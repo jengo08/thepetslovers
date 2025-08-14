@@ -40,13 +40,13 @@ a {
 }
 
 .logo img {
-    height: 90px; /* Logo más grande */
+    height: 90px;
     width: auto;
 }
 
 .nav-links {
     list-style: none;
-    margin: 0 auto; /* Centramos los enlaces horizontalmente */
+    margin: 0 auto;
     padding: 0;
     display: flex;
     justify-content: center;
@@ -291,9 +291,13 @@ a {
     text-decoration: underline;
 }
 
-.cookie-modal-content button {
-    background-color: var(--color-principal);
-    color: white;
+.cookie-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.cookie-buttons button {
     border: none;
     padding: 12px 30px;
     border-radius: 5px;
@@ -302,8 +306,23 @@ a {
     transition: background-color 0.3s ease;
 }
 
-.cookie-modal-content button:hover {
+.cookie-buttons .accept-button {
+    background-color: var(--color-principal);
+    color: white;
+}
+
+.cookie-buttons .accept-button:hover {
     background-color: #2a7e80;
+}
+
+.cookie-buttons .deny-button {
+    background-color: var(--color-fondo-claro);
+    color: var(--color-texto);
+    border: 1px solid #ccc;
+}
+
+.cookie-buttons .deny-button:hover {
+    background-color: #e8e8e8;
 }
 
 /* Estilos para el diseño responsive */
@@ -322,4 +341,49 @@ a {
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
-        margin-top:
+        margin-top: 10px;
+    }
+    
+    .nav-links li {
+        margin: 5px 0;
+    }
+
+    .login-button {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-content p {
+        font-size: 1.2rem;
+    }
+
+    .cta-button {
+        padding: 12px 25px;
+    }
+
+    .services-section, .why-us-section, .testimonials-section {
+        padding: 60px 15px;
+    }
+
+    .services-section h2, .why-us-section h2, .testimonials-section h2 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+        margin-bottom: 40px;
+    }
+
+    .cookie-modal-content {
+        max-width: 90%;
+        padding: 20px;
+    }
+    
+    .cookie-buttons {
+        flex-direction: column;
+    }
+}
