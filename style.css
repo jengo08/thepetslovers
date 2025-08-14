@@ -52,10 +52,11 @@ a {
     display: flex;
     justify-content: center;
     flex-grow: 1;
+    gap: 10px; /* Reduce el espacio entre los enlaces */
 }
 
 .nav-links li {
-    margin: 0 15px;
+    margin: 0 5px; /* Reduce el espacio entre los enlaces */
 }
 
 .nav-links a {
@@ -74,7 +75,8 @@ a {
     padding: 8px 15px;
     border-radius: 5px;
     margin-left: auto;
-    color: white; /* Texto en blanco */
+    margin-right: 30px; /* Espacio de 3cm del borde derecho */
+    color: white;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -93,7 +95,7 @@ a {
     text-align: center;
     background-image: url('images/hero.jpg.png');
     background-size: cover;
-    background-position: center bottom; /* La imagen se baja para mostrar más el cielo */
+    background-position: center bottom;
     background-attachment: fixed;
     color: white;
     padding-top: 60px;
@@ -345,6 +347,7 @@ a {
         align-items: flex-start;
         width: 100%;
         margin-top: 10px;
+        gap: 5px;
     }
     
     .nav-links li {
@@ -355,7 +358,7 @@ a {
         margin-left: 0;
         margin-top: 10px;
         align-self: flex-end;
-        color: white;
+        margin-right: 0;
     }
     .login-button:hover {
         background-color: white;
