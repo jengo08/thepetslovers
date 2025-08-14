@@ -30,7 +30,8 @@ a {
     top: 0;
     left: 0;
     width: 100%;
-    padding: 10px 20px;
+    height: 90px; /* Altura de la barra de navegación */
+    padding: 0 20px;
     z-index: 20;
     display: flex;
     justify-content: space-between;
@@ -40,17 +41,17 @@ a {
 }
 
 .logo img {
-    height: 90px;
+    height: 70px; /* Tamaño del logo para que se ajuste */
     width: auto;
 }
 
 .nav-links {
     list-style: none;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
     display: flex;
     justify-content: center;
-    flex-grow: 1; 
+    flex-grow: 1; /* Ocupa el espacio central */
 }
 
 .nav-links li {
@@ -72,7 +73,7 @@ a {
     border: 2px solid white;
     padding: 8px 15px;
     border-radius: 5px;
-    margin-left: 20px;
+    margin-left: auto; /* Mueve el botón de login a la derecha */
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -328,6 +329,7 @@ a {
 /* Estilos para el diseño responsive */
 @media (max-width: 768px) {
     .navbar {
+        height: auto;
         flex-direction: column;
         align-items: flex-start;
         padding: 10px 15px;
@@ -351,6 +353,7 @@ a {
     .login-button {
         margin-left: 0;
         margin-top: 10px;
+        align-self: flex-end;
     }
 
     .hero-content h1 {
