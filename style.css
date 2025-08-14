@@ -42,7 +42,7 @@ a {
 
 .logo {
     background-color: rgba(255, 255, 255, 0.5);
-    padding: 2px; /* Reducido para ajustarse al logo más pequeño */
+    padding: 1px; /* ¡Ajustado para que el recuadro sea muy pequeño! */
     border-radius: 5px;
     display: flex;
     align-items: center;
@@ -51,7 +51,7 @@ a {
 }
 
 .logo img {
-    height: 113px; /* ¡Aproximadamente 3 cm! */
+    height: 113px; /* Aproximadamente 3 cm */
     width: auto;
 }
 
