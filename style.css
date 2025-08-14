@@ -41,17 +41,17 @@ a {
 }
 
 .logo {
-    background-color: rgba(255, 255, 255, 0.5); /* Fondo blanco semitransparente */
-    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 5px;
     border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 30px; /* Agregado para separar del menú de navegación */
+    margin-right: 30px;
 }
 
 .logo img {
-    height: 265px; /* ¡Aproximadamente 7 cm! */
+    height: 189px; /* Aproximadamente 5 cm */
     width: auto;
 }
 
