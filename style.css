@@ -40,8 +40,18 @@ a {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+.logo {
+    background-color: rgba(255, 255, 255, 0.5); /* Fondo blanco semitransparente */
+    padding: 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 30px; /* Agregado para separar del menú de navegación */
+}
+
 .logo img {
-    height: 378px; /* ¡Aproximadamente 10 cm! */
+    height: 265px; /* ¡Aproximadamente 7 cm! */
     width: auto;
 }
 
@@ -118,13 +128,4 @@ a {
     padding: 20px;
 }
 
-.hero-content h1 {
-    font-family: var(--fuente-titulo);
-    font-size: 4rem;
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.hero-content p {
-    font-family: var(--fuente-texto);
-    font-size: 1.5
+.hero-content h1
