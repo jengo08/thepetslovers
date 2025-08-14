@@ -1,274 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Pets Lovers</title>
-  <!-- Tipografía -->
-  <link href="https://fonts.googleapis.com/css2?family=Lato&family=Montserrat&family=Playfair+Display&display=swap" rel="stylesheet">
-  <style>
-    /* Colores */
-    :root {
-      --color-principal: #339496;
-      --color-secundario: #58425a;
-      --fondo-claro: #f4f4f4;
-      --fondo-blanco: #ffffff;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Montserrat', sans-serif;
-      color: var(--color-secundario);
-      background-color: var(--fondo-blanco);
-    }
-
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
-
-    /* Cabecera (Hero Section) */
-    .hero {
-      position: relative;
-      background-image: url('ruta-de-tu-imagen-hero.jpg');
-      background-size: cover;
-      background-position: center;
-      height: 90vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: var(--fondo-blanco);
-    }
-
-    .hero::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(51, 148, 150, 0.5); /* Filtro #339496 */
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 3rem;
-      color: var(--color-secundario);
-      margin-bottom: 1rem;
-    }
-
-    .hero p {
-      font-family: 'Montserrat', sans-serif;
-      font-size: 1.2rem;
-      color: #333;
-      margin-bottom: 2rem;
-    }
-
-    .hero button {
-      background-color: var(--color-principal);
-      color: #fff;
-      border: none;
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    /* Sección de Servicios */
-    .servicios {
-      padding: 4rem 2rem;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-      background-color: var(--fondo-blanco);
-    }
-
-    .servicio-card {
-      text-align: center;
-      padding: 2rem;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-    }
-
-    .servicio-card h3 {
-      font-family: 'Playfair Display', serif;
-      color: var(--color-secundario);
-      margin-bottom: 1rem;
-    }
-
-    .servicio-card p {
-      font-family: 'Montserrat', sans-serif;
-      color: #333;
-    }
-
-    /* Sección Por qué elegirnos */
-    .porque {
-      padding: 4rem 2rem;
-      background-color: var(--fondo-claro);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-around;
-      gap: 2rem;
-      text-align: center;
-    }
-
-    .porque-item {
-      max-width: 250px;
-    }
-
-    .porque-item i {
-      font-size: 2rem;
-      color: var(--color-principal);
-      margin-bottom: 1rem;
-    }
-
-    .porque-item h4 {
-      font-family: 'Montserrat', sans-serif;
-      color: var(--color-secundario);
-      margin-bottom: 0.5rem;
-    }
-
-    .porque-item p {
-      font-family: 'Montserrat', sans-serif;
-      color: #333;
-    }
-
-    /* Testimonios */
-    .testimonios {
-      padding: 4rem 2rem;
-      background-color: var(--fondo-blanco);
-      text-align: center;
-    }
-
-    .testimonio {
-      margin-bottom: 2rem;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .testimonio p {
-      font-family: 'Lato', sans-serif;
-      color: var(--color-secundario);
-      font-style: italic;
-    }
-
-    .testimonio h5 {
-      font-family: 'Lato', sans-serif;
-      color: var(--color-secundario);
-      margin-top: 0.5rem;
-    }
-
-    /* Llamada a la Acción Final */
-    .cta {
-      padding: 4rem 2rem;
-      background-color: var(--fondo-blanco);
-      text-align: center;
-    }
-
-    .cta h2 {
-      font-family: 'Playfair Display', serif;
-      color: var(--color-secundario);
-      margin-bottom: 1rem;
-    }
-
-    .cta button {
-      background-color: var(--color-principal);
-      color: #fff;
-      border: none;
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-
-    /* Responsive */
-    @media(max-width: 768px){
-      .hero h1 {
-        font-size: 2.2rem;
-      }
-      .hero p {
-        font-size: 1rem;
-      }
-    }
-
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Pets Lovers - Cuidamos a tu mascota con amor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Cabecera (Hero Section) -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>Tu guardería de mascotas exclusiva</h1>
-      <p>Auxiliares veterinarios titulados cuidando de tu mascota con amor y profesionalismo</p>
-      <button>Descubre nuestros servicios</button>
-    </div>
-  </section>
+    <nav class="navbar">
+        <div class="logo">
+            <a href="index.html">
+                <img src="images/logo.png.png" alt="The Pets Lovers Logo">
+            </a>
+        </div>
+        </nav>
+    
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1>The Pets Lovers</h1>
+            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares veterinarios.</p>
+            <a href="#servicios" class="cta-button">Descubre nuestros servicios</a>
+        </div>
+    </header>
 
-  <!-- Sección de Servicios -->
-  <section class="servicios">
-    <div class="servicio-card">
-      <h3>Visitas a domicilio</h3>
-      <p>Atención personalizada en la comodidad de tu hogar.</p>
-    </div>
-    <div class="servicio-card">
-      <h3>Paseos</h3>
-      <p>Paseos seguros y divertidos con auxiliares especializados.</p>
-    </div>
-    <div class="servicio-card">
-      <h3>Guardería de día</h3>
-      <p>Cuidados profesionales mientras trabajas o estudias.</p>
-    </div>
-    <div class="servicio-card">
-      <h3>Guardería en casa</h3>
-      <p>Tu mascota se queda en un hogar con cuidador certificado.</p>
-    </div>
-  </section>
+    <section id="servicios" class="services-section">
+        <div class="container">
+            <h2>Nuestros Servicios</h2>
+            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">🐾</div>
+                    <h3>Visitas a domicilio</h3>
+                    <p>Cuidado personalizado en la comodidad de su hogar.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🚶</div>
+                    <h3>Paseos</h3>
+                    <p>Paseos energéticos y seguros para mantenerlo feliz y saludable.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🏡</div>
+                    <h3>Guardería de día</h3>
+                    <p>Un día lleno de juegos y compañía en un entorno seguro.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🏠</div>
+                    <h3>Guardería en casa</h3>
+                    <p>Atención completa en casa de un cuidador, como en familia.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-  <!-- Sección Por qué elegirnos -->
-  <section class="porque">
-    <div class="porque-item">
-      <i class="fas fa-user-md"></i>
-      <h4>Auxiliares Veterinarios Titulados</h4>
-      <p>Profesionales capacitados para el bienestar de tu mascota.</p>
-    </div>
-    <div class="porque-item">
-      <i class="fas fa-heart"></i>
-      <h4>Atención Personalizada</h4>
-      <p>Cuidado adaptado a las necesidades de cada mascota.</p>
-    </div>
-    <div class="porque-item">
-      <i class="fas fa-star"></i>
-      <h4>Servicios Exclusivos</h4>
-      <p>Experiencias únicas y de calidad para tus animales.</p>
-    </div>
-  </section>
-
-  <!-- Testimonios -->
-  <section class="testimonios">
-    <div class="testimonio">
-      <p>"Excelente servicio, mi perro nunca estuvo tan feliz. ¡Totalmente recomendable!"</p>
-      <h5>- Laura & Max</h5>
-    </div>
-    <div class="testimonio">
-      <p>"La cuidadora es increíble, atenta y profesional. Nuestro gato estaba encantado."</p>
-      <h5>- Javier & Simba</h5>
-    </div>
-  </section>
-
-  <!-- Llamada a la Acción Final -->
-  <section class="cta">
-    <h2>Tu mascota merece lo mejor. Contáctanos hoy mismo.</h2>
-    <button>Reserva ahora</button>
-  </section>
-
-  <!-- Iconos de Font Awesome -->
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
 </body>
 </html>
