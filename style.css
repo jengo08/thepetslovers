@@ -30,7 +30,7 @@ a {
     top: 0;
     left: 0;
     width: 100%;
-    height: 90px; /* Altura de la barra de navegación */
+    height: 90px;
     padding: 0 20px;
     z-index: 20;
     display: flex;
@@ -41,7 +41,7 @@ a {
 }
 
 .logo img {
-    height: 70px; /* Tamaño del logo para que se ajuste */
+    height: 85px;
     width: auto;
 }
 
@@ -51,7 +51,7 @@ a {
     padding: 0;
     display: flex;
     justify-content: center;
-    flex-grow: 1; /* Ocupa el espacio central */
+    flex-grow: 1;
 }
 
 .nav-links li {
@@ -73,7 +73,8 @@ a {
     border: 2px solid white;
     padding: 8px 15px;
     border-radius: 5px;
-    margin-left: auto; /* Mueve el botón de login a la derecha */
+    margin-left: auto;
+    color: white; /* Texto en blanco */
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -85,14 +86,14 @@ a {
 /* ---- HERO SECTION ---- */
 .hero-section {
     position: relative;
-    height: 100vh; 
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
     background-image: url('images/hero.jpg.png');
     background-size: cover;
-    background-position: center;
+    background-position: center bottom; /* La imagen se baja para mostrar más el cielo */
     background-attachment: fixed;
     color: white;
     padding-top: 60px;
@@ -354,6 +355,11 @@ a {
         margin-left: 0;
         margin-top: 10px;
         align-self: flex-end;
+        color: white;
+    }
+    .login-button:hover {
+        background-color: white;
+        color: var(--color-principal);
     }
 
     .hero-content h1 {
