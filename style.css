@@ -40,17 +40,17 @@ a {
 }
 
 .logo img {
-    height: 70px; /* Logo más grande */
+    height: 90px; /* Logo más grande */
     width: auto;
 }
 
 .nav-links {
     list-style: none;
-    margin: 0;
+    margin: 0 auto; /* Centramos los enlaces horizontalmente */
     padding: 0;
     display: flex;
-    justify-content: center; /* Centrar los enlaces */
-    flex-grow: 1; /* Ocupa el espacio restante para centrar */
+    justify-content: center;
+    flex-grow: 1; 
 }
 
 .nav-links li {
@@ -58,13 +58,13 @@ a {
 }
 
 .nav-links a {
-    color: white; /* Texto en blanco para el fondo aquamarina */
+    color: white;
     font-weight: 700;
     transition: color 0.3s ease;
 }
 
 .nav-links a:hover {
-    color: var(--color-texto); /* Color morado en hover */
+    color: var(--color-texto);
 }
 
 .login-button {
@@ -104,8 +104,8 @@ a {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--color-texto); /* Morado como superposición */
-    opacity: 0.2; /* Opacidad sutil */
+    background-color: var(--color-texto);
+    opacity: 0.2;
 }
 
 .hero-content {
@@ -259,6 +259,52 @@ a {
     color: var(--color-texto);
 }
 
+/* ---- MODAL DE COOKIES ---- */
+.cookie-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.cookie-modal-content {
+    background-color: white;
+    max-width: 600px;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+}
+
+.cookie-modal-content p {
+    margin-bottom: 20px;
+}
+
+.cookie-modal-content a {
+    color: var(--color-principal);
+    text-decoration: underline;
+}
+
+.cookie-modal-content button {
+    background-color: var(--color-principal);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.cookie-modal-content button:hover {
+    background-color: #2a7e80;
+}
 
 /* Estilos para el diseño responsive */
 @media (max-width: 768px) {
@@ -276,40 +322,4 @@ a {
         flex-direction: column;
         align-items: flex-start;
         width: 100%;
-        margin-top: 10px;
-    }
-    
-    .nav-links li {
-        margin: 5px 0;
-    }
-
-    .login-button {
-        margin-left: 0;
-        margin-top: 10px;
-    }
-
-    .hero-content h1 {
-        font-size: 2.5rem;
-    }
-
-    .hero-content p {
-        font-size: 1.2rem;
-    }
-
-    .cta-button {
-        padding: 12px 25px;
-    }
-
-    .services-section, .why-us-section, .testimonials-section {
-        padding: 60px 15px;
-    }
-
-    .services-section h2, .why-us-section h2, .testimonials-section h2 {
-        font-size: 2rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
-        margin-bottom: 40px;
-    }
-}
+        margin-top:
