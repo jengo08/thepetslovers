@@ -245,10 +245,14 @@ a {
     margin-bottom: 60px;
 }
 
+/* Cambio para que los servicios estén en una sola fila */
 .services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
     gap: 30px;
+    overflow-x: auto;
+    padding-bottom: 20px; /* Para que la barra de scroll no tape el contenido */
 }
 
 .service-card {
@@ -256,6 +260,7 @@ a {
     padding: 40px 20px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    flex: 0 0 250px; /* Fija el ancho de cada tarjeta */
     transition: transform 0.3s ease;
 }
 
