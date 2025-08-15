@@ -196,3 +196,25 @@ a { color: var(--color-principal); text-decoration: none; }
 .footer-bottom {
   padding: 10px 20px; /* reduce alto del pie */
 }
+/* ===== FIX footer redes (aplica en todas las páginas) ===== */
+footer .footer-right.socials,
+footer .socials.footer-right {
+  position: relative;
+  top: -16px;   /* súbelos un pelín */
+  right: 24px;  /* muévelos un poco hacia la izquierda */
+}
+
+footer .footer-bottom {
+  padding: 10px 20px; /* reduce la altura del pie */
+}
+
+/* En móvil, deja los iconos sin desplazamiento para que no se descoloquen */
+@media (max-width: 768px) {
+  footer .footer-right.socials,
+  footer .socials.footer-right {
+    position: static;
+    top: 0;
+    right: 0;
+    justify-content: center; /* si tu footer los centra en móvil */
+  }
+}
