@@ -1,22 +1,31 @@
-document.addEventListener('DOMContentLoaded', (event) => {
+document.addEventListener('DOMContentLoaded', function() {
+    const cookieModal = document.getElementById('cookie-modal-overlay');
     const acceptButton = document.getElementById('accept-cookies');
     const denyButton = document.getElementById('deny-cookies');
-    const cookieModal = document.getElementById('cookie-modal-overlay');
+    const cookieAccepted = localStorage.getItem('cookies-accepted');
 
-    const cookieAccepted = localStorage.getItem('cookieAccepted');
-
-    if (cookieAccepted !== 'true') {
+    // Si el usuario no ha aceptado ni denegado las cookies, mostramos el modal.
+    if (!cookieAccepted) {
         cookieModal.style.display = 'flex';
     }
 
-    acceptButton.addEventListener('click', () => {
-        localStorage.setItem('cookieAccepted', 'true');
+    // Función para ocultar el modal y guardar la preferencia.
+    function hideModalAndSetPreference(preference) {
+        localStorage.setItem('cookies-accepted', preference);
         cookieModal.style.display = 'none';
-    });
+    }
 
-    denyButton.addEventListener('click', () => {
-        // En un caso real, aquí pondrías la lógica para denegar las cookies
-        // y eliminar las que ya existan. Por ahora, solo cerramos el modal.
-        cookieModal.style.display = 'none';
-    });
+    // Evento para el botón de aceptar
+    if (acceptButton) {
+        acceptButton.addEventListener('click', function() {
+            hideModalAndSetPreference('true');
+        });
+    }
+
+    // Evento para el botón de denegar
+    if (denyButton) {
+        denyButton.addEventListener('click', function() {
+            hideModalAndSetPreference('false');
+        });
+    }
 });
