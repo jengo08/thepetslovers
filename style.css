@@ -94,7 +94,7 @@ a {
 /* ---- HERO (base) ---- */
 .hero-section {
     position: relative;
-    height: 100vh; /* base para la home */
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -108,27 +108,18 @@ a {
 }
 .hero-section::before {
     content: '';
-    position: absolute; inset: 0;
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
     background-color: rgba(88, 66, 90, 0.5);
     z-index: 1;
 }
-.hero-content {
-    position: relative;
-    z-index: 10;
-    padding: 20px;
-}
+.hero-content { position: relative; z-index: 10; padding: 20px; }
 .hero-content h1 {
-    font-family: var(--fuente-titulo);
-    font-size: 4rem;
-    color: white;
+    font-size: 4rem; color: white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 .hero-content p {
-    font-family: var(--fuente-texto);
-    font-size: 1.5rem;
-    max-width: 600px;
-    margin: 14px auto 0;
-    color: white;
+    font-size: 1.5rem; max-width: 600px; margin: 14px auto 0; color: white;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
 }
 
@@ -155,7 +146,7 @@ a {
 }
 .step-card:hover{ transform:translateY(-10px); }
 .step-icon{ font-size:3rem; color:var(--color-principal); margin-bottom:20px; }
-.step-card h3{ font-family:var(--fuente-titulo); font-size:1.5rem; margin-bottom:10px; }
+.step-card h3{ font-size:1.5rem; margin-bottom:10px; }
 .start-now-text{ margin-top:40px; font-style:italic; font-weight:bold; }
 
 /* ---- SERVICIOS ---- */
@@ -167,7 +158,7 @@ a {
 .service-card{ background:var(--color-fondo-claro); padding:20px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,.1); flex:1 1 180px; transition:transform .3s; }
 .service-card:hover{ transform:translateY(-10px); }
 .service-icon{ font-size:2.5rem; color:var(--color-principal); margin-bottom:15px; }
-.service-card h3{ font-family:var(--fuente-titulo); font-size:1.2rem; margin-bottom:10px; }
+.service-card h3{ font-size:1.2rem; margin-bottom:10px; }
 
 /* ---- POR QUÉ ELEGIRNOS ---- */
 .why-us-section{ padding:80px 20px; text-align:center; background:var(--color-fondo-claro); }
@@ -179,7 +170,7 @@ a {
 .testimonials-section{ padding:80px 20px; text-align:center; background:#fff; }
 .testimonial-card{ max-width:800px; margin:0 auto; padding:40px; background:var(--color-fondo-claro); border-left:5px solid var(--color-principal); border-radius:10px; font-style:italic; font-size:1.1rem; position:relative; }
 .testimonial-card p{ margin-bottom:20px; }
-.client-info{ text-align:right; font-style:normal; }
+.client-info{ text-align:right; }
 .client-name{ font-weight:700; color:var(--color-texto); }
 
 /* ---- CONVIÉRTETE EN CUIDADOR ---- */
@@ -214,9 +205,7 @@ a {
     .hero-content p{ font-size:1.2rem; }
     .cta-button{ padding:12px 25px; }
 
-    .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{
-        padding:60px 15px;
-    }
+    .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{ padding:60px 15px; }
     .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2, .become-sitter-section h2{ font-size:2rem; }
     .subtitle{ font-size:1rem; margin-bottom:40px; }
 
@@ -232,18 +221,18 @@ a {
    (más bajo y texto un poco más arriba)
    ================================ */
 .hero-section.hero-como{
-    background-image:url('images/como.jpg.png');   /* tu imagen */
-    height: 65vh;                                  /* más corto que la home */
-    min-height: 460px;                             /* asegura buena presencia */
+    background-image:url('images/como.jpg.png');
+    height: 65vh;
+    min-height: 460px;
     background-position:center top;
-    padding-top: 40px;                             /* compensa la navbar fija */
+    padding-top: 40px;
 }
 .hero-section.hero-como .hero-content{
-    margin-top: -10px;                             /* sube un pelín el bloque de texto */
+    margin-top: -10px;
 }
 
 /* ================================
-   PASOS EN UNA SOLA FILA
+   PASOS EN UNA SOLA FILA (sin números)
    ================================ */
 .how-it-works--one-row{
     display:flex; flex-wrap:nowrap; gap:16px; margin-top:30px;
@@ -256,4 +245,7 @@ a {
 }
 .how-it-works--one-row h3{
     font-size:clamp(13px, 1.6vw, 18px); margin-bottom:6px;
+}
+.how-it-works--one-row p{
+    font-size:clamp(12px, 1.5vw, 16px); color:#666;
 }
