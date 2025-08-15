@@ -186,16 +186,13 @@ a { color: var(--color-principal); text-decoration: none; }
   .how-it-works-grid{ flex-direction:column; }
   .why-us-grid{ grid-template-columns:1fr; }
 }
-/* Ajuste footer iconos redes sociales */
-.footer-social {
-    display: flex;
-    gap: 15px;
-    position: relative;
-    top: -15px; /* sube los iconos */
-    right: 20px; /* desplaza un poco hacia la izquierda */
+/* Ajuste footer iconos redes (aplica a tu HTML actual) */
+.footer-right.socials {
+  position: relative;
+  top: -16px;   /* súbelos un pelín */
+  right: 24px;  /* muévelos un poco hacia la izquierda */
 }
 
 .footer-bottom {
-    padding: 10px 0; /* menos alto */
+  padding: 10px 20px; /* reduce alto del pie */
 }
-
