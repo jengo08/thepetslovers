@@ -9,18 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <style>
-        /* Ajuste específico de la portada solo para como-funciona */
-        .hero-section.hero-como-funciona {
-            background-position: center 3%;
-        }
-
-        @media (max-width: 768px) {
-            .hero-section.hero-como-funciona {
-                background-position: center 13%;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -41,18 +29,82 @@
     </nav>
 
     <!-- Hero Section -->
-    <header class="hero-section hero-como-funciona" style="background-image: url('images/como.jpg.png');">
+    <header class="hero-section" style="background-image: url('images/como.jpg.png'); background-position: center 3%;">
         <div class="hero-content">
             <h1>Cómo Funciona</h1>
         </div>
     </header>
 
-    <!-- El resto de tu contenido actual se queda igual -->
-    <!-- ... -->
+    <!-- Bloque de reserva -->
+    <section class="how-it-works-section">
+        <div class="container">
+            <h2>Listos para confiar</h2>
+            <a href="#servicios" class="cta-button">Reserva un servicio</a>
+        </div>
+    </section>
+
+    <!-- Características -->
+    <section class="why-us-section">
+        <div class="container">
+            <div class="why-us-grid">
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                    <h3>Auxiliares y Veterinarios Titulados</h3>
+                    <p>Todos nuestros cuidadores son profesionales del sector veterinario con experiencia comprobada.</p>
+                </div>
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-shield-dog"></i></div>
+                    <h3>Seguridad y tranquilidad</h3>
+                    <p>Supervisión constante, espacios seguros y seguimiento personalizado de cada mascota.</p>
+                </div>
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-heart"></i></div>
+                    <h3>Atención personalizada</h3>
+                    <p>Adaptamos cada servicio a las necesidades específicas de tu mascota y tu familia.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
-    <footer>
-        <!-- Aquí va el footer que ya tienes actualmente -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-links">
+                <div>
+                    <h4>Sobre nosotros</h4>
+                    <ul>
+                        <li><a href="#">Quiénes somos</a></li>
+                        <li><a href="#">Dónde estamos</a></li>
+                        <li><a href="#">Trabaja con nosotros</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Contacta con nosotros</h4>
+                    <ul>
+                        <li><a href="mailto:contacto@thepetslovers.es"><i class="fa-solid fa-envelope"></i> contacto@thepetslovers.es</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Información</h4>
+                    <ul>
+                        <li><a href="#">Política de Privacidad</a></li>
+                        <li><a href="#">Condiciones de Servicio</a></li>
+                        <li><a href="#">Digital Services Act</a> | <a href="#">¿Necesitas ayuda? Centro de ayuda</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-social">
+                <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+                <a href="#"><i class="fa-brands fa-facebook"></i></a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025 The Pets Lovers - Todos los derechos reservados</p>
+            <div class="footer-bottom-links">
+                <a href="#">Aviso legal</a> | <a href="#">Privacidad</a> | <a href="#">Cookies</a> | <a href="#">Canal de denuncias</a>
+            </div>
+        </div>
     </footer>
 
     <script src="script.js"></script>
