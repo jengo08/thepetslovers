@@ -19,6 +19,7 @@
             </a>
         </div>
         <ul class="nav-links">
+            <li><a href="index.html">Inicio</a></li>
             <li><a href="como-funciona.html">Cómo funciona</a></li>
             <li><a href="servicios.html">Servicios</a></li>
             <li><a href="#quienes-somos">Conócenos</a></li>
@@ -31,7 +32,7 @@
     <header class="hero-section">
         <div class="hero-content">
             <h1>The Pets Lovers</h1>
-            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares veterinarios.</p>
+            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares y veterinarios del sector.</p>
             <a href="#servicios" class="cta-button">Reserva un servicio</a>
         </div>
     </header>
@@ -85,12 +86,13 @@
                     <h3>Alojamiento nocturno</h3>
                     <p>Atención completa en casa de un cuidador, como en familia.</p>
                 </div>
-                <!-- Aquí está el cambio: enlace a servicios.html -->
-                <a href="servicios.html" class="service-card">
-                    <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
-                    <h3>Más servicios</h3>
-                    <p>Explora todas las opciones de cuidado que ofrecemos.</p>
-                </a>
+                <div class="service-card">
+                    <a href="servicios.html">
+                        <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
+                        <h3>Más servicios</h3>
+                        <p>Explora todas las opciones de cuidado que ofrecemos.</p>
+                    </a>
+                </div>
             </div>
         </div>
     </section>
@@ -151,7 +153,6 @@
                 <a href="digital-services-act.html">Digital Services Act</a>
                 <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
             </nav>
-
             <div class="footer-right socials">
                 <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
                 <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
@@ -159,7 +160,6 @@
                 <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
             </div>
         </div>
-
         <div class="footer-bottom footer-bottom--inline">
             <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
             <nav class="footer-bottom-right legal-links">
@@ -174,5 +174,6 @@
     <script>
         document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
     </script>
+
 </body>
 </html>
