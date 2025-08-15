@@ -281,47 +281,6 @@ a {
     margin-bottom: 10px;
 }
 
-/* ---- NUEVAS SECCIONES EN PÁGINA "CÓMO FUNCIONA" ---- */
-.details-section {
-    padding: 60px 20px;
-    background-color: white;
-}
-
-.details-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 40px;
-}
-
-.details-card {
-    background-color: var(--color-fondo-claro);
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.details-card h2 {
-    font-size: 1.8rem;
-    margin-top: 0;
-    margin-bottom: 20px;
-}
-
-.details-card ul {
-    list-style: none;
-    padding: 0;
-}
-
-.details-card li {
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    text-align: left;
-}
-
-.details-card li i {
-    color: var(--color-principal);
-    margin-right: 10px;
-}
-
 /* ---- SECCIÓN DE SERVICIOS ---- */
 .services-section {
     padding: 80px 20px;
@@ -476,7 +435,7 @@ a {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
+    display: none; /* Empezamos con el modal oculto por defecto */
     justify-content: center;
     align-items: center;
     z-index: 999;
