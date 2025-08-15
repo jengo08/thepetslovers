@@ -24,7 +24,6 @@
   </style>
 </head>
 <body>
-  <!-- puedes reutilizar tu navbar si quieres; lo dejamos limpio para foco en la reserva -->
 
   <div class="booking-wrapper">
     <div class="booking-header">
@@ -108,17 +107,13 @@
     }
     updateAuthUI();
 
-    // Evita enviar si no hay login
     form.addEventListener('submit', (e)=>{
       if(!isLoggedIn){
         e.preventDefault();
         alert('Debes iniciar sesión o registrarte para completar la reserva.');
-      }else{
-        // Aquí irá el envío real cuando conectemos backend/Google Sheets/Firebase
       }
     });
 
-    // Botones de login/registro (placeholder)
     document.getElementById('btnLogin').addEventListener('click', (e)=>{
       e.preventDefault();
       alert('Pantalla de Iniciar sesión (la añadiremos más adelante).');
@@ -130,4 +125,3 @@
   </script>
 </body>
 </html>
-
