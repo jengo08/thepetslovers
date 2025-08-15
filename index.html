@@ -31,7 +31,10 @@
     <header class="hero-section">
         <div class="hero-content">
             <h1>The Pets Lovers</h1>
-            <p>Cuidamos de tu mascota con la experiencia de profesionales del sector veterinario.</p>
+            <!-- MINI SUBTÍTULO AÑADIDO (nuevo) -->
+            <p class="subtitle" style="margin-top:8px;">Cuidamos con amor y profesionalidad</p>
+            <!-- Texto original se mantiene tal cual -->
+            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares veterinarios.</p>
             <a href="#servicios" class="cta-button">Reserva un servicio</a>
         </div>
     </header>
@@ -151,7 +154,42 @@
         </div>
     </div>
 
+    <!-- FOOTER (copiado tal cual del de como-funciona) -->
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <nav class="footer-links-row">
+          <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+          <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+          <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+          <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+          <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+          <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+          <a href="digital-services-act.html">Digital Services Act</a>
+          <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+        </nav>
+
+        <div class="footer-right socials">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-bottom footer-bottom--inline">
+        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+        <nav class="footer-bottom-right legal-links">
+          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+          <a href="cookies.html">Cookies</a><span class="sep">|</span>
+          <a href="canal-denuncias.html">Canal de denuncias</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
-
