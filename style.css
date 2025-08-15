@@ -523,11 +523,10 @@ a {
     }
 }
 
-/* ==== NUEVO: “Inicio” a la derecha del logo, separado 2–3 cm, sin tocar lo demás ==== */
+/* ==== NUEVO: “Inicio” a la derecha del logo, 3 cm más a la izquierda que antes ==== */
 .home-button {
     position: absolute;
-    /* 2–3 cm ≈ 76–114px. Dejamos ~90px de separación desde el borde del recuadro del logo */
-    left: 280px; /* ajusta si tu logo es más ancho/estrecho */
+    left: 170px; /* antes 280px → 3 cm aprox. más a la izquierda */
     top: 50%;
     transform: translateY(-50%);
     color: white;
