@@ -9,63 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-  <!-- Ajustes SOLO para esta página -->
-  <style>
-    /* 1) HERO: subimos un poco el encuadre para que se vea más el perro */
-    .hero-section.hero-como {
-      height: 60vh;
-      min-height: 420px;
-      background-image: url('images/como.jpg.png.png') !important;
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center 5%; /* subido más (antes 8%) */
-    }
-    @media (max-width: 768px) {
-      .hero-section.hero-como {
-        height: 55vh;
-        min-height: 360px;
-        background-position: center 15%; /* subido también en móvil */
-      }
-    }
-
-    /* 2) Línea fina de features (sin tarjetas), compacta y en una fila */
-    .features-line {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      align-items: center;
-      margin: 8px auto 0;
-      max-width: 1100px;
-    }
-    .feature-chip {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 12px;
-      border: 1px solid #ececec;
-      border-radius: 999px;
-      background: #fff;
-      font-size: 0.95rem;
-      color: var(--color-texto);
-      box-shadow: 0 1px 6px rgba(0,0,0,.04);
-      white-space: nowrap;
-    }
-    .feature-chip i {
-      color: var(--color-principal);
-      font-size: 1rem;
-    }
-    @media (max-width: 900px) {
-      .features-line {
-        grid-template-columns: repeat(2, 1fr);
-        row-gap: 12px;
-      }
-    }
-    @media (max-width: 520px) {
-      .feature-chip { font-size: 0.9rem; padding: 8px 10px; }
-    }
-  </style>
 </head>
 <body>
 
@@ -75,9 +18,13 @@
         <img src="images/logo.png.png" alt="The Pets Lovers Logo">
       </a>
     </div>
+
+    <!-- Botón Inicio -->
+    <a href="index.html" class="home-button">Inicio</a>
+
     <ul class="nav-links">
       <li><a href="como-funciona.html">Cómo funciona</a></li>
-      <li><a href="index.html#servicios">Servicios</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
       <li><a href="index.html#quienes-somos">Conócenos</a></li>
       <li><a href="index.html#contactanos">Contáctanos</a></li>
       <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
@@ -85,7 +32,7 @@
     <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
   </nav>
 
-  <!-- HERO (igual que antes, solo más centrado para ver el perro) -->
+  <!-- HERO -->
   <header class="hero-section hero-como">
     <div class="hero-content">
       <h1>Cómo funciona</h1>
@@ -93,92 +40,9 @@
     </div>
   </header>
 
-  <!-- Sección Cómo funciona (sin cambios de diseño/textos) -->
-  <section id="como-funciona-detallada" class="how-it-works-section">
-    <div class="container">
-      <h2>El proceso es sencillo y seguro</h2>
-      <p>Desde el primer clic hasta el último día de servicio, tendrás la tranquilidad de que tu mascota está atendida por profesionales formados.</p>
+  <!-- Aquí iría todo tu contenido actual de "cómo funciona" -->
+  <!-- FOOTER tal y como lo tienes ahora -->
 
-      <div class="how-it-works-grid how-it-works--one-row">
-        <div class="step-card">
-          <div class="step-icon"><i class="fa-solid fa-notes-medical"></i></div>
-          <h3>Crea tu perfil y el de tu mascota</h3>
-          <p>Cuéntanos carácter, patologías, cuidados especiales y preferencias.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
-          <h3>Elige días y horarios</h3>
-          <p>Reserva días sueltos o periodos largos según tu agenda.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon"><i class="fa-solid fa-phone-volume"></i></div>
-          <h3>Te llamaremos para conocernos</h3>
-          <p>Tras crear la reserva, hablamos para ajustar el cuidado a vuestro perfil.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon"><i class="fa-solid fa-house-circle-check"></i></div>
-          <h3>Primera visita gratuita</h3>
-          <p>Una vez aceptada la reserva, visita gratuita con el cuidador para conoceros.</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon"><i class="fa-solid fa-file-lines"></i></div>
-          <h3>Cuidados & seguimiento diario</h3>
-          <p>Atención profesional, fotos e informe diario durante la estancia.</p>
-        </div>
-      </div>
-
-      <!-- CTA centrado en recuadro (sin cambios) -->
-      <div class="cta-panel">
-        <h3>¿Listos para confiar?</h3>
-        <p>Reserva tu primera visita gratuita y conoce a tu cuidador antes de la estancia.</p>
-        <a href="reserva.html" class="cta-button">Reservar ahora</a>
-      </div>
-
-      <!-- NUEVO: Línea fina con 4 puntos, sin tarjetas -->
-      <div class="features-line">
-        <div class="feature-chip"><i class="fa-solid fa-user-nurse"></i> Auxiliares veterinarios titulados</div>
-        <div class="feature-chip"><i class="fa-solid fa-shield-heart"></i> Seguridad y tranquilidad</div>
-        <div class="feature-chip"><i class="fa-solid fa-user-check"></i> Selección a medida</div>
-        <div class="feature-chip"><i class="fa-solid fa-file-pen"></i> Informe diario con fotos</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER (sin cambios) -->
-  <footer class="site-footer">
-    <div class="container footer-row">
-      <nav class="footer-links-row">
-        <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-        <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-        <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-        <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-        <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-        <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-        <a href="digital-services-act.html">Digital Services Act</a>
-        <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
-      </nav>
-
-      <div class="footer-right socials">
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-      </div>
-    </div>
-
-    <div class="footer-bottom footer-bottom--inline">
-      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-      <nav class="footer-bottom-right legal-links">
-        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-        <a href="cookies.html">Cookies</a><span class="sep">|</span>
-        <a href="canal-denuncias.html">Canal de denuncias</a>
-      </nav>
-    </div>
-  </footer>
-
-  <script>
-    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
