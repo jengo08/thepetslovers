@@ -1,1 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reserva · The Pets Lovers</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    .booking-wrapper{ max-width: 900px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
+    .booking-header{ text-align:center; margin-bottom: 18px; }
+    .booking-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    .booking-field{ display:flex; flex-direction:column; gap:6px; }
+    .booking-field label{ font-weight:700; font-size:.95rem; color: var(--color-texto); }
+    .booking-field input, .booking-field select, .booking-field textarea{
+      padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:var(--fuente-texto);
+    }
+    .booking-actions{ display:flex; gap:12px; justify-content:center; margin-top: 16px; }
+    .note{ font-size:.95rem; color:#666; text-align:center; margin: 10px 0 0; }
+    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
+    .auth-wall strong{ color: var(--color-texto); }
+    .disabled{ opacity:.6; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <!-- puedes reutilizar tu navbar si quieres; lo dejamos limpio para foco en la reserva -->
+
+  <div class="booking-wrapper">
+    <div class="booking-header">
+      <h1>Reserva tu servicio</h1>
+      <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario estar registrada y haber añadido los datos de tu mascota.</p>
+    </div>
+
+    <!-- Muro de autenticación (placeholder) -->
+    <div id="authWall" class="auth-wall">
+      <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
+      <div class="booking-actions">
+        <a href="#" class="cta-button" id="btnLogin">Iniciar sesión</a>
+        <a href="#" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
+      </div>
+      <p class="note">Cuando activemos el área privada, podrás acceder aquí con tu usuario.</p>
+    </div>
+
+    <!-- Formulario de reserva (bloqueado si no hay login) -->
+    <form id="bookingForm" class="disabled">
+      <div class="booking-grid">
+        <div class="booking-field">
+          <label for="service">Servicio</label>
+          <select id="service" required>
+            <option value="">Elige un servicio…</option>
+            <option>Visitas a domicilio</option>
+            <option>Paseos</option>
+            <option>Guardería de día</option>
+            <option>Guardería en casa con cuidador</option>
+            <option>Bodas y servicios exclusivos</option>
+          </select>
+        </div>
+
+        <div class="booking-field">
+          <label for="date">Fecha</label>
+          <input type="date" id="date" required>
+        </div>
+
+        <div class="booking-field">
+          <label for="start">Hora de inicio</label>
+          <input type="time" id="start" required>
+        </div>
+
+        <div class="booking-field">
+          <label for="end">Hora de fin</label>
+          <input type="time" id="end" required>
+        </div>
+
+        <div class="booking-field">
+          <label for="location">Lugar</label>
+          <input type="text" id="location" placeholder="Dirección o zona">
+        </div>
+
+        <div class="booking-field" style="grid-column: 1 / -1;">
+          <label for="notes">Notas (opcional)</label>
+          <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
+        </div>
+      </div>
+
+      <div class="booking-actions">
+        <button type="submit" class="cta-button">Solicitar reserva</button>
+      </div>
+      <p class="note">Tras enviar, te llamaremos para conocernos y confirmar detalles. La primera visita con el cuidador es gratuita.</p>
+    </form>
+  </div>
+
+  <script>
+    // Placeholder de autenticación: cambia esto a true cuando implementemos login real
+    const isLoggedIn = false;
+
+    const form = document.getElementById('bookingForm');
+    const wall = document.getElementById('authWall');
+
+    function updateAuthUI(){
+      if(isLoggedIn){
+        form.classList.remove('disabled');
+        wall.style.display = 'none';
+      }else{
+        form.classList.add('disabled');
+        wall.style.display = 'block';
+      }
+    }
+    updateAuthUI();
+
+    // Evita enviar si no hay login
+    form.addEventListener('submit', (e)=>{
+      if(!isLoggedIn){
+        e.preventDefault();
+        alert('Debes iniciar sesión o registrarte para completar la reserva.');
+      }else{
+        // Aquí irá el envío real cuando conectemos backend/Google Sheets/Firebase
+      }
+    });
+
+    // Botones de login/registro (placeholder)
+    document.getElementById('btnLogin').addEventListener('click', (e)=>{
+      e.preventDefault();
+      alert('Pantalla de Iniciar sesión (la añadiremos más adelante).');
+    });
+    document.getElementById('btnRegister').addEventListener('click', (e)=>{
+      e.preventDefault();
+      alert('Pantalla de Registro (la añadiremos más adelante).');
+    });
+  </script>
+</body>
+</html>
 
