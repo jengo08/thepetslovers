@@ -3,52 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Título de tu Página</title>
+    <title>The Pets Lovers - Cuidamos a tu mascota con amor</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <nav class="navbar">
-        <a href="#" class="logo">
-            <img src="images/logo.png" alt="Logo de la Empresa">
-        </a>
-        <ul class="nav-links">
-            <li><a href="#">Inicio</a></li>
-            <li><a href="#">Servicios</a></li>
-            <li><a href="#">Contacto</a></li>
-        </ul>
-        <a href="#" class="login-button">Iniciar Sesión</a>
-    </nav>
-
-    <section class="hero-section">
-        <div class="hero-content">
-            <h1>Descubre experiencias inolvidables.</h1>
-            <p>Explora la ciudad como nunca antes con nuestros recorridos únicos y personalizados.</p>
-            <a href="#" class="cta-button">Ver servicios</a>
+        <div class="logo">
+            <a href="index.html">
+                <img src="images/logo.png.png" alt="The Pets Lovers Logo">
+            </a>
         </div>
-    </section>
+        <ul class="nav-links">
+            <li><a href="#como-funciona">Cómo funciona</a></li>
+            <li><a href="#servicios">Servicios</a></li>
+            <li><a href="#quienes-somos">Conócenos</a></li>
+            <li><a href="#contactanos">Contáctanos</a></li>
+            <li><a href="#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
+    </nav>
+    
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1>The Pets Lovers</h1>
+            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares veterinarios.</p>
+            <a href="#servicios" class="cta-button">Reserva un servicio</a>
+        </div>
+    </header>
 
-    <section class="services-section">
+    <section id="servicios" class="services-section">
         <div class="container">
             <h2>Nuestros Servicios</h2>
-            <p class="subtitle">Ofrecemos una variedad de tours para todos los gustos.</p>
+            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
             <div class="services-grid">
                 <div class="service-card">
-                    <i class="fa-solid fa-city service-icon"></i>
-                    <h3>Tours Históricos</h3>
-                    <p>Viaja al pasado y descubre los secretos de la ciudad.</p>
+                    <div class="service-icon">🐾</div>
+                    <h3>Visitas a domicilio</h3>
+                    <p>Cuidado personalizado en la comodidad de su hogar.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fa-solid fa-utensils service-icon"></i>
-                    <h3>Tours Gastronómicos</h3>
-                    <p>Deléitate con los sabores locales y la mejor gastronomía.</p>
+                    <div class="service-icon">🚶</div>
+                    <h3>Paseos</h3>
+                    <p>Paseos energéticos y seguros para mantenerlo feliz y saludable.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fa-solid fa-bicycle service-icon"></i>
-                    <h3>Tours en Bici</h3>
-                    <p>Recorre la ciudad de una forma divertida y activa.</p>
+                    <div class="service-icon">🏡</div>
+                    <h3>Guardería de día</h3>
+                    <p>Un día lleno de juegos y compañía en un entorno seguro.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon">🏠</div>
+                    <h3>Guardería en casa</h3>
+                    <p>Atención completa en casa de un cuidador, como en familia.</p>
                 </div>
             </div>
         </div>
@@ -56,23 +66,23 @@
 
     <section class="why-us-section">
         <div class="container">
-            <h2>¿Por qué elegirnos?</h2>
-            <p class="subtitle">Más de 10 años creando experiencias mágicas.</p>
+            <h2>The Pets Lovers</h2>
+            <p class="subtitle">Confianza y tranquilidad para ti, amor y cuidado para tu mascota.</p>
             <div class="why-us-grid">
                 <div class="why-us-item">
-                    <i class="fa-solid fa-star why-us-icon"></i>
-                    <h3>Guías Expertos</h3>
-                    <p>Nuestros guías son apasionados y expertos en la historia de la ciudad.</p>
+                    <div class="why-us-icon">👩‍⚕️</div>
+                    <h3>Auxiliares Veterinarios Titulados</h3>
+                    <p>Todos nuestros cuidadores cuentan con formación profesional, garantizando el cuidado experto de tu mascota.</p>
                 </div>
                 <div class="why-us-item">
-                    <i class="fa-solid fa-handshake why-us-icon"></i>
+                    <div class="why-us-icon">🧡</div>
                     <h3>Atención Personalizada</h3>
-                    <p>Nos adaptamos a tus necesidades para crear el tour perfecto para ti.</p>
+                    <p>Cada mascota es única. Adaptamos nuestros servicios a sus necesidades y personalidad.</p>
                 </div>
                 <div class="why-us-item">
-                    <i class="fa-solid fa-heart why-us-icon"></i>
-                    <h3>Momentos Inolvidables</h3>
-                    <p>Más que un tour, creamos recuerdos que durarán toda la vida.</p>
+                    <div class="why-us-icon">🌟</div>
+                    <h3>Servicios Exclusivos</h3>
+                    <p>Ofrecemos servicios especiales como cuidado en bodas, para que nadie se pierda tu gran día.</p>
                 </div>
             </div>
         </div>
@@ -82,42 +92,24 @@
         <div class="container">
             <h2>Lo que dicen nuestros clientes</h2>
             <div class="testimonial-card">
-                <p>"¡Una experiencia maravillosa! Los guías eran increíbles y el recorrido superó todas mis expectativas."</p>
-                <p class="client-info">- María G. de Madrid</p>
+                <p>"¡The Pets Lovers es la mejor guardería! Dejo a mi perro con total tranquilidad sabiendo que está en las mejores manos."</p>
+                <div class="client-info">
+                    <p class="client-name">Ana M. y Toby</p>
+                </div>
             </div>
         </div>
     </section>
 
-    <div class="cookie-modal-overlay" style="display: none;">
+    <div id="cookie-modal-overlay" class="cookie-modal-overlay">
         <div class="cookie-modal-content">
-            <h3>Aviso de Cookies</h3>
-            <p>Utilizamos cookies para mejorar la experiencia de usuario. <a href="#">Política de privacidad</a>.</p>
+            <p>Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. <a href="#">Política de cookies</a></p>
             <div class="cookie-buttons">
-                <button class="accept-button">Aceptar</button>
-                <button class="deny-button">Rechazar</button>
+                <button id="deny-cookies" class="deny-button">Denegar</button>
+                <button id="accept-cookies" class="accept-button">Aceptar</button>
             </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const cookieOverlay = document.querySelector('.cookie-modal-overlay');
-            const acceptButton = document.querySelector('.accept-button');
-            const denyButton = document.querySelector('.deny-button');
 
-            if (!localStorage.getItem('cookies-accepted')) {
-                cookieOverlay.style.display = 'flex';
-            }
-
-            acceptButton.addEventListener('click', () => {
-                localStorage.setItem('cookies-accepted', 'true');
-                cookieOverlay.style.display = 'none';
-            });
-
-            denyButton.addEventListener('click', () => {
-                localStorage.setItem('cookies-accepted', 'true');
-                cookieOverlay.style.display = 'none';
-            });
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
