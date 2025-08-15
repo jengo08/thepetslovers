@@ -29,7 +29,7 @@
     <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
   </nav>
 
-  <!-- HERO (principal, 100vh) -->
+  <!-- HERO principal -->
   <header class="hero-section">
     <div class="hero-content">
       <h1>El mejor cuidado para tu mejor amigo</h1>
@@ -125,29 +125,30 @@
     </div>
   </section>
 
-  <!-- FOOTER (siempre lo último) -->
+  <!-- FOOTER -->
   <footer class="site-footer">
     <div class="container footer-flex">
       <div class="footer-links">
         <a href="sobre-nosotros.html">Sobre nosotros</a>
         <a href="ayuda.html">Ayuda</a>
-        <a href="mailto:contacto@thepetslovers.es"><i class="fas fa-envelope"></i> contacto@thepetslovers.es</a>
+        <a href="mailto:contacto@thepetslovers.es">
+          <i class="fas fa-envelope"></i> contacto@thepetslovers.es
+        </a>
       </div>
       <div class="socials">
-        <a href="https://wa.me/34600000000" target="_blank" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
         <a href="https://instagram.com" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
         <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
         <a href="https://tiktok.com" target="_blank" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
       </div>
     </div>
     <div class="footer-bottom">
-      © <span id="year-home"></span> The Pets Lovers — Todos los derechos reservados
+      © <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados
     </div>
   </footer>
 
   <script>
-    document.getElementById('year-home').textContent = new Date().getFullYear();
+    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
   </script>
-  <script src="script.js"></script>
 </body>
 </html>
