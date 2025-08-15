@@ -41,7 +41,7 @@ a {
 }
 
 .logo {
-    background-color: rgba(255, 255, 255, 0.7); /* Menos transparente */
+    background-color: rgba(255, 255, 255, 0.7);
     padding: 2px;
     border-radius: 5px;
     display: flex;
@@ -51,7 +51,7 @@ a {
 }
 
 .logo img {
-    height: 86px; /* Ajustado para que el recuadro tenga 90px de alto */
+    height: 225px; /* ¡Tamaño del logo restaurado! */
     width: auto;
 }
 
