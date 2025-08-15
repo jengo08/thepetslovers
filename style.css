@@ -524,24 +524,32 @@ a {
 }
 
 /* ================================
+   ESPECÍFICO: HERO "CÓMO FUNCIONA"
+   ================================ */
+.hero-section.hero-como {
+    background-image: url('images/como.jpg.png');
+}
+
+/* ================================
    MEJORAS: "CÓMO FUNCIONA" EN 1 FILA
    ================================ */
 .how-it-works--one-row {
     display: flex;
-    flex-wrap: nowrap;     /* NO saltar a otra línea */
+    flex-wrap: nowrap;     /* No saltar a otra línea */
     gap: 16px;
     margin-top: 30px;
 }
 
 .how-it-works--one-row .step-card {
     flex: 1 1 0;
-    min-width: 0;          /* Permite que todas reduzcan su ancho por igual */
+    min-width: 0;          /* Todas reducen ancho por igual */
     padding: 18px 12px;    /* Más compacto */
 }
 
 .how-it-works--one-row .step-icon {
-    font-size: clamp(18px, 2.2vw, 28px); /* Se hace más pequeño en pantallas pequeñas */
+    font-size: clamp(18px, 2.2vw, 28px);
     margin-bottom: 8px;
+    color: var(--color-principal);
 }
 
 .how-it-works--one-row h3 {
