@@ -29,7 +29,7 @@
         <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
     </nav>
     
-    <!-- Hero (misma altura que la portada) -->
+    <!-- Hero con MISMA imagen y más corto (como te gustó) -->
     <header class="hero-section hero-como">
         <div class="hero-content">
             <h1>Cómo funciona</h1>
@@ -45,37 +45,32 @@
             <p>En The Pets Lovers queremos que el cuidado de tu mascota sea tan natural y seguro como si lo hicieras tú mismo. Nuestro proceso está diseñado para que cada paso sea claro, rápido y adaptado a vuestras necesidades.</p>
             <p>Desde el primer clic hasta el último día de servicio, tendrás la seguridad de que tu mascota está atendida por profesionales formados y con experiencia en bienestar animal.</p>
 
-            <!-- Una sola fila, iconos FA y tarjetas compactas (sin números) -->
+            <!-- Pasos en una sola fila, iconos FA y tarjetas compactas (sin números) -->
             <div class="how-it-works-grid how-it-works--one-row">
-                <!-- Paso 1 -->
                 <div class="step-card">
                     <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-notes-medical"></i></div>
                     <h3>Crea tu perfil y el de tu mascota</h3>
                     <p>Cuéntanos de ti y de tu mascota: carácter, patologías, cuidados especiales y preferencias.</p>
                 </div>
 
-                <!-- Paso 2 -->
                 <div class="step-card">
                     <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></div>
                     <h3>Elige días y horarios</h3>
                     <p>Reserva días sueltos o periodos largos según tu agenda, todo de forma sencilla.</p>
                 </div>
 
-                <!-- Paso 3 -->
                 <div class="step-card">
                     <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-phone-volume"></i></div>
                     <h3>Te llamaremos para conocernos</h3>
                     <p>Creada la reserva, te llamaremos para conocernos un poco más y encontrar el cuidado adaptado a vosotros.</p>
                 </div>
 
-                <!-- Paso 4 -->
                 <div class="step-card">
                     <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-house-circle-check"></i></div>
                     <h3>Primera visita gratuita</h3>
                     <p>Una vez aceptada la reserva, realizamos una visita gratuita con el cuidador para conoceros antes de la estancia.</p>
                 </div>
 
-                <!-- Paso 5 -->
                 <div class="step-card">
                     <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></div>
                     <h3>Cuidados y seguimiento diario</h3>
@@ -83,26 +78,60 @@
                 </div>
             </div>
 
-            <!-- CTA final, centrado y con mismo botón que la home -->
+            <!-- CTA final centrado -->
             <div class="cta-panel cta-panel--center">
                 <h3>¿Listos para confiar?</h3>
                 <p>Reserva tu primera visita gratuita y conoce a tu cuidador antes de la estancia.</p>
-                <a href="index.html#contactanos" class="cta-button">Reservar ahora</a>
+                <a href="reserva.html" class="cta-button">Reservar ahora</a>
             </div>
 
-            <!-- Tira de confianza (con el cambio solicitado) -->
-            <section class="trust-strip">
-                <div class="container trust-strip-inner">
-                    <div><i class="fa-solid fa-shield-dog"></i> Auxiliares veterinarios titulados</div>
-                    <div><i class="fa-solid fa-shield-halved"></i> Seguridad y tranquilidad</div>
-                    <div><i class="fa-solid fa-phone"></i> Soporte durante el servicio</div>
-                    <div><i class="fa-solid fa-heart"></i> Cuidado adaptado a cada mascota</div>
+            <!-- Separador y footer -->
+            <hr class="section-divider">
+
+            <footer class="site-footer">
+                <div class="container footer-grid">
+                    <div class="footer-col">
+                        <h4>Contacto</h4>
+                        <ul>
+                            <li><a href="index.html#contactanos">Contáctanos</a></li>
+                            <li><a href="mailto:hola@thepetslovers.es">hola@thepetslovers.es</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Sobre nosotros</h4>
+                        <ul>
+                            <li><a href="index.html#quienes-somos">Quiénes somos</a></li>
+                            <li><a href="como-funciona.html">Cómo funciona</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Ayuda</h4>
+                        <ul>
+                            <li><a href="#">Centro de ayuda</a></li>
+                            <li><a href="#">Política de privacidad</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Síguenos</h4>
+                        <div class="socials">
+                            <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+                            <a href="#" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                        </div>
+                    </div>
                 </div>
-            </section>
+                <div class="footer-bottom">
+                    © <span id="year"></span> The Pets Lovers · Todos los derechos reservados
+                </div>
+            </footer>
 
         </div>
     </section>
 
+    <script>
+      // año dinámico en el footer (opcional)
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
     <script src="script.js"></script>
 </body>
 </html>
