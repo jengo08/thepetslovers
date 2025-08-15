@@ -244,3 +244,40 @@ footer .footer-bottom {
 
 /* Hacer clicable una tarjeta completa como enlace */
 .services-grid .card-link{ color: inherit; text-decoration: none; display:block; }
+
+.home-button {
+  position: absolute;
+  left: 140px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  color: var(--color-principal);
+  border: 2px solid #fff;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all .25s ease;
+  z-index: 22;
+  white-space: nowrap;
+}
+.home-button:hover {
+  background: transparent;
+  color: #fff;
+  border-color: #fff;
+}
+
+@media (max-width: 768px) {
+  .home-button {
+    position: static;
+    transform: none;
+    margin: 6px 0 0 0;
+    align-self: flex-start;
+  }
+}
+
+.services-grid .card-link {
+  color: inherit;
+  text-decoration: none;
+  display: block;
+}
