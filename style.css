@@ -144,3 +144,4 @@ a { color: var(--color-principal); text-decoration: none; }
 .info-duo{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:10px; }
 .info-card{ background:#fff; border:1px solid #eee; border-radius:12px; padding:18px; box-shadow:0 2px 10px rgba(0,0,0,.04); text-align:left; }
 .info-card h4{ margin:0 0 8px; }
+
