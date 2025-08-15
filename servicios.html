@@ -9,133 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-  <!-- Estilos mínimos SOLO para esta página -->
-  <style>
-    /* Botón Inicio junto al logo (no afecta a otras páginas) */
-    .home-button {
-      position: absolute;
-      left: 140px; /* justo a la derecha del logo (logo alto en desktop) */
-      top: 50%;
-      transform: translateY(-50%);
-      background: #fff;
-      color: var(--color-principal);
-      border: 2px solid #fff;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 6px;
-      text-decoration: none;
-      transition: all .25s ease;
-      z-index: 22;
-      white-space: nowrap;
-    }
-    .home-button:hover {
-      background: transparent;
-      color: #fff;
-      border-color: #fff;
-    }
-    @media (max-width: 768px) {
-      .home-button {
-        position: static;
-        transform: none;
-        margin: 6px 0 0 0;
-        align-self: flex-start;
-      }
-    }
-
-    /* Hero específico */
-    .hero-section.hero-servicios {
-      background-image: url('images/hero.jpg.png'); /* cámbiala si quieres otra */
-      background-position: center top;
-      height: 45vh;
-      min-height: 340px;
-    }
-    @media (max-width: 768px) {
-      .hero-section.hero-servicios {
-        height: 42vh;
-        min-height: 300px;
-        background-position: center 15%;
-      }
-    }
-
-    /* Acentos morados sutiles en iconos/títulos de esta página */
-    .services-section .service-icon i {
-      color: #58425a; /* morado de tu paleta */
-    }
-    .services-section h3 {
-      color: var(--color-texto);
-    }
-
-    /* Detalles de servicio (desplegables) */
-    .service-details { margin-top: 10px; text-align: left; }
-    .service-details summary {
-      list-style: none;
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--color-texto);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .service-details summary::-webkit-details-marker { display: none; }
-
-    .service-details .chev {
-      transition: transform .25s ease;
-      font-size: 0.95rem;
-      color: var(--color-principal);
-    }
-    details[open] .chev { transform: rotate(90deg); }
-
-    .service-details .content {
-      border-top: 1px dashed #e2e2e2;
-      margin-top: 10px;
-      padding-top: 10px;
-      color: #555;
-      font-size: 0.95rem;
-    }
-    .service-details .precio {
-      display: inline-block;
-      margin-top: 8px;
-      font-weight: 700;
-      color: var(--color-principal);
-      border-left: 3px solid #58425a;
-      padding-left: 8px;
-    }
-
-    .service-cta, .ver-mas {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 10px 14px;
-      font-weight: 700;
-      border-radius: 6px;
-      background: var(--color-principal);
-      color: #fff;
-      text-decoration: none;
-      transition: background .25s ease;
-    }
-    .service-cta:hover, .ver-mas:hover { background: #2a7e80; }
-
-    /* Hint “Ver más” plano con borde morado */
-    .ver-mas--outline {
-      background: transparent;
-      color: #58425a;
-      border: 2px solid #58425a;
-      margin-left: 8px;
-    }
-    .ver-mas--outline:hover {
-      background: #58425a;
-      color: #fff;
-    }
-
-    /* Hover para abrir detalles con ratón (mejoramos UX desktop) */
-    .service-card:hover details[data-hover] {
-      /* se gestiona por JS para compatibilidad, esto es solo por si el navegador lo respeta */
-    }
-  </style>
 </head>
 <body>
 
-  <!-- NAV -->
   <nav class="navbar">
     <div class="logo">
       <a href="index.html">
@@ -143,217 +19,59 @@
       </a>
     </div>
 
-    <!-- Botón Inicio al lado del logo -->
     <a href="index.html" class="home-button">Inicio</a>
 
     <ul class="nav-links">
       <li><a href="como-funciona.html">Cómo funciona</a></li>
       <li><a href="servicios.html">Servicios</a></li>
-      <li><a href="index.html#quienes-somos">Conócenos</a></li>
       <li><a href="index.html#contactanos">Contáctanos</a></li>
       <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
     </ul>
     <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
   </nav>
 
-  <!-- HERO -->
-  <header class="hero-section hero-servicios">
+  <header class="hero-section" style="height:45vh; min-height:340px;">
     <div class="hero-content">
       <h1>Servicios</h1>
-      <p>Elige el cuidado perfecto para tu mascota: cómodo, seguro y a tu medida.</p>
+      <p>Elige el cuidado perfecto para tu mascota.</p>
       <a href="#lista-servicios" class="cta-button">Ver servicios</a>
     </div>
   </header>
 
-  <!-- LISTA DE SERVICIOS (mismo diseño que en la home) -->
   <section id="lista-servicios" class="services-section">
     <div class="container">
       <h2>Nuestros Servicios</h2>
-      <p class="subtitle">Pasa el ratón o pulsa en cada servicio para ver la información y el precio.</p>
-
+      <p class="subtitle">Explora todas las opciones de cuidado que ofrecemos.</p>
       <div class="services-grid">
-        <!-- Estancias 24h -->
         <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-house-circle-check"></i></div>
-          <h3>Estancias en casa (24h)</h3>
-          <p>Como en familia: día y noche con un cuidador.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <ul>
-                <li><strong>30 €</strong> por día (24h completas).</li>
-                <li>Recogida hasta las 12:00 del día siguiente.</li>
-                <li>Suplemento <strong>15 €</strong> si la recogida es después de las 12:00.</li>
-                <li><em>Estancias largas:</em> del día 11 en adelante → <strong>27 €</strong>/día.</li>
-              </ul>
-              <p class="precio">Ejemplo 14 días: 10×30 € + 4×27 € = <strong>408 €</strong>.</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-estancias.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
+          <div class="service-icon"><i class="fa-solid fa-house"></i></div>
+          <h3>Visitas a domicilio</h3>
+          <p>Cuidado personalizado en la comodidad de su hogar.</p>
         </div>
-
-        <!-- Visitas a domicilio (gatos) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-cat"></i></div>
-          <h3>Visitas a domicilio (gatos)</h3>
-          <p>Rutina, mimos y medicación si hace falta.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <ul>
-                <li>Visita estándar (50–60 min): <strong>22 €</strong>.</li>
-                <li>2º gato: +<strong>8 €</strong>. A partir del 3º: +<strong>4 €</strong>/gato.</li>
-                <li>2ª visita del día (solo medicación, máx. 20 min): <strong>17 €</strong>.</li>
-                <li>Extra medicación: <strong>+2 €</strong>.</li>
-              </ul>
-              <p class="precio"><em>Frecuencia:</em> desde la visita nº 11 → <strong>20 €</strong> (estándar).</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-visitas.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- Visita larga 90min -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-clock"></i></div>
-          <h3>Visita larga (90 min)</h3>
-          <p>Más tiempo de juego y acompañamiento.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <ul>
-                <li>Visita larga: <strong>30 €</strong>.</li>
-                <li>Suplemento por gato adicional: <strong>+4 €</strong>.</li>
-              </ul>
-              <p class="precio"><em>Frecuencia:</em> desde la visita nº 11 → <strong>27 €</strong> (larga).</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-visita-larga.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- Paseos -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-person-walking"></i></div>
           <h3>Paseos</h3>
-          <p>Paseos seguros y estimulantes.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <ul>
-                <li>Paseo estándar: <strong>12 €</strong>.</li>
-                <li>2ª mascota: +<strong>8 €</strong>.</li>
-                <li>Cachorros (≤6 meses, atención intensiva): <strong>35 €</strong>.</li>
-              </ul>
-              <p class="precio"><em>Frecuencia:</em> desde el paseo nº 11 → <strong>10 €</strong> (estándar).</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-paseos.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
+          <p>Paseos energéticos y seguros para mantenerlo feliz y saludable.</p>
         </div>
-
-        <!-- Guardería de día -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
           <h3>Guardería de día</h3>
-          <p>Compañía y supervisión durante el día.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <p>Juegos, paseos, descanso y enriquecimiento ambiental en un entorno seguro. Ideal para jornadas de trabajo largas.</p>
-              <p class="precio">Precio: <strong>a consultar</strong>.</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-guarderia.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
+          <p>Un día lleno de juegos y compañía en un entorno seguro.</p>
         </div>
-
-        <!-- Transporte -->
         <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-car-side"></i></div>
-          <h3>Transporte</h3>
-          <p>Traslados seguros a clínica, peluquería o domicilio.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <ul>
-                <li>2–10 km → <strong>6 €</strong></li>
-                <li>10–25 km → <strong>10 €</strong></li>
-                <li>25–40 km → <strong>15 €</strong></li>
-                <li>+40 km → <strong>20 €</strong></li>
-              </ul>
-              <p class="precio">Incluye sujeción segura y tiempos de espera básicos.</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-transporte.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
+          <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
+          <h3>Alojamiento nocturno</h3>
+          <p>Atención completa en casa de un cuidador, como en familia.</p>
         </div>
-
-        <!-- Servicios exclusivos (bodas, eventos) -->
         <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
-          <h3>Servicios exclusivos (+)</h3>
-          <p>Bodas, eventos, sesiones y planes a medida.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <p>Acompañamiento en eventos (bodas, shootings, etc.), logística completa y coordinación con proveedores. Transporte opcional.</p>
-              <p class="precio">Precio: <strong>a consultar</strong> según agenda y horas.</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-exclusivos.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
+          <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
+          <h3>Más servicios</h3>
+          <p>Transporte, eventos, postquirúrgicos y más.</p>
         </div>
-
-        <!-- Postquirúrgicos / medicación -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-briefcase-medical"></i></div>
-          <h3>Cuidados postquirúrgicos</h3>
-          <p>Curar, medicar y vigilar con profesionales.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <p>Supervisión de puntos, administración de medicación, control del dolor y coordinación con tu clínica si es necesario.</p>
-              <p class="precio">Precio: <strong>a consultar</strong> según complejidad.</p>
-              <a href="reserva.html" class="service-cta">Reservar</a>
-              <a href="servicio-postquirurgico.html" class="ver-mas ver-mas--outline">Ver más</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- Festivos y desplazamientos (informativos) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
-          <h3>Festivos y desplazamientos</h3>
-          <p>Suplementos aplicables según fecha y km.</p>
-
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <ul>
-                <li>Festivos: +<strong>10 €</strong></li>
-                <li>Días señalados (Navidad, Nochevieja…): +<strong>30 €</strong></li>
-                <li>Desplazamiento: según tramo (ver Transporte).</li>
-              </ul>
-              <a href="condiciones.html" class="ver-mas ver-mas--outline">Condiciones completas</a>
-            </div>
-          </details>
-        </div>
-
       </div>
     </div>
   </section>
 
-  <!-- FOOTER (idéntico al resto) -->
   <footer class="site-footer">
     <div class="container footer-row">
       <nav class="footer-links-row">
@@ -387,15 +105,7 @@
   </footer>
 
   <script>
-    // Año dinámico footer
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-
-    // Abrir/cerrar detalles al pasar el ratón (desktop) sin romper el tap en móvil
-    const detailsList = document.querySelectorAll('details[data-hover]');
-    detailsList.forEach(d => {
-      d.addEventListener('mouseenter', () => d.setAttribute('open',''));
-      d.addEventListener('mouseleave', () => d.removeAttribute('open'));
-    });
   </script>
 </body>
 </html>
