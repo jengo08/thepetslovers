@@ -55,7 +55,7 @@ a {
 }
 
 .logo img {
-    height: 184px; /* Tamaño del logo actualizado */
+    height: 184px;
     width: auto;
 }
 
@@ -161,6 +161,64 @@ a {
 
 .cta-button:hover {
     background-color: #2a7e80;
+}
+
+/* ---- SECCIÓN CÓMO FUNCIONA ---- */
+.how-it-works-section {
+    padding: 80px 20px;
+    text-align: center;
+    background-color: var(--color-fondo-claro);
+}
+
+.how-it-works-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.how-it-works-section p {
+    max-width: 800px;
+    margin: 0 auto 20px;
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.how-it-works-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 50px;
+}
+
+.step-card {
+    background-color: white;
+    padding: 40px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    flex: 1 1 250px;
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-10px);
+}
+
+.step-icon {
+    font-size: 3rem;
+    color: var(--color-principal);
+    margin-bottom: 20px;
+}
+
+.step-card h3 {
+    font-family: var(--fuente-titulo);
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.start-now-text {
+    margin-top: 40px;
+    font-style: italic;
+    font-weight: bold;
 }
 
 /* ---- SECCIÓN DE SERVICIOS ---- */
@@ -275,6 +333,36 @@ a {
 .client-name {
     font-weight: 700;
     color: var(--color-texto);
+}
+
+/* ---- SECCIÓN CONVIÉRTETE EN CUIDADOR ---- */
+.become-sitter-section {
+    padding: 80px 20px;
+    text-align: center;
+    background-color: var(--color-principal);
+    color: white;
+}
+
+.become-sitter-section h2 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.become-sitter-section .subtitle {
+    color: white;
+    margin-bottom: 40px;
+}
+
+.become-sitter-section .cta-button {
+    background-color: white;
+    color: var(--color-principal);
+    border: 2px solid white;
+}
+
+.become-sitter-section .cta-button:hover {
+    background-color: transparent;
+    color: white;
 }
 
 /* ---- MODAL DE COOKIES ---- */
@@ -402,17 +490,25 @@ a {
         padding: 12px 25px;
     }
 
-    .services-section, .why-us-section, .testimonials-section {
+    .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section {
         padding: 60px 15px;
     }
 
-    .services-section h2, .why-us-section h2, .testimonials-section h2 {
+    .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2, .become-sitter-section h2 {
         font-size: 2rem;
     }
 
     .subtitle {
         font-size: 1rem;
         margin-bottom: 40px;
+    }
+
+    .how-it-works-grid {
+        flex-direction: column;
+    }
+    
+    .why-us-grid {
+        grid-template-columns: 1fr;
     }
 
     .cookie-modal-content {
