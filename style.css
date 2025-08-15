@@ -99,7 +99,7 @@ a {
     color: var(--color-principal);
 }
 
-/* ---- HERO SECTION ---- */
+/* ---- HERO SECTION PRINCIPAL ---- */
 .hero-section {
     position: relative;
     height: 100vh;
@@ -163,7 +163,40 @@ a {
     background-color: #2a7e80;
 }
 
-/* ---- SECCIÓN CÓMO FUNCIONA ---- */
+/* ---- CABECERA DE PÁGINAS SECUNDARIAS ---- */
+.page-hero-section {
+    position: relative;
+    height: 60vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-image: url('images/hero-page.jpg.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: white;
+}
+
+.page-hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(88, 66, 90, 0.5);
+    z-index: 1;
+}
+
+.page-hero-section h1 {
+    font-size: 3.5rem;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+}
+
+/* ---- SECCIÓN CÓMO FUNCIONA (EN PÁGINA PRINCIPAL) ---- */
 .how-it-works-section {
     padding: 80px 20px;
     text-align: center;
@@ -221,6 +254,74 @@ a {
     font-weight: bold;
 }
 
+/* ---- SECCIÓN CÓMO FUNCIONA (PÁGINA DEDICADA) ---- */
+.how-it-works-page-section {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: var(--color-fondo-claro);
+}
+
+.how-it-works-page-section .container {
+    max-width: 900px;
+}
+
+.how-it-works-page-section .how-it-works-grid {
+    gap: 20px;
+    margin-top: 0;
+}
+
+.how-it-works-page-section .step-card {
+    padding: 30px 15px;
+}
+
+.how-it-works-page-section .step-number {
+    font-family: var(--fuente-titulo);
+    font-size: 2rem;
+    color: var(--color-principal);
+    margin-bottom: 10px;
+}
+
+/* ---- NUEVAS SECCIONES EN PÁGINA "CÓMO FUNCIONA" ---- */
+.details-section {
+    padding: 60px 20px;
+    background-color: white;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.details-card {
+    background-color: var(--color-fondo-claro);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.details-card h2 {
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.details-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.details-card li {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.details-card li i {
+    color: var(--color-principal);
+    margin-right: 10px;
+}
+
 /* ---- SECCIÓN DE SERVICIOS ---- */
 .services-section {
     padding: 80px 20px;
@@ -245,12 +346,11 @@ a {
     margin-bottom: 60px;
 }
 
-/* --- CAMBIO AQUÍ para que las tarjetas estén en una fila y se ajusten al ancho --- */
 .services-grid {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 20px; /* Reducimos el espacio entre tarjetas */
+    gap: 20px; 
 }
 
 .service-card {
@@ -258,7 +358,7 @@ a {
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    flex: 1 1 180px; /* Ajustamos el tamaño para que quepan 5 en una fila */
+    flex: 1 1 180px; 
     transition: transform 0.3s ease;
 }
 
@@ -267,18 +367,16 @@ a {
 }
 
 .service-icon {
-    font-size: 2.5rem; /* Reducimos el tamaño de los iconos */
+    font-size: 2.5rem; 
     color: var(--color-principal);
     margin-bottom: 15px;
 }
 
 .service-card h3 {
     font-family: var(--fuente-titulo);
-    font-size: 1.2rem; /* Reducimos el tamaño de la fuente */
+    font-size: 1.2rem; 
     margin-bottom: 10px;
 }
-/* -------------------------------------------------------------------------- */
-
 
 /* ---- SECCIÓN POR QUÉ ELEGIRNOS ---- */
 .why-us-section {
@@ -514,6 +612,25 @@ a {
     
     .why-us-grid {
         grid-template-columns: 1fr;
+    }
+    .how-it-works-page-section .how-it-works-grid {
+        flex-direction: column;
+    }
+
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .details-card {
+        padding: 20px;
+    }
+
+    .details-card h2 {
+        font-size: 1.5rem;
+    }
+
+    .details-card li {
+        font-size: 1rem;
     }
 
     .cookie-modal-content {
