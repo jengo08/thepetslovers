@@ -57,10 +57,10 @@ a {
 }
 .login-button:hover { background: #fff; color: var(--color-principal); }
 
-/* ---- HERO (base) ---- */
+/* ---- HERO (base: igual que home) ---- */
 .hero-section {
     position: relative;
-    height: 100vh; /* base (home) */
+    height: 100vh; /* igual que portada */
     display: flex; justify-content: center; align-items: center; text-align: center;
     background-image: url('images/hero.jpg.png');
     background-size: cover; background-position: center top; background-attachment: fixed;
@@ -75,52 +75,57 @@ a {
 .hero-content p { font-size: 1.5rem; max-width: 600px; margin: 14px auto 0; color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,.5); }
 
 /* ---- BOTONES ---- */
+.cta-button{
+    display:inline-block; padding:15px 30px; background:var(--color-principal); color:#fff;
+    font-family:var(--fuente-texto); font-weight:700; border-radius:5px; transition:background-color .3s;
+}
+.cta-button:hover{ background:#2a7e80; }
+
 .btn { display: inline-block; padding: 12px 22px; border-radius: 8px; font-weight: 700; text-align: center; }
 .btn-primary { background: var(--color-principal); color: #fff; border: 2px solid var(--color-principal); }
 .btn-primary:hover { background: #2a7e80; border-color: #2a7e80; }
 
-/* ---- CTA RIBBON (bajo hero) ---- */
-.cta-ribbon { background: #fff; border-bottom: 1px solid #eee; }
-.cta-ribbon-inner {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 16px; padding: 14px 0; font-weight: 700; color: var(--color-texto);
-}
-.cta-ribbon-inner i { margin-right: 8px; color: var(--color-principal); }
-
 /* ---- CÓMO FUNCIONA (base) ---- */
-.how-it-works-section { padding: 70px 20px; text-align: center; background: var(--color-fondo-claro); }
-.how-it-works-section h2 { font-size: 2.3rem; margin-bottom: 8px; }
-.how-it-works-section p { max-width: 820px; margin: 0 auto 18px; font-size: 1.06rem; color: #555; }
-
-.how-it-works-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; margin-top: 40px; }
-.step-card {
-    background: #fff; padding: 28px 16px; border-radius: 12px;
-    box-shadow: 0 3px 12px rgba(0,0,0,.08); flex: 1 1 250px; transition: transform .25s ease, box-shadow .25s ease;
+.how-it-works-section{
+    padding:70px 20px; text-align:center; background:var(--color-fondo-claro);
 }
-.step-card:hover { transform: translateY(-6px); box-shadow: 0 6px 18px rgba(0,0,0,.12); }
-.step-icon { font-size: 2rem; color: var(--color-principal); margin-bottom: 10px; }
-.step-card h3 { font-size: 1.15rem; margin-bottom: 8px; }
-.step-card p { font-size: .98rem; color: #666; }
+.how-it-works-section h2{ font-size:2.3rem; margin-bottom:8px; }
+.how-it-works-section p{ max-width:820px; margin:0 auto 18px; font-size:1.06rem; color:#555; }
 
-.start-now-text { margin-top: 32px; font-style: italic; font-weight: bold; }
-
-/* ---- CTA PANEL (final corto y elegante) ---- */
-.cta-panel {
-    margin: 36px auto 0; max-width: 980px; background: #fff;
-    border: 1px solid #eee; border-radius: 14px; padding: 22px 20px;
-    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
-    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+.how-it-works-grid{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:30px; margin-top:40px;
 }
-.cta-panel h3 { margin: 0; font-size: 1.4rem; }
-.cta-panel p { margin: 0; color: #666; }
-.cta-panel .btn { justify-self: end; }
+.step-card{
+    background:#fff; padding:28px 16px; border-radius:12px;
+    box-shadow:0 3px 12px rgba(0,0,0,.08); flex:1 1 250px; transition:transform .25s ease, box-shadow .25s ease;
+}
+.step-card:hover{ transform:translateY(-6px); box-shadow:0 6px 18px rgba(0,0,0,.12); }
+.step-icon{ font-size:2rem; color:var(--color-principal); margin-bottom:10px; }
+.step-card h3{ font-size:1.15rem; margin-bottom:8px; }
+.step-card p{ font-size:.98rem; color:#666; }
+
+.start-now-text{ margin-top:28px; font-style:italic; font-weight:bold; }
+
+/* ---- CTA PANEL (centrado y compacto, menos espacio debajo) ---- */
+.cta-panel{
+    margin: 34px auto 24px;
+    max-width: 820px;
+    background:#fff; border:1px solid #eee; border-radius:14px; padding:22px 22px;
+    box-shadow:0 2px 12px rgba(0,0,0,.05);
+}
+.cta-panel--center{
+    text-align:center;
+}
+.cta-panel--center h3{ margin:0 0 6px; font-size:1.35rem; }
+.cta-panel--center p{ margin:0 0 14px; color:#666; }
+.cta-panel--center .cta-button{ margin:0 auto; display:inline-block; }
 
 /* ---- TIRA DE CONFIANZA ---- */
 .trust-strip { background: #fff; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
 .trust-strip-inner { display: grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap: 14px; padding: 18px 0; font-weight: 600; color: var(--color-texto); }
 .trust-strip-inner i { margin-right: 8px; color: var(--color-principal); }
 
-/* ---- FAQ (opcional) ---- */
+/* ---- FAQ (si lo activas en el futuro) ---- */
 .faq-section { padding: 60px 20px; background: #fff; }
 .faq-section h2 { text-align: center; margin-bottom: 24px; }
 .faq-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 12px; max-width: 980px; margin: 0 auto; }
@@ -152,9 +157,11 @@ a {
 
     .hero-content h1{ font-size:2.5rem; }
     .hero-content p{ font-size:1.2rem; }
-    .btn{ padding: 12px 20px; }
+    .cta-button{ padding:12px 25px; }
 
-    .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{ padding:60px 15px; }
+    .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{
+        padding:60px 15px;
+    }
     .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2, .become-sitter-section h2{ font-size:2rem; }
     .subtitle{ font-size:1rem; margin-bottom:40px; }
 
@@ -167,23 +174,9 @@ a {
 
 /* ================================
    HERO ESPECÍFICO "CÓMO FUNCIONA"
-   (más bajo y texto un poco más arriba)
+   (misma altura que home; solo cambia imagen)
    ================================ */
 .hero-section.hero-como{
-    /* FORZAMOS esta imagen EXACTA para evitar conflictos de cascada y caché */
     background-image: url('images/como.jpg.png.png') !important;
-    height: 65vh;
-    min-height: 460px;
-    background-position: center top;
-    padding-top: 40px;
+    /* NO tocamos height para que quede igual que la portada */
 }
-.hero-section.hero-como .hero-content{ margin-top: -10px; }
-
-/* ================================
-   PASOS EN UNA SOLA FILA (sin números)
-   ================================ */
-.how-it-works--one-row{ display:flex; flex-wrap:nowrap; gap:16px; margin-top:30px; }
-.how-it-works--one-row .step-card{ flex:1 1 0; min-width:0; padding:18px 12px; }
-.how-it-works--one-row .step-icon{ font-size:clamp(18px, 2.2vw, 28px); margin-bottom:8px; color:var(--color-principal); }
-.how-it-works--one-row h3{ font-size:clamp(13px, 1.6vw, 18px); margin-bottom:6px; }
-.how-it-works--one-row p{ font-size:clamp(12px, 1.5vw, 16px); color:#666; }
