@@ -41,21 +41,17 @@ a {
 }
 
 .logo {
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 2px;
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 5px; /* Reducido para adaptarse al logo más pequeño */
     border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 21;
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
+    margin-right: 30px;
 }
 
 .logo img {
-    height: 184px; /* Tamaño del logo actualizado */
+    height: 189px; /* ¡Aproximadamente 5 cm! */
     width: auto;
 }
 
@@ -356,10 +352,6 @@ a {
     .logo {
         margin-right: 0;
         padding: 5px;
-        position: static;
-        top: auto;
-        left: auto;
-        transform: none;
     }
 
     .logo img {
