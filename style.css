@@ -375,7 +375,7 @@ a {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
-    display: none;
+    display: none; /* Se muestra con JavaScript */
     justify-content: center;
     align-items: center;
     z-index: 999;
@@ -434,7 +434,7 @@ a {
     background-color: #e8e8e8;
 }
 
-/* ---- VERSIÓN MÓVIL ---- */
+/* ---- VERSIÓN MÓVIL (PANTALLAS PEQUEÑAS) ---- */
 @media (max-width: 768px) {
     .navbar {
         height: auto;
@@ -474,6 +474,10 @@ a {
         margin-top: 10px;
         align-self: flex-end;
         margin-right: 0;
+    }
+    .login-button:hover {
+        background-color: white;
+        color: var(--color-principal);
     }
 
     .hero-content h1 {
@@ -519,44 +523,33 @@ a {
     }
 }
 
-/* ---- MEJORAS EN "CÓMO FUNCIONA" ---- */
-.how-it-works-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
-    margin-top: 40px;
-}
-
-.step-card {
-    background-color: white;
-    padding: 20px 15px;
-    border-radius: 10px;
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* ================================
+   MEJORAS: "CÓMO FUNCIONA" EN 1 FILA
+   ================================ */
+.how-it-works--one-row {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: auto;
+    flex-wrap: nowrap;     /* NO saltar a otra línea */
+    gap: 16px;
+    margin-top: 30px;
 }
 
-.step-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+.how-it-works--one-row .step-card {
+    flex: 1 1 0;
+    min-width: 0;          /* Permite que todas reduzcan su ancho por igual */
+    padding: 18px 12px;    /* Más compacto */
 }
 
-.step-icon {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-}
-
-.step-card h3 {
-    font-size: 1.2rem;
+.how-it-works--one-row .step-icon {
+    font-size: clamp(18px, 2.2vw, 28px); /* Se hace más pequeño en pantallas pequeñas */
     margin-bottom: 8px;
-    text-align: center;
 }
 
-.step-card p {
-    font-size: 1rem;
-    text-align: center;
+.how-it-works--one-row h3 {
+    font-size: clamp(13px, 1.6vw, 18px);
+    margin-bottom: 6px;
+}
+
+.how-it-works--one-row p {
+    font-size: clamp(12px, 1.5vw, 16px);
     color: #666;
 }
