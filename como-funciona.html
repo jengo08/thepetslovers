@@ -9,11 +9,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <style>
-    /* Afinamos un poco más el encuadre para ver al perrito */
-    .hero-section.hero-como{ background-position:center 12% !important; }
-    @media (max-width:768px){ .hero-section.hero-como{ background-position:center 22% !important; } }
-  </style>
 </head>
 <body>
 
@@ -33,7 +28,7 @@
     <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
   </nav>
 
-  <!-- Hero con misma altura que home, imagen específica y encuadre un poco más arriba -->
+  <!-- Hero igual de alto que home, con encuadre un poco arriba -->
   <header class="hero-section hero-como">
     <div class="hero-content">
       <h1>Cómo funciona</h1>
@@ -41,56 +36,53 @@
     </div>
   </header>
 
-  <!-- Sección Cómo funciona (tarjetas en una fila) -->
+  <!-- Sección Cómo funciona -->
   <section id="como-funciona-detallada" class="how-it-works-section">
     <div class="container">
       <h2>El proceso es sencillo y seguro</h2>
-      <p>Diseñado para que cada paso sea claro, rápido y adaptado a vuestras necesidades.</p>
+      <p>Desde el primer clic hasta el último día de servicio, tendrás la tranquilidad de que tu mascota está atendida por profesionales formados.</p>
 
+      <!-- Tarjetas en una sola fila (iconos FA, sin números) -->
       <div class="how-it-works-grid how-it-works--one-row">
         <div class="step-card">
-          <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-notes-medical"></i></div>
+          <div class="step-icon"><i class="fa-solid fa-notes-medical"></i></div>
           <h3>Crea tu perfil y el de tu mascota</h3>
           <p>Cuéntanos carácter, patologías, cuidados especiales y preferencias.</p>
         </div>
-
         <div class="step-card">
-          <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-calendar-check"></i></div>
+          <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
           <h3>Elige días y horarios</h3>
           <p>Reserva días sueltos o periodos largos según tu agenda.</p>
         </div>
-
         <div class="step-card">
-          <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-phone-volume"></i></div>
+          <div class="step-icon"><i class="fa-solid fa-phone-volume"></i></div>
           <h3>Te llamaremos para conocernos</h3>
           <p>Tras crear la reserva, hablamos para ajustar el cuidado a vuestro perfil.</p>
         </div>
-
         <div class="step-card">
-          <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-house-circle-check"></i></div>
+          <div class="step-icon"><i class="fa-solid fa-house-circle-check"></i></div>
           <h3>Primera visita gratuita</h3>
           <p>Una vez aceptada la reserva, visita gratuita con el cuidador para conoceros.</p>
         </div>
-
         <div class="step-card">
-          <div class="step-icon" aria-hidden="true"><i class="fa-solid fa-file-lines"></i></div>
+          <div class="step-icon"><i class="fa-solid fa-file-lines"></i></div>
           <h3>Cuidados & seguimiento diario</h3>
           <p>Atención profesional, fotos e informe diario durante la estancia.</p>
         </div>
       </div>
 
-      <!-- CTA en recuadro -->
+      <!-- CTA centrado en recuadro -->
       <div class="cta-panel">
         <h3>¿Listos para confiar?</h3>
         <p>Reserva tu primera visita gratuita y conoce a tu cuidador antes de la estancia.</p>
         <a href="reserva.html" class="cta-button">Reservar ahora</a>
       </div>
 
-      <!-- Bloque inferior (auxiliares + seguridad/tranquilidad) -->
+      <!-- Bloque inferior (dos tarjetas discretas) -->
       <div class="info-duo">
         <div class="info-card">
           <h4><i class="fa-solid fa-user-nurse"></i> Auxiliares veterinarios titulados</h4>
-          <p>Todos nuestros cuidadores están formados para el bienestar y la salud animal.</p>
+          <p>Equipo formado en bienestar y salud animal para una experiencia segura.</p>
         </div>
         <div class="info-card">
           <h4><i class="fa-solid fa-shield-heart"></i> Seguridad y tranquilidad</h4>
@@ -100,7 +92,7 @@
     </div>
   </section>
 
-  <!-- FOOTER (enlaces + ayuda seguidos / redes a la derecha) -->
+  <!-- FOOTER (igual al que te gustaba) -->
   <footer class="site-footer">
     <div class="container footer-row">
       <nav class="footer-links-row">
@@ -115,26 +107,4 @@
       </nav>
 
       <div class="footer-right socials">
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-      </div>
-    </div>
-
-    <div class="footer-bottom footer-bottom--inline">
-      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-      <nav class="footer-bottom-right legal-links">
-        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-        <a href="cookies.html">Cookies</a><span class="sep">|</span>
-        <a href="canal-denuncias.html">Canal de denuncias</a>
-      </nav>
-    </div>
-  </footer>
-
-  <script>
-    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-  </script>
-</body>
-</html>
+        <a href="#" aria-label="
