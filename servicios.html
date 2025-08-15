@@ -12,36 +12,41 @@
 </head>
 <body>
 
-  <!-- NAVBAR actualizada -->
+  <!-- NAVBAR (igual que en index/como-funciona: Inicio + sin Conócenos) -->
   <nav class="navbar">
-    <div class="inicio-btn">
-      <a href="index.html">Inicio</a>
-    </div>
     <div class="logo">
       <a href="index.html">
         <img src="images/logo.png.png" alt="The Pets Lovers Logo">
       </a>
     </div>
+
+    <!-- Botón Inicio a la derecha del logo (posicionado por .home-button en style.css) -->
+    <a href="index.html" class="home-button">Inicio</a>
+
     <ul class="nav-links">
       <li><a href="como-funciona.html">Cómo funciona</a></li>
-      <li><a href="index.html#servicios">Servicios</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
       <li><a href="index.html#contactanos">Contáctanos</a></li>
       <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
     </ul>
     <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
   </nav>
 
-  <header class="hero-section" style="background-image:url('images/servicios.jpg'); background-size:cover; background-position:center;">
+  <!-- HERO: usa el hero por defecto (mismo estilo que tu CSS global) -->
+  <header class="hero-section">
     <div class="hero-content">
       <h1>Servicios</h1>
-      <p>Descubre todas las opciones que tenemos para el cuidado de tu mascota.</p>
+      <p>Elige el cuidado perfecto para tu mascota.</p>
+      <a href="#lista-servicios" class="cta-button">Ver servicios</a>
     </div>
   </header>
 
-  <section class="services-section">
+  <!-- LISTA DE SERVICIOS (misma estética de tarjetas) -->
+  <section id="lista-servicios" class="services-section">
     <div class="container">
       <h2>Nuestros Servicios</h2>
-      <p class="subtitle">Selecciona un servicio para ver más detalles y precios.</p>
+      <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+
       <div class="services-grid">
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-house"></i></div>
@@ -63,16 +68,17 @@
           <h3>Alojamiento nocturno</h3>
           <p>Atención completa en casa de un cuidador, como en familia.</p>
         </div>
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-paw"></i></div>
-          <h3>Cuidado en bodas</h3>
-          <p>Nos encargamos de tu mascota durante el evento más especial.</p>
-        </div>
+        <!-- Igual que en la home: “Más servicios” enlaza a esta misma página si luego creas subpáginas, lo dejamos aquí para consistencia -->
+        <a href="servicios.html" class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
+          <h3>Más servicios</h3>
+          <p>Explora todas las opciones de cuidado que ofrecemos.</p>
+        </a>
       </div>
     </div>
   </section>
 
-  <!-- FOOTER igual que el resto -->
+  <!-- FOOTER (idéntico al resto) -->
   <footer class="site-footer">
     <div class="container footer-row">
       <nav class="footer-links-row">
