@@ -1,480 +1,148 @@
-:root {
-    --color-principal: #339496;
-    --color-texto: #58425a;
-    --fuente-titulo: 'Poppins', sans-serif;
-    --fuente-texto: 'Montserrat', sans-serif;
-    --color-fondo-claro: #f4f4f4;
-}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Título de tu Página</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
 
-body {
-    font-family: var(--fuente-texto);
-    color: var(--color-texto);
-    margin: 0;
-    padding: 0;
-    line-height: 1.6;
-}
+    <nav class="navbar">
+        <a href="#" class="logo">
+            <img src="images/logo.png" alt="Logo de la Empresa">
+        </a>
+        <ul class="nav-links">
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#">Servicios</a></li>
+            <li><a href="#">Contacto</a></li>
+        </ul>
+        <a href="#" class="login-button">Iniciar Sesión</a>
+    </nav>
 
-h1, h2, h3 {
-    font-family: var(--fuente-titulo);
-    color: var(--color-texto);
-}
-
-a {
-    color: var(--color-principal);
-    text-decoration: none;
-}
-
-/* ---- NAVEGACIÓN Y LOGO ---- */
-.navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 90px;
-    padding: 0 20px;
-    z-index: 20;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    background-color: rgba(51, 148, 150, 0.8);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.logo {
-    background-color: rgba(255, 255, 255, 0.7);
-    padding: 2px;
-    border-radius: 5px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 21;
-    position: absolute;
-    left: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-}
-
-.logo img {
-    height: 184px;
-    width: auto;
-}
-
-.nav-links {
-    list-style: none;
-    margin: 0 0 0 auto;
-    padding: 0;
-    display: flex;
-    justify-content: flex-start;
-    flex-grow: 0;
-    gap: 20px;
-}
-
-.nav-links li {
-    margin: 0;
-}
-
-.nav-links a {
-    color: white;
-    font-weight: 700;
-    transition: color 0.3s ease;
-}
-
-.nav-links a:hover {
-    color: var(--color-texto);
-}
-
-.login-button {
-    background-color: transparent;
-    border: 2px solid white;
-    padding: 8px 15px;
-    border-radius: 5px;
-    margin-left: 20px;
-    margin-right: 30px;
-    color: white;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.login-button:hover {
-    background-color: white;
-    color: var(--color-principal);
-}
-
-/* ---- HERO SECTION ---- */
-.hero-section {
-    position: relative;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    background-image: url('images/hero.jpg.png');
-    background-size: cover;
-    background-position: center top;
-    background-attachment: fixed;
-    color: white;
-    padding-top: 60px;
-}
-
-.hero-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(88, 66, 90, 0.5);
-    z-index: 1;
-}
-
-.hero-content {
-    position: relative;
-    z-index: 10;
-    padding: 20px;
-}
-
-.hero-content h1 {
-    font-family: var(--fuente-titulo);
-    font-size: 4rem;
-    color: white;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.hero-content p {
-    font-family: var(--fuente-texto);
-    font-size: 1.5rem;
-    max-width: 600px;
-    margin: 20px auto;
-    color: white;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.cta-button {
-    display: inline-block;
-    padding: 15px 30px;
-    background-color: var(--color-principal);
-    color: white;
-    font-family: var(--fuente-texto);
-    font-weight: 700;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
-}
-
-.cta-button:hover {
-    background-color: #2a7e80;
-}
-
-/* ---- CÓMO FUNCIONA ---- */
-.how-it-works-section {
-    padding: 80px 20px;
-    text-align: center;
-    background-color: var(--color-fondo-claro);
-}
-
-.how-it-works-section h2 {
-    font-size: 2.5rem;
-    margin-bottom: 50px;
-}
-
-.how-it-works-grid {
-    display: flex;
-    justify-content: center;
-    gap: 30px;
-}
-
-.step-card {
-    background-color: white;
-    padding: 40px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    flex-basis: 30%;
-    transition: transform 0.3s ease;
-}
-
-.step-card:hover {
-    transform: translateY(-10px);
-}
-
-.step-icon {
-    font-size: 3rem;
-    color: var(--color-principal);
-    margin-bottom: 20px;
-}
-
-.step-card h3 {
-    font-family: var(--fuente-titulo);
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
-
-/* ---- SECCIÓN DE SERVICIOS ---- */
-.services-section {
-    padding: 80px 20px;
-    text-align: center;
-    background-color: white;
-}
-
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.services-section h2 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    font-size: 1.2rem;
-    color: #888;
-    margin-bottom: 60px;
-}
-
-.services-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-}
-
-.service-card {
-    background-color: var(--color-fondo-claro);
-    padding: 40px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-
-.service-card:hover {
-    transform: translateY(-10px);
-}
-
-.service-icon {
-    font-size: 3rem;
-    color: var(--color-principal);
-    margin-bottom: 20px;
-}
-
-.service-card h3 {
-    font-family: var(--fuente-titulo);
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
-
-/* ---- SECCIÓN POR QUÉ ELEGIRNOS ---- */
-.why-us-section {
-    padding: 80px 20px;
-    text-align: center;
-    background-color: var(--color-fondo-claro);
-}
-
-.why-us-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-    margin-top: 50px;
-}
-
-.why-us-item {
-    background-color: white;
-    padding: 40px 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.why-us-icon {
-    font-size: 3rem;
-    color: var(--color-principal);
-    margin-bottom: 20px;
-}
-
-/* ---- SECCIÓN TESTIMONIOS ---- */
-.testimonials-section {
-    padding: 80px 20px;
-    text-align: center;
-    background-color: white;
-}
-
-.testimonial-card {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 40px;
-    background-color: var(--color-fondo-claro);
-    border-left: 5px solid var(--color-principal);
-    border-radius: 10px;
-    font-style: italic;
-    font-size: 1.1rem;
-    position: relative;
-}
-
-.testimonial-card p {
-    margin-bottom: 20px;
-}
-
-.client-info {
-    text-align: right;
-    font-style: normal;
-}
-
-.client-name {
-    font-weight: 700;
-    color: var(--color-texto);
-}
-
-/* ---- MODAL DE COOKIES ---- */
-.cookie-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
-}
-
-.cookie-modal-content {
-    background-color: white;
-    max-width: 600px;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    z-index: 1000;
-}
-
-.cookie-modal-content p {
-    margin-bottom: 20px;
-}
-
-.cookie-modal-content a {
-    color: var(--color-principal);
-    text-decoration: underline;
-}
-
-.cookie-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-.cookie-buttons button {
-    border: none;
-    padding: 12px 30px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
-
-.cookie-buttons .accept-button {
-    background-color: var(--color-principal);
-    color: white;
-}
-
-.cookie-buttons .accept-button:hover {
-    background-color: #2a7e80;
-}
-
-.cookie-buttons .deny-button {
-    background-color: var(--color-fondo-claro);
-    color: var(--color-texto);
-    border: 1px solid #ccc;
-}
-
-.cookie-buttons .deny-button:hover {
-    background-color: #e8e8e8;
-}
-
-/* ---- VERSIÓN MÓVIL (PANTALLAS PEQUEÑAS) ---- */
-@media (max-width: 768px) {
-    .navbar {
-        height: auto;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 10px 15px;
-    }
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>Descubre experiencias inolvidables.</h1>
+            <p>Explora la ciudad como nunca antes con nuestros recorridos únicos y personalizados.</p>
+            <a href="#" class="cta-button">Ver servicios</a>
+        </div>
+    </section>
     
-    .logo {
-        margin-right: 0;
-        padding: 5px;
-        position: static;
-        top: auto;
-        left: auto;
-        transform: none;
-    }
+    <section class="how-it-works-section">
+        <div class="container">
+            <h2>Cómo funciona</h2>
+            <div class="how-it-works-grid">
+                <div class="step-card">
+                    <i class="fa-solid fa-map-pin step-icon"></i>
+                    <h3>1. Elige tu aventura</h3>
+                    <p>Navega por nuestras experiencias únicas y encuentra el recorrido perfecto para ti y los tuyos.</p>
+                </div>
+                <div class="step-card">
+                    <i class="fa-solid fa-calendar-check step-icon"></i>
+                    <h3>2. Reserva y paga</h3>
+                    <p>Selecciona la fecha y hora, y completa tu reserva de forma segura en nuestro sitio web.</p>
+                </div>
+                <div class="step-card">
+                    <i class="fa-solid fa-champagne-glasses step-icon"></i>
+                    <h3>3. ¡Disfruta!</h3>
+                    <p>Prepárate para vivir una experiencia inolvidable. Te esperamos en el punto de encuentro.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    .logo img {
-        height: 50px;
-    }
+    <section class="services-section">
+        <div class="container">
+            <h2>Nuestros Servicios</h2>
+            <p class="subtitle">Ofrecemos una variedad de tours para todos los gustos.</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <i class="fa-solid fa-city service-icon"></i>
+                    <h3>Tours Históricos</h3>
+                    <p>Viaja al pasado y descubre los secretos de la ciudad.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fa-solid fa-utensils service-icon"></i>
+                    <h3>Tours Gastronómicos</h3>
+                    <p>Deléitate con los sabores locales y la mejor gastronomía.</p>
+                </div>
+                <div class="service-card">
+                    <i class="fa-solid fa-bicycle service-icon"></i>
+                    <h3>Tours en Bici</h3>
+                    <p>Recorre la ciudad de una forma divertida y activa.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="why-us-section">
+        <div class="container">
+            <h2>¿Por qué elegirnos?</h2>
+            <p class="subtitle">Más de 10 años creando experiencias mágicas.</p>
+            <div class="why-us-grid">
+                <div class="why-us-item">
+                    <i class="fa-solid fa-star why-us-icon"></i>
+                    <h3>Guías Expertos</h3>
+                    <p>Nuestros guías son apasionados y expertos en la historia de la ciudad.</p>
+                </div>
+                <div class="why-us-item">
+                    <i class="fa-solid fa-handshake why-us-icon"></i>
+                    <h3>Atención Personalizada</h3>
+                    <p>Nos adaptamos a tus necesidades para crear el tour perfecto para ti.</p>
+                </div>
+                <div class="why-us-item">
+                    <i class="fa-solid fa-heart why-us-icon"></i>
+                    <h3>Momentos Inolvidables</h3>
+                    <p>Más que un tour, creamos recuerdos que durarán toda la vida.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials-section">
+        <div class="container">
+            <h2>Lo que dicen nuestros clientes</h2>
+            <div class="testimonial-card">
+                <p>"¡Una experiencia maravillosa! Los guías eran increíbles y el recorrido superó todas mis expectativas."</p>
+                <p class="client-info">- María G. de Madrid</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="cookie-modal-overlay">
+        <div class="cookie-modal-content">
+            <h3>Aviso de Cookies</h3>
+            <p>Utilizamos cookies para mejorar la experiencia de usuario. <a href="#">Política de privacidad</a>.</p>
+            <div class="cookie-buttons">
+                <button class="accept-button">Aceptar</button>
+                <button class="deny-button">Rechazar</button>
+            </div>
+        </div>
+    </div>
     
-    .nav-links {
-        flex-direction: column;
-        align-items: flex-start;
-        width: 100%;
-        margin-top: 10px;
-        gap: 5px;
-        margin-left: 0;
-    }
-    
-    .nav-links li {
-        margin: 5px 0;
-    }
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const cookieOverlay = document.querySelector('.cookie-modal-overlay');
+            const acceptButton = document.querySelector('.accept-button');
+            const denyButton = document.querySelector('.deny-button');
 
-    .login-button {
-        margin-left: 0;
-        margin-top: 10px;
-        align-self: flex-end;
-        margin-right: 0;
-    }
-    .login-button:hover {
-        background-color: white;
-        color: var(--color-principal);
-    }
+            if (!localStorage.getItem('cookies-accepted')) {
+                cookieOverlay.style.display = 'flex';
+            }
 
-    .hero-content h1 {
-        font-size: 2.5rem;
-    }
+            acceptButton.addEventListener('click', () => {
+                localStorage.setItem('cookies-accepted', 'true');
+                cookieOverlay.style.display = 'none';
+            });
 
-    .hero-content p {
-        font-size: 1.2rem;
-    }
+            denyButton.addEventListener('click', () => {
+                localStorage.setItem('cookies-accepted', 'true');
+                cookieOverlay.style.display = 'none';
+            });
+        });
+    </script>
 
-    .cta-button {
-        padding: 12px 25px;
-    }
-
-    .services-section, .why-us-section, .testimonials-section, .how-it-works-section {
-        padding: 60px 15px;
-    }
-
-    .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2 {
-        font-size: 2rem;
-    }
-
-    .subtitle {
-        font-size: 1rem;
-        margin-bottom: 40px;
-    }
-    
-    .how-it-works-grid {
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .step-card {
-        flex-basis: 100%;
-        width: 100%;
-        max-width: 400px;
-    }
-
-    .cookie-modal-content {
-        max-width: 90%;
-        padding: 20px;
-    }
-    
-    .cookie-buttons {
-        flex-direction: column;
-    }
-}
+</body>
+</html>
