@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- Estilos mínimos SOLO para esta página, como la versión que te gustó -->
+  <!-- Estilos mínimos SOLO para esta página -->
   <style>
     /* Hero más corto para servicios */
     .hero-section.hero-servicios {
@@ -24,7 +24,7 @@
     @media (max-width: 768px) {
       .hero-section.hero-servicios { height: 42vh; min-height: 300px; background-position: center 15%; }
     }
-    /* Iconos morados en esta página (detalle que te gustó) */
+    /* Iconos morados en esta página */
     .services-section .service-icon i { color: #58425a; }
 
     /* Desplegables de servicio (details) */
@@ -67,7 +67,7 @@
 </head>
 <body>
 
-  <!-- NAVBAR unificado -->
+  <!-- NAVBAR -->
   <nav class="navbar">
     <div class="logo">
       <a href="index.html">
@@ -100,29 +100,28 @@
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
       <div class="services-grid">
-        <!-- ========= Fila 1: Alojamiento | Visitas (span 2) | Guardería ========= -->
+        <!-- ===== Fila 1: Guardería | Visitas (ancha) | Alojamiento ===== -->
 
-        <!-- Alojamiento nocturno (24 h) -->
+        <!-- Guardería de día -->
         <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
-          <h3>Alojamiento nocturno</h3>
-          <p>Como en familia: día y noche con un cuidador.</p>
+          <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
+          <h3>Guardería de día</h3>
+          <p>Compañía y supervisión durante el día.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li><strong>35 €</strong> (24 h).</li>
-                <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><strong>Recogida después de las 14:00 h:</strong> suplemento de <strong>15 €</strong>.</li>
-                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
+                <li><strong>Duración:</strong> 8 horas.</li>
+                <li><strong>Precio:</strong> 15 €.</li>
+                <li><strong>Cachorros (≤ 6 meses):</strong> 20 €.</li>
               </ul>
               <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-estancias.html" class="ver-mas">Más información</a>
+              <a href="servicio-guarderia.html" class="ver-mas">Más información</a>
             </div>
           </details>
         </div>
 
-        <!-- Visitas a domicilio (gatos) — ocupa dos columnas -->
+        <!-- Visitas a domicilio (gatos) — tamaño como Desplazamientos -->
         <div class="service-card" style="grid-column: span 2;">
           <div class="service-icon"><i class="fa-solid fa-cat"></i></div>
           <h3>Visitas a domicilio (gatos)</h3>
@@ -130,7 +129,6 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-              <!-- Tabla simple sin CSS extra -->
               <table>
                 <thead>
                   <tr>
@@ -167,26 +165,27 @@
           </details>
         </div>
 
-        <!-- Guardería de día -->
+        <!-- Alojamiento nocturno (24 h) -->
         <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
-          <h3>Guardería de día</h3>
-          <p>Compañía y supervisión durante el día.</p>
+          <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
+          <h3>Alojamiento nocturno</h3>
+          <p>Como en familia: día y noche con un cuidador.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li><strong>Duración:</strong> 8 horas.</li>
-                <li><strong>Precio:</strong> 15 €.</li>
-                <li><strong>Cachorros (≤ 6 meses):</strong> 20 €.</li>
+                <li><strong>35 €</strong> (24 h).</li>
+                <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
+                <li><strong>Recogida después de las 14:00 h:</strong> suplemento de <strong>15 €</strong>.</li>
+                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
               </ul>
               <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-guarderia.html" class="ver-mas">Más información</a>
+              <a href="servicio-estancias.html" class="ver-mas">Más información</a>
             </div>
           </details>
         </div>
 
-        <!-- ========= Fila 2: resto de servicios ========= -->
+        <!-- ===== Fila 2: resto ===== -->
 
         <!-- Paseos -->
         <div class="service-card">
@@ -224,7 +223,7 @@
           </details>
         </div>
 
-        <!-- Bodas (Servicios especiales) -->
+        <!-- Bodas -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
           <h3>Bodas</h3>
@@ -288,26 +287,11 @@
           </details>
         </div>
 
-        <!-- Servicios especiales (+) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-star"></i></div>
-          <h3>Servicios especiales (+)</h3>
-          <p>Eventos, sesiones y planes a medida.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <div class="content">
-              <p>Paquetes personalizados para sesiones, shootings, sorpresas o necesidades específicas. Coordinación integral.</p>
-              <p class="precio">Precio: <strong>a consultar</strong>.</p>
-              <a href="servicio-especiales.html" class="ver-mas">Más información</a>
-            </div>
-          </details>
-        </div>
-
       </div>
     </div>
   </section>
 
-  <!-- FOOTER unificado -->
+  <!-- FOOTER -->
   <footer class="site-footer">
     <div class="container footer-row">
       <nav class="footer-links-row">
@@ -343,7 +327,7 @@
   <script>
     // Año del footer
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-    // Abrir details al pasar el ratón (como te gustaba)
+    // Abrir details al pasar el ratón
     document.querySelectorAll('details[data-hover]').forEach(d => {
       d.addEventListener('mouseenter', () => d.setAttribute('open',''));
       d.addEventListener('mouseleave', () => d.removeAttribute('open'));
