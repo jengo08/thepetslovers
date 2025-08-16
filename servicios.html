@@ -103,7 +103,9 @@
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
       <div class="services-grid">
-        <!-- Estancias en casa -->
+        <!-- Fila 1: Estancias | Visitas (span 2) | Paseos -->
+
+        <!-- Estancias en casa (24 h) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-house-circle-check"></i></div>
           <h3>Estancias en casa</h3>
@@ -122,8 +124,8 @@
           </details>
         </div>
 
-        <!-- Visitas a domicilio (gatos) -->
-        <div class="service-card">
+        <!-- Visitas a domicilio (gatos) — ocupa dos columnas -->
+        <div class="service-card" style="grid-column: span 2;">
           <div class="service-icon"><i class="fa-solid fa-cat"></i></div>
           <h3>Visitas a domicilio (gatos)</h3>
           <p>Rutina, mimos y medicación si hace falta.</p>
@@ -187,6 +189,8 @@
           </details>
         </div>
 
+        <!-- Fila 2 -->
+
         <!-- Guardería de día -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
@@ -225,6 +229,38 @@
           </details>
         </div>
 
+        <!-- Servicios exclusivos (+) -->
+        <div class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
+          <h3>Servicios exclusivos (+)</h3>
+          <p>Bodas, eventos, sesiones y planes a medida.</p>
+          <details class="service-details" data-hover>
+            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
+            <div class="content">
+              <p>Acompañamiento en eventos (bodas, shootings, etc.), logística completa y coordinación con proveedores. Transporte opcional.</p>
+              <p class="precio">Precio: <strong>a consultar</strong> según agenda y horas.</p>
+              <a href="reserva.html" class="service-cta">Reservar</a>
+              <a href="servicio-exclusivos.html" class="ver-mas">Leer detalles del servicio</a>
+            </div>
+          </details>
+        </div>
+
+        <!-- Cuidados postquirúrgicos -->
+        <div class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-briefcase-medical"></i></div>
+          <h3>Cuidados postquirúrgicos</h3>
+          <p>Curar, medicar y vigilar con profesionales.</p>
+          <details class="service-details" data-hover>
+            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
+            <div class="content">
+              <p>Supervisión de puntos, administración de medicación, control del dolor y coordinación con tu clínica si es necesario.</p>
+              <p class="precio">Precio: <strong>a consultar</strong> según complejidad.</p>
+              <a href="reserva.html" class="service-cta">Reservar</a>
+              <a href="servicio-postquirurgico.html" class="ver-mas">Leer detalles del servicio</a>
+            </div>
+          </details>
+        </div>
+
         <!-- Festivos y kilometraje -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
@@ -241,6 +277,7 @@
             </div>
           </details>
         </div>
+
       </div>
     </div>
   </section>
