@@ -149,6 +149,14 @@ a { color: var(--color-principal); text-decoration: none; }
 .footer-links-row .sep{ color:#bbb; }
 .footer-links-row a{ color:var(--color-texto); text-decoration:none; white-space:nowrap; font-size:.95rem; }
 .footer-links-row a:hover{ color:var(--color-principal); text-decoration:underline; }
+.footer-links-row a,
+.footer-links-row .footer-help-inline {
+  color: var(--color-texto);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: .95rem;
+}
+
 .footer-help-inline{ margin-left:10px; font-size:.95rem; color:#666; white-space:nowrap; }
 .footer-help-inline a{ color:var(--color-principal); text-decoration:underline; }
 
@@ -218,3 +226,4 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 /* TPL: FIN BLOQUE NUEVO */
+
