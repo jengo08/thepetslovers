@@ -396,6 +396,42 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 
+/* ===== Posición de INICIO (escritorio) ===== */
+@media (min-width:901px){
+  /* Por si aún existe, anulamos el viejo offset por margen */
+  .navbar .tpl-home-offset { margin-left: 0 !important; }
+
+  /* INICIO: mismo estilo que los demás y pegado al logo con offset fino */
+  .navbar .home-button{
+    position: absolute !important;
+    top: 50%;
+    transform: translateY(-50%);
+
+    /* 20px (separación lateral del logo) + 184px (ancho del bloque logo)
+       + 1cm (AJUSTE fino: más cerca del recuadro que 2cm) */
+    left: calc(20px + 184px + 1cm) !important;
+
+    z-index: 22;
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: color .3s ease;
+  }
+  .navbar .home-button:hover{ color: var(--color-texto); }
+}
+
+/* ===== INICIO en móvil (se queda en columna) ===== */
+@media (max-width:768px){
+  .home-button{
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+
 
 
 
