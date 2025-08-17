@@ -1,5 +1,54 @@
 <!DOCTYPE html>
 <html lang="es">
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios] -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "The Pets Lovers",
+  "url": "https://www.thepetslovers.es/",
+  "logo": "https://www.thepetslovers.es/images/logo.png.png",
+  "sameAs": ["https://www.instagram.com/guarderiamascotasthepetslovers/"],
+  "areaServed": "Madrid",
+  "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados.",
+  "serviceOffer": [
+    {
+      "@type": "Service",
+      "name": "Visitas a domicilio (gatos)",
+      "areaServed": "Madrid",
+      "offers": [
+        {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
+        {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"}
+      ]
+    },
+    {
+      "@type": "Service",
+      "name": "Paseos",
+      "areaServed": "Madrid",
+      "offers": [{"@type": "Offer", "price": "12", "priceCurrency": "EUR"}]
+    },
+    {
+      "@type": "Service",
+      "name": "Guardería de día",
+      "areaServed": "Madrid",
+      "offers": [{"@type": "Offer", "price": "20", "priceCurrency": "EUR"}]
+    },
+    {
+      "@type": "Service",
+      "name": "Estancias en casa del cuidador",
+      "areaServed": "Madrid",
+      "offers": [{"@type": "Offer", "price": "30", "priceCurrency": "EUR"}]
+    },
+    {
+      "@type": "Service",
+      "name": "Mascotas en bodas",
+      "offers": [{"@type": "Offer", "price": "0", "priceCurrency": "EUR", "priceSpecification": "A consultar"}]
+    }
+  ]
+}
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +58,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<!-- TPL: INICIO BLOQUE NUEVO [SEO on-page servicios] -->
+<meta name="description" content="Servicios de The Pets Lovers: visitas a domicilio para gatos, paseos, guardería de día, guardería en casa del cuidador y servicios para bodas. Equipo de auxiliares veterinarios titulados.">
+<meta property="og:title" content="Servicios | The Pets Lovers">
+<meta property="og:description" content="Cuidado profesional de mascotas: visitas a domicilio, paseos, guardería de día, estancias y bodas. Auxiliares veterinarios titulados.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.thepetslovers.es/servicios.html">
+<meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Servicios | The Pets Lovers">
+<meta name="twitter:description" content="Visitas a domicilio, paseos, guardería, estancias y bodas. Equipo profesional del sector veterinario.">
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Estilos mínimos SOLO para esta página -->
   <style>
@@ -48,6 +108,26 @@
     .ver-mas:hover { background: var(--color-principal); color:#fff; }
   </style>
 </head>
+  <!-- TPL: INICIO BLOQUE NUEVO [Accesibilidad details/summary] -->
+<script>
+  document.querySelectorAll('.service-details').forEach(function(det){
+    var sum = det.querySelector('summary');
+    if(sum){
+      sum.setAttribute('role','button');
+      sum.setAttribute('aria-controls', (sum.textContent.trim().toLowerCase().replace(/\s+/g,'-') + '-content'));
+      function sync(){ sum.setAttribute('aria-expanded', det.hasAttribute('open') ? 'true' : 'false'); }
+      det.addEventListener('toggle', sync);
+      sync();
+    }
+    var content = det.querySelector('.content');
+    if(content){
+      var id = sum ? sum.getAttribute('aria-controls') : '';
+      if(id) content.setAttribute('id', id);
+    }
+  });
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 <body>
 
   <!-- NAVBAR -->
