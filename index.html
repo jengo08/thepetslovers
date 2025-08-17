@@ -40,27 +40,30 @@
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="logo">
+    <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada con botón Inicio] -->
+    <div id="tpl-navbar">
+      <noscript>
+        <!-- Fallback sin JS: misma navbar con Inicio -->
+        <nav class="navbar">
+          <div class="logo">
             <a href="index.html">
-                <img src="images/logo.png.png" alt="The Pets Lovers Logo">
+              <img src="images/logo.png.png" alt="The Pets Lovers Logo">
             </a>
-        </div>
-        <ul class="nav-links">
-            <!-- TPL: INICIO BLOQUE NUEVO [Restaurar botón Inicio en el menú] -->
-            <li><a href="index.html">Inicio</a></li>
-            <!-- TPL: FIN BLOQUE NUEVO -->
+          </div>
+          <a href="index.html" class="home-button">Inicio</a>
+          <ul class="nav-links">
             <li><a href="como-funciona.html">Cómo funciona</a></li>
-            <!-- TPL: INICIO BLOQUE NUEVO [Servicios apunta a la página de servicios] -->
             <li><a href="servicios.html">Servicios</a></li>
-            <!-- TPL: FIN BLOQUE NUEVO -->
             <li><a href="#quienes-somos">Conócenos</a></li>
             <li><a href="#contactanos">Contáctanos</a></li>
             <li><a href="#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
-    </nav>
-    
+          </ul>
+          <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
+        </nav>
+      </noscript>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <header class="hero-section">
         <div class="hero-content">
             <h1>The Pets Lovers</h1>
@@ -189,38 +192,42 @@
         </div>
     </div>
 
-    <!-- FOOTER (copiado tal cual del de como-funciona) -->
-    <footer class="site-footer">
-      <div class="container footer-row">
-        <nav class="footer-links-row">
-          <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-          <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-          <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-          <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-          <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-          <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-          <a href="digital-services-act.html">Digital Services Act</a>
-          <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
-        </nav>
-
-        <div class="footer-right socials">
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-        </div>
-      </div>
-
-      <div class="footer-bottom footer-bottom--inline">
-        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-        <nav class="footer-bottom-right legal-links">
-          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-          <a href="cookies.html">Cookies</a><span class="sep">|</span>
-          <a href="canal-denuncias.html">Canal de denuncias</a>
-        </nav>
-      </div>
-    </footer>
+    <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
+    <div id="tpl-footer">
+      <noscript>
+        <!-- Fallback sin JS: footer actual -->
+        <footer class="site-footer">
+          <div class="container footer-row">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+              <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+            </nav>
+            <div class="footer-right socials">
+              <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+              <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+              <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+              <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            </div>
+          </div>
+          <div class="footer-bottom footer-bottom--inline">
+            <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+            <nav class="footer-bottom-right legal-links">
+              <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+              <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+              <a href="cookies.html">Cookies</a><span class="sep">|</span>
+              <a href="canal-denuncias.html">Canal de denuncias</a>
+            </nav>
+          </div>
+        </footer>
+      </noscript>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <script>
       document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
@@ -247,5 +254,10 @@
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <script src="script.js"></script>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
+    <script src="tpl-navbar.js" defer></script>
+    <script src="tpl-footer.js" defer></script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
