@@ -1,64 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Pets Lovers | Guardería de Mascotas en Madrid</title>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Google Fonts] -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page] -->
-  <meta name="description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-  <meta property="og:title" content="The Pets Lovers | Guardería de Mascotas en Madrid">
-  <meta property="og:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.thepetslovers.es/">
-  <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="The Pets Lovers | Guardería de Mascotas en Madrid">
-  <meta name="twitter:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD sitio] -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "The Pets Lovers",
-    "url": "https://www.thepetslovers.es/",
-    "logo": "https://www.thepetslovers.es/images/logo.png.png",
-    "sameAs": ["https://www.instagram.com/guarderiamascotasthepetslovers/"],
-    "areaServed": "Madrid",
-    "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados."
-  }
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Pets Lovers - Cuidamos a tu mascota con amor</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
-  <!-- Aquí sigue tu contenido existente (hero, secciones, footer, etc.) -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Accesibilidad details/summary] -->
-  <script>
-    document.querySelectorAll('.service-details').forEach(function(det){
-      var sum = det.querySelector('summary');
-      if(sum){
-        sum.setAttribute('role','button');
-        sum.setAttribute('aria-controls', (sum.textContent.trim().toLowerCase().replace(/\s+/g,'-') + '-content'));
-        function sync(){ sum.setAttribute('aria-expanded', det.hasAttribute('open') ? 'true' : 'false'); }
-        det.addEventListener('toggle', sync);
-        sync();
-      }
-      var content = det.querySelector('.content');
-      if(content){
-        var id = sum ? sum.getAttribute('aria-controls') : '';
-        if(id) content.setAttribute('id', id);
-      }
-    });
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+    <nav class="navbar">
+        <div class="logo">
+            <a href="index.html">
+                <img src="images/logo.png.png" alt="The Pets Lovers Logo">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="como-funciona.html">Cómo funciona</a></li>
+            <li><a href="#servicios">Servicios</a></li>
+            <li><a href="#quienes-somos">Conócenos</a></li>
+            <li><a href="#contactanos">Contáctanos</a></li>
+            <li><a href="#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
+    </nav>
+    
+    <header class="hero-section">
+        <div class="hero-content">
+            <h1>The Pets Lovers</h1>
+            <!-- Texto original se mantiene tal cual -->
+            <p>Cuidamos de tu mascota con la profesionalidad de auxiliares veterinarios.</p>
+            <a href="#servicios" class="cta-button">Reserva un servicio</a>
+        </div>
+    </header>
+
+    <section id="como-funciona-simple" class="how-it-works-section">
+        <div class="container">
+            <h2>Cómo funciona</h2>
+            <p class="subtitle">Encuentra y reserva el cuidador perfecto en 3 pasos.</p>
+            <div class="how-it-works-grid">
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+                    <h3>Crea tu perfil y el de tu mascota</h3>
+                    <p>Completa la información de tu mascota para que podamos encontrar al cuidador que mejor se adapte a ti.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                    <h3>Contacta y reserva</h3>
+                    <p>Una vez que reserves, disfrutarás de una primera visita gratuita con el cuidador.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-paw"></i></div>
+                    <h3>¡Disfruta!</h3>
+                    <p>Tu mascota estará en las mejores manos mientras tú estás fuera.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicios" class="services-section">
+        <div class="container">
+            <h2>Nuestros Servicios</h2>
+            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-house"></i></div>
+                    <h3>Visitas a domicilio</h3>
+                    <p>Cuidado personalizado en la comodidad de su hogar.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-person-walking"></i></div>
+                    <h3>Paseos</h3>
+                    <p>Paseos energéticos y seguros para mantenerlo feliz y saludable.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
+                    <h3>Guardería de día</h3>
+                    <p>Un día lleno de juegos y compañía en un entorno seguro.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
+                    <h3>Alojamiento nocturno</h3>
+                    <p>Atención completa en casa de un cuidador, como en familia.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
+                    <h3>Más servicios</h3>
+                    <p>Explora todas las opciones de cuidado que ofrecemos.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="quienes-somos" class="why-us-section">
+        <div class="container">
+            <h2>The Pets Lovers</h2>
+            <p class="subtitle">Confianza y tranquilidad para ti, amor y cuidado para tu mascota.</p>
+            <div class="why-us-grid">
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                    <h3>Auxiliares Veterinarios Titulados</h3>
+                    <p>Todos nuestros cuidadores cuentan con formación profesional, garantizando el cuidado experto de tu mascota.</p>
+                </div>
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-heart"></i></div>
+                    <h3>Atención Personalizada</h3>
+                    <p>Cada mascota es única. Adaptamos nuestros servicios a sus necesidades y personalidad.</p>
+                </div>
+                <div class="why-us-item">
+                    <div class="why-us-icon"><i class="fa-solid fa-star"></i></div>
+                    <h3>Servicios Exclusivos</h3>
+                    <p>Ofrecemos servicios especiales como cuidado en bodas, transporte y citas veterinarias.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contactanos" class="testimonials-section">
+        <div class="container">
+            <h2>Lo que dicen nuestros clientes</h2>
+            <div class="testimonial-card">
+                <p>"¡The Pets Lovers es la mejor guardería! Dejo a mi perro con total tranquilidad sabiendo que está en las mejores manos."</p>
+                <div class="client-info">
+                    <p class="client-name">Ana M. y Toby</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="hazte-cuidador" class="become-sitter-section">
+        <div class="container">
+            <h2>¿Te apasionan los animales?</h2>
+            <p class="subtitle">Únete a nuestra red de cuidadores y trabaja haciendo lo que más te gusta.</p>
+            <a href="#" class="cta-button">Conviértete en cuidador</a>
+        </div>
+    </section>
+
+    <!-- Modal de cookies: solo aparece la primera vez -->
+    <div id="cookie-modal-overlay" class="cookie-modal-overlay">
+        <div class="cookie-modal-content">
+            <p>Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. 
+               <a href="cookies.html">Política de cookies</a>
+            </p>
+            <div class="cookie-buttons">
+                <button id="deny-cookies" class="deny-button">Denegar</button>
+                <button id="accept-cookies" class="accept-button">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER (copiado tal cual del de como-funciona) -->
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <nav class="footer-links-row">
+          <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+          <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+          <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+          <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+          <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+          <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+          <a href="digital-services-act.html">Digital Services Act</a>
+          <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+        </nav>
+
+        <div class="footer-right socials">
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-bottom footer-bottom--inline">
+        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+        <nav class="footer-bottom-right legal-links">
+          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+          <a href="cookies.html">Cookies</a><span class="sep">|</span>
+          <a href="canal-denuncias.html">Canal de denuncias</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+    </script>
+    <script src="script.js"></script>
 </body>
 </html>
