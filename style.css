@@ -243,3 +243,10 @@ footer .footer-bottom {
   outline-offset: 3px;
 }
 /* TPL: FIN BLOQUE NUEVO */
+/* TPL: INICIO BLOQUE NUEVO [Offset botón Inicio en navbar] */
+.navbar .tpl-home-offset { margin-left: 3cm; }     /* separación exacta en desktop */
+@media (max-width: 900px) {
+  .navbar .tpl-home-offset { margin-left: 0; }     /* en móvil/tablet no forzamos separación */
+}
+/* TPL: FIN BLOQUE NUEVO */
+
