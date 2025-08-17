@@ -199,3 +199,28 @@ a { color: var(--color-principal); text-decoration: none; }
 @media (max-width:900px){
   .navbar .tpl-home-offset { margin-left:0; }
 }
+
+/* TPL: INICIO BLOQUE NUEVO [Posición exacta del botón Inicio] */
+/* Desktop: coloca Inicio a la izquierda, a 3 cm del logo */
+@media (min-width: 901px){
+  .home-button{
+    position: absolute;
+    /* 20px (separación lateral del logo) + 184px (alto del logo = ancho aprox. del contenedor logo)
+       + 3cm (offset solicitado)  */
+    left: calc(20px + 184px + 3cm);
+    z-index: 22;              /* por encima del logo que tiene z-index:21 */
+  }
+  /* El menú sigue a la derecha como siempre */
+  .nav-links{ margin-left: auto; }
+}
+
+/* Móvil/Tablet: vuelve al flujo normal para no romper el layout */
+@media (max-width: 900px){
+  .home-button{
+    position: static;
+    left: auto;
+    z-index: auto;
+    margin-left: 0;
+  }
+}
+/* TPL: FIN BLOQUE NUEVO */
