@@ -323,6 +323,39 @@ a { color: var(--color-principal); text-decoration: none; }
   .navbar .home-button:hover{ color: var(--color-texto); }
 }
 
+/* ===== INICIO a 2 cm del logo — ESCRITORIO ===== */
+@media (min-width:901px){
+  /* Anula el margen antiguo, si existiera */
+  .navbar .tpl-home-offset { margin-left: 0 !important; }
+
+  /* Coloca INICIO alineado y 2 cm a la derecha del recuadro del logo */
+  .navbar .home-button{
+    position: absolute !important;
+    top: 50%;
+    transform: translateY(-50%);
+    /* 20px (separación lateral del logo) + 184px (ancho del bloque logo) + 2cm (espacio pedido) */
+    left: calc(20px + 184px + 2cm) !important;
+
+    z-index: 22;
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: color .3s ease;
+  }
+  .navbar .home-button:hover{ color: var(--color-texto); }
+}
+
+/* ===== INICIO con sangría en móvil (aspecto coherente) ===== */
+@media (max-width:768px){
+  .home-button{
+    /* se muestra debajo del logo, pero con una sangría de ~2 cm */
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    margin-left: 2cm;   /* sangría equivalente al pedido */
+    margin-top: 10
+
 
 
 
