@@ -356,6 +356,27 @@ a { color: var(--color-principal); text-decoration: none; }
     margin-left: 2cm;   /* sangría equivalente al pedido */
     margin-top: 10
 
+@media (min-width:901px){
+  /* Quita offsets previos */
+  .navbar .tpl-home-offset { margin-left: 0 !important; }
+
+  /* Inicio pegado al logo con separación controlada */
+  .nav-links li:first-child {
+    margin-left: 2cm;  /* ajusta este valor para acercar o alejar */
+  }
+
+  .nav-links a.tpl-home-offset {
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: color .3s ease;
+  }
+  .nav-links a.tpl-home-offset:hover {
+    color: var(--color-texto);
+  }
+}
+
 
 
 
