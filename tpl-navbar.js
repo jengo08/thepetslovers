@@ -1,5 +1,3 @@
-<!-- TPL: INICIO tpl-navbar.js -->
-<script>
 (function () {
   function highlightActiveLink() {
     var path = location.pathname.split('/').pop() || 'index.html';
@@ -7,7 +5,7 @@
       var href = a.getAttribute('href'); if (!href) return;
       var file = href.split('#')[0] || '';
       if ((file && file === path) || (!file && path === 'index.html')) {
-        a.classList.add('active'); // solo se verá si tienes CSS para .active
+        a.classList.add('active'); // opcional, si tienes estilos para .active
       }
     });
   }
@@ -16,15 +14,24 @@
     var mount = document.getElementById('tpl-navbar');
     if (!mount) return;
 
-    fetch('tpl-navbar.html', { cache: 'no-store' })
-      .then(function (res) { return res.text(); })
-      .then(function (html) {
-        mount.outerHTML = html;
-        highlightActiveLink();
-      })
-      .catch(function (err) {
-        console.error('TPL: Error al cargar la navbar:', err);
+    // intenta rutas seguras (raíz y relativo)
+    var paths = ['tpl-navbar.html', './tpl-navbar.html', '/tpl-navbar.html'];
+
+    paths.reduce(function(chain, path){
+      return chain.catch(function(){
+        return fetch(path, { cache: 'no-store' }).then(function(res){
+          if(!res.ok) throw new Error('HTTP '+res.status+' en '+path);
+          return res.text();
+        });
       });
+    }, Promise.reject())
+    .then(function (html) {
+      mount.outerHTML = html;
+      highlightActiveLink();
+    })
+    .catch(function (err) {
+      console.error('TPL NAVBAR: No se pudo cargar la navbar.', err);
+    });
   }
 
   if (document.readyState === 'loading') {
@@ -33,5 +40,3 @@
     injectNavbar();
   }
 })();
-</script>
-<!-- TPL: FIN tpl-navbar.js -->
