@@ -6,53 +6,135 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO guardería] -->
-  <meta name="description" content="Guardería de día para perros y gatos. Jornada de hasta 8 horas con auxiliares veterinarios titulados.">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO] -->
+  <meta name="description" content="Guardería de día (hasta 8 horas). Entrega por la mañana y recogida por la noche. Profesionales del sector veterinario titulados. Bonos desde 10 días.">
   <!-- TPL: FIN BLOQUE NUEVO -->
-  <style>.page{padding-top:120px}.lead{color:#666}.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px}</style>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs] -->
+  <style>
+    .page{padding-top:120px}.lead{color:#666}
+    .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
+    .breadcrumb a{color:var(--color-principal);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb span{font-weight:600}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
+    .icon-list{list-style:none;padding-left:0}
+    .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+    .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
+    .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
+    .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
+    .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
+    .price-table thead th{background:#fafafa}
+    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
+    .links-list li{margin:6px 0}
+    .links-list a{color:var(--color-principal);text-decoration:none}
+    .links-list a:hover{text-decoration:underline}
+    .cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+    .cta-row .service-cta{order:1}
+    .cta-row .ver-mas{order:2;margin-left:auto}
+    @media (max-width:600px){.cta-row{gap:10px}.cta-row .ver-mas{margin-left:0}}
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
   <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
   <div id="tpl-navbar"><noscript>
-    <nav class="navbar"><div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+    <nav class="navbar">
+      <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
       <a href="index.html" class="home-button">Inicio</a>
       <ul class="nav-links">
         <li><a href="como-funciona.html">Cómo funciona</a></li>
         <li><a href="servicios.html">Servicios</a></li>
         <li><a href="index.html#contactanos">Contáctanos</a></li>
         <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-      </ul><a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </ul>
+      <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
     </nav>
   </noscript></div>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
+    <!-- TPL: INICIO BLOQUE NUEVO [Breadcrumb] -->
+    <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html">Servicios</a> &gt; <span>Guardería de día</span></nav>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <h1>Guardería de día</h1>
-    <p class="lead">Compañía y supervisión hasta <strong>8 horas</strong> con atención profesional.</p>
+    <p class="lead">
+      Entrega por la mañana y recogida por la noche — hasta <strong>8 horas</strong> de cuidado, juego y mimos con
+      <strong>profesionales del sector veterinario titulados</strong> y con formación. Siempre buscamos al
+      <strong>cuidador que mejor se adapte</strong> a tu mascota.
+    </p>
 
-    <p><span class="badge"><i class="fa-solid fa-user-nurse"></i> Auxiliares veterinarios titulados</span>
-       <span class="badge"><i class="fa-solid fa-camera"></i> Fotos e informe diario</span>
-       <span class="badge"><i class="fa-solid fa-shield-heart"></i> Seguro RC del cuidador</span></p>
+    <p>
+      <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
+      <span class="badge"><i class="fa-solid fa-camera"></i> Fotos e informe del día</span>
+      <span class="badge"><i class="fa-solid fa-paw"></i> Rutina adaptada</span>
+      <span class="badge"><i class="fa-solid fa-shield-heart"></i> Bienestar y seguridad</span>
+    </p>
 
-    <h3>Qué incluye</h3>
-    <ul>
-      <li>Hasta 8 horas de guardería en casa del cuidador.</li>
-      <li>Paseos y enriquecimiento según el perfil.</li>
-      <li>Actualizaciones con fotos y notas del día.</li>
+    <h3>¿Qué haremos durante el día?</h3>
+    <ul class="icon-list">
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> según tus indicaciones (cantidad y horarios).</div></li>
+      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas breves adaptadas a su energía.</div></li>
+      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y enriquecimiento</strong> (olfato, estimulación mental).</div></li>
+      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si se requiere, tal y como nos indiques.</div></li>
+      <li><i class="fa-solid fa-chalkboard-user"></i><div>Si es <strong>cachorro</strong> o tiene <strong>adiestrador</strong>, seguimos sus pautas para mantener la coherencia.</div></li>
     </ul>
+
+    <h3>Horarios y suplementos</h3>
+    <div class="note">
+      <p><i class="fa-regular fa-clock"></i> La guardería cubre <strong>hasta 8 horas</strong> entre la entrega por la mañana y la recogida por la noche.</p>
+      <p><i class="fa-solid fa-plus-minus"></i> Si se superan las 8h, se aplica <strong>suplemento de 5 € por cada hora extra</strong>.</p>
+    </div>
 
     <h3>Precios</h3>
-    <ul>
-      <li>Jornada día (hasta 8h): <strong>20 €</strong></li>
-      <li>Cachorros (≤ 6 meses): <strong>20 €</strong></li>
-      <li>Suplementos aplicables: festivos y desplazamientos (ver <a href="condiciones.html">condiciones</a>).</li>
-    </ul>
+    <table class="price-table">
+      <thead>
+        <tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Tarifa estándar (hasta 8h)</strong></td>
+          <td><strong>15 € / día</strong></td>
+          <td>Incluye actividades, seguimiento y reportes.</td>
+        </tr>
+        <tr>
+          <td><strong>Cachorros (≤ 6 meses)</strong></td>
+          <td><strong>20 € / día</strong></td>
+          <td>Seguimos tus pautas y/o las del adiestrador.</td>
+        </tr>
+        <tr>
+          <td><strong>Bono 10 días</strong></td>
+          <td><strong>120 €</strong> <small>(12 € / día)</small></td>
+          <td>Ahorro frente a tarifa diaria.</td>
+        </tr>
+      </tbody>
+    </table>
 
-    <p><a href="reserva.html" class="service-cta">Reservar ahora</a> <a href="servicios.html" class="ver-mas">Volver a servicios</a></p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Enlaces externos Festivos/Desplazamientos] -->
+    <h3>Suplementos y desplazamientos</h3>
+    <ul class="links-list">
+      <li><i class="fa-solid fa-calendar-day"></i> <a href="condiciones.html" rel="nofollow">Ver suplementos de festivos y días señalados</a></li>
+      <li><i class="fa-solid fa-route"></i> <a href="condiciones.html" rel="nofollow">Ver política de desplazamientos (kilometraje)</a></li>
+    </ul>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Aviso de desplazamiento no incluido] -->
+    <p class="note" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i>
+      <strong>Desplazamiento no incluido:</strong> si el cuidador debe desplazarse, se aplica <strong>kilometraje</strong> según tarifas vigentes (consulta el enlace de desplazamientos).
+    </p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- CTA: reservar (preselección del servicio) y volver, separados -->
+    <div class="cta-row">
+      <a href="reserva.html?servicio=guarderia-dia" class="service-cta" aria-label="Reservar guardería de día">Reservar ahora</a>
+      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">Volver a servicios</a>
+    </div>
   </main>
 
   <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
-  <div id="tpl-footer"><noscript><!-- mismo footer que el resto -->
+  <div id="tpl-footer"><noscript>
     <footer class="site-footer">
       <div class="container footer-row">
         <div class="footer-left">
