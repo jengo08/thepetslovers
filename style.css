@@ -432,6 +432,39 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 
+/* ===== AJUSTE DEFINITIVO INICIO ===== */
+@media (min-width:901px){
+  .navbar .home-button {
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+
+    /* LOGO (20px margen + 184px ancho aprox) + 2cm extra */
+    left: calc(20px + 184px + 2cm) !important;
+
+    z-index: 30 !important;
+    font-family: var(--fuente-titulo) !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    text-decoration: none !important;
+    transition: color .3s ease !important;
+  }
+  .navbar .home-button:hover{
+    color: var(--color-texto) !important;
+  }
+}
+
+/* Móvil y tablet: Inicio fluye normal */
+@media (max-width:900px){
+  .navbar .home-button {
+    position: static !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 8px 0 0 0 !important;
+  }
+}
+
+
 
 
 
