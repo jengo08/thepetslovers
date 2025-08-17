@@ -98,10 +98,8 @@
         "offers": [
           {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
           {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación", "price": "17", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "14", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita 60 min (desde día 11)", "price": "19", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita 90 min (desde día 11)", "price": "27", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name": "2ª visita solo medicación (opcional, aparte)", "price": "17", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "14", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -215,6 +213,8 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
+
+              <!-- TPL: INICIO BLOQUE NUEVO [Visitas gatos: aclaración y suplementos actualizados] -->
               <table>
                 <thead>
                   <tr>
@@ -225,25 +225,29 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Tarifa base</td>
+                    <td><strong>Tarifa base</strong></td>
                     <td><strong>22 €</strong></td>
                     <td><strong>30 €</strong></td>
                   </tr>
-                  <tr>
-                    <td>2ª visita solo medicación</td>
-                    <td colspan="2"><strong>17 €</strong> <small>(desde el día 11: <strong>14 €</strong>)</small></td>
-                  </tr>
-                  <tr>
-                    <td>2ª visita más larga <small>(a partir del día 11)</small></td>
-                    <td><strong>19 €</strong></td>
-                    <td><strong>27 €</strong></td>
-                  </tr>
                 </tbody>
               </table>
+
               <ul>
-                <li><strong>Suplementos por número de gatos:</strong> 2 gatos: <strong>+12 €</strong> · 3 gatos: <strong>+8 €</strong> (cada uno, segundo y tercero) · 4+ gatos: <strong>+4 €</strong> cada uno.</li>
+                <li><strong>Medicación (solo medicación, visita breve):</strong> 17 € <small>(desde el día 11: 14 €)</small>. <em>Este extra es aparte; no está ligado a 60/90 min.</em></li>
               </ul>
-              <p class="precio">Revisa los detalles para calcular tu precio final (tarifa base + suplementos).</p>
+
+              <ul>
+                <li><strong>Suplementos por nº de gatos:</strong></li>
+                <li>1 gato más: <strong>12 €</strong></li>
+                <li>2 gatos: <strong>8 €</strong> <small>cada uno</small></li>
+                <li>+ de 3 gatos: <strong>6 €</strong> <small>cada uno</small></li>
+              </ul>
+              <!-- TPL: FIN BLOQUE NUEVO -->
+
+              <!-- TPL: INICIO BLOQUE NUEVO [Nota de cálculo] -->
+              <p class="precio">Calcula tu precio final: <strong>tarifa base</strong> (60 o 90 min) + suplementos por nº de gatos + (opcional) medicación.</p>
+              <!-- TPL: FIN BLOQUE NUEVO -->
+
               <a href="reserva.html" class="service-cta">Reservar ahora</a>
               <a href="servicio-visitas.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
@@ -259,7 +263,7 @@
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li><strong>30 €</strong> por día.</li>
+                <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
                 <li><strong>Recogida después de las 14:00 h:</strong> suplemento de <strong>15 €</strong>.</li>
                 <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
@@ -282,8 +286,8 @@
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li>Paseo estándar: <strong>12 €</strong>.</li>
-                <li>2ª mascota: +<strong>8 €</strong>.</li>
+                <li><strong>Paseo estándar:</strong> 12 €.</li>
+                <li><strong>2ª mascota:</strong> +8 €.</li>
               </ul>
               <p class="precio">Consulta los detalles para ver cómo organizamos la ruta y los tiempos.</p>
               <a href="reserva.html" class="service-cta">Reservar ahora</a>
@@ -352,8 +356,8 @@
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
             <div class="content">
               <ul>
-                <li><strong>Festivos:</strong> +<strong>10 €</strong></li>
-                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +<strong>30 €</strong></li>
+                <li><strong>Festivos:</strong> +10 €</li>
+                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
               </ul>
               <a href="condiciones.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
