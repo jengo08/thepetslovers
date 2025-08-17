@@ -377,6 +377,25 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 
+@media (min-width:901px){
+  .navbar .tpl-home-offset { margin-left: 0 !important; }
+
+  .nav-links li:first-child {
+    margin-left: 1cm;  /* más cerca del recuadro */
+  }
+
+  .nav-links a.tpl-home-offset {
+    font-family: var(--fuente-titulo);
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: color .3s ease;
+  }
+  .nav-links a.tpl-home-offset:hover {
+    color: var(--color-texto);
+  }
+}
+
 
 
 
