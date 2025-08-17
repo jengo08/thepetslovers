@@ -12,6 +12,7 @@ h1, h2, h3 { font-family: var(--fuente-titulo); color: var(--color-texto); }
 a { color: var(--color-principal); text-decoration: none; }
 
 /* ===== NAVBAR + LOGO ===== */
+/* ===== NAVBAR + LOGO (actualizado) ===== */
 .navbar {
   position: fixed; top:0; left:0; width:100%; height:90px; padding:0 20px; z-index:20;
   display:flex; justify-content:flex-start; align-items:center;
@@ -23,9 +24,28 @@ a { color: var(--color-principal); text-decoration: none; }
   position:absolute; left:20px; top:50%; transform:translateY(-50%);
 }
 .logo img{ height:184px; width:auto; }
+
+/* Inicio: mismo estilo que enlaces + posición a 2 cm del logo */
+.home-button{
+  font-family: var(--fuente-titulo);
+  font-weight:700;
+  color:#fff;
+  text-decoration:none;
+  transition: color .3s ease;
+
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  /* 20px (separación lateral del logo) + 184px (alto = ancho caja logo) + 2cm (offset pedido) */
+  left: calc(20px + 184px + 2cm);
+  z-index:22;
+}
+.home-button:hover{ color:var(--color-texto); }
+
 .nav-links{ list-style:none; margin:0 0 0 auto; padding:0; display:flex; gap:20px; }
 .nav-links a{ color:#fff; font-weight:700; transition: color .3s ease; }
 .nav-links a:hover{ color:var(--color-texto); }
+
 .login-button{
   background:transparent; border:2px solid #fff; padding:8px 15px; border-radius:5px;
   margin-left:20px; margin-right:30px; color:#fff; transition:.3s;
@@ -179,35 +199,78 @@ a { color: var(--color-principal); text-decoration: none; }
 .legal-links a:hover{ color:var(--color-principal); text-decoration:underline; }
 
 /* ===== RESPONSIVE ===== */
+/* Móvil: que INICIO baje y se vea igual que el resto */
+/* ===== RESPONSIVE ===== */
 @media (max-width:768px){
-  .navbar{ height:auto; flex-direction:column; align-items:flex-start; padding:10px 15px; }
-  .logo{ position:static; transform:none; padding:5px; }
+  /* NAVBAR */
+  .navbar{
+    height:auto;
+    flex-direction:column;
+    align-items:flex-start;
+    padding:10px 15px;
+  }
+  .logo{
+    position:static;
+    transform:none;
+    padding:5px;
+  }
   .logo img{ height:50px; }
 
-  /* 👇 Hace que INICIO baje y se comporte como un enlace normal en móvil */
+  /* INICIO baja y se comporta como enlace normal */
   .home-button{
     position: static;
     left: auto;
     z-index: auto;
     margin-left: 0;
     margin-top: 10px;
+    transform: none;
+    color:#fff;
   }
 
-  .nav-links{ flex-direction:column; align-items:flex-start; width:100%; margin-top:10px; gap:5px; }
-  .login-button{ margin-left:0; margin-top:10px; align-self:flex-end; margin-right:0; }
+  .nav-links{
+    flex-direction:column;
+    align-items:flex-start;
+    width:100%;
+    margin-top:10px;
+    gap:5px;
+  }
+  .login-button{
+    margin-left:0;
+    margin-top:10px;
+    align-self:flex-end;
+    margin-right:0;
+  }
 
+  /* HERO / TIPOGRAFÍA */
   .hero-content h1{ font-size:2.5rem; }
   .hero-content p{ font-size:1.2rem; }
   .cta-button{ padding:12px 25px; }
 
-  .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{ padding:60px 15px; }
-  .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2, .become-sitter-section h2{ font-size:2rem; }
+  /* SECCIONES */
+  .services-section,
+  .why-us-section,
+  .testimonials-section,
+  .how-it-works-section,
+  .become-sitter-section{
+    padding:60px 15px;
+  }
+  .services-section h2,
+  .why-us-section h2,
+  .testimonials-section h2,
+  .how-it-works-section h2,
+  .become-sitter-section h2{
+    font-size:2rem;
+  }
   .subtitle{ font-size:1rem; margin-bottom:40px; }
   .how-it-works-grid{ flex-direction:column; }
   .why-us-grid{ grid-template-columns:1fr; }
 
-  /* Footer en móvil: sin desplazamiento, centrado */
-  .footer-right.socials{ position:static; top:0; right:0; justify-content:center; }
+  /* FOOTER */
+  .footer-right.socials{
+    position:static;
+    top:0; right:0;
+    justify-content:center;
+  }
 }
 
 
@@ -239,5 +302,6 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 /* TPL: FIN BLOQUE NUEVO */
+
 
 
