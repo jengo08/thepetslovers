@@ -9,17 +9,26 @@
   <style>.page{padding-top:120px}.page h1{margin:0 0 10px}.page p.lead{color:#666;margin:0 0 24px}</style>
 </head>
 <body>
-  <nav class="navbar">
-    <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
-    <ul class="nav-links">
-      <li><a href="como-funciona.html">Cómo funciona</a></li>
-      <li><a href="index.html#servicios">Servicios</a></li>
-      <li><a href="index.html#quienes-somos">Conócenos</a></li>
-      <li><a href="index.html#contactanos">Contáctanos</a></li>
-      <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-    </ul>
-    <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-  </nav>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
     <h1>Dónde estamos</h1>
@@ -27,38 +36,46 @@
     <p>Próximamente añadiremos un mapa con áreas de cobertura.</p>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="container footer-row">
-      <div class="footer-left">
-        <nav class="footer-links-row">
-          <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-          <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-          <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-          <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-          <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-          <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-          <a href="digital-services-act.html">Digital Services Act</a>
-        </nav>
-        <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-      </div>
-      <div class="footer-right socials">
-        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-      </div>
-    </div>
-    <div class="footer-bottom footer-bottom--inline">
-      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-      <nav class="footer-bottom-right legal-links">
-        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-        <a href="cookies.html">Cookies</a><span class="sep">|</span>
-        <a href="canal-denuncias.html">Canal de denuncias</a>
-      </nav>
-    </div>
-  </footer>
+  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <nav class="footer-links-row">
+            <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+            <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+            <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+            <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+            <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+            <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+            <a href="digital-services-act.html">Digital Services Act</a>
+            <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+          </nav>
+          <div class="footer-right socials">
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Scripts -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
 </body>
 </html>
