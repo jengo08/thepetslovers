@@ -183,11 +183,23 @@ a { color: var(--color-principal); text-decoration: none; }
   .navbar{ height:auto; flex-direction:column; align-items:flex-start; padding:10px 15px; }
   .logo{ position:static; transform:none; padding:5px; }
   .logo img{ height:50px; }
+
+  /* 👇 Hace que INICIO baje y se comporte como un enlace normal en móvil */
+  .home-button{
+    position: static;
+    left: auto;
+    z-index: auto;
+    margin-left: 0;
+    margin-top: 10px;
+  }
+
   .nav-links{ flex-direction:column; align-items:flex-start; width:100%; margin-top:10px; gap:5px; }
   .login-button{ margin-left:0; margin-top:10px; align-self:flex-end; margin-right:0; }
+
   .hero-content h1{ font-size:2.5rem; }
   .hero-content p{ font-size:1.2rem; }
   .cta-button{ padding:12px 25px; }
+
   .services-section, .why-us-section, .testimonials-section, .how-it-works-section, .become-sitter-section{ padding:60px 15px; }
   .services-section h2, .why-us-section h2, .testimonials-section h2, .how-it-works-section h2, .become-sitter-section h2{ font-size:2rem; }
   .subtitle{ font-size:1rem; margin-bottom:40px; }
@@ -197,6 +209,7 @@ a { color: var(--color-principal); text-decoration: none; }
   /* Footer en móvil: sin desplazamiento, centrado */
   .footer-right.socials{ position:static; top:0; right:0; justify-content:center; }
 }
+
 
 /* ===== TPL EXTRA ===== */
 :focus-visible { outline:2px dashed var(--color-principal); outline-offset:2px; }
@@ -226,4 +239,5 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 /* TPL: FIN BLOQUE NUEVO */
+
 
