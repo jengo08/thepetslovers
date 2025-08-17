@@ -111,6 +111,7 @@ a { color: var(--color-principal); text-decoration: none; }
 .become-sitter-section .cta-button:hover{ background:transparent; color:#fff; }
 
 /* ===== COOKIES MODAL ===== */
+/* (mantén tu modal/script como lo tengas, aquí solo estilos base por si los usas) */
 .cookie-modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; justify-content:center; align-items:center; z-index:999; }
 .cookie-modal-content{ background:#fff; max-width:600px; padding:40px; border-radius:10px; box-shadow:0 5px 25px rgba(0,0,0,.2); text-align:center; z-index:1000; }
 .cookie-modal-content p{ margin-bottom:20px; }
@@ -152,6 +153,7 @@ a { color: var(--color-principal); text-decoration: none; }
 .footer-help-inline{ margin-left:10px; font-size:.95rem; color:#666; white-space:nowrap; }
 .footer-help-inline a{ color:var(--color-principal); text-decoration:underline; }
 
+/* Redes a la derecha; un pelín elevadas si quieres separarlas de la línea inferior */
 .footer-right.socials{ display:flex; gap:10px; margin-left:auto; }
 .socials a{
   display:inline-flex; align-items:center; justify-content:center;
@@ -159,6 +161,8 @@ a { color: var(--color-principal); text-decoration: none; }
   font-size:1.2rem; color:var(--color-texto); transition:all .3s ease;
 }
 .socials a:hover{ border-color:var(--color-principal); color:var(--color-principal); }
+/* si quieres levantarlas un poco, descomenta la línea de abajo */
+/* .footer-right.socials{ margin-bottom:6px; } */
 
 .footer-bottom{ border-top:1px solid #eee; padding:12px 20px; font-size:.9rem; color:#777; }
 .footer-bottom--inline{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -182,38 +186,60 @@ a { color: var(--color-principal); text-decoration: none; }
   .how-it-works-grid{ flex-direction:column; }
   .why-us-grid{ grid-template-columns:1fr; }
 }
-
-/* Ajuste footer iconos redes (opcional) */
-.footer-right.socials { position: relative; top: -16px; right: 24px; }
-.footer-bottom { padding: 10px 20px; }
-
-/* En móvil, sin desplazamiento */
-@media (max-width: 768px) {
-  .footer-right.socials { position: static; top: 0; right: 0; justify-content: center; }
+/* Ajuste footer iconos redes (aplica a tu HTML actual) */
+.footer-right.socials {
+  position: relative;
+  top: -16px;   /* súbelos un pelín */
+  right: 24px;  /* muévelos un poco hacia la izquierda */
 }
 
-/* ==== Botón "Inicio" a la derecha del logo ==== */
-.home-button {
-  position: absolute;
-  left: 170px;   /* ~3 cm desde el recuadro del logo */
-  top: 50%;
-  transform: translateY(-50%);
-  color: #fff;
-  font-weight: 700;
-  padding: 8px 10px;
-  border-radius: 5px;
-  text-decoration: none;
-  z-index: 22;
-  transition: color .3s ease;
+.footer-bottom {
+  padding: 10px 20px; /* reduce alto del pie */
 }
-.home-button:hover { color: var(--color-texto); }
+/* ===== FIX footer redes (aplica en todas las páginas) ===== */
+footer .footer-right.socials,
+footer .socials.footer-right {
+  position: relative;
+  top: -16px;   /* súbelos un pelín */
+  right: 24px;  /* muévelos un poco hacia la izquierda */
+}
 
+footer .footer-bottom {
+  padding: 10px 20px; /* reduce la altura del pie */
+}
+
+/* En móvil, deja los iconos sin desplazamiento para que no se descoloquen */
 @media (max-width: 768px) {
-  .home-button {
+  footer .footer-right.socials,
+  footer .socials.footer-right {
     position: static;
-    transform: none;
-    margin: 6px 0 0 0;
-    align-self: flex-start;
-    color: #fff;
+    top: 0;
+    right: 0;
+    justify-content: center; /* si tu footer los centra en móvil */
   }
 }
+
+/* TPL: INICIO BLOQUE NUEVO [Accesibilidad + utilidades] */
+:focus-visible {
+  outline: 2px dashed var(--color-principal);
+  outline-offset: 2px;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap; border: 0;
+}
+/* Details/Summary global por si los usas en servicios u otras páginas */
+.service-details summary {
+  list-style: none;
+}
+.service-details summary::-webkit-details-marker {
+  display: none;
+}
+.service-details summary:focus-visible {
+  outline: 2px dashed var(--color-principal);
+  outline-offset: 3px;
+}
+/* TPL: FIN BLOQUE NUEVO */
