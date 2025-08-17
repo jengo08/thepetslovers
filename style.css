@@ -284,7 +284,7 @@ a { color: var(--color-principal); text-decoration: none; }
     position:absolute;
     top:50%;
     transform:translateY(-50%);
-    left: 215px; /* más cerca del recuadro blanco */
+    left: 200px; /* más cerca del recuadro blanco */
     z-index:22;
     font-family: var(--fuente-titulo);
     font-weight:700;
@@ -296,4 +296,5 @@ a { color: var(--color-principal); text-decoration: none; }
     color: var(--color-texto);
   }
 }
+
 
