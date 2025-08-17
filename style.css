@@ -26,20 +26,20 @@ a { color: var(--color-principal); text-decoration: none; }
 .logo img{ height:184px; width:auto; }
 
 /* Inicio: mismo estilo que enlaces + posición a 2 cm del logo */
-.home-button{
+.home-button {
   font-family: var(--fuente-titulo);
-  font-weight:700;
-  color:#fff;
-  text-decoration:none;
+  font-weight: 700;
+  color: #fff;
+  text-decoration: none;
   transition: color .3s ease;
-
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  /* 20px (separación lateral del logo) + 184px (alto = ancho caja logo) + 2cm (offset pedido) */
-  left: calc(20px + 184px + 2cm);
-  z-index:22;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  /* 20px (margen logo) + 184px (ancho caja logo) - 2cm */
+  left: calc(20px + 184px - 2cm);
+  z-index: 22;
 }
+
 .home-button:hover{ color:var(--color-texto); }
 
 .nav-links{ list-style:none; margin:0 0 0 auto; padding:0; display:flex; gap:20px; }
@@ -302,6 +302,7 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 /* TPL: FIN BLOQUE NUEVO */
+
 
 
 
