@@ -303,6 +303,26 @@ a { color: var(--color-principal); text-decoration: none; }
 }
 /* TPL: FIN BLOQUE NUEVO */
 
+/* Forzar que el offset por margen NO afecte en escritorio */
+@media (min-width:901px){
+  .navbar .tpl-home-offset { margin-left: 0 !important; }
+}
+@media (min-width:901px){
+  .navbar .home-button{
+    position: absolute !important;
+    top: 50%;
+    transform: translateY(-50%);
+    /* 20px (separación lateral del logo) + 184px (ancho aprox del bloque del logo)
+       - 2cm (lo acercamos 2 cm hacia el logo) */
+    left: calc(20px + 184px - 2cm) !important;
+    z-index: 22;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+  }
+  .navbar .home-button:hover{ color: var(--color-texto); }
+}
+
 
 
 
