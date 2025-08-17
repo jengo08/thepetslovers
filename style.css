@@ -11,8 +11,7 @@ body { font-family: var(--fuente-texto); color: var(--color-texto); margin:0; pa
 h1, h2, h3 { font-family: var(--fuente-titulo); color: var(--color-texto); }
 a { color: var(--color-principal); text-decoration: none; }
 
-/* ===== NAVBAR + LOGO ===== */
-/* ===== NAVBAR + LOGO (actualizado) ===== */
+/* ===== NAVBAR + LOGO (limpio) ===== */
 .navbar {
   position: fixed; top:0; left:0; width:100%; height:90px; padding:0 20px; z-index:20;
   display:flex; justify-content:flex-start; align-items:center;
@@ -25,21 +24,14 @@ a { color: var(--color-principal); text-decoration: none; }
 }
 .logo img{ height:184px; width:auto; }
 
-/* Inicio: mismo estilo que enlaces + posición a 2 cm del logo */
-.home-button {
+/* Inicio con el mismo estilo que los enlaces */
+.home-button{
   font-family: var(--fuente-titulo);
-  font-weight: 700;
-  color: #fff;
-  text-decoration: none;
+  font-weight:700;
+  color:#fff;
+  text-decoration:none;
   transition: color .3s ease;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  /* 20px (margen logo) + 184px (ancho caja logo) - 2cm */
-  left: calc(20px + 184px - 2cm);
-  z-index: 22;
 }
-
 .home-button:hover{ color:var(--color-texto); }
 
 .nav-links{ list-style:none; margin:0 0 0 auto; padding:0; display:flex; gap:20px; }
@@ -169,6 +161,8 @@ a { color: var(--color-principal); text-decoration: none; }
 .footer-links-row .sep{ color:#bbb; }
 .footer-links-row a{ color:var(--color-texto); text-decoration:none; white-space:nowrap; font-size:.95rem; }
 .footer-links-row a:hover{ color:var(--color-principal); text-decoration:underline; }
+
+/* Alinear “¿Necesitas ayuda?” en línea con los enlaces */
 .footer-links-row a,
 .footer-links-row .footer-help-inline {
   color: var(--color-texto);
@@ -176,13 +170,12 @@ a { color: var(--color-principal); text-decoration: none; }
   white-space: nowrap;
   font-size: .95rem;
 }
-
 .footer-help-inline{ margin-left:10px; font-size:.95rem; color:#666; white-space:nowrap; }
 .footer-help-inline a{ color:var(--color-principal); text-decoration:underline; }
 
 .footer-right.socials{
   display:flex; gap:10px; margin-left:auto;
-  position:relative; top:-16px; right:24px; /* desplazamiento escritorio */
+  position:relative; top:-16px; right:24px;
 }
 .socials a{
   display:inline-flex; align-items:center; justify-content:center;
@@ -198,11 +191,21 @@ a { color: var(--color-principal); text-decoration: none; }
 .legal-links a{ color:#777; text-decoration:none; white-space:nowrap; }
 .legal-links a:hover{ color:var(--color-principal); text-decoration:underline; }
 
+/* ===== ESCRITORIO: posicionar INICIO respecto al logo ===== */
+@media (min-width:901px){
+  /* Coloca INICIO  a la derecha del logo. Ajusta el valor para más/menos separación */
+  .navbar .home-button{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    left: 244px; /* 20px (margen) + 184px (ancho bloque logo) + 40px separador */
+    z-index:22;
+  }
+}
+
 /* ===== RESPONSIVE ===== */
-/* Móvil: que INICIO baje y se vea igual que el resto */
-/* ===== RESPONSIVE ===== */
-@media (max-width:768px){
-  /* NAVBAR */
+@media (max-width:900px){
+  /* NAVBAR en columna */
   .navbar{
     height:auto;
     flex-direction:column;
@@ -216,14 +219,12 @@ a { color: var(--color-principal); text-decoration: none; }
   }
   .logo img{ height:50px; }
 
-  /* INICIO baja y se comporta como enlace normal */
+  /* INICIO fluye normal en móvil */
   .home-button{
     position: static;
     left: auto;
-    z-index: auto;
-    margin-left: 0;
-    margin-top: 10px;
     transform: none;
+    margin-top: 10px;
     color:#fff;
   }
 
@@ -241,12 +242,11 @@ a { color: var(--color-principal); text-decoration: none; }
     margin-right:0;
   }
 
-  /* HERO / TIPOGRAFÍA */
+  /* Secciones */
   .hero-content h1{ font-size:2.5rem; }
   .hero-content p{ font-size:1.2rem; }
   .cta-button{ padding:12px 25px; }
 
-  /* SECCIONES */
   .services-section,
   .why-us-section,
   .testimonials-section,
@@ -265,7 +265,7 @@ a { color: var(--color-principal); text-decoration: none; }
   .how-it-works-grid{ flex-direction:column; }
   .why-us-grid{ grid-template-columns:1fr; }
 
-  /* FOOTER */
+  /* Footer en móvil */
   .footer-right.socials{
     position:static;
     top:0; right:0;
@@ -273,198 +273,6 @@ a { color: var(--color-principal); text-decoration: none; }
   }
 }
 
-
-/* ===== TPL EXTRA ===== */
+/* ===== ACCESIBILIDAD / UTILIDADES ===== */
 :focus-visible { outline:2px dashed var(--color-principal); outline-offset:2px; }
 .sr-only { position:absolute!important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,1px,1px); white-space:nowrap; border:0; }
-
-/* Offset botón Inicio */
-.navbar .tpl-home-offset { margin-left:3cm; }
-@media (max-width:900px){
-  .navbar .tpl-home-offset { margin-left:0; }
-}
-
-/* TPL: INICIO BLOQUE NUEVO [Posición exacta del botón Inicio] */
-@media (min-width: 901px){
-  .home-button{
-    position: absolute;
-    left: calc(20px + 184px + 3cm);
-    z-index: 22;
-  }
-  .nav-links{ margin-left: auto; }
-}
-@media (max-width: 900px){
-  .home-button{
-    position: static;
-    left: auto;
-    z-index: auto;
-    margin-left: 0;
-  }
-}
-/* TPL: FIN BLOQUE NUEVO */
-
-/* Forzar que el offset por margen NO afecte en escritorio */
-@media (min-width:901px){
-  .navbar .tpl-home-offset { margin-left: 0 !important; }
-}
-@media (min-width:901px){
-  .navbar .home-button{
-    position: absolute !important;
-    top: 50%;
-    transform: translateY(-50%);
-    /* 20px (separación lateral del logo) + 184px (ancho aprox del bloque del logo)
-       - 2cm (lo acercamos 2 cm hacia el logo) */
-    left: calc(20px + 184px - 2cm) !important;
-    z-index: 22;
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-  }
-  .navbar .home-button:hover{ color: var(--color-texto); }
-}
-
-/* ===== INICIO a 2 cm del logo — ESCRITORIO ===== */
-@media (min-width:901px){
-  /* Anula el margen antiguo, si existiera */
-  .navbar .tpl-home-offset { margin-left: 0 !important; }
-
-  /* Coloca INICIO alineado y 2 cm a la derecha del recuadro del logo */
-  .navbar .home-button{
-    position: absolute !important;
-    top: 50%;
-    transform: translateY(-50%);
-    /* 20px (separación lateral del logo) + 184px (ancho del bloque logo) + 2cm (espacio pedido) */
-    left: calc(20px + 184px + 2cm) !important;
-
-    z-index: 22;
-    font-family: var(--fuente-titulo);
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    transition: color .3s ease;
-  }
-  .navbar .home-button:hover{ color: var(--color-texto); }
-}
-
-/* ===== INICIO con sangría en móvil (aspecto coherente) ===== */
-@media (max-width:768px){
-  .home-button{
-    /* se muestra debajo del logo, pero con una sangría de ~2 cm */
-    position: static !important;
-    left: auto !important;
-    transform: none !important;
-    margin-left: 2cm;   /* sangría equivalente al pedido */
-    margin-top: 10
-
-@media (min-width:901px){
-  /* Quita offsets previos */
-  .navbar .tpl-home-offset { margin-left: 0 !important; }
-
-  /* Inicio pegado al logo con separación controlada */
-  .nav-links li:first-child {
-    margin-left: 2cm;  /* ajusta este valor para acercar o alejar */
-  }
-
-  .nav-links a.tpl-home-offset {
-    font-family: var(--fuente-titulo);
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    transition: color .3s ease;
-  }
-  .nav-links a.tpl-home-offset:hover {
-    color: var(--color-texto);
-  }
-}
-
-@media (min-width:901px){
-  .navbar .tpl-home-offset { margin-left: 0 !important; }
-
-  .nav-links li:first-child {
-    margin-left: 1cm;  /* más cerca del recuadro */
-  }
-
-  .nav-links a.tpl-home-offset {
-    font-family: var(--fuente-titulo);
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    transition: color .3s ease;
-  }
-  .nav-links a.tpl-home-offset:hover {
-    color: var(--color-texto);
-  }
-}
-
-/* ===== Posición de INICIO (escritorio) ===== */
-@media (min-width:901px){
-  /* Por si aún existe, anulamos el viejo offset por margen */
-  .navbar .tpl-home-offset { margin-left: 0 !important; }
-
-  /* INICIO: mismo estilo que los demás y pegado al logo con offset fino */
-  .navbar .home-button{
-    position: absolute !important;
-    top: 50%;
-    transform: translateY(-50%);
-
-    /* 20px (separación lateral del logo) + 184px (ancho del bloque logo)
-       + 1cm (AJUSTE fino: más cerca del recuadro que 2cm) */
-    left: calc(20px + 184px + 1cm) !important;
-
-    z-index: 22;
-    font-family: var(--fuente-titulo);
-    font-weight: 700;
-    color: #fff;
-    text-decoration: none;
-    transition: color .3s ease;
-  }
-  .navbar .home-button:hover{ color: var(--color-texto); }
-}
-
-/* ===== INICIO en móvil (se queda en columna) ===== */
-@media (max-width:768px){
-  .home-button{
-    position: static !important;
-    left: auto !important;
-    transform: none !important;
-    margin-left: 0;
-    margin-top: 10px;
-  }
-}
-
-/* ===== AJUSTE DEFINITIVO INICIO ===== */
-@media (min-width:901px){
-  .navbar .home-button {
-    position: absolute !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
-
-    /* LOGO (20px margen + 184px ancho aprox) + 2cm extra */
-    left: calc(20px + 184px + 2cm) !important;
-
-    z-index: 30 !important;
-    font-family: var(--fuente-titulo) !important;
-    font-weight: 700 !important;
-    color: #fff !important;
-    text-decoration: none !important;
-    transition: color .3s ease !important;
-  }
-  .navbar .home-button:hover{
-    color: var(--color-texto) !important;
-  }
-}
-
-/* Móvil y tablet: Inicio fluye normal */
-@media (max-width:900px){
-  .navbar .home-button {
-    position: static !important;
-    left: auto !important;
-    transform: none !important;
-    margin: 8px 0 0 0 !important;
-  }
-}
-
-
-
-
-
