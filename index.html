@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="es">
-    
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,39 +7,36 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- TPL: INICIO BLOQUE NUEVO [Google Fonts] -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-<!-- TPL: FIN BLOQUE NUEVO -->
-
-<!-- TPL: INICIO BLOQUE NUEVO [SEO on-page] -->
-<meta name="description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-<meta property="og:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
-<meta property="og:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://www.thepetslovers.es/">
-<meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
-<meta name="twitter:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en Madrid.">
-<!-- TPL: FIN BLOQUE NUEVO -->
-
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<!-- TPL: INICIO BLOQUE NUEVO [JSON-LD sitio] -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "LocalBusiness",
-  "name": "The Pets Lovers",
-  "url": "https://www.thepetslovers.es/",
-  "logo": "https://www.thepetslovers.es/images/logo.png.png",
-  "sameAs": ["https://www.instagram.com/guarderiamascotasthepetslovers/"],
-  "areaServed": "Madrid",
-  "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados."
-}
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page] -->
+    <meta name="description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en toda España.">
+    <meta property="og:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
+    <meta property="og:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en toda España.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.thepetslovers.es/">
+    <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
+    <meta name="twitter:description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en toda España.">
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD sitio] -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "The Pets Lovers",
+      "url": "https://www.thepetslovers.es/",
+      "logo": "https://www.thepetslovers.es/images/logo.png.png",
+      "sameAs": ["https://www.instagram.com/guarderiamascotasthepetslovers/"],
+      "areaServed": "España",
+      "serviceArea": {"@type":"Country","name":"España"},
+      "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados."
+    }
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -220,27 +216,27 @@
     <script>
       document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
     </script>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Accesibilidad details/summary] -->
+    <script>
+      document.querySelectorAll('.service-details').forEach(function(det){
+        var sum = det.querySelector('summary');
+        if(sum){
+          sum.setAttribute('role','button');
+          sum.setAttribute('aria-controls', (sum.textContent.trim().toLowerCase().replace(/\s+/g,'-') + '-content'));
+          function sync(){ sum.setAttribute('aria-expanded', det.hasAttribute('open') ? 'true' : 'false'); }
+          det.addEventListener('toggle', sync);
+          sync();
+        }
+        var content = det.querySelector('.content');
+        if(content){
+          var id = sum ? sum.getAttribute('aria-controls') : '';
+          if(id) content.setAttribute('id', id);
+        }
+      });
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <script src="script.js"></script>
-  <!-- TPL: INICIO BLOQUE NUEVO [Accesibilidad details/summary] -->
-<script>
-  document.querySelectorAll('.service-details').forEach(function(det){
-    var sum = det.querySelector('summary');
-    if(sum){
-      sum.setAttribute('role','button');
-      sum.setAttribute('aria-controls', (sum.textContent.trim().toLowerCase().replace(/\s+/g,'-') + '-content'));
-      function sync(){ sum.setAttribute('aria-expanded', det.hasAttribute('open') ? 'true' : 'false'); }
-      det.addEventListener('toggle', sync);
-      sync();
-    }
-    var content = det.querySelector('.content');
-    if(content){
-      var id = sum ? sum.getAttribute('aria-controls') : '';
-      if(id) content.setAttribute('id', id);
-    }
-  });
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-  
 </body>
 </html>
-
