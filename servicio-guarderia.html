@@ -8,32 +8,40 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <!-- TPL: INICIO BLOQUE NUEVO [SEO] -->
-  <meta name="description" content="Guardería de día (hasta 8 horas). Entrega por la mañana y recogida por la noche. Profesionales del sector veterinario titulados. Bonos desde 10 días.">
+  <meta name="description" content="Guardería de día para mascotas: hasta 8 horas desde las 07:00 h. Profesionales del sector veterinario titulados. Bonos 10, 20 y 30 días. Fotos y vídeos durante el día.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
+    /* Breadcrumb */
     .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
     .breadcrumb a{color:var(--color-principal);text-decoration:none}
     .breadcrumb a:hover{text-decoration:underline}
     .breadcrumb span{font-weight:600}
+    /* Badges e icon-list */
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
     .icon-list{list-style:none;padding-left:0}
     .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
     .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
+    /* Notas y avisos */
     .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
+    .alert{background:#fff8e6;border:1px solid #ffd27f}
+    /* Tablas */
     .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
     .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
     .price-table thead th{background:#fafafa}
+    /* Enlaces extra */
     .links-list{list-style:none;padding-left:0;margin:10px 0 0}
     .links-list li{margin:6px 0}
     .links-list a{color:var(--color-principal);text-decoration:none}
     .links-list a:hover{text-decoration:underline}
-    .cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
-    .cta-row .service-cta{order:1}
-    .cta-row .ver-mas{order:2;margin-left:auto}
-    @media (max-width:600px){.cta-row{gap:10px}.cta-row .ver-mas{margin-left:0}}
+    /* CTAs: Volver a la izquierda, Reservar grande a la derecha */
+    .cta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .cta-row .ver-mas{border:2px solid var(--color-principal);color:var(--color-principal);text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:700}
+    .cta-row .ver-mas:hover{background:var(--color-principal);color:#fff}
+    .cta-row .service-cta{background:var(--color-principal);color:#fff;padding:16px 22px;font-weight:700;border-radius:6px;text-decoration:none;font-size:1.05rem}
+    .cta-row .service-cta:hover{background:#2a7e80}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -59,43 +67,50 @@
     <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html">Servicios</a> &gt; <span>Guardería de día</span></nav>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <h1>Guardería de día</h1>
+    <h1><i class="fa-solid fa-sun"></i> Guardería de día</h1>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Introducción cercana] -->
     <p class="lead">
-      Entrega por la mañana y recogida por la noche — hasta <strong>8 horas</strong> de cuidado, juego y mimos con
-      <strong>profesionales del sector veterinario titulados</strong> y con formación. Siempre buscamos al
-      <strong>cuidador que mejor se adapte</strong> a tu mascota.
+      Para que tu compi pase el día <strong>acompañado, activo y seguro</strong> mientras tú haces tus cosas.  
+      Empezamos desde las <strong>07:00 h</strong> y la guardería cubre <strong>hasta 8 horas</strong> (hasta la tarde).  
+      Siempre con <strong>profesionales del sector veterinario titulados</strong> y buscando al <strong>cuidador que mejor se adapta</strong> a su carácter y necesidades.
     </p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <p>
       <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
-      <span class="badge"><i class="fa-solid fa-camera"></i> Fotos e informe del día</span>
       <span class="badge"><i class="fa-solid fa-paw"></i> Rutina adaptada</span>
       <span class="badge"><i class="fa-solid fa-shield-heart"></i> Bienestar y seguridad</span>
     </p>
 
     <h3>¿Qué haremos durante el día?</h3>
     <ul class="icon-list">
-      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> según tus indicaciones (cantidad y horarios).</div></li>
-      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas breves adaptadas a su energía.</div></li>
-      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y enriquecimiento</strong> (olfato, estimulación mental).</div></li>
-      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si se requiere, tal y como nos indiques.</div></li>
-      <li><i class="fa-solid fa-chalkboard-user"></i><div>Si es <strong>cachorro</strong> o tiene <strong>adiestrador</strong>, seguimos sus pautas para mantener la coherencia.</div></li>
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> según tus indicaciones (cantidad/horarios).</div></li>
+      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas adaptadas a su energía.</div></li>
+      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y enriquecimiento</strong> (olfato y estímulos mentales).</div></li>
+      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si se requiere, exactamente como nos indiques.</div></li>
+      <li><i class="fa-solid fa-chalkboard-user"></i><div>Si es <strong>cachorro</strong> o está con <strong>adiestrador</strong>, seguimos sus pautas para mantener la coherencia.</div></li>
     </ul>
 
-    <h3>Horarios y suplementos</h3>
+    <!-- TPL: INICIO BLOQUE NUEVO [Comunicación de fotos/vídeos] -->
     <div class="note">
-      <p><i class="fa-regular fa-clock"></i> La guardería cubre <strong>hasta 8 horas</strong> entre la entrega por la mañana y la recogida por la noche.</p>
-      <p><i class="fa-solid fa-plus-minus"></i> Si se superan las 8h, se aplica <strong>suplemento de 5 € por cada hora extra</strong>.</p>
+      <i class="fa-solid fa-camera"></i> Durante la jornada te <strong>enviaremos fotos y vídeos</strong> para que veas cómo va todo.
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <h3>Horarios</h3>
+    <div class="note">
+      <p><i class="fa-regular fa-clock"></i> Inicio disponible desde <strong>07:00 h</strong>.</p>
+      <p><i class="fa-regular fa-hourglass-half"></i> Cobertura de <strong>hasta 8 horas</strong> (hasta la tarde).</p>
+      <p><i class="fa-solid fa-circle-plus"></i> Si se superan las 8 h, se aplica <strong>suplemento de 5 € por cada hora extra</strong>.</p>
     </div>
 
     <h3>Precios</h3>
     <table class="price-table">
-      <thead>
-        <tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr>
-      </thead>
+      <thead><tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr></thead>
       <tbody>
         <tr>
-          <td><strong>Tarifa estándar (hasta 8h)</strong></td>
+          <td><strong>Tarifa estándar (hasta 8 h)</strong></td>
           <td><strong>15 € / día</strong></td>
           <td>Incluye actividades, seguimiento y reportes.</td>
         </tr>
@@ -106,30 +121,46 @@
         </tr>
         <tr>
           <td><strong>Bono 10 días</strong></td>
-          <td><strong>120 €</strong> <small>(12 € / día)</small></td>
+          <td><strong>135 €</strong> <small>(13,50 € / día)</small></td>
           <td>Ahorro frente a tarifa diaria.</td>
+        </tr>
+        <tr>
+          <td><strong>Bono 20 días</strong></td>
+          <td><strong>240 €</strong> <small>(12 € / día)</small></td>
+          <td>Descuento mayor por volumen.</td>
+        </tr>
+        <tr>
+          <td><strong>Bono 30 días</strong></td>
+          <td><strong>300 €</strong> <small>(10 € / día)</small></td>
+          <td>La opción más económica.</td>
         </tr>
       </tbody>
     </table>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Enlaces externos Festivos/Desplazamientos] -->
-    <h3>Suplementos y desplazamientos</h3>
+    <h3>Suplementos</h3>
     <ul class="links-list">
-      <li><i class="fa-solid fa-calendar-day"></i> <a href="condiciones.html" rel="nofollow">Ver suplementos de festivos y días señalados</a></li>
-      <li><i class="fa-solid fa-route"></i> <a href="condiciones.html" rel="nofollow">Ver política de desplazamientos (kilometraje)</a></li>
+      <!-- Estos enlaces van a las tarjetas de servicios (no a condiciones) -->
+      <li><i class="fa-solid fa-calendar-day"></i> <a href="servicios.html#festivos">Suplementos por festivos y días señalados</a></li>
+      <li><i class="fa-solid fa-route"></i> <a href="servicios.html#desplazamientos">Desplazamientos (kilometraje)</a></li>
     </ul>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Aviso sanitario y seguros] -->
+    <div class="note alert" style="margin-top:14px">
+      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos obligatorios:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, y <strong>seguro de responsabilidad civil</strong> vigente.</p>
+    </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Aviso de desplazamiento no incluido] -->
-    <p class="note" style="margin-top:12px;"><i class="fa-solid fa-circle-info"></i>
-      <strong>Desplazamiento no incluido:</strong> si el cuidador debe desplazarse, se aplica <strong>kilometraje</strong> según tarifas vigentes (consulta el enlace de desplazamientos).
+    <!-- TPL: INICIO BLOQUE NUEVO [Enlace a condiciones específicas de Guardería de día] -->
+    <p class="note" style="margin-top:12px">
+      <i class="fa-solid fa-file-lines"></i> Lee todas las <strong>condiciones de guardería de día</strong> en 
+      <a href="condiciones.html#guarderia-dia">esta página de condiciones</a>.
     </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- CTA: reservar (preselección del servicio) y volver, separados -->
+    <!-- CTA: Volver a la izquierda y Reservar grande a la derecha -->
     <div class="cta-row">
-      <a href="reserva.html?servicio=guarderia-dia" class="service-cta" aria-label="Reservar guardería de día">Reservar ahora</a>
-      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">Volver a servicios</a>
+      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
+      <a href="reserva.html?servicio=guarderia-dia" class="service-cta" aria-label="Haz tu reserva de guardería de día">Haz tu reserva</a>
     </div>
   </main>
 
