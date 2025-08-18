@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
-    .booking-wrapper{ max-width: 900px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
+    .booking-wrapper{ max-width: 980px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
     .booking-header{ text-align:center; margin-bottom: 18px; }
     .booking-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
     .booking-field{ display:flex; flex-direction:column; gap:6px; }
@@ -21,11 +21,22 @@
     .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
     .auth-wall strong{ color: var(--color-texto); }
     .disabled{ opacity:.6; pointer-events:none; }
+
+    /* TPL: INICIO BLOQUE NUEVO [Desglose de pago] */
+    .summary-panel{ margin-top: 16px; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:16px; }
+    .summary-grid{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
+    .summary-row{ display:contents; }
+    .summary-label{ color:#555; }
+    .summary-value{ font-weight:700; color: var(--color-texto); text-align:right; }
+    .summary-muted{ color:#999; font-weight:400; }
+    .summary-total{ border-top:1px solid #e7e7e7; margin-top:8px; padding-top:8px; font-size:1.05rem; }
+    .summary-badge{ display:inline-block; font-size:.85rem; padding:2px 8px; border-radius:999px; border:1px dashed #bbb; color:#666; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada por inyección] -->
+  <!-- Navbar unificada (inyectada) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -43,12 +54,11 @@
       </nav>
     </noscript>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <div class="booking-wrapper">
     <div class="booking-header">
       <h1>Reserva tu servicio</h1>
-      <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario estar registrada y haber añadido los datos de tu mascota.</p>
+      <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario iniciar sesión y tener los datos de tu mascota guardados.</p>
     </div>
 
     <!-- Muro de autenticación (placeholder) -->
@@ -62,45 +72,148 @@
     </div>
 
     <!-- Formulario de reserva (bloqueado si no hay login) -->
-    <form id="bookingForm" class="disabled">
+    <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree] -->
+    <!-- Sustituye ACTION por tu endpoint de Formspree cuando lo tengas (ver pasos abajo) -->
+    <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/xxxxxxxx" method="POST">
+    <!-- TPL: FIN BLOQUE NUEVO -->
       <div class="booking-grid">
         <div class="booking-field">
           <label for="service">Servicio</label>
-          <select id="service" required>
+          <select id="service" name="Servicio" required>
             <option value="">Elige un servicio…</option>
-            <option>Visitas a domicilio</option>
-            <option>Paseos</option>
-            <option>Guardería de día</option>
-            <option>Guardería en casa con cuidador</option>
-            <option>Bodas y servicios exclusivos</option>
+            <option value="visitas">Visitas a domicilio (gatos)</option>
+            <option value="paseos">Paseos</option>
+            <option value="guarderia">Guardería de día</option>
+            <option value="alojamiento">Alojamiento (por día)</option>
+            <option value="bodas">Bodas y servicios exclusivos</option>
           </select>
         </div>
 
         <div class="booking-field">
           <label for="date">Fecha</label>
-          <input type="date" id="date" required>
+          <input type="date" id="date" name="Fecha" required>
         </div>
 
         <div class="booking-field">
           <label for="start">Hora de inicio</label>
-          <input type="time" id="start" required>
+          <input type="time" id="start" name="Hora_inicio" required>
         </div>
 
         <div class="booking-field">
           <label for="end">Hora de fin</label>
-          <input type="time" id="end" required>
+          <input type="time" id="end" name="Hora_fin" required>
         </div>
 
         <div class="booking-field">
           <label for="location">Lugar</label>
-          <input type="text" id="location" placeholder="Dirección o zona">
+          <input type="text" id="location" name="Lugar" placeholder="Dirección o zona">
         </div>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Tipo animal, nº mascotas y cachorro] -->
+        <div class="booking-field" id="fieldSpecies" hidden>
+          <label for="species">Tipo de animal</label>
+          <select id="species" name="Tipo_animal">
+            <option value="perro">Perro</option>
+            <option value="gato">Gato</option>
+          </select>
+        </div>
+
+        <div class="booking-field" id="fieldIsPuppy" hidden>
+          <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
+          <select id="isPuppy" name="Cachorro">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+        </div>
+
+        <div class="booking-field" id="fieldNumPets" hidden>
+          <label for="numPets">Nº de mascotas</label>
+          <select id="numPets" name="N_mascotas">
+            <option value="1">1</option><option value="2">2</option>
+            <option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Extras generales] -->
+        <div class="booking-field">
+          <label for="festivo">¿Es festivo?</label>
+          <select id="festivo" name="Festivo">
+            <option value="0">No</option>
+            <option value="10">Sí, +10 €</option>
+          </select>
+        </div>
+
+        <div class="booking-field">
+          <label for="senalado">¿Día señalado (Navidad, Nochevieja…)?</label>
+          <select id="senalado" name="Dia_senalado">
+            <option value="0">No</option>
+            <option value="30">Sí, +30 €</option>
+          </select>
+        </div>
+
+        <div class="booking-field">
+          <label for="depositPct">Depósito (retención)</label>
+          <select id="depositPct" name="Deposito_pct">
+            <option value="0.2">20% (recomendado)</option>
+            <option value="0.3">30%</option>
+            <option value="0.5">50%</option>
+          </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="booking-field" style="grid-column: 1 / -1;">
           <label for="notes">Notas (opcional)</label>
-          <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
+          <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
         </div>
       </div>
+
+      <!-- Resumen / Desglose -->
+      <div class="summary-panel" id="summary">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <strong>Desglose preliminar</strong>
+          <span class="summary-badge">El kilómetraje se añade al asignar cuidador</span>
+        </div>
+        <div class="summary-grid">
+          <div class="summary-row">
+            <div class="summary-label">Precio base</div>
+            <div class="summary-value"><span id="sumBase">—</span> €</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Suplementos por mascotas</div>
+            <div class="summary-value"><span id="sumPets">0.00</span> €</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Festivo</div>
+            <div class="summary-value"><span id="sumFestivo">0.00</span> €</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Día señalado</div>
+            <div class="summary-value"><span id="sumSenalado">0.00</span> €</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Desplazamiento</div>
+            <div class="summary-value summary-muted">pendiente</div>
+          </div>
+          <div class="summary-row summary-total">
+            <div class="summary-label">Subtotal (sin desplazamiento)</div>
+            <div class="summary-value"><span id="sumSubtotal">—</span> €</div>
+          </div>
+          <div class="summary-row">
+            <div class="summary-label">Depósito a retener</div>
+            <div class="summary-value"><span id="sumDeposit">—</span> €</div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:10px;">
+          Este cálculo es orientativo. El importe por kilometraje se añade al confirmar el cuidador más cercano.
+          El depósito se retiene (autorización) y se captura tras aceptar la reserva.
+        </p>
+      </div>
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Campo oculto con el desglose para el email] -->
+      <input type="hidden" name="Desglose" id="summaryField">
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="booking-actions">
         <button type="submit" class="cta-button">Solicitar reserva</button>
@@ -110,41 +223,174 @@
   </div>
 
   <script>
-    // Placeholder de autenticación: cambia esto a true cuando implementemos login real
+    // Placeholder de autenticación real
     const isLoggedIn = false;
 
     const form = document.getElementById('bookingForm');
     const wall = document.getElementById('authWall');
 
     function updateAuthUI(){
-      if(isLoggedIn){
-        form.classList.remove('disabled');
-        wall.style.display = 'none';
-      }else{
-        form.classList.add('disabled');
-        wall.style.display = 'block';
-      }
+      if(isLoggedIn){ form.classList.remove('disabled'); wall.style.display = 'none'; }
+      else { form.classList.add('disabled'); wall.style.display = 'block'; }
     }
     updateAuthUI();
 
+    document.getElementById('btnLogin').addEventListener('click', (e)=>{ e.preventDefault(); alert('Pantalla de Iniciar sesión (la añadiremos más adelante).'); });
+    document.getElementById('btnRegister').addEventListener('click', (e)=>{ e.preventDefault(); alert('Pantalla de Registro (la añadiremos más adelante).'); });
+
+    // ====== TPL: INICIO BLOQUE NUEVO [Lógica de precios] ======
+    const els = {
+      service: document.getElementById('service'),
+      species: document.getElementById('species'),
+      isPuppy: document.getElementById('isPuppy'),
+      numPets: document.getElementById('numPets'),
+      festivo: document.getElementById('festivo'),
+      senalado: document.getElementById('senalado'),
+      depositPct: document.getElementById('depositPct'),
+
+      fieldSpecies: document.getElementById('fieldSpecies'),
+      fieldIsPuppy: document.getElementById('fieldIsPuppy'),
+      fieldNumPets: document.getElementById('fieldNumPets'),
+
+      sumBase: document.getElementById('sumBase'),
+      sumPets: document.getElementById('sumPets'),
+      sumFestivo: document.getElementById('sumFestivo'),
+      sumSenalado: document.getElementById('sumSenalado'),
+      sumSubtotal: document.getElementById('sumSubtotal'),
+      sumDeposit: document.getElementById('sumDeposit'),
+
+      summaryField: document.getElementById('summaryField')
+    };
+
+    // Precios base (coinciden con tu web actual)
+    const BASES = {
+      visitas: 22,       // 60' (incluye 1 gato)
+      paseos: 12,
+      guarderia: 20,     // día (hasta 8h)
+      alojamiento: 30,   // por día (perro/gato) — sube a 35€ si cachorro
+      bodas: 0           // a consultar
+    };
+
+    function currency(n){ return (Math.round(n * 100) / 100).toFixed(2); }
+
+    // Suplementos dinámicos por nº de mascotas, según servicio
+    function calcPetSupplements(service, species, n){
+      if(n <= 1) return 0;
+
+      // Visitas (gatos): 1 extra +12; 2 extras +8 c/u; + de 3 extras +6 c/u
+      if(service === 'visitas'){
+        const extra = n - 1;
+        if(extra === 1) return 12;
+        if(extra === 2) return 8 * 2;
+        if(extra >= 3) return 6 * extra;
+        return 0;
+      }
+
+      // Paseos: +8€ por cada mascota adicional
+      if(service === 'paseos'){
+        return 8 * (n - 1);
+      }
+
+      // Alojamiento: cada perro adicional 25€ / día
+      if(service === 'alojamiento' && species === 'perro'){
+        return 25 * (n - 1);
+      }
+
+      return 0;
+    }
+
+    function toggleFields(){
+      const svc = els.service.value;
+
+      // Mostrar tipo de animal y nº de mascotas en servicios que lo requieren
+      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
+      els.fieldSpecies.hidden = !needSpeciesNum;
+      els.fieldNumPets.hidden = !needSpeciesNum;
+
+      // Selector "cachorro" sólo para alojamiento y guardería
+      const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
+      els.fieldIsPuppy.hidden = !needPuppy;
+
+      // En visitas fijamos especie = gato
+      if(svc === 'visitas'){ els.species.value = 'gato'; }
+    }
+
+    function getBasePrice(service){
+      let base = BASES[service] || 0;
+      const isPuppy = (els.isPuppy.value === 'si');
+
+      // Regla de cachorro:
+      // - Alojamiento: cachorros 35 €
+      // - Guardería de día: sigue 20 € (sin cambio)
+      if(service === 'alojamiento' && isPuppy){ base = 35; }
+
+      return base;
+    }
+
+    function recalc(){
+      const svc = els.service.value || '';
+      const species = (els.species.value || 'perro');
+      const n = parseInt(els.numPets.value || '1', 10);
+
+      const base = getBasePrice(svc);
+      const pets = calcPetSupplements(svc, species, n);
+
+      const festivo = parseFloat(els.festivo.value || 0);
+      const senalado = parseFloat(els.senalado.value || 0);
+
+      const subtotal = base + pets + festivo + senalado;
+      const depPct = parseFloat(els.depositPct.value || 0.2);
+      const deposit = subtotal * depPct;
+
+      els.sumBase.textContent = base ? currency(base) : '—';
+      els.sumPets.textContent = currency(pets);
+      els.sumFestivo.textContent = currency(festivo);
+      els.sumSenalado.textContent = currency(senalado);
+      els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
+      els.sumDeposit.textContent = base ? currency(deposit) : '—';
+    }
+
+    ['change','input'].forEach(ev=>{
+      ['service','species','isPuppy','numPets','festivo','senalado','depositPct'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalc(); });
+      });
+    });
+
+    toggleFields();
+    recalc();
+
     form.addEventListener('submit', (e)=>{
+      // Bloquea si no hay login (política que querías)
       if(!isLoggedIn){
         e.preventDefault();
         alert('Debes iniciar sesión o registrarte para completar la reserva.');
+        return;
       }
-    });
 
-    document.getElementById('btnLogin').addEventListener('click', (e)=>{
-      e.preventDefault();
-      alert('Pantalla de Iniciar sesión (la añadiremos más adelante).');
+      // Antes de enviar a Formspree, dejamos el desglose en el campo oculto
+      const summary = [
+        `Servicio: ${els.service.options[els.service.selectedIndex]?.text || ''}`,
+        `Tipo de animal: ${els.species && !els.fieldSpecies.hidden ? els.species.value : '-'}`,
+        `Cachorro: ${els.isPuppy && !els.fieldIsPuppy.hidden ? els.isPuppy.value : '-'}`,
+        `Nº mascotas: ${els.numPets && !els.fieldNumPets.hidden ? els.numPets.value : '1'}`,
+        `Festivo: ${els.festivo.value} €`,
+        `Día señalado: ${els.senalado.value} €`,
+        `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal').textContent} €`,
+        `Depósito a retener: ${document.getElementById('sumDeposit').textContent} €`,
+        `Kilometraje: pendiente (al asignar cuidador)`
+      ].join(' | ');
+      els.summaryField.value = summary;
+
+      // (Opcional) podrías mostrar una confirmación aquí
+      // alert('Enviando solicitud de reserva...');
+      // Si quieres evitar el envío real hasta probar, descomenta:
+      // e.preventDefault();
     });
-    document.getElementById('btnRegister').addEventListener('click', (e)=>{
-      e.preventDefault();
-      alert('Pantalla de Registro (la añadiremos más adelante).');
-    });
+    // ====== TPL: FIN BLOQUE NUEVO ======
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado por inyección] -->
+  <!-- Footer unificado (inyectado) -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
@@ -180,12 +426,9 @@
       </footer>
     </noscript>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
+  <!-- Mini-injectors -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
 </body>
 </html>
