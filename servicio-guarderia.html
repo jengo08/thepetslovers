@@ -1,193 +1,203 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Guardería de día · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos] -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO] -->
+  <meta name="description" content="Guardería de día (hasta 8 h desde las 7:00 am). Cuidado profesional con auxiliares veterinarios titulados. Bonos: 10 días 13,50€/día · 20 días 12€/día · 30 días 10€/día.">
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs] -->
   <style>
-    .page { padding-top: 120px; }
-    .page h1 { margin: 0 0 10px; }
-    .lead { color:#666; margin:0 0 16px; }
-    .info-wrap { background:#fff; border:1px solid #eee; border-radius:12px; padding:18px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-    .grid-2 { display:grid; grid-template-columns:1fr; gap:16px; }
-    @media(min-width:900px){ .grid-2{ grid-template-columns: 1.2fr .8fr; } }
-    table { width:100%; border-collapse: collapse; margin: 6px 0 10px; }
-    th, td { border:1px solid #eee; padding:8px; text-align:center; }
-    thead th { background:#fafafa; }
-    .pill { display:inline-block; padding:6px 10px; border-radius:999px; background:#f5f5f5; color:var(--color-texto); font-size:.9rem; }
-    .note { color:#666; font-size:.95rem; }
-    .warn-box { border:1px solid #f2c94c; background:#fff8e1; color:#7a5c00; padding:12px 14px; border-radius:10px; }
-    .section { margin:18px 0; }
-    .actions { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px; }
-    .btn-back { background:#fff; color:var(--color-principal); border:2px solid var(--color-principal); padding:12px 16px; border-radius:8px; font-weight:700; }
-    .btn-reserva { display:inline-block; padding:15px 28px; font-weight:700; border-radius:8px; background:var(--color-principal); color:#fff; }
-    .list { margin:0; padding-left:18px; }
-    .list li { margin:6px 0; }
-    .tag-links a { text-decoration: underline; }
+    .page{padding-top:120px}.lead{color:#666}
+    .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
+    .breadcrumb a{color:var(--color-principal);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb span{font-weight:600}
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
+    .icon-list{list-style:none;padding-left:0}
+    .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+    .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
+    .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
+    .warn{background:#fff8e1;border:1px solid #f2c94c;color:#7a5c00;border-radius:8px;padding:12px}
+    .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
+    .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
+    .price-table thead th{background:#fafafa}
+    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
+    .links-list li{margin:6px 0}
+    .links-list a{color:var(--color-principal);text-decoration:none}
+    .links-list a:hover{text-decoration:underline}
+    .cta-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+    .cta-row .btn-back{order:1}
+    .cta-row .service-cta{order:2}
+    .btn-back{background:#fff;border:2px solid var(--color-principal);color:var(--color-principal);padding:12px 16px;border-radius:8px;font-weight:700}
+    .service-cta{background:var(--color-principal);color:#fff;padding:15px 26px;border-radius:8px;font-weight:700;display:inline-block}
+    @media (max-width:600px){.cta-row{gap:10px}}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-
-  <!-- NAVBAR (igual estilo que el resto) -->
-  <nav class="navbar">
-    <div class="logo">
-      <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-    </div>
-    <a href="index.html" class="home-button">Inicio</a>
-    <ul class="nav-links">
-      <li><a href="como-funciona.html">Cómo funciona</a></li>
-      <li><a href="servicios.html">Servicios</a></li>
-      <li><a href="index.html#contactanos">Contáctanos</a></li>
-      <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-    </ul>
-    <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
-  </nav>
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
+  <div id="tpl-navbar"><noscript>
+    <nav class="navbar">
+      <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+      <a href="index.html" class="home-button">Inicio</a>
+      <ul class="nav-links">
+        <li><a href="como-funciona.html">Cómo funciona</a></li>
+        <li><a href="servicios.html">Servicios</a></li>
+        <li><a href="index.html#contactanos">Contáctanos</a></li>
+        <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+      </ul>
+      <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+    </nav>
+  </noscript></div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
-    <div class="actions">
-      <!-- TPL: INICIO BLOQUE NUEVO [Botón Volver atrás a la izquierda] -->
-      <a href="servicios.html#guarderia-dia" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver atrás</a>
-      <!-- TPL: FIN BLOQUE NUEVO -->
-    </div>
+    <!-- TPL: INICIO BLOQUE NUEVO [Breadcrumb] -->
+    <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html#guarderia-dia">Servicios</a> &gt; <span>Guardería de día</span></nav>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h1>Guardería de día</h1>
-    <p class="lead">Compañía y supervisión durante el día para que tu compi esté tranquilo y tú, sin preocupaciones. Siempre con auxiliares veterinarios titulados.</p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Intro ajustada] -->
+    <p class="lead">
+      Cuidado y compañía durante el día, con <strong>auxiliares veterinarios titulados</strong>. Dejáis a primera hora y
+      recogéis por la tarde: hasta <strong>8 horas</strong> de rutina, juego y tranquilidad para tu compi.
+    </p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <div class="grid-2">
-      <section class="info-wrap">
-        <h2>Tarifas y bonos</h2>
-        <!-- TPL: INICIO BLOQUE NUEVO [Tabla estilo que te gustaba] -->
-        <table aria-label="Tarifas guardería de día">
-          <thead>
-            <tr>
-              <th>Modalidad</th>
-              <th>Incluye</th>
-              <th>Precio</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Jornada de día</strong></td>
-              <td>Hasta 8 h <span class="pill">desde 7:00 am</span></td>
-              <td><strong>20 €</strong></td>
-            </tr>
-            <tr>
-              <td><strong>Bono 10 días</strong></td>
-              <td>10 jornadas (canjeables)</td>
-              <td><strong>13,50 €/día</strong></td>
-            </tr>
-            <tr>
-              <td><strong>Bono 20 días</strong></td>
-              <td>20 jornadas (canjeables)</td>
-              <td><strong>12 €/día</strong></td>
-            </tr>
-            <tr>
-              <td><strong>Bono 30 días</strong></td>
-              <td>30 jornadas (canjeables)</td>
-              <td><strong>10 €/día</strong></td>
-            </tr>
-          </tbody>
-        </table>
-        <p class="note">El precio final puede incluir suplementos según el día y el desplazamiento (ver más abajo).</p>
+    <p>
+      <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
+      <span class="badge"><i class="fa-solid fa-paw"></i> Rutina adaptada</span>
+      <span class="badge"><i class="fa-solid fa-camera"></i> Seguimiento con fotos</span>
+      <span class="badge"><i class="fa-solid fa-shield-heart"></i> Bienestar y seguridad</span>
+    </p>
+
+    <h3>¿Qué haremos durante el día?</h3>
+    <ul class="icon-list">
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> según tus indicaciones (cantidades y horarios).</div></li>
+      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas adaptadas a su energía.</div></li>
+      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y enriquecimiento</strong> (olfato, estimulación mental).</div></li>
+      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si se requiere, tal y como nos indiques.</div></li>
+      <li><i class="fa-solid fa-chalkboard-user"></i><div>Si es <strong>cachorro</strong> o sigue pautas, las mantenemos para que todo sea coherente.</div></li>
+    </ul>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Seguimiento fotos/vídeos reubicado] -->
+    <h3>Seguimiento durante el día</h3>
+    <p>Te enviamos <strong>fotos y notas</strong> por WhatsApp o email para que veas cómo va todo.</p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- ===== Horarios / Suplementos separados ===== -->
+    <h3>Horarios</h3>
+    <div class="note">
+      <p><i class="fa-regular fa-clock"></i> Apertura desde las <strong>7:00 am</strong>.</p>
+      <p><i class="fa-regular fa-hourglass-half"></i> Cobertura de <strong>hasta 8 horas</strong> por jornada.</p>
+      <p><i class="fa-solid fa-circle-info"></i> Si necesitas más tiempo, indícalo en la reserva y te confirmamos disponibilidad.</p>
+    </div>
+
+    <h3>Suplementos</h3>
+    <!-- TPL: INICIO BLOQUE NUEVO [Enlaces a tarjetas de servicios, no a condiciones] -->
+    <ul class="links-list">
+      <li><i class="fa-solid fa-calendar-day"></i> <a href="servicios.html#festivos">Festivos y días señalados</a></li>
+      <li><i class="fa-solid fa-route"></i> <a href="servicios.html#desplazamientos">Desplazamientos (kilometraje)</a></li>
+    </ul>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Aviso requisitos sanitarios y seguro] -->
+    <div class="warn" style="margin-top:12px;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <strong>Requisitos:</strong> cartilla al día de <u>vacunas</u> y <u>desparasitaciones</u>, y <u>seguro de responsabilidad civil</u> en vigor.
+      <br>Lee todas las normas en <a href="condiciones.html">Condiciones de guardería de día</a>.
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <h3>Precios</h3>
+    <table class="price-table" aria-label="Tarifas guardería de día">
+      <thead>
+        <tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Tarifa estándar (hasta 8 h)</strong></td>
+          <td><strong>15 € / día</strong></td>
+          <td>Incluye actividades y seguimiento.</td>
+        </tr>
+        <tr>
+          <td><strong>Cachorros (≤ 6 meses)</strong></td>
+          <td><strong>20 € / día</strong></td>
+          <td>Mantenemos tus pautas y ritmos.</td>
+        </tr>
+        <!-- TPL: INICIO BLOQUE NUEVO [Bonos corregidos] -->
+        <tr>
+          <td><strong>Bono 10 días</strong></td>
+          <td><strong>13,50 € / día</strong></td>
+          <td>Canjeable por jornadas de día.</td>
+        </tr>
+        <tr>
+          <td><strong>Bono 20 días</strong></td>
+          <td><strong>12 € / día</strong></td>
+          <td>Canjeable por jornadas de día.</td>
+        </tr>
+        <tr>
+          <td><strong>Bono 30 días</strong></td>
+          <td><strong>10 € / día</strong></td>
+          <td>Canjeable por jornadas de día.</td>
+        </tr>
         <!-- TPL: FIN BLOQUE NUEVO -->
+      </tbody>
+    </table>
 
-        <div class="section">
-          <h3>Horarios</h3>
-          <ul class="list">
-            <li><strong>Apertura:</strong> desde las <strong>7:00 am</strong>.</li>
-            <li><strong>Duración:</strong> hasta <strong>8 h</strong> por jornada.</li>
-            <li>Si necesitas más horas, indícalo en la reserva y te confirmamos disponibilidad.</li>
-          </ul>
-        </div>
-
-        <div class="section">
-          <h3>Suplementos</h3>
-          <ul class="list tag-links">
-            <li><strong>Festivos:</strong> suplemento según fecha — consulta la tarjeta de <a href="servicios.html#festivos">Festivos</a>.</li>
-            <li><strong>Desplazamientos:</strong> si el cuidador debe moverse — consulta la tarjeta de <a href="servicios.html#desplazamientos">Desplazamientos</a>.</li>
-          </ul>
-          <p class="note">Estos suplementos se aplican aparte y se muestran de forma transparente antes de confirmar tu reserva.</p>
-        </div>
-
-        <div class="section">
-          <h3>Seguimiento durante el día</h3>
-          <p>Recibirás <strong>fotos y notas</strong> del día a través del canal que prefieras (WhatsApp o email) para que veas cómo va todo.</p>
-        </div>
-
-        <div class="section warn-box" role="note" aria-label="Requisitos sanitarios y de seguro">
-          <strong>Antes de venir:</strong> cartilla al día de <u>vacunas</u> y <u>desparasitaciones</u>, y <u>seguro obligatorio de responsabilidad civil</u> en vigor.
-        </div>
-
-        <div class="section">
-          <p class="note">¿Tienes dudas o necesidades especiales? Escríbenos y lo adaptamos a vuestro caso.</p>
-        </div>
-
-        <div class="actions">
-          <!-- TPL: INICIO BLOQUE NUEVO [Botón grande de reserva] -->
-          <a href="reserva.html" class="btn-reserva">Haz tu reserva</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-        </div>
-      </section>
-
-      <aside class="info-wrap">
-        <h2>Antes de reservar</h2>
-        <ul class="list">
-          <li>Primera visita gratuita con tu cuidador tras aceptar la reserva.</li>
-          <li>Entorno seguro y adaptado a su rutina.</li>
-          <li>Comunicación constante y atención profesional.</li>
-        </ul>
-
-        <div class="section">
-          <h3>Condiciones de guardería de día</h3>
-          <p>Te recomendamos leer las normas y detalles completos aquí:</p>
-          <p><a class="cta-button" href="condiciones.html">Lee todas las condiciones</a></p>
-        </div>
-      </aside>
+    <!-- CTA: volver (izquierda) + reservar grande -->
+    <div class="cta-row">
+      <!-- TPL: INICIO BLOQUE NUEVO [Botón volver a la izquierda] -->
+      <a href="servicios.html#guarderia-dia" class="btn-back" aria-label="Volver a todos los servicios"><i class="fa-solid fa-arrow-left"></i> Volver atrás</a>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+      <a href="reserva.html?servicio=guarderia-dia" class="service-cta" aria-label="Reservar guardería de día">Haz tu reserva</a>
     </div>
   </main>
 
-  <!-- FOOTER (igual que en las demás páginas) -->
-  <footer class="site-footer">
-    <div class="container footer-row">
-      <nav class="footer-links-row">
-        <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-        <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-        <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-        <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-        <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-        <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-        <a href="digital-services-act.html">Digital Services Act</a>
-        <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
-      </nav>
-
-      <div class="footer-right socials">
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
+  <div id="tpl-footer"><noscript>
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <div class="footer-left">
+          <nav class="footer-links-row">
+            <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+            <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+            <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+            <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+            <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+            <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+            <a href="digital-services-act.html">Digital Services Act</a>
+          </nav>
+          <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+        </div>
+        <div class="footer-right socials">
+          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        </div>
       </div>
-    </div>
+      <div class="footer-bottom footer-bottom--inline">
+        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+        <nav class="footer-bottom-right legal-links">
+          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+          <a href="cookies.html">Cookies</a><span class="sep">|</span>
+          <a href="canal-denuncias.html">Canal de denuncias</a>
+        </nav>
+      </div>
+    </footer>
+  </noscript></div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <div class="footer-bottom footer-bottom--inline">
-      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-      <nav class="footer-bottom-right legal-links">
-        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-        <a href="cookies.html">Cookies</a><span class="sep">|</span>
-        <a href="canal-denuncias.html">Canal de denuncias</a>
-      </nav>
-    </div>
-  </footer>
-
-  <script>
-    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-  </script>
+  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
 </body>
 </html>
