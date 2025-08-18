@@ -527,3 +527,61 @@
    TPL: FIN BLOQUE NUEVO [Hotfix reservas robusto]
 ================================================== */
 
+<!-- TPL: INICIO BLOQUE NUEVO [Airbag reservas + diagnóstico visible] -->
+<script>
+(function(){
+  // Mensaje discreto de carga (se quita al renderizar)
+  const root = document.querySelector('[data-tpl="reservas"], #tpl-reservas, #tpl-calendar, .tpl-reservas');
+  if (root && !root.dataset.tplInit) {
+    root.dataset.tplInit = "1";
+    const loading = document.createElement('div');
+    loading.id = 'tpl-reservas-loading';
+    loading.style.cssText = 'margin:10px 0;padding:10px;border:1px dashed #ddd;border-radius:10px;background:#fff;color:#58425a;font:500 14px/1.4 Montserrat,system-ui';
+    loading.textContent = 'Cargando calendario…';
+    root.appendChild(loading);
+  }
+
+  // Si mi lógica principal ya estaba, no hacemos nada más
+  if (window.__TPL_RESERVAS_OK__) return;
+
+  // Pequeño calendario mínimo si no se ha dibujado nada (fallback)
+  function drawFallbackCalendar(container){
+    if (!container) return;
+    container.innerHTML = '';
+    const box = document.createElement('div');
+    box.style.cssText = 'border:1px solid #eee;border-radius:12px;padding:12px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.05)';
+    const h = document.createElement('div');
+    h.style.cssText = 'font-weight:700;margin-bottom:8px;color:#58425a;font-family:Poppins,system-ui';
+    const now = new Date();
+    const m = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][now.getMonth()];
+    h.textContent = `Disponibilidad — ${m} ${now.getFullYear()}`;
+    const p = document.createElement('p');
+    p.style.cssText = 'margin:0;color:#58425a';
+    p.textContent = 'Si ves este calendario básico, la lógica avanzada no cargó. Puedes seguir enviando la solicitud; los festivos se aplicarán al revisar.';
+    box.append(h,p);
+    container.append(box);
+  }
+
+  // Si a los 800ms no hay nada más que el "loading", pinto fallback
+  setTimeout(()=>{
+    const cont = document.querySelector('[data-tpl="reservas"], #tpl-reservas, #tpl-calendar, .tpl-reservas');
+    const onlyLoading = cont && cont.children.length === 1 && cont.querySelector('#tpl-reservas-loading');
+    if (onlyLoading) {
+      drawFallbackCalendar(cont);
+    }
+  }, 800);
+
+  // Capturo errores globales y los muestro (sin romper estética)
+  function showError(msg){
+    const bar = document.getElementById('tpl-reservas-error') || document.createElement('div');
+    bar.id = 'tpl-reservas-error';
+    bar.style.cssText = 'margin:10px 0;padding:10px;border:1px solid #f3c2c2;border-radius:10px;background:#fff7f7;color:#7a2c2c;font:500 13px/1.5 Montserrat';
+    bar.innerHTML = 'Ha ocurrido un problema con el script de reservas. <br><small>'+ (msg||'Error desconocido') +'</small>';
+    (root || document.body).prepend(bar);
+  }
+  window.addEventListener('error', (e)=>{ showError(e.message); });
+  window.addEventListener('unhandledrejection', (e)=>{ showError((e.reason && e.reason.message) || 'Promesa rechazada'); });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
