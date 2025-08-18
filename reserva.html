@@ -71,15 +71,16 @@
       <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
     </div>
 
-    <!-- Formulario de reserva (bloqueado si no hay login) -->
-    <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree a contacto@thepetslovers.es] -->
+    <!-- Formulario de reserva -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Formspree + metadatos email + redirección] -->
     <form id="bookingForm" class="disabled" novalidate
           action="https://formspree.io/f/mdkdvlpr" method="POST">
-      <!-- Metadatos de email -->
       <input type="hidden" name="_subject" value="Nueva solicitud de reserva · The Pets Lovers">
       <input type="hidden" name="_replyto" value="contacto@thepetslovers.es">
+      <input type="hidden" name="_redirect" value="https://www.thepetslovers.es/gracias.html">
     <!-- TPL: FIN BLOQUE NUEVO -->
       <div class="booking-grid">
+        <!-- Servicio -->
         <div class="booking-field">
           <label for="service">Servicio</label>
           <select id="service" name="Servicio" required>
@@ -92,44 +93,101 @@
           </select>
         </div>
 
+        <!-- TPL: INICIO BLOQUE NUEVO [Rango de fechas] -->
         <div class="booking-field">
-          <label for="date">Fecha</label>
-          <input type="date" id="date" name="Fecha" required>
+          <label for="startDate">Fecha de inicio</label>
+          <input type="date" id="startDate" name="Fecha_inicio" required>
+        </div>
+        <div class="booking-field">
+          <label for="endDate">Fecha de fin</label>
+          <input type="date" id="endDate" name="Fecha_fin" required>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- Horas (opcionales por día 1) -->
+        <div class="booking-field">
+          <label for="start">Hora de inicio (día 1)</label>
+          <input type="time" id="start" name="Hora_inicio">
         </div>
 
         <div class="booking-field">
-          <label for="start">Hora de inicio</label>
-          <input type="time" id="start" name="Hora_inicio" required>
+          <label for="end">Hora de fin (día 1)</label>
+          <input type="time" id="end" name="Hora_fin">
         </div>
 
-        <div class="booking-field">
-          <label for="end">Hora de fin</label>
-          <input type="time" id="end" name="Hora_fin" required>
-        </div>
-
+        <!-- Ubicación + Desplazamiento -->
         <div class="booking-field">
           <label for="location">Lugar</label>
           <input type="text" id="location" name="Lugar" placeholder="Dirección o zona">
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Tipo animal, nº mascotas y cachorro] -->
-        <div class="booking-field" id="fieldSpecies" hidden>
+        <!-- TPL: INICIO BLOQUE NUEVO [Desplazamiento] -->
+        <div class="booking-field">
+          <label for="needTravel">¿Necesita desplazamiento?</label>
+          <select id="needTravel" name="Desplazamiento">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+          <small class="note">El coste por kilometraje se calculará cuando asignemos al cuidador/a que mejor se adapte a tus necesidades.</small>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Zona/CCAA para festivos] -->
+        <div class="booking-field">
+          <label for="region">Comunidad autónoma</label>
+          <select id="region" name="CCAA">
+            <option value="nacional">España (festivos nacionales)</option>
+            <option value="andalucia">Andalucía</option>
+            <option value="aragon">Aragón</option>
+            <option value="asturias">Asturias</option>
+            <option value="baleares">Illes Balears</option>
+            <option value="canarias">Canarias</option>
+            <option value="cantabria">Cantabria</option>
+            <option value="castilla-la-mancha">Castilla-La Mancha</option>
+            <option value="castilla-y-leon">Castilla y León</option>
+            <option value="cataluna">Cataluña</option>
+            <option value="ceuta">Ceuta</option>
+            <option value="valenciana">Comunitat Valenciana</option>
+            <option value="extremadura">Extremadura</option>
+            <option value="galicia">Galicia</option>
+            <option value="la-rioja">La Rioja</option>
+            <option value="madrid">Madrid</option>
+            <option value="melilla">Melilla</option>
+            <option value="murcia">Región de Murcia</option>
+            <option value="navarra">Navarra</option>
+            <option value="euskadi">País Vasco</option>
+          </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- Tipo animal ampliado + Nº mascotas + Cachorro -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Especie ampliada] -->
+        <div class="booking-field" id="fieldSpecies">
           <label for="species">Tipo de animal</label>
           <select id="species" name="Tipo_animal">
             <option value="perro">Perro</option>
             <option value="gato">Gato</option>
+            <option value="conejo">Conejo</option>
+            <option value="huron">Hurón</option>
+            <option value="ave">Ave</option>
+            <option value="tortuga">Tortuga</option>
+            <option value="reptil">Reptiles (lagartos)</option>
+            <option value="hamster">Hámster</option>
+            <option value="otros">Otros</option>
           </select>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <div class="booking-field" id="fieldIsPuppy" hidden>
+        <div class="booking-field" id="fieldIsPuppy">
           <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
-          <select id="isPuppy" name="Cachorro">
+          <select id="isPuppy" name="Cachorro" disabled>
             <option value="no">No</option>
             <option value="si">Sí</option>
           </select>
+          <small class="note">Se rellena automáticamente a partir del perfil de tu mascota.</small>
         </div>
 
-        <div class="booking-field" id="fieldNumPets" hidden>
+        <div class="booking-field" id="fieldNumPets">
           <label for="numPets">Nº de mascotas</label>
           <select id="numPets" name="N_mascotas">
             <option value="1">1</option><option value="2">2</option>
@@ -137,32 +195,24 @@
             <option value="5">5</option>
           </select>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Extras generales] -->
-        <div class="booking-field">
-          <label for="festivo">¿Es festivo?</label>
-          <select id="festivo" name="Festivo">
-            <option value="0">No</option>
-            <option value="10">Sí, +10 €</option>
-          </select>
+        <!-- Preferencia de contacto -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Preferencia de contacto] -->
+        <div class="booking-field" style="grid-column:1 / -1;">
+          <label>¿Cómo prefieres que te contactemos?</label>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <label><input type="radio" name="Preferencia_contacto" value="telefono" required> Teléfono</label>
+            <label><input type="radio" name="Preferencia_contacto" value="whatsapp"> WhatsApp</label>
+            <label><input type="radio" name="Preferencia_contacto" value="email"> Correo electrónico</label>
+          </div>
         </div>
-
         <div class="booking-field">
-          <label for="senalado">¿Día señalado (Navidad, Nochevieja…)?</label>
-          <select id="senalado" name="Dia_senalado">
-            <option value="0">No</option>
-            <option value="30">Sí, +30 €</option>
-          </select>
+          <label for="contactPhone">Teléfono</label>
+          <input type="tel" id="contactPhone" name="Telefono" placeholder="+34 6XX XXX XXX">
         </div>
-
         <div class="booking-field">
-          <label for="depositPct">Depósito (retención)</label>
-          <select id="depositPct" name="Deposito_pct">
-            <option value="0.2">20% (recomendado)</option>
-            <option value="0.3">30%</option>
-            <option value="0.5">50%</option>
-          </select>
+          <label for="contactEmail">Email</label>
+          <input type="email" id="contactEmail" name="Email" placeholder="tu@correo.com">
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -176,7 +226,7 @@
       <div class="summary-panel" id="summary">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
           <strong>Desglose preliminar</strong>
-          <span class="summary-badge">El kilómetraje se añade al asignar cuidador</span>
+          <span class="summary-badge">El kilometraje se calcula al asignar cuidador</span>
         </div>
         <div class="summary-grid">
           <div class="summary-row">
@@ -188,11 +238,11 @@
             <div class="summary-value"><span id="sumPets">0.00</span> €</div>
           </div>
           <div class="summary-row">
-            <div class="summary-label">Festivo</div>
+            <div class="summary-label">Festivos (auto)</div>
             <div class="summary-value"><span id="sumFestivo">0.00</span> €</div>
           </div>
           <div class="summary-row">
-            <div class="summary-label">Día señalado</div>
+            <div class="summary-label">Días especiales</div>
             <div class="summary-value"><span id="sumSenalado">0.00</span> €</div>
           </div>
           <div class="summary-row">
@@ -209,24 +259,22 @@
           </div>
         </div>
         <p class="note" style="margin-top:10px;">
-          Este cálculo es orientativo. El importe por kilometraje se añade al confirmar el cuidador más cercano.
-          El depósito se retiene (autorización) y se captura tras aceptar la reserva.
+          El cálculo de festivos es automático y puede variar según la comunidad autónoma. Ajustaremos el importe final cuando asignemos a tu cuidador/a.
         </p>
       </div>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Campo oculto con el desglose para el email] -->
+      <!-- Campo oculto con el desglose para el email -->
       <input type="hidden" name="Desglose" id="summaryField">
-      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="booking-actions">
         <button type="submit" class="cta-button">Solicitar reserva</button>
       </div>
-      <p class="note">Tras enviar, te llamaremos para conocernos y confirmar detalles. La primera visita con el cuidador es gratuita.</p>
+      <p class="note">Tras enviar, te contactaremos por tu canal preferido para confirmar detalles. La primera visita con el cuidador es gratuita.</p>
     </form>
   </div>
 
+  <!-- ===== Lógica de UI y precios ===== -->
   <script>
-    // ====== TPL: INICIO BLOQUE NUEVO [Lógica de UI y precios] ======
     const form = document.getElementById('bookingForm');
     const wall = document.getElementById('authWall');
 
@@ -235,35 +283,44 @@
       species: document.getElementById('species'),
       isPuppy: document.getElementById('isPuppy'),
       numPets: document.getElementById('numPets'),
-      festivo: document.getElementById('festivo'),
-      senalado: document.getElementById('senalado'),
-      depositPct: document.getElementById('depositPct'),
-
-      fieldSpecies: document.getElementById('fieldSpecies'),
-      fieldIsPuppy: document.getElementById('fieldIsPuppy'),
-      fieldNumPets: document.getElementById('fieldNumPets'),
-
+      startDate: document.getElementById('startDate'),
+      endDate: document.getElementById('endDate'),
+      region: document.getElementById('region'),
+      needTravel: document.getElementById('needTravel'),
+      depositPct: document.getElementById('depositPct'), // se define abajo
       sumBase: document.getElementById('sumBase'),
       sumPets: document.getElementById('sumPets'),
       sumFestivo: document.getElementById('sumFestivo'),
       sumSenalado: document.getElementById('sumSenalado'),
       sumSubtotal: document.getElementById('sumSubtotal'),
       sumDeposit: document.getElementById('sumDeposit'),
-
       summaryField: document.getElementById('summaryField')
     };
 
-    // Precios base
-    const BASES = {
-      visitas: 22,
-      paseos: 12,
-      guarderia: 20,
-      alojamiento: 30, // 35 si cachorro
-      bodas: 0
-    };
+    // TPL: INICIO BLOQUE NUEVO [Selector depósito visible + opciones]
+    // Insertamos dinámicamente el selector de depósito (para mantener tu estructura)
+    (function injectDeposit(){
+      const container = document.querySelector('.booking-grid');
+      const block = document.createElement('div');
+      block.className = 'booking-field';
+      block.innerHTML = `
+        <label for="depositPct">Depósito (retención)</label>
+        <select id="depositPct" name="Deposito_pct">
+          <option value="0.2">20% (recomendado)</option>
+          <option value="0.3">30%</option>
+          <option value="0.5">50%</option>
+        </select>`;
+      container.appendChild(block);
+      els.depositPct = document.getElementById('depositPct');
+    })();
+    // TPL: FIN BLOQUE NUEVO
+
+    // Precios base (como tu versión anterior)
+    const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0 };
 
     function currency(n){ return (Math.round(n * 100) / 100).toFixed(2); }
 
+    // Suplementos por nº de mascotas
     function calcPetSupplements(service, species, n){
       if(n <= 1) return 0;
       if(service === 'visitas'){
@@ -278,38 +335,91 @@
       return 0;
     }
 
+    function getBasePrice(service, isPuppy){
+      let base = BASES[service] || 0;
+      if(service === 'alojamiento' && isPuppy){ base = 35; }
+      return base;
+    }
+
+    // TPL: INICIO BLOQUE NUEVO [Festivos auto - provisional]
+    // Nota: provisional (nacionales + días especiales). En el siguiente paso cargaremos el calendario oficial por CCAA.
+    const NATIONAL_SPECIAL = ['01-01','01-06','12-24','12-25','12-31']; // Año Nuevo, Reyes, Nochebuena, Navidad, Nochevieja
+    function eachDate(from, to){
+      const res=[]; if(!from||!to) return res;
+      const d1=new Date(from), d2=new Date(to);
+      if(d2<d1) return res;
+      const cur=new Date(d1);
+      while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+      return res;
+    }
+    function mmdd(d){
+      const m=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      return `${m}-${day}`;
+    }
+    function calcFestivosAuto(region, start, end){
+      const days = eachDate(start, end);
+      let festivo = 0;
+      let senalado = 0;
+      for(const d of days){
+        const isNational = [0].includes(d.getDay()) ? false : false; // placeholder no-fin-de-semana
+        const special = NATIONAL_SPECIAL.includes(mmdd(d));
+        // Provisional: +10€ por día festivo nacional (aquí no diferenciamos, lo haremos por CCAA después)
+        // y +30€ si cae en día especial (Navidad, Nochevieja, etc.)
+        if(special) senalado += 30;
+        // Si quieres marcar también domingos como festivos provisionales, descomenta:
+        // if (d.getDay() === 0) festivo += 10;
+      }
+      return { festivo, senalado };
+    }
+    // TPL: FIN BLOQUE NUEVO
+
     function toggleFields(){
       const svc = els.service.value;
-      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
-      els.fieldSpecies.hidden = !needSpeciesNum;
-      els.fieldNumPets.hidden = !needSpeciesNum;
-
-      const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
-      els.fieldIsPuppy.hidden = !needPuppy;
-
+      // Si visitas: especie por defecto gato (puedes seguir cambiándola)
       if(svc === 'visitas'){ els.species.value = 'gato'; }
     }
 
-    function getBasePrice(service){
-      let base = BASES[service] || 0;
-      const isPuppy = (els.isPuppy.value === 'si');
-      if(service === 'alojamiento' && isPuppy){ base = 35; }
-      return base;
+    // Relleno automático de "cachorro" (si Firestore tiene perfil de mascota < 6 meses)
+    async function autoPuppyFromProfile(){
+      try{
+        if(typeof auth === 'undefined' || typeof db === 'undefined') return;
+        const u = auth.currentUser;
+        if(!u) return;
+        // Buscamos primera mascota en users/{uid}/mascotas (si existiera)
+        const snap = await db.collection('users').doc(u.uid).collection('mascotas').limit(1).get();
+        if(!snap.empty){
+          const pet = snap.docs[0].data();
+          // Si hay fecha de nacimiento, calculamos meses
+          if(pet?.birthdate){ // birthdate en formato ISO yyyy-mm-dd
+            const b = new Date(pet.birthdate);
+            const today = new Date();
+            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+            if(months < 6){
+              els.isPuppy.value = 'si';
+              els.isPuppy.disabled = true;
+            } else {
+              els.isPuppy.value = 'no';
+              els.isPuppy.disabled = true;
+            }
+          }
+        }
+      }catch(e){ /* silencioso */ }
     }
 
     function recalc(){
       const svc = els.service.value || '';
       const species = (els.species.value || 'perro');
       const n = parseInt(els.numPets.value || '1', 10);
+      const isPuppy = (els.isPuppy.value === 'si');
 
-      const base = getBasePrice(svc);
+      const base = getBasePrice(svc, isPuppy);
       const pets = calcPetSupplements(svc, species, n);
 
-      const festivo = parseFloat(els.festivo.value || 0);
-      const senalado = parseFloat(els.senalado.value || 0);
+      const { festivo, senalado } = calcFestivosAuto(els.region.value, els.startDate.value, els.endDate.value);
 
       const subtotal = base + pets + festivo + senalado;
-      const depPct = parseFloat(els.depositPct.value || 0.2);
+      const depPct = parseFloat(els.depositPct?.value || 0.2);
       const deposit = subtotal * depPct;
 
       els.sumBase.textContent = base ? currency(base) : '—';
@@ -321,31 +431,44 @@
     }
 
     ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','festivo','senalado','depositPct'].forEach(id=>{
+      ['service','species','isPuppy','numPets','startDate','endDate','region','needTravel','depositPct'].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalc(); });
       });
     });
 
     toggleFields();
+    autoPuppyFromProfile();
     recalc();
 
-    // Antes de enviar a Formspree, dejamos el desglose en el hidden
-    form.addEventListener('submit', ()=>{
+    // Validaciones mínimas de preferencia de contacto
+    form.addEventListener('submit', (e)=>{
+      // Reglas básicas: si elige teléfono/whatsapp, debe poner teléfono; si elige email, debe poner email
+      const pref = (new FormData(form).get('Preferencia_contacto')) || '';
+      const tel = document.getElementById('contactPhone').value.trim();
+      const mail= document.getElementById('contactEmail').value.trim();
+      if(pref === 'telefono' || pref === 'whatsapp'){
+        if(!tel){ e.preventDefault(); alert('Por favor, indícanos tu teléfono para poder contactarte.'); return; }
+      } else if(pref === 'email'){
+        if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return; }
+      }
+
+      // Prepara el desglose para el correo
       const summary = [
         `Servicio: ${els.service.options[els.service.selectedIndex]?.text || ''}`,
-        `Tipo de animal: ${els.species && !els.fieldSpecies.hidden ? els.species.value : '-'}`,
-        `Cachorro: ${els.isPuppy && !els.fieldIsPuppy.hidden ? els.isPuppy.value : '-'}`,
-        `Nº mascotas: ${els.numPets && !els.fieldNumPets.hidden ? els.numPets.value : '1'}`,
-        `Festivo: ${els.festivo.value} €`,
-        `Día señalado: ${els.senalado.value} €`,
+        `Fecha: ${els.startDate.value || '-'} a ${els.endDate.value || '-'}`,
+        `Tipo de animal: ${els.species.value}`,
+        `Cachorro: ${els.isPuppy.value}`,
+        `Nº mascotas: ${els.numPets.value}`,
+        `Desplazamiento: ${els.needTravel.value}`,
+        `Festivos (auto): ${document.getElementById('sumFestivo').textContent} €`,
+        `Días especiales: ${document.getElementById('sumSenalado').textContent} €`,
         `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal').textContent} €`,
         `Depósito a retener: ${document.getElementById('sumDeposit').textContent} €`,
-        `Kilometraje: pendiente (al asignar cuidador)`
+        `CCAA: ${els.region.options[els.region.selectedIndex]?.text || 'España'}`
       ].join(' | ');
       els.summaryField.value = summary;
     });
-    // ====== TPL: FIN BLOQUE NUEVO ======
   </script>
 
   <!-- Footer unificado (inyectado) -->
@@ -407,7 +530,7 @@
     const auth = firebase.auth();
     const db   = firebase.firestore();
 
-    // Visibilidad form según sesión
+    // Mostrar/ocultar formulario según sesión
     function updateAuthUI(user){
       const logged = !!user;
       if (form) { form.classList.toggle('disabled', !logged); }
