@@ -6,40 +6,224 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO visitas] -->
-  <meta name="description" content="Visitas a domicilio para gatos: 60 o 90 minutos, medicación, limpieza, mimos y seguimiento con fotos.">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO] -->
+  <meta name="description" content="Visitas a domicilio para gatos de 60 o 90 minutos. Limpieza, juego, cepillado, medicación si es necesario y reportes con fotos. Profesionales del sector veterinario titulados.">
   <!-- TPL: FIN BLOQUE NUEVO -->
-  <style>.page{padding-top:120px}.lead{color:#666} table{width:100%;border-collapse:collapse}th,td{border:1px solid #eee;padding:8px;text-align:center}thead th{background:#fafafa}</style>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
+  <style>
+    .page{padding-top:120px}.lead{color:#666}
+    /* Breadcrumb */
+    .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
+    .breadcrumb a{color:var(--color-principal);text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb span{font-weight:600}
+    /* Badges e icon-list */
+    .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
+    .icon-list{list-style:none;padding-left:0}
+    .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+    .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
+    /* Notas y avisos */
+    .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
+    .alert{background:#fff8e6;border:1px solid #ffd27f}
+    /* Tablas */
+    .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
+    .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
+    .price-table thead th{background:#fafafa}
+    /* Enlaces extra */
+    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
+    .links-list li{margin:6px 0}
+    .links-list a{color:var(--color-principal);text-decoration:none}
+    .links-list a:hover{text-decoration:underline}
+    /* CTAs: Volver a la izquierda, Reservar grande a la derecha */
+    .cta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+    .cta-row .ver-mas{border:2px solid var(--color-principal);color:var(--color-principal);text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:700}
+    .cta-row .ver-mas:hover{background:var(--color-principal);color:#fff}
+    .cta-row .service-cta{background:var(--color-principal);color:#fff;padding:16px 22px;font-weight:700;border-radius:6px;text-decoration:none;font-size:1.05rem}
+    .cta-row .service-cta:hover{background:#2a7e80}
+
+    /* Tarjetas lado a lado: Suplementos y Desplazamientos */
+    .tpl-cards-2{display:grid;gap:16px;margin-top:10px}
+    @media (min-width: 780px){.tpl-cards-2{grid-template-columns:1fr 1fr}}
+    .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
+    .tpl-card h4{margin:0 0 8px}
+    .tpl-card ul{margin:8px 0 0 18px}
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-  <!-- Navbar -->
-  <div id="tpl-navbar"><noscript><!-- fallback igual que otros --><nav class="navbar"><div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div><a href="index.html" class="home-button">Inicio</a><ul class="nav-links"><li><a href="como-funciona.html">Cómo funciona</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="index.html#contactanos">Contáctanos</a></li><li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li></ul><a class="login-button" href="#iniciar-sesion">Iniciar sesión</a></nav></noscript></div>
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
+  <div id="tpl-navbar"><noscript>
+    <nav class="navbar">
+      <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+      <a href="index.html" class="home-button">Inicio</a>
+      <ul class="nav-links">
+        <li><a href="como-funciona.html">Cómo funciona</a></li>
+        <li><a href="servicios.html">Servicios</a></li>
+        <li><a href="index.html#contactanos">Contáctanos</a></li>
+        <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+      </ul>
+      <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+    </nav>
+  </noscript></div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
-    <h1>Visitas a domicilio (gatos)</h1>
-    <p class="lead">Rutina, alimentación, arenero, juego, medicación si hace falta y muchas caricias 😺.</p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Breadcrumb] -->
+    <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html">Servicios</a> &gt; <span>Visitas a domicilio (gatos)</span></nav>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <h3>Duración y tarifas</h3>
-    <table>
-      <thead><tr><th>Incluye 1 gato</th><th>60 min</th><th>90 min</th></tr></thead>
-      <tbody><tr><td><strong>Tarifa base</strong></td><td><strong>22 €</strong></td><td><strong>30 €</strong></td></tr></tbody>
-    </table>
+    <h1><i class="fa-solid fa-cat"></i> Visitas a domicilio (gatos)</h1>
 
-    <h3>Suplementos</h3>
-    <ul>
-      <li>2ª visita solo medicación (visita breve): <strong>17 €</strong> <small>(desde el día 11: 14 €)</small></li>
-      <li>1 gato más: <strong>12 €</strong></li>
-      <li>2 gatos: <strong>8 €</strong> <small>cada uno</small></li>
-      <li>+ de 3 gatos: <strong>6 €</strong> <small>cada uno</small></li>
-      <li>Festivos y desplazamientos según <a href="condiciones.html">condiciones</a>.</li>
+    <!-- TPL: INICIO BLOQUE NUEVO [Introducción cercana] -->
+    <p class="lead">
+      Para que tu gato <strong>permanezca en su entorno</strong> y mantenga su <strong>rutina sin estrés</strong>.  
+      Trabajamos siempre a <strong>la misma hora cada día</strong> para respetar sus hábitos.  
+      Cuidamos, limpiamos, jugamos y administramos <strong>medicación si es necesario</strong>, con <strong>profesionales del sector veterinario titulados</strong>.
+    </p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <p>
+      <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
+      <span class="badge"><i class="fa-solid fa-heart"></i> Rutina y bienestar felino</span>
+      <span class="badge"><i class="fa-solid fa-house"></i> Siempre en su casa</span>
+    </p>
+
+    <h3>Duración y recomendación</h3>
+    <div class="note">
+      <p><i class="fa-regular fa-clock"></i> Puedes elegir entre <strong>60 minutos</strong> o <strong>90 minutos</strong>.</p>
+      <p><i class="fa-solid fa-users"></i> Las <strong>visitas de 90 minutos</strong> son recomendables cuando hay <strong>4 o más gatos</strong>, para tener tiempo de <strong>limpiar, jugar con calma, cepillar y dedicar atención individual</strong>.</p>
+    </div>
+
+    <h3>¿Qué haremos en cada visita?</h3>
+    <ul class="icon-list">
+      <li><i class="fa-solid fa-broom"></i><div><strong>Limpieza de areneros</strong> y zonas de alimentación/agua.</div></li>
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comida y agua</strong> según tus pautas (cantidades/horarios).</div></li>
+      <li><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>Juego y enriquecimiento</strong> (caña, plumas, olfato).</div></li>
+      <li><i class="fa-solid fa-brush"></i><div><strong>Cepillado</strong> si el gato lo tolera.</div></li>
+      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si es necesaria (comprimidos/ jarabes/ pomadas) según indicación veterinaria.</div></li>
+      <li><i class="fa-solid fa-camera"></i><div><strong>Fotos y vídeo-resumen</strong> para que veas cómo va todo.</div></li>
     </ul>
 
-    <p><a href="reserva.html" class="service-cta">Reservar ahora</a> <a href="servicios.html" class="ver-mas">Volver a servicios</a></p>
+    <h3>Precios</h3>
+    <table class="price-table">
+      <thead><tr><th>Incluye 1 gato</th><th>60 min</th><th>90 min</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Tarifa base</strong></td>
+          <td><strong>22 €</strong></td>
+          <td><strong>30 €</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Suplementos (por nº de gatos)</h3>
+    <ul class="icon-list">
+      <li><i class="fa-solid fa-cat"></i><div><strong>1 gato más:</strong> +12 €</div></li>
+      <li><i class="fa-solid fa-cats"></i><div><strong>2 gatos:</strong> +8 € <small>cada uno</small></div></li>
+      <li><i class="fa-solid fa-layer-group"></i><div><strong>+ de 3 gatos:</strong> +6 € <small>cada uno</small></div></li>
+    </ul>
+
+    <h3>Extras independientes</h3>
+    <div class="tpl-cards-2">
+      <!-- Tarjeta 1: Medicación -->
+      <div class="tpl-card">
+        <h4><i class="fa-solid fa-prescription-bottle-medical"></i> Medicación (visita breve solo medicación)</h4>
+        <ul>
+          <li><strong>17 €</strong> <small>(desde el día 11: <strong>14 €</strong>)</small></li>
+        </ul>
+        <p class="note" style="margin-top:8px">Este extra es aparte; <u>no</u> depende de si eliges 60 o 90 minutos.</p>
+      </div>
+
+      <!-- Tarjeta 2: Festivos -->
+      <div class="tpl-card">
+        <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por fecha</h4>
+        <ul>
+          <li><strong>Festivos:</strong> +10 €</li>
+          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Desplazamientos (kilometraje)</h3>
+    <div class="note">
+      <ul style="margin:0 0 0 18px">
+        <li>2–10 km → <strong>6 €</strong></li>
+        <li>10–25 km → <strong>10 €</strong></li>
+        <li>25–40 km → <strong>15 €</strong></li>
+        <li>+40 km → <strong>20 €</strong></li>
+      </ul>
+      <p style="margin-top:8px">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+    </div>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos y salud] -->
+    <h3>Requisitos y salud</h3>
+    <div class="note alert">
+      <p><i class="fa-solid fa-file-shield"></i> <strong>Cuéntanos cualquier patología</strong>, alergia o pauta especial de tu gato.</p>
+      <p><i class="fa-solid fa-syringe"></i> Cartilla al día de <strong>vacunas y desparasitaciones</strong>.</p>
+      <p><i class="fa-solid fa-shield"></i> <strong>Seguro de responsabilidad civil</strong> vigente (aplica como en el resto de servicios).</p>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <h3>Nuestro método</h3>
+    <ul class="icon-list">
+      <li><i class="fa-regular fa-clock"></i><div><strong>Misma hora cada día</strong> para mantener su rutina.</div></li>
+      <li><i class="fa-solid fa-user-nurse"></i><div>Equipo de <strong>auxiliares veterinarios titulados</strong>, asignado según el carácter y necesidades de tus gatos.</div></li>
+      <li><i class="fa-solid fa-message"></i><div><strong>Comunicación clara</strong> por WhatsApp o email con fotos y notas.</div></li>
+    </ul>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Enlaces útiles] -->
+    <ul class="links-list">
+      <li><a href="condiciones.html#visitas-gatos"><i class="fa-solid fa-file-lines"></i> Condiciones específicas de Visitas</a></li>
+      <li><a href="servicios.html#lista-servicios"><i class="fa-solid fa-grid-2"></i> Ver todos los servicios</a></li>
+    </ul>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- CTA: Volver a la izquierda y Reservar grande a la derecha -->
+    <div class="cta-row">
+      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
+      <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
+    </div>
   </main>
 
-  <!-- Footer -->
-  <div id="tpl-footer"><noscript><!-- mismo footer --><footer class="site-footer"><div class="container footer-row"><div class="footer-left"><nav class="footer-links-row"><a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span><a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span><a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span><a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span><a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span><a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span><a href="digital-services-act.html">Digital Services Act</a></nav><div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div></div><div class="footer-right socials"><a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a><a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a></div></div><div class="footer-bottom footer-bottom--inline"><div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div><nav class="footer-bottom-right legal-links"><a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span><a href="privacidad.html">Privacidad</a><span class="sep">|</span><a href="cookies.html">Cookies</a><span class="sep">|</span><a href="canal-denuncias.html">Canal de denuncias</a></nav></div></footer></noscript></div>
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
+  <div id="tpl-footer"><noscript>
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <div class="footer-left">
+          <nav class="footer-links-row">
+            <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+            <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+            <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+            <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+            <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+            <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+            <a href="digital-services-act.html">Digital Services Act</a>
+          </nav>
+          <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+        </div>
+        <div class="footer-right socials">
+          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        </div>
+      </div>
+      <div class="footer-bottom footer-bottom--inline">
+        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+        <nav class="footer-bottom-right legal-links">
+          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+          <a href="cookies.html">Cookies</a><span class="sep">|</span>
+          <a href="canal-denuncias.html">Canal de denuncias</a>
+        </nav>
+      </div>
+    </footer>
+  </noscript></div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
+  <!-- Scripts -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
