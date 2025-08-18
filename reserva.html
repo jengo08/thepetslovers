@@ -314,7 +314,7 @@
     </form>
   </div>
 
-  <!-- ====== TPL: INICIO BLOQUE NUEVO [Lógica reservas + Nager.Date + fallback JSON/local] ====== -->
+  <!-- ====== TPL: INICIO BLOQUE NUEVO [Lógica reservas + Nager.Date + fallback JSON/local] -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const els = {
@@ -368,7 +368,7 @@
       depositPctSelect: document.getElementById('depositPct')
     };
 
-    // ======= Configuración de precios (puedes ajustar aquí) =======
+    // ======= Configuración de precios (AJUSTADA) =======
     const PR = {
       visitas60: 22,
       visitas90: 32,
@@ -377,6 +377,9 @@
       alojamientoDia: 30,
       alojamientoCachorroDia: 35,
       alojamientoDesde11: 27,
+      /* TPL: INICIO BLOQUE NUEVO [Nuevo precio cachorro 11+] */
+      alojamientoDesde11Cachorro: 32,
+      /* TPL: FIN BLOQUE NUEVO */
       bonoDesc: { 10: 0.05, 20: 0.10, 30: 0.15 } // % descuento guardería (10/20/30 días)
     };
     const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01']; // +30€
@@ -401,13 +404,11 @@
       const a = parseDate(start), b = parseDate(end);
       if(!a) return 0;
       if(!b) return 1;
-      // end exclusivo
       const ms = (Date.UTC(b.getFullYear(),b.getMonth(),b.getDate()) - Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()));
-      const days = Math.max(1, Math.round(ms / (24*3600*1000)));
-      return days;
+      return Math.max(1, Math.round(ms / (24*3600*1000)));
     };
 
-    // Prefill servicio/duración desde la URL (?service=...&duracion=60|90)
+    // Prefill servicio/duración desde la URL
     (function prefillService(){
       const params = new URLSearchParams(location.search);
       const map = {
@@ -441,11 +442,8 @@
         return (dur === '90') ? PR.visitas90 : PR.visitas60;
       }
       if(service === 'paseos') return PR.paseos;
-      if(service === 'guarderia') return PR.guarderiaDia; // se multiplicará por días
-      if(service === 'alojamiento'){
-        // se calcula por tramos más abajo
-        return 0;
-      }
+      if(service === 'guarderia') return PR.guarderiaDia;
+      if(service === 'alojamiento'){ return 0; }
       return 0;
     }
 
@@ -456,20 +454,16 @@
       if(els.fieldNumPets) els.fieldNumPets.hidden = !needSpeciesNum;
       const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
       if(els.fieldIsPuppy) els.fieldIsPuppy.hidden = !needPuppy;
-      // visitas → gato + mostrar duración
       if(els.species){ if(svc === 'visitas'){ els.species.value = 'gato'; } }
       const durationField = document.getElementById('fieldDuration');
       if(durationField) durationField.hidden = (svc !== 'visitas');
-      // mostrar/ocultar filas específicas del desglose
       if(els.rowGuarderia) els.rowGuarderia.style.display = (svc === 'guarderia') ? '' : 'none';
       if(els.rowBono) els.rowBono.style.display = 'none';
       if(els.rowAloj10) els.rowAloj10.style.display = (svc === 'alojamiento') ? '' : 'none';
       if(els.rowAloj11) els.rowAloj11.style.display = (svc === 'alojamiento') ? '' : 'none';
-      // suplementos visibles solo si aplica
       document.getElementById('rowPets').style.display = (needSpeciesNum ? '' : 'none');
     }
 
-    // Nº mascotas exacto si 6+
     function handleNumPetsExact(){
       if(!els.numPets || !els.numPetsExact) return;
       if(els.numPets.value === '6+'){
@@ -485,7 +479,7 @@
       return parseInt(els.numPets.value || '1', 10);
     }
 
-    // ===== Festivos automáticos =====
+    // ===== Festivos automáticos ===== (igual que versión anterior)
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
       for(const url of urls){
@@ -568,10 +562,6 @@
       const year = d.getFullYear();
       const iso = ymd(d);
       const pack = await fetchHolidaysForYear(year);
-      const COUNTY_TO_REGIONKEY = {
-        'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
-        'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
-      };
       const county = REGION_TO_COUNTY[ccaa || 'nacional'] || null;
       const regKey = COUNTY_TO_REGIONKEY[county] || county;
       const isNat = !!pack?.nacional?.has(iso);
@@ -617,14 +607,12 @@
         extrasPets = calcPetSupplements('paseos', species, petCount);
       }
       else if(svc === 'guarderia'){
-        // días totales (fin exclusivo)
         const nDias = daysBetween(els.date.value, els.dateEnd.value);
         const bruto = nDias * PR.guarderiaDia;
-        // detectar bono exacto 10/20/30
         const descPct = PR.bonoDesc[nDias] || 0;
         bonoDesc = bruto * descPct;
         guarderiaSubtotal = bruto - bonoDesc;
-        base = 0; // ya incluido en guarderiaSubtotal
+        base = 0;
         els.rowGuarderia.style.display = '';
         els.lblGuarderia.textContent = `Guardería (${nDias} día${nDias!==1?'s':''} × ${PR.guarderiaDia} €)`;
         els.sumGuarderia.textContent = currency(bruto);
@@ -640,22 +628,21 @@
         const rest  = Math.max(0, nDias - 10);
         const puppy = (els.isPuppy?.value === 'si');
         const tarifa1 = puppy ? PR.alojamientoCachorroDia : PR.alojamientoDia; // 35 o 30
+        const tarifa2 = puppy ? PR.alojamientoDesde11Cachorro : PR.alojamientoDesde11; // 32 o 27  <-- CAMBIO
         aloj10 = first * tarifa1;
-        aloj11 = rest  * PR.alojamientoDesde11; // 27€
-        base = 0; // se usa desglosado
+        aloj11 = rest  * tarifa2;
+        base = 0;
         els.rowAloj10.style.display = '';
         els.rowAloj11.style.display = (rest>0) ? '' : 'none';
         els.lblAloj10.textContent = `Alojamiento (días 1–10 × ${tarifa1} €)`;
-        els.lblAloj11.textContent = `Alojamiento (desde día 11 × ${PR.alojamientoDesde11} €)`;
+        els.lblAloj11.textContent = `Alojamiento (desde día 11 × ${tarifa2} €)`;
         els.sumAloj10.textContent = currency(aloj10);
         els.sumAloj11.textContent = currency(aloj11);
       }
       else {
-        // exoticos / transporte / posoperatorios / bodas: sin cálculo especial por ahora
         base = 0;
       }
 
-      // Actualiza visibles de suplementos
       document.getElementById('rowPets').style.display =
         (svc === 'visitas' || svc === 'paseos' || svc === 'alojamiento' || svc === 'exoticos' || svc === 'posoperatorios') ? '' : 'none';
 
@@ -667,7 +654,7 @@
       els.sumTravelText.textContent = 'Se añadirá al confirmar cuidador';
 
       const subtotal =
-        (svc==='guarderia' ? guarderiaSubtotal + bonoDesc /* mostrar bruto en sumGuarderia, desc en sumBono */ : 0) +
+        (svc==='guarderia' ? guarderiaSubtotal + bonoDesc : 0) +
         (svc==='alojamiento' ? (aloj10 + aloj11) : 0) +
         (svc!=='guarderia' && svc!=='alojamiento' ? base : 0) +
         extrasPets + festivo + senalado;
@@ -681,7 +668,6 @@
       recalc();
     }
 
-    // Eventos
     ['change','input'].forEach(ev=>{
       ['service','species','isPuppy','numPets','numPetsExact','region','date','dateEnd','duration','needTravel','start','end']
         .forEach(id=>{
@@ -705,7 +691,6 @@
       const svc = els.service.value;
       const nDias = (svc==='guarderia' || svc==='alojamiento') ? daysBetween(els.date.value, els.dateEnd.value) : 0;
 
-      // compone líneas de desglose extendido
       const lines = [];
       if(svc==='guarderia'){
         const bruto = nDias * PR.guarderiaDia;
@@ -717,8 +702,9 @@
         const first = Math.min(nDias,10), rest = Math.max(0,nDias-10);
         const puppy = (els.isPuppy?.value === 'si');
         const tarifa1 = puppy ? PR.alojamientoCachorroDia : PR.alojamientoDia;
+        const tarifa2 = puppy ? PR.alojamientoDesde11Cachorro : PR.alojamientoDesde11; // 32 / 27
         if(first>0) lines.push(`Alojamiento días 1–10: ${first} × ${tarifa1} € = ${currency(first*tarifa1)} €`);
-        if(rest>0) lines.push(`Alojamiento desde día 11: ${rest} × ${PR.alojamientoDesde11} € = ${currency(rest*PR.alojamientoDesde11)} €`);
+        if(rest>0)  lines.push(`Alojamiento desde día 11: ${rest} × ${tarifa2} € = ${currency(rest*tarifa2)} €`);
       }
 
       const summary = [
@@ -744,7 +730,6 @@
       if(!els.dateEnd.value && els.date.value){ els.dateEnd.value = els.date.value; }
     });
 
-    // “Otros” animales: input dinámico
     (function speciesOtherToggle(){
       const sel = els.species;
       if(!sel) return;
@@ -769,7 +754,7 @@
       ensureOtherInput();
     })();
 
-    // ===== Autorrelleno de usuario (Firebase Auth + Firestore si existe) =====
+    // Autorrelleno usuario (igual que antes)
     async function fillUserFromAuth(user){
       const name = user?.displayName || '';
       const email = user?.email || '';
@@ -816,7 +801,6 @@
       }catch(_){}
     })();
 
-    // Exponer función para Firebase Auth (definida más abajo)
     window.__tpl_onAuthUser = (u)=>{ if(u){ fillUserFromAuth(u); } };
   });
   </script>
