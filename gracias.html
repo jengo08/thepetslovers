@@ -4,16 +4,38 @@
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>¡Gracias! · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <script defer src="tpl-navbar.js"></script>
   <script defer src="tpl-footer.js"></script>
+  <style>
+    .thanks-wrap{max-width:760px;margin:120px auto 60px;padding:24px;background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.05);text-align:center}
+    .thanks-wrap h1{margin:0 0 8px}
+    .thanks-wrap p{margin:6px 0;color:#555}
+    .thanks-actions{margin-top:16px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .thanks-badge{display:inline-block;margin-top:8px;font-size:.9rem;padding:4px 10px;border-radius:999px;border:1px dashed #bbb;color:#666}
+  </style>
 </head>
 <body>
   <header id="tpl-navbar"></header>
-  <main class="container" style="max-width:720px; margin:120px auto 40px; text-align:center;">
-    <h1>¡Solicitud enviada! 🐾</h1>
-    <p>Te contactaremos muy pronto para confirmar detalles y presentarte a tu cuidador/a.</p>
-    <p><a class="cta-button" href="index.html">Volver al inicio</a></p>
+
+  <main class="thanks-wrap">
+    <h1>¡Gracias por tu solicitud! 🐾</h1>
+    <p>La hemos recibido correctamente. <strong>Nos pondremos en contacto contigo lo antes posible</strong> para confirmar detalles y presentarte al cuidador/a ideal.</p>
+    <span class="thanks-badge">Profesionales del sector veterinario · Auxiliares veterinarios titulados</span>
+
+    <div class="thanks-actions">
+      <a class="cta-button" href="reserva.html">Hacer otra reserva</a>
+      <a class="cta-button" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);" href="index.html">Volver al inicio</a>
+    </div>
+
+    <p style="margin-top:14px">
+      ¿Tienes dudas? Visita el <a href="ayuda.html">Centro de ayuda</a> o <a href="index.html#contactanos">contáctanos</a>.
+    </p>
   </main>
+
   <footer id="tpl-footer"></footer>
 </body>
 </html>
