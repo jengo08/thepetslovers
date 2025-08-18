@@ -36,6 +36,7 @@
     /* TPL: INICIO BLOQUE NUEVO [Pequeños detalles] */
     .readonly-chip{ background:#f2f8f8; border:1px dashed #cfe7e7; border-radius:8px; padding:10px 12px; font-size:.95rem; }
     .inline{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .help-tiny{ font-size:.85rem; color:#777; }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
@@ -76,12 +77,13 @@
       <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
     </div>
 
-    <!-- Formulario de reserva -->
     <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree – endpoint ya configurado] -->
     <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
     <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="booking-grid">
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Servicios ampliados] -->
         <div class="booking-field">
           <label for="service">Servicio</label>
           <select id="service" name="Servicio" required>
@@ -91,8 +93,22 @@
             <option value="guarderia">Guardería de día</option>
             <option value="alojamiento">Alojamiento (por día)</option>
             <option value="bodas">Bodas y servicios exclusivos</option>
+            <option value="exoticos">Mascotas exóticas</option>
+            <option value="transporte">Transporte</option>
+            <option value="posoperatorios">Cuidados posoperatorios</option>
           </select>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Duración solo para visitas] -->
+        <div class="booking-field" id="fieldDuration" hidden>
+          <label for="duration">Duración de la visita</label>
+          <select id="duration" name="Duracion">
+            <option value="60">60 minutos (22 € base)</option>
+            <option value="90">90 minutos (32 € base)</option>
+          </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <!-- TPL: INICIO BLOQUE NUEVO [CCAA para autonómicos] -->
         <div class="booking-field">
@@ -154,6 +170,7 @@
           <select id="species" name="Tipo_animal">
             <option value="perro">Perro</option>
             <option value="gato">Gato</option>
+            <option value="exotico">Exótico</option>
             <option value="otros">Otros</option>
           </select>
         </div>
@@ -188,6 +205,17 @@
             <option value="telefono">Teléfono</option>
             <option value="email">Email</option>
           </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Desplazamiento Sí/No] -->
+        <div class="booking-field">
+          <label for="needTravel">¿Necesitas desplazamiento?</label>
+          <select id="needTravel" name="Desplazamiento">
+            <option value="no">No</option>
+            <option value="si">Sí</option>
+          </select>
+          <span class="help-tiny">El precio del desplazamiento se sabrá cuando se encuentre a tu cuidador.</span>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -242,7 +270,7 @@
           </div>
           <div class="summary-row">
             <div class="summary-label">Desplazamiento</div>
-            <div class="summary-value summary-muted">pendiente</div>
+            <div class="summary-value"><span id="sumTravelText" class="summary-muted">—</span></div>
           </div>
           <div class="summary-row summary-total">
             <div class="summary-label">Subtotal (sin desplazamiento)</div>
@@ -280,13 +308,16 @@
       region: document.getElementById('region'),
       date: document.getElementById('date'),
       dateEnd: document.getElementById('dateEnd'),
+      start: document.getElementById('start'),
+      end: document.getElementById('end'),
+      duration: document.getElementById('duration'),
       species: document.getElementById('species'),
       isPuppy: document.getElementById('isPuppy'),
       numPets: document.getElementById('numPets'),
       numPetsExact: document.getElementById('numPetsExact'),
+      needTravel: document.getElementById('needTravel'),
       festivo: document.getElementById('festivo'),
       senalado: document.getElementById('senalado'),
-      depositPct: document.getElementById('depositPct'),
       fieldSpecies: document.getElementById('fieldSpecies'),
       fieldIsPuppy: document.getElementById('fieldIsPuppy'),
       fieldNumPets: document.getElementById('fieldNumPets'),
@@ -296,6 +327,7 @@
       sumSenalado: document.getElementById('sumSenalado'),
       sumSubtotal: document.getElementById('sumSubtotal'),
       sumDeposit: document.getElementById('sumDeposit'),
+      sumTravelText: document.getElementById('sumTravelText'),
       summaryField: document.getElementById('summaryField'),
       // cliente
       uiName: document.getElementById('uiName'),
@@ -304,12 +336,12 @@
       custName: document.getElementById('custName'),
       custEmail: document.getElementById('custEmail'),
       custPhone: document.getElementById('custPhone'),
-      // depósito (selector existente en tu versión)
+      // depósito (si existe en otra parte)
       depositPctSelect: document.getElementById('depositPct')
     };
 
-    // Base de precios (tu lógica)
-    const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0 };
+    // Base de precios
+    const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0, exoticos:0, transporte:0, posoperatorios:0 };
     const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01']; // Días señalados +30€
     const REGION_TO_COUNTY = {
       andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
@@ -323,12 +355,23 @@
     };
     const _festivosCache = new Map();
 
-    // Autorellenar servicio por ?service= o ?svc=
+    // Prefill servicio y duración desde la URL (?service=...&duracion=60|90)
     (function prefillService(){
       const params = new URLSearchParams(location.search);
-      const map = { visitas:'visitas', paseos:'paseos', guarderia:'guarderia', alojamiento:'alojamiento', bodas:'bodas' };
+      const map = {
+        visitas:'visitas', paseos:'paseos', guarderia:'guarderia', alojamiento:'alojamiento', bodas:'bodas',
+        exoticos:'exoticos', transporte:'transporte', posoperatorios:'posoperatorios'
+      };
       const svc = map[params.get('service')] || map[params.get('svc')] || '';
-      if(svc && els.service){ els.service.value = svc; els.service.disabled = true; }
+      const dur = params.get('duracion') || params.get('duration') || '';
+      if(svc && els.service){
+        els.service.value = svc;
+        els.service.disabled = true; // bloquea si viene desde tarjeta
+      }
+      // si es visitas y viene duración, la aplicamos
+      if(svc === 'visitas' && els.duration && (dur === '60' || dur === '90')){
+        els.duration.value = dur;
+      }
     })();
 
     function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
@@ -347,24 +390,35 @@
       }
       if(service === 'paseos') return 8 * (num - 1);
       if(service === 'alojamiento' && species === 'perro') return 25 * (num - 1);
+      // Para exoticos/transporte/posoperatorios no aplicamos suplemento automático
       return 0;
     }
 
     function getBasePrice(service){
       let base = BASES[service] || 0;
       const isPuppy = (els.isPuppy?.value === 'si');
+
       if(service === 'alojamiento' && isPuppy){ base = 35; }
+      if(service === 'visitas'){
+        const dur = els.duration?.value || '60';
+        base = (dur === '90') ? 32 : 22;
+      }
       return base;
     }
 
     function toggleFields(){
       const svc = els.service?.value;
-      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
+      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos' || svc === 'exoticos' || svc === 'posoperatorios');
       if(els.fieldSpecies) els.fieldSpecies.hidden = !needSpeciesNum;
       if(els.fieldNumPets) els.fieldNumPets.hidden = !needSpeciesNum;
       const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
       if(els.fieldIsPuppy) els.fieldIsPuppy.hidden = !needPuppy;
-      if(svc === 'visitas' && els.species) els.species.value = 'gato';
+      // Si es visitas, forzamos gato y mostramos duración
+      if(els.species){
+        if(svc === 'visitas'){ els.species.value = 'gato'; }
+      }
+      const durationField = document.getElementById('fieldDuration');
+      if(durationField) durationField.hidden = (svc !== 'visitas');
     }
 
     // Nº mascotas exacto si 6+
@@ -515,6 +569,15 @@
       if(els.sumSenalado) els.sumSenalado.textContent = currency(senalado);
       if(els.sumSubtotal) els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
       if(els.sumDeposit)  els.sumDeposit.textContent = base ? currency(deposit) : '—';
+
+      // Desplazamiento texto en desglose
+      if(els.sumTravelText){
+        const need = els.needTravel?.value || 'no';
+        els.sumTravelText.textContent = (need === 'si')
+          ? 'pendiente (el precio se sabrá cuando se encuentre a tu cuidador)'
+          : '—';
+        els.sumTravelText.classList.toggle('summary-muted', true);
+      }
     }
 
     async function recalcWithAuto(){
@@ -524,15 +587,12 @@
 
     // Eventos
     ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','numPetsExact','region','date','dateEnd'].forEach(id=>{
+      ['service','species','isPuppy','numPets','numPetsExact','region','date','dateEnd','duration','needTravel'].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.addEventListener(ev, ()=>{ toggleFields(); handleNumPetsExact(); recalcWithAuto(); });
       });
     });
-    // Deposito selector puede estar en tu HTML original (si no, ignora)
-    if(els.depositPctSelect){
-      els.depositPctSelect.addEventListener('change', recalcWithAuto);
-    }
+    if(els.depositPctSelect){ els.depositPctSelect.addEventListener('change', recalcWithAuto); }
 
     toggleFields();
     handleNumPetsExact();
@@ -548,6 +608,7 @@
         const petCount = getEffectivePets();
         const summary = [
           `Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`,
+          `Duración: ${els.duration && !document.getElementById('fieldDuration')?.hidden ? (els.duration.value + ' min') : '-'}`,
           `Fecha inicio: ${els.date?.value || '-'}`,
           `Fecha fin: ${els.dateEnd?.value || '-'}`,
           `Tipo de animal: ${speciesVal}`,
@@ -556,11 +617,11 @@
           `CCAA: ${els.region?.options?.[els.region.selectedIndex]?.text || 'España'}`,
           `Festivo (auto sobre fecha inicio): ${els.festivo?.value || '0'} €`,
           `Día señalado (auto): ${els.senalado?.value || '0'} €`,
+          `Desplazamiento: ${els.needTravel?.value === 'si' ? 'Sí (precio al asignar cuidador)' : 'No'}`,
           `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal')?.textContent || '0.00'} €`,
           `Depósito a retener: ${document.getElementById('sumDeposit')?.textContent || '0.00'} €`,
           `Preferencia contacto: ${document.getElementById('contactPref')?.value || '-'}`,
-          `Cliente: ${els.custName?.value || '-'} | ${els.custEmail?.value || '-'} | ${els.custPhone?.value || '-'}`,
-          `Kilometraje: pendiente (al asignar cuidador)`
+          `Cliente: ${els.custName?.value || '-'} | ${els.custEmail?.value || '-'} | ${els.custPhone?.value || '-'}`
         ].join(' | ');
         if(els.summaryField) els.summaryField.value = summary;
         // Normaliza Fecha_fin vacía => Fecha_inicio
@@ -599,7 +660,7 @@
       const email = user?.email || '';
       const phone = user?.phoneNumber || '';
 
-      // Intenta Firestore (si existe) para completar teléfono/nombre
+      // Intenta Firestore (si existe) para completar teléfono/nombre y mascota
       let fsName = '', fsPhone = '';
       try{
         if(window.firebase && firebase.firestore){
@@ -609,7 +670,7 @@
             const u = doc.data() || {};
             fsName = u.name || u.fullName || '';
             fsPhone = u.phone || '';
-            // Intenta última mascota para “cachorro” auto
+            // Última mascota
             if(u.pets && Array.isArray(u.pets) && u.pets.length){
               const pet = u.pets.find(p=>p.primary) || u.pets[0];
               if(pet?.species && els.species){ els.species.value = pet.species; }
@@ -648,7 +709,6 @@
       }catch(_){}
     })();
 
-    // Observa cambios para recálculo
     if(els.isPuppy){ els.isPuppy.addEventListener('change', recalcWithAuto); }
 
     // Exponer función para Firebase Auth (se define más abajo)
