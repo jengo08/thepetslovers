@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Init Firestore Data</title>
+  <script type="module">
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { app } from "./firebase-app-init.js"; // 👈 usa tu mismo init que en reserva.html
+
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("Inicia sesión primero en tu web para crear datos de prueba.");
+        return;
+      }
+
+      const uid = user.uid;
+
+      try {
+        // 1) Perfil de usuario con preferencia de contacto y dirección
+        await setDoc(doc(db, "users", uid), {
+          contactPref: "whatsapp",
+          lastAddress: "Calle Mayor 15, Madrid"
+        }, { merge: true });
+
+        // 2) Añadir mascotas de ejemplo
+        const petsCol = collection(db, "users", uid, "pets");
+
+        await setDoc(doc(petsCol, "nala"), {
+          name: "Nala",
+          species: "gato",
+          birthDateISO: "2024-06-15",
+          isPuppy: true
+        });
+
+        await setDoc(doc(petsCol, "toby"), {
+          name: "Toby",
+          species: "perro",
+          birthDateISO: "2020-09-01"
+          // sin isPuppy → se deduce por edad
+        });
+
+        alert("✅ Datos de prueba creados correctamente en Firestore.");
+      } catch (e) {
+        console.error(e);
+        alert("❌ Error creando datos: " + e.message);
+      }
+    });
+  </script>
+</head>
+<body>
+  <h1>Init Firestore Data</h1>
+  <p>Abre esta página estando logueada para cargar mascotas y preferencias de prueba.</p>
+</body>
+</html>
