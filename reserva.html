@@ -539,5 +539,95 @@
     auth.onAuthStateChanged(updateAuthUI);
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Guardar reserva en Firestore + enviar email] -->
+<script>
+  (function () {
+    const form = document.getElementById('bookingForm');
+    if (!form || typeof firebase === 'undefined') return;
+
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    form.addEventListener('submit', async (e) => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          // Si no hay sesión, no permitimos enviar y mandamos a login
+          e.preventDefault();
+          location.href = 'login.html?next=reserva.html';
+          return;
+        }
+
+        // Recogemos todos los campos del formulario
+        const fd = new FormData(form);
+        const txt = (k) => (fd.get(k) ? String(fd.get(k)).trim() : '');
+
+        const servicio      = txt('Servicio');
+        const fechaInicio   = txt('Fecha_inicio');
+        const fechaFin      = txt('Fecha_fin');
+        const horaInicio    = txt('Hora_inicio');
+        const horaFin       = txt('Hora_fin');
+        const lugar         = txt('Lugar');
+        const tipoAnimal    = txt('Tipo_animal');
+        const cachorro      = txt('Cachorro') || 'no';
+        const nMascotas     = Number(fd.get('N_mascotas') || 1);
+        const desplazamiento= txt('Desplazamiento');
+        const ccaa          = txt('CCAA');
+        const preferencia   = txt('Preferencia_contacto');
+        const telefono      = txt('Telefono');
+        const email         = txt('Email');
+        const notas         = txt('Notas');
+        const desglose      = txt('Desglose'); // lo rellenas justo antes de enviar en tu lógica actual
+
+        // Normalizamos fechas a ISO para consultas futuras (opcional pero útil)
+        const startISO = fechaInicio ? new Date(fechaInicio + (horaInicio ? `T${horaInicio}` : 'T00:00')).toISOString() : null;
+        const endISO   = fechaFin    ? new Date(fechaFin   + (horaFin    ? `T${horaFin}`    : 'T23:59')).toISOString() : null;
+
+        // Documento a guardar (cumple tus reglas Opción A: requiere userId == auth.uid)
+        const doc = {
+          userId: user.uid,
+          servicio,
+          fechas: {
+            inicio: fechaInicio || null,
+            fin:    fechaFin || null,
+            horaInicio: horaInicio || null,
+            horaFin:    horaFin || null,
+            startISO, endISO
+          },
+          lugar: lugar || null,
+          mascota: {
+            tipo: tipoAnimal || null,
+            cachorro, n: nMascotas
+          },
+          logistica: {
+            desplazamiento: desplazamiento || 'no',
+            ccaa: ccaa || 'nacional'
+          },
+          contacto: {
+            preferencia: preferencia || null,
+            telefono: telefono || null,
+            email: email || null
+          },
+          notas: notas || '',
+          desglose: desglose || '',
+          estado: 'pendiente',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // Importante: guardamos primero en Firestore y luego enviamos el email
+        e.preventDefault();                 // detenemos el envío HTML por defecto
+        await db.collection('reservas').add(doc);  // guardado en Firestore
+        form.submit();                      // reanudamos envío a Formspree (email)
+      } catch (err) {
+        e.preventDefault();
+        console.error('Error guardando reserva:', err);
+        alert('No se pudo guardar la reserva ahora mismo. Inténtalo de nuevo en unos minutos.');
+      }
+    });
+  })();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
