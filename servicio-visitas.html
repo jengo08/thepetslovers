@@ -32,11 +32,6 @@
     .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
     .price-table thead th{background:#fafafa}
     .price-table .subtle{color:#666;font-weight:400;font-size:.95rem}
-    /* Enlaces extra */
-    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
-    .links-list li{margin:6px 0}
-    .links-list a{color:var(--color-principal);text-decoration:none}
-    .links-list a:hover{text-decoration:underline}
     /* CTAs */
     .cta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
     .cta-row .ver-mas{border:2px solid var(--color-principal);color:var(--color-principal);text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:700}
@@ -49,10 +44,6 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
-    /* TPL: INICIO BLOQUE NUEVO [Caja condiciones final] */
-    .tpl-conditions-box{margin-top:16px}
-    .tpl-conditions-box h3{margin-top:0}
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -140,15 +131,15 @@
     </table>
     <p class="subtle" style="margin: -6px 0 10px;"><small>* Solo para <u>administrar medicación y verificación</u>; no incluye juegos ni cepillado.</small></p>
     <div class="note" style="margin-top:8px">
-      <p><i class="fa-solid fa-repeat"></i> <strong>Segunda visita (misma jornada)</strong> — <strong>10 €</strong> <span class="subtle">(aplicable desde el día 11)</span>.</p>
+      <p><i class="fa-solid fa-repeat"></i> <strong>Segunda visita (misma jornada)</strong> — <strong>10 €</strong>.</p>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Suplementos (por nº de gatos)</h3>
     <ul class="icon-list">
-      <li><i class="fa-solid fa-cat"></i><div><strong>1 gato más:</strong> +12 €</div></li>
-      <li><i class="fa-solid fa-cats"></i><div><strong>2 gatos:</strong> +8 € <small>cada uno</small></div></li>
-      <li><i class="fa-solid fa-layer-group"></i><div><strong>+ de 3 gatos:</strong> +6 € <small>cada uno</small></div></li>
+      <li><i class="fa-solid fa-cat"></i><div><strong>1 gato más:</strong> <strong>+12 €</strong></div></li>
+      <li><i class="fa-solid fa-cats"></i><div><strong>2 gatos:</strong> <strong>+8 €</strong> <small>cada uno</small></div></li>
+      <li><i class="fa-solid fa-layer-group"></i><div><strong>+ de 3 gatos:</strong> <strong>+6 €</strong> <small>cada uno</small></div></li>
     </ul>
 
     <h3>Extras independientes</h3>
@@ -157,8 +148,8 @@
       <div class="tpl-card">
         <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por fecha</h4>
         <ul>
-          <li><strong>Festivos:</strong> +10 €</li>
-          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+          <li><strong>Festivos:</strong> <strong>+10 €</strong></li>
+          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): <strong>+30 €</strong></li>
         </ul>
       </div>
 
@@ -169,28 +160,22 @@
           <li>Al ser en domicilio, se aplica <strong>suplemento de desplazamiento</strong>:</li>
           <li>2–10 km → <strong>6 €</strong> · 10–25 km → <strong>10 €</strong> · 25–40 km → <strong>15 €</strong> · +40 km → <strong>20 €</strong></li>
           <li><i class="fa-solid fa-location-dot"></i> <strong>Buscamos al cuidador más cercano</strong> a ti.</li>
-          <li><i class="fa-solid fa-key"></i> <strong>Entrega/devolución de llaves:</strong> +8 € si el cuidador debe desplazarse aparte solo para este trámite.</li>
+          <li><i class="fa-solid fa-key"></i> <strong>Entrega/devolución de llaves:</strong> <strong>+8 €</strong> si el cuidador debe desplazarse aparte solo para este trámite.</li>
         </ul>
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Caja condiciones/método/requisitos] -->
-    <div class="note tpl-conditions-box">
-      <h3><i class="fa-solid fa-file-shield"></i> Condiciones, método y salud</h3>
-      <ul class="icon-list" style="margin:0">
-        <li><i class="fa-regular fa-clock"></i><div><strong>Misma hora cada día</strong> para mantener la rutina felina.</div></li>
-        <li><i class="fa-solid fa-user-nurse"></i><div>Equipo de <strong>auxiliares veterinarios titulados</strong>, asignado según carácter y necesidades.</div></li>
-        <li><i class="fa-solid fa-syringe"></i><div><strong>Requisitos:</strong> cartilla al día (vacunas y desparasitación) e informar <strong>patologías</strong>, alergias o pautas especiales.</div></li>
-        <li><i class="fa-solid fa-shield"></i><div>Servicio cubierto por <strong>seguro de responsabilidad civil</strong>.</div></li>
-        <li><i class="fa-solid fa-message"></i><div><strong>Comunicación</strong> por WhatsApp o email con fotos y notas tras la visita.</div></li>
-      </ul>
-      <p style="margin:10px 0 0"><a href="condiciones.html#visitas-gatos"><i class="fa-solid fa-file-lines"></i> Ver condiciones específicas completas</a></p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Condiciones especiales — igual que guardería de día] -->
+    <div class="note alert" style="margin-top:14px">
+      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos obligatorios:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, y <strong>seguro de responsabilidad civil</strong> vigente. Informa de cualquier <strong>patología</strong> o pauta especial.</p>
     </div>
+    <p class="note" style="margin-top:12px">
+      <i class="fa-solid fa-file-lines"></i> Lee todas las <strong>condiciones de visitas</strong> en 
+      <a href="condiciones.html#visitas-gatos">esta página de condiciones</a>.
+    </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <ul class="links-list">
-      <li><a href="servicios.html#lista-servicios"><i class="fa-solid fa-grid-2"></i> Ver todos los servicios</a></li>
-    </ul>
+    <!-- (Eliminado el enlace “Ver todos los servicios” como pediste) -->
 
     <div class="cta-row">
       <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
