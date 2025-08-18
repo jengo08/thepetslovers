@@ -25,7 +25,7 @@
   <!-- Estilos mínimos SOLO para esta página (tal cual tu diseño) -->
   <style>
     .hero-section.hero-servicios {
-      background-image: url('images/como.jpg.png (2).png');
+      background-image: url('images/hero.jpg.png');
       background-position: center top;
       background-repeat: no-repeat;
       background-size: cover;
@@ -37,14 +37,16 @@
     }
     .services-section .service-icon i { color: #58425a; }
 
-    /* === OVERRIDE LOCAL: grid para permitir la tarjeta doble de Visitas === */
+    /* === OVERRIDE LOCAL: grid para permitir la tarjeta doble === */
     .services-section .services-grid {
       display: grid;
       gap: 20px;
       grid-template-columns: 1fr;
     }
     @media (min-width: 900px) {
-      .services-section .services-grid { grid-template-columns: repeat(3, 1fr); }
+      .services-section .services-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
 
     .service-details summary {
@@ -61,14 +63,14 @@
     .service-details .content { padding: 12px 8px 6px; text-align: left; }
     .service-details .content ul { margin: 0 0 8px 18px; }
     .service-details .precio { margin: 6px 0 10px; font-weight: 600; color: var(--color-texto); }
-
-    /* CTA principal */
-    .service-cta{
-      display:inline-block; padding: 10px 14px; border-radius: 6px;
-      text-decoration: none; font-weight: 700; margin-top: 6px;
-      background: var(--color-principal); color:#fff;
+    .service-cta, .ver-mas {
+      display: inline-block; padding: 10px 14px; border-radius: 6px;
+      text-decoration: none; font-weight: 700; margin-right: 8px; margin-top: 4px;
     }
+    .service-cta { background: var(--color-principal); color: #fff; }
     .service-cta:hover { background:#2a7e80; }
+    .ver-mas { border: 2px solid var(--color-principal); color: var(--color-principal); }
+    .ver-mas:hover { background: var(--color-principal); color:#fff; }
 
     /* Tabla simple (para visitas) */
     table { width:100%; border-collapse: collapse; margin: 6px 0 10px; }
@@ -76,7 +78,7 @@
     thead th { background:#fafafa; }
   </style>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España) — actualizado] -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -96,8 +98,8 @@
         "offers": [
           {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
           {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (opcional, aparte)", "price": "17", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "14", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name": "2ª visita solo medicación (opcional, aparte)", "price": "12", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "10", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -115,7 +117,7 @@
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name":"Jornada día (hasta 8h)", "price": "15", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "20", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name":"Bono 10 días (desde)", "price": "135", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -148,25 +150,22 @@
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="logo">
+      <a href="index.html">
+        <img src="images/logo.png.png" alt="The Pets Lovers Logo">
+      </a>
+    </div>
+    <a href="index.html" class="home-button">Inicio</a>
+    <ul class="nav-links">
+      <li><a href="como-funciona.html">Cómo funciona</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
+      <li><a href="index.html#contactanos">Contáctanos</a></li>
+      <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+    </ul>
+    <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
+  </nav>
 
   <!-- HERO -->
   <header class="hero-section hero-servicios">
@@ -187,40 +186,37 @@
         <!-- ===== Fila 1: Guardería | Visitas (ancha) | Alojamiento ===== -->
 
         <!-- Guardería de día -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="guarderia-dia">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
           <h3>Guardería de día</h3>
           <p>Compañía y supervisión durante el día.</p>
+          <!-- TPL: INICIO BLOQUE NUEVO [Guardería: mostrar precio día + bonos desde 135€] -->
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li><strong>Duración:</strong> 8 horas.</li>
-                <!-- TPL: INICIO BLOQUE NUEVO [Precios actualizados] -->
-                <li><strong>Precio:</strong> 15 €.</li>
-                <li><strong>Cachorros (≤ 6 meses):</strong> 20 €.</li>
-                <!-- TPL: FIN BLOQUE NUEVO -->
+                <li><strong>Duración:</strong> hasta 8 horas.</li>
+                <li><strong>Tarifa día:</strong> 15 €.</li>
+                <li><strong>Bonos:</strong> <strong>desde 135 €</strong> <small>(10 días)</small>.</li>
               </ul>
               <p class="precio">Antes de reservar, te recomendamos leer los detalles para ver qué incluye.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO [Reserva → subpágina .html con guion] -->
-              <a href="servicio-guarderia.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-guarderia.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
 
         <!-- Visitas a domicilio (gatos) — doble ancho -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="visitas" style="grid-column: span 2;">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card" style="grid-column: span 2;">
           <div class="service-icon"><i class="fa-solid fa-cat"></i></div>
           <h3>Visitas a domicilio (gatos)</h3>
           <p>Rutina, mimos y medicación si hace falta.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
+
+              <!-- TPL: INICIO BLOQUE NUEVO [Visitas gatos: aclaración y suplementos actualizados] -->
               <table>
                 <thead>
                   <tr>
@@ -239,7 +235,7 @@
               </table>
 
               <ul>
-                <li><strong>Medicación (solo medicación, visita breve):</strong> 17 € <small>(desde el día 11: 14 €)</small>. <em>Este extra es aparte; no está ligado a 60/90 min.</em></li>
+                <li><strong>Medicación (solo medicación, visita breve):</strong> <strong>12 €</strong> <small>(desde el día 11: <strong>10 €</strong>)</small>. <em>Este extra es aparte; no está ligado a 60/90 min.</em></li>
               </ul>
 
               <ul>
@@ -248,20 +244,20 @@
                 <li>2 gatos: <strong>8 €</strong> <small>cada uno</small></li>
                 <li>+ de 3 gatos: <strong>6 €</strong> <small>cada uno</small></li>
               </ul>
-
-              <p class="precio">Calcula tu precio final: <strong>tarifa base</strong> (60 o 90 min) + suplementos por nº de gatos + (opcional) medicación.</p>
-
-              <!-- TPL: INICIO BLOQUE NUEVO [Reserva → subpágina .html con guion] -->
-              <a href="servicio-visitas.html" class="service-cta">Haz tu reserva</a>
               <!-- TPL: FIN BLOQUE NUEVO -->
+
+              <!-- TPL: INICIO BLOQUE NUEVO [Nota de cálculo] -->
+              <p class="precio">Calcula tu precio final: <strong>tarifa base</strong> (60 o 90 min) + suplementos por nº de gatos + (opcional) medicación.</p>
+              <!-- TPL: FIN BLOQUE NUEVO -->
+
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-visitas.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
         <!-- Alojamiento nocturno (por día) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="alojamiento">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
           <h3>Alojamiento nocturno</h3>
           <p>Como en familia: día y noche con un cuidador.</p>
@@ -275,9 +271,8 @@
                 <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO -->
-              <a href="servicio-alojamiento.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-estancias.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
@@ -285,9 +280,7 @@
         <!-- ===== Fila 2 ===== -->
 
         <!-- Paseos -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="paseos">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-person-walking"></i></div>
           <h3>Paseos</h3>
           <p>Paseos seguros y estimulantes.</p>
@@ -299,17 +292,14 @@
                 <li><strong>2ª mascota:</strong> +8 €.</li>
               </ul>
               <p class="precio">Consulta los detalles para ver cómo organizamos la ruta y los tiempos.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO -->
-              <a href="servicio-paseos.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-paseos.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
         <!-- Transporte -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="transporte">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-car-side"></i></div>
           <h3>Transporte</h3>
           <p>Traslados seguros a clínica, peluquería o domicilio.</p>
@@ -321,17 +311,14 @@
                 <li>Se calcula según distancia y tiempos de espera.</li>
               </ul>
               <p class="precio">Lee los detalles para saber qué incluye y cómo calculamos la distancia.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO -->
-              <a href="servicio-transporte.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-transporte.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
         <!-- Bodas -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="bodas">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
           <h3>Bodas</h3>
           <p>Acompañamos a tu mascota en tu gran día.</p>
@@ -340,17 +327,14 @@
             <div class="content">
               <p>Logística, coordinación y cuidado durante la ceremonia, reportaje y celebración. Transporte opcional.</p>
               <p class="precio">Precio: <strong>a consultar</strong> según agenda y horas.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO -->
-              <a href="servicio-bodas.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-bodas.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
         <!-- Postoperatorio -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="postoperatorio">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-briefcase-medical"></i></div>
           <h3>Postoperatorio</h3>
           <p>Curar, medicar y vigilar con profesionales.</p>
@@ -359,17 +343,14 @@
             <div class="content">
               <p>Supervisión de puntos, administración de medicación, control del dolor y coordinación con tu clínica si es necesario.</p>
               <p class="precio">Precio: <strong>a consultar</strong> según complejidad.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO -->
-              <a href="servicio-postoperatorio.html" class="service-cta">Haz tu reserva</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="reserva.html" class="service-cta">Reservar ahora</a>
+              <a href="servicio-postquirurgico.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
         <!-- Festivos -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="festivos">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
           <h3>Festivos</h3>
           <p>Suplementos por fecha especial.</p>
@@ -380,15 +361,13 @@
                 <li><strong>Festivos:</strong> +10 €</li>
                 <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
               </ul>
-              <!-- “Leer detalles” eliminado -->
+              <a href="condiciones.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
 
-        <!-- Desplazamientos (kilometraje tarifado) — tamaño normal -->
-        <!-- TPL: INICIO BLOQUE NUEVO [ID para anclaje] -->
-        <div class="service-card" id="desplazamientos">
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <!-- Desplazamientos (kilometraje tarifado) -->
+        <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-route"></i></div>
           <h3>Desplazamientos</h3>
           <p>Kilometraje adicional cuando el cuidador se moviliza.</p>
@@ -402,78 +381,47 @@
                 <li>+40 km → <strong>20 €</strong></li>
               </ul>
               <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-              <!-- “Leer detalles” eliminado -->
+              <a href="condiciones.html" class="ver-mas">Leer detalles del servicio</a>
             </div>
           </details>
         </div>
-
-        <!-- TPL: INICIO BLOQUE NUEVO [Servicio Exóticos] -->
-        <div class="service-card" id="exoticos">
-          <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
-          <h3>Exóticos</h3>
-          <p>Cuidado de aves, reptiles, pequeños mamíferos y otras especies.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <p>Disponible solo si contamos con un cuidador de exóticos en tu zona.</p>
-              <p class="precio">Precio: <strong>a consultar</strong></p>
-              <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
-              <!-- “Leer detalles” eliminado -->
-            </div>
-          </details>
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
-
-        <!-- TPL: INICIO BLOQUE NUEVO [Tarjeta de ayuda] -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
-          <h3>¿No sabes qué servicio elegir?</h3>
-          <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
-          <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
       </div>
     </div>
   </section>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <nav class="footer-links-row">
+        <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+        <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+        <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+        <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+        <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+        <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+        <a href="digital-services-act.html">Digital Services Act</a>
+        <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+      </nav>
+
+      <div class="footer-right socials">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      </div>
+    </div>
+
+    <div class="footer-bottom footer-bottom--inline">
+      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+      <nav class="footer-bottom-right legal-links">
+        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+        <a href="cookies.html">Cookies</a><span class="sep">|</span>
+        <a href="canal-denuncias.html">Canal de denuncias</a>
+      </nav>
+    </div>
+  </footer>
 
   <script>
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
@@ -482,83 +430,5 @@
       d.addEventListener('mouseleave', () => d.removeAttribute('open'));
     });
   </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Auto-enlace a reserva con service + duración] -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  // 1) Selecciona todos los enlaces que van a reserva
-  const links = Array.from(document.querySelectorAll('a[href*="reserva.html"]'));
-
-  // 2) Detección robusta del servicio
-  const detectService = (a) => {
-    // Prioridad: data-tpl-service (si la añades en el HTML de cada botón)
-    const dataSvc = (a.dataset.tplService || a.dataset.service || '').toLowerCase();
-    if (dataSvc) return dataSvc;
-
-    // Fallback: intenta deducir por texto cercano (título de la tarjeta o contenedor)
-    const container = a.closest('[class*="card"], [class*="tarjeta"], section, article, div') || document.body;
-    const blob = (container.innerText || container.textContent || '').toLowerCase();
-
-    if (/\bvisitas?\b/.test(blob) || /\bgato(s)?\b/.test(blob)) return 'visitas';
-    if (/\bpaseo(s)?\b/.test(blob)) return 'paseos';
-    if (/\bguard(e|é)r(i|í)a\b/.test(blob) && /d[ií]a/.test(blob)) return 'guarderia';
-    if (/\balojamiento\b|\bestancia\b/.test(blob)) return 'alojamiento';
-    if (/\bbodas?\b|exclusiv/.test(blob)) return 'bodas';
-    if (/\bex[oó]tico(s)?\b/.test(blob)) return 'exoticos';
-    if (/\btransporte\b/.test(blob)) return 'transporte';
-    if (/\bposoperat(orios?|orio)\b/.test(blob)) return 'posoperatorios';
-    return ''; // desconocido
-  };
-
-  // 3) Reescribe la URL al hacer click
-  links.forEach(a => {
-    a.addEventListener('click', (ev) => {
-      // Solo actuamos si apunta a reserva.html
-      const href = a.getAttribute('href') || '';
-      if (!/reserva\.html/i.test(href)) return;
-
-      const svc = detectService(a);
-      // Construye base URL limpia (conservando # si lo hay)
-      const u = new URL(href, location.href);
-      const hash = u.hash || '';
-      u.hash = '';
-
-      // Si es VISITAS → pedir duración 60/90 sin tocar el diseño
-      if (svc === 'visitas') {
-        ev.preventDefault();
-        let dur = (new URLSearchParams(u.search).get('duracion') || '').trim();
-        if (!/^(60|90)$/.test(dur)) {
-          dur = (window.prompt('Elige duración de la visita (60 o 90 min):', '60') || '').trim();
-        }
-        if (!/^(60|90)$/.test(dur)) dur = '60'; // por defecto 60
-
-        // Aplica params
-        u.searchParams.set('service', 'visitas');
-        u.searchParams.set('duracion', dur);
-
-        // Navega
-        location.href = u.pathname + '?' + u.searchParams.toString() + hash;
-        return;
-      }
-
-      // Otros servicios → solo añadimos ?service=...
-      if (svc) {
-        // Evita duplicados si ya viene en la URL del botón
-        if (!new URLSearchParams(u.search).get('service')) {
-          u.searchParams.set('service', svc);
-          a.setAttribute('href', u.pathname + '?' + u.searchParams.toString() + (u.hash || ''));
-        }
-      }
-      // Si no se detecta servicio, dejamos el enlace tal cual (no rompemos nada).
-    }, { capture:false });
-  });
-});
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
 </body>
 </html>
