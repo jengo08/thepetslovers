@@ -88,6 +88,34 @@
           </select>
         </div>
 
+        <!-- TPL: INICIO BLOQUE NUEVO [CCAA para autonómicos] -->
+        <div class="booking-field">
+          <label for="region">Comunidad Autónoma</label>
+          <select id="region" name="CCAA">
+            <option value="madrid" selected>Comunidad de Madrid</option>
+            <option value="andalucia">Andalucía</option>
+            <option value="aragon">Aragón</option>
+            <option value="asturias">Asturias</option>
+            <option value="baleares">Illes Balears</option>
+            <option value="canarias">Canarias</option>
+            <option value="cantabria">Cantabria</option>
+            <option value="castilla-la-mancha">Castilla-La Mancha</option>
+            <option value="castilla-y-leon">Castilla y León</option>
+            <option value="cataluna">Cataluña</option>
+            <option value="valenciana">Comunitat Valenciana</option>
+            <option value="extremadura">Extremadura</option>
+            <option value="galicia">Galicia</option>
+            <option value="la-rioja">La Rioja</option>
+            <option value="melilla">Melilla</option>
+            <option value="murcia">Región de Murcia</option>
+            <option value="navarra">Navarra</option>
+            <option value="euskadi">País Vasco</option>
+            <option value="ceuta">Ceuta</option>
+            <option value="nacional">Solo festivos nacionales</option>
+          </select>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
         <div class="booking-field">
           <label for="date">Fecha</label>
           <input type="date" id="date" name="Fecha" required>
@@ -114,6 +142,7 @@
           <select id="species" name="Tipo_animal">
             <option value="perro">Perro</option>
             <option value="gato">Gato</option>
+            <option value="otros">Otros</option>
           </select>
         </div>
 
@@ -135,7 +164,7 @@
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Extras generales] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Extras generales (autorrelleno)] -->
         <div class="booking-field">
           <label for="festivo">¿Es festivo?</label>
           <select id="festivo" name="Festivo">
@@ -221,148 +250,295 @@
     </form>
   </div>
 
+  <!-- ====== TPL: INICIO BLOQUE NUEVO [Lógica reservas + Nager.Date + fallback JSON/local] ====== -->
   <script>
-    // ====== TPL: INICIO BLOQUE NUEVO [Lógica de UI y precios] ======
+  document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('bookingForm');
-    const wall = document.getElementById('authWall');
 
     const els = {
       service: document.getElementById('service'),
+      region: document.getElementById('region'),
+      date: document.getElementById('date'),
       species: document.getElementById('species'),
       isPuppy: document.getElementById('isPuppy'),
       numPets: document.getElementById('numPets'),
       festivo: document.getElementById('festivo'),
       senalado: document.getElementById('senalado'),
       depositPct: document.getElementById('depositPct'),
-
       fieldSpecies: document.getElementById('fieldSpecies'),
       fieldIsPuppy: document.getElementById('fieldIsPuppy'),
       fieldNumPets: document.getElementById('fieldNumPets'),
-
       sumBase: document.getElementById('sumBase'),
       sumPets: document.getElementById('sumPets'),
       sumFestivo: document.getElementById('sumFestivo'),
       sumSenalado: document.getElementById('sumSenalado'),
       sumSubtotal: document.getElementById('sumSubtotal'),
       sumDeposit: document.getElementById('sumDeposit'),
-
       summaryField: document.getElementById('summaryField')
     };
 
-    // Precios base (coinciden con tu web actual)
-    const BASES = {
-      visitas: 22,       // 60' (incluye 1 gato)
-      paseos: 12,
-      guarderia: 20,     // día (hasta 8h)
-      alojamiento: 30,   // por día (perro/gato) — sube a 35€ si cachorro
-      bodas: 0           // a consultar
+    const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0 };
+    const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01']; // Días señalados +30€
+    const REGION_TO_COUNTY = {
+      andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
+      'castilla-la-mancha':'ES-CM', 'castilla-y-leon':'ES-CL', cataluna:'ES-CT', ceuta:'ES-CE', valenciana:'ES-VC',
+      extremadura:'ES-EX', galicia:'ES-GA', 'la-rioja':'ES-RI', madrid:'ES-MD', melilla:'ES-ML', murcia:'ES-MC',
+      navarra:'ES-NC', euskadi:'ES-PV', nacional:null
     };
+    const COUNTY_TO_REGIONKEY = {
+      'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
+      'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
+    };
+    const _festivosCache = new Map();
 
-    function currency(n){ return (Math.round(n * 100) / 100).toFixed(2); }
+    // Autorellenar servicio por ?service= o ?svc=
+    (function prefillService(){
+      const params = new URLSearchParams(location.search);
+      const map = { visitas:'visitas', paseos:'paseos', guarderia:'guarderia', alojamiento:'alojamiento', bodas:'bodas' };
+      const svc = map[params.get('service')] || map[params.get('svc')] || '';
+      if(svc && els.service){ els.service.value = svc; els.service.disabled = true; }
+    })();
 
-    // Suplementos dinámicos por nº de mascotas, según servicio
+    function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
+    function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
     function calcPetSupplements(service, species, n){
-      if(n <= 1) return 0;
-
-      // Visitas (gatos): 1 extra +12; 2 extras +8 c/u; + de 3 extras +6 c/u
+      const num = parseInt(n || '1', 10);
+      if(num <= 1) return 0;
       if(service === 'visitas'){
-        const extra = n - 1;
+        const extra = num - 1;
         if(extra === 1) return 12;
         if(extra === 2) return 8 * 2;
         if(extra >= 3) return 6 * extra;
         return 0;
       }
-
-      // Paseos: +8€ por cada mascota adicional
-      if(service === 'paseos'){
-        return 8 * (n - 1);
-      }
-
-      // Alojamiento: cada perro adicional 25€ / día
-      if(service === 'alojamiento' && species === 'perro'){
-        return 25 * (n - 1);
-      }
-
+      if(service === 'paseos') return 8 * (num - 1);
+      if(service === 'alojamiento' && species === 'perro') return 25 * (num - 1);
       return 0;
-    }
-
-    function toggleFields(){
-      const svc = els.service.value;
-
-      // Mostrar tipo de animal y nº de mascotas en servicios que lo requieren
-      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
-      els.fieldSpecies.hidden = !needSpeciesNum;
-      els.fieldNumPets.hidden = !needSpeciesNum;
-
-      // Selector "cachorro" sólo para alojamiento y guardería
-      const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
-      els.fieldIsPuppy.hidden = !needPuppy;
-
-      // En visitas fijamos especie = gato
-      if(svc === 'visitas'){ els.species.value = 'gato'; }
     }
 
     function getBasePrice(service){
       let base = BASES[service] || 0;
-      const isPuppy = (els.isPuppy.value === 'si');
-
-      // Regla de cachorro:
-      // - Alojamiento: cachorros 35 €
+      const isPuppy = (els.isPuppy?.value === 'si');
       if(service === 'alojamiento' && isPuppy){ base = 35; }
-
       return base;
     }
 
+    function toggleFields(){
+      const svc = els.service?.value;
+      const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
+      if(els.fieldSpecies) els.fieldSpecies.hidden = !needSpeciesNum;
+      if(els.fieldNumPets) els.fieldNumPets.hidden = !needSpeciesNum;
+      const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
+      if(els.fieldIsPuppy) els.fieldIsPuppy.hidden = !needPuppy;
+      if(svc === 'visitas' && els.species) els.species.value = 'gato';
+    }
+
+    // --- Preferencia: JSON local /festivos-es-YYYY.json (si existe) ---
+    async function fetchLocalHolidays(year){
+      const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
+      for(const url of urls){
+        try{
+          const r = await fetch(url, {cache:'no-store'});
+          if(!r.ok) continue;
+          const data = await r.json();
+          const nacional = new Set((data.national || data.nacional || []).map(x => x.date || x));
+          const porCcaa = new Map();
+          if(data.regions){
+            Object.entries(data.regions).forEach(([k, arr])=>{
+              porCcaa.set(k, new Set((arr||[]).map(x => x.date || x)));
+            });
+          }
+          return { nacional, porCcaa, _src:'local' };
+        }catch(_){}
+      }
+      return null;
+    }
+
+    // --- Nager.Date (sin API key) ---
+    async function fetchNagerHolidays(year){
+      const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ES`, {cache:'force-cache'});
+      if(!r.ok) throw new Error('Nager fail');
+      const data = await r.json();
+      const nacional = new Set();
+      const porCcaa = new Map();
+      for(const h of data){
+        const date = h.date; // YYYY-MM-DD
+        if(!h.counties || !h.counties.length){
+          nacional.add(date);
+        }else{
+          for(const c of h.counties){
+            const key = COUNTY_TO_REGIONKEY[c] || c; // normaliza a "MD", "AN", etc.
+            if(!porCcaa.has(key)) porCcaa.set(key, new Set());
+            porCcaa.get(key).add(date);
+          }
+        }
+      }
+      return { nacional, porCcaa, _src:'nager' };
+    }
+
+    async function fetchHolidaysForYear(year){
+      if(_festivosCache.has(year)) return _festivosCache.get(year);
+
+      // 0) Si hay cache en localStorage (válida 24h), úsala
+      try{
+        const raw = localStorage.getItem(`tpl_festivos_${year}`);
+        if(raw){
+          const parsed = JSON.parse(raw);
+          if(parsed?.t && Date.now() - parsed.t <= 24*3600*1000){
+            const nacional = new Set(parsed.d || []);
+            const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
+            const cached = {nacional, porCcaa, _src:'localStorage'};
+            _festivosCache.set(year, cached);
+            return cached;
+          }
+        }
+      }catch(_){}
+
+      // 1) JSON local en el repo (si lo has subido)
+      const local = await fetchLocalHolidays(year);
+      if(local){ _festivosCache.set(year, local); return local; }
+
+      // 2) Nager.Date online
+      try{
+        const nager = await fetchNagerHolidays(year);
+        _festivosCache.set(year, nager);
+        try{
+          localStorage.setItem(`tpl_festivos_${year}`, JSON.stringify({
+            t: Date.now(),
+            d: [...nager.nacional],
+            r: [...nager.porCcaa.entries()].map(([k,v])=>[k,[...v]])
+          }));
+        }catch(_){}
+        return nager;
+      }catch(_){}
+
+      // 3) Fallback nacional mínimo
+      const basic = {
+        nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]),
+        porCcaa: new Map(),
+        _src:'basic'
+      };
+      _festivosCache.set(year, basic);
+      return basic;
+    }
+
+    async function detectRecargos(ccaa, dateStr){
+      if(!dateStr) return { festivo:0, senalado:0 };
+      const d = new Date(dateStr);
+      if(isNaN(d)) return { festivo:0, senalado:0 };
+      const year = d.getFullYear();
+      const iso = ymd(d);
+      const pack = await fetchHolidaysForYear(year);
+
+      const isNat = !!pack?.nacional?.has(iso);
+      const county = REGION_TO_COUNTY[ccaa || 'nacional'] || null;     // "ES-MD"
+      const regKey = COUNTY_TO_REGIONKEY[county] || county;            // "MD"
+      const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
+
+      const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
+      return { festivo: (isNat || isReg) ? 10 : 0, senalado: isSpecial ? 30 : 0 };
+    }
+
+    async function autoFestivoSenalado(){
+      const ccaa = els.region?.value || 'nacional';
+      const dateStr = els.date?.value || '';
+      try{
+        const r = await detectRecargos(ccaa, dateStr);
+        if(els.festivo)  els.festivo.value  = String(r.festivo);
+        if(els.senalado) els.senalado.value = String(r.senalado);
+      }catch(_){}
+    }
+
     function recalc(){
-      const svc = els.service.value || '';
-      const species = (els.species.value || 'perro');
-      const n = parseInt(els.numPets.value || '1', 10);
+      const svc = els.service?.value || '';
+      const species = (els.species?.value || 'perro');
+      const n = parseInt(els.numPets?.value || '1', 10);
 
       const base = getBasePrice(svc);
       const pets = calcPetSupplements(svc, species, n);
-
-      const festivo = parseFloat(els.festivo.value || 0);
-      const senalado = parseFloat(els.senalado.value || 0);
+      const festivo = parseFloat(els.festivo?.value || 0);
+      const senalado = parseFloat(els.senalado?.value || 0);
 
       const subtotal = base + pets + festivo + senalado;
-      const depPct = parseFloat(els.depositPct.value || 0.2);
+      const depPct = parseFloat(els.depositPct?.value || 0.2);
       const deposit = subtotal * depPct;
 
-      els.sumBase.textContent = base ? currency(base) : '—';
-      els.sumPets.textContent = currency(pets);
-      els.sumFestivo.textContent = currency(festivo);
-      els.sumSenalado.textContent = currency(senalado);
-      els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
-      els.sumDeposit.textContent = base ? currency(deposit) : '—';
+      if(els.sumBase)     els.sumBase.textContent = base ? currency(base) : '—';
+      if(els.sumPets)     els.sumPets.textContent = currency(pets);
+      if(els.sumFestivo)  els.sumFestivo.textContent = currency(festivo);
+      if(els.sumSenalado) els.sumSenalado.textContent = currency(senalado);
+      if(els.sumSubtotal) els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
+      if(els.sumDeposit)  els.sumDeposit.textContent = base ? currency(deposit) : '—';
+    }
+
+    async function recalcWithAuto(){
+      await autoFestivoSenalado(); // autocompleta festivo/señalado
+      recalc();                    // recalcula totales
     }
 
     ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','festivo','senalado','depositPct'].forEach(id=>{
+      ['service','species','isPuppy','numPets','festivo','senalado','depositPct','region','date'].forEach(id=>{
         const el = document.getElementById(id);
-        if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalc(); });
+        if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalcWithAuto(); });
       });
     });
 
     toggleFields();
-    recalc();
+    recalcWithAuto();
 
-    // Antes de enviar a Formspree, guardamos el desglose en el campo oculto
-    form.addEventListener('submit', (e)=>{
-      const summary = [
-        `Servicio: ${els.service.options[els.service.selectedIndex]?.text || ''}`,
-        `Tipo de animal: ${els.species && !els.fieldSpecies.hidden ? els.species.value : '-'}`,
-        `Cachorro: ${els.isPuppy && !els.fieldIsPuppy.hidden ? els.isPuppy.value : '-'}`,
-        `Nº mascotas: ${els.numPets && !els.fieldNumPets.hidden ? els.numPets.value : '1'}`,
-        `Festivo: ${els.festivo.value} €`,
-        `Día señalado: ${els.senalado.value} €`,
-        `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal').textContent} €`,
-        `Depósito a retener: ${document.getElementById('sumDeposit').textContent} €`,
-        `Kilometraje: pendiente (al asignar cuidador)`
-      ].join(' | ');
-      els.summaryField.value = summary;
-    });
-    // ====== TPL: FIN BLOQUE NUEVO ======
+    // Guardar desglose para Formspree
+    if(form){
+      form.addEventListener('submit', ()=>{
+        const speciesOther = document.getElementById('speciesOther');
+        const speciesVal = (els.species && !els.fieldSpecies?.hidden)
+          ? (speciesOther?.value ? `otros (${speciesOther.value.trim()})` : els.species.value)
+          : '-';
+        const summary = [
+          `Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`,
+          `Fecha: ${els.date?.value || '-'}`,
+          `Tipo de animal: ${speciesVal}`,
+          `Cachorro: ${els.isPuppy && !els.fieldIsPuppy?.hidden ? els.isPuppy.value : '-'}`,
+          `Nº mascotas: ${els.numPets && !els.fieldNumPets?.hidden ? els.numPets.value : '1'}`,
+          `CCAA: ${els.region?.options?.[els.region.selectedIndex]?.text || 'España'}`,
+          `Festivo (auto): ${els.festivo?.value || '0'} €`,
+          `Día señalado (auto): ${els.senalado?.value || '0'} €`,
+          `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal')?.textContent || '0.00'} €`,
+          `Depósito a retener: ${document.getElementById('sumDeposit')?.textContent || '0.00'} €`,
+          `Kilometraje: pendiente (al asignar cuidador)`
+        ].join(' | ');
+        if(els.summaryField) els.summaryField.value = summary;
+      });
+    }
+
+    // “Otros” animales: input dinámico sin tocar tu layout
+    (function speciesOtherToggle(){
+      const sel = els.species;
+      if(!sel) return;
+      function ensureOtherInput(){
+        let extra = document.getElementById('speciesOther');
+        if(sel.value === 'otros'){
+          if(!extra){
+            extra = document.createElement('input');
+            extra.id = 'speciesOther';
+            extra.name = 'Tipo_animal_otro';
+            extra.placeholder = 'Especifica el animal';
+            extra.className = 'booking-extra';
+            extra.style.marginTop = '6px';
+            document.getElementById('fieldSpecies').appendChild(extra);
+          }
+          extra.required = true;
+        }else if(extra){
+          extra.remove();
+        }
+      }
+      sel.addEventListener('change', ensureOtherInput);
+      ensureOtherInput();
+    })();
+  });
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Footer unificado (inyectado) -->
   <div id="tpl-footer">
@@ -405,14 +581,12 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática - COMPAT correcto] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK compat] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
-
   <script>
-    // Configuración de tu proyecto
     const firebaseConfig = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -422,25 +596,21 @@
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
-
-    // Inicialización (compat expone 'firebase' global)
-    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-    if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
-
-    // Mostrar/ocultar formulario según sesión
-    function updateAuthUI(user){
-      const logged = !!user;
-      if (form) {
-        form.classList.toggle('disabled', !logged);
+    if (typeof firebase !== 'undefined') {
+      if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
+      function updateAuthUI(user){
+        const logged = !!user;
+        const form = document.getElementById('bookingForm');
+        const wall = document.getElementById('authWall');
+        if (form) form.classList.toggle('disabled', !logged);
+        if (wall) wall.style.display = logged ? 'none' : 'block';
       }
-      if (wall) {
-        wall.style.display = logged ? 'none' : 'block';
-      }
+      auth.onAuthStateChanged(updateAuthUI);
     }
-    auth.onAuthStateChanged(updateAuthUI);
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
