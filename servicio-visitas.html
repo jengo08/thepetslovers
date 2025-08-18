@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <!-- TPL: INICIO BLOQUE NUEVO [SEO] -->
-  <meta name="description" content="Visitas a domicilio para gatos de 60 o 90 minutos. Limpieza, juego, cepillado, medicación si es necesario y reportes con fotos. Profesionales del sector veterinario titulados.">
+  <meta name="description" content="Visitas a domicilio para gatos de 15, 60 o 90 minutos. Limpieza, juego, cepillado, medicación si es necesario y reportes con fotos. Auxiliares veterinarios titulados.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
@@ -31,6 +31,7 @@
     .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
     .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
     .price-table thead th{background:#fafafa}
+    .price-table .subtle{color:#666;font-weight:400;font-size:.95rem}
     /* Enlaces extra */
     .links-list{list-style:none;padding-left:0;margin:10px 0 0}
     .links-list li{margin:6px 0}
@@ -43,7 +44,7 @@
     .cta-row .service-cta{background:var(--color-principal);color:#fff;padding:16px 22px;font-weight:700;border-radius:6px;text-decoration:none;font-size:1.05rem}
     .cta-row .service-cta:hover{background:#2a7e80}
 
-    /* Tarjetas lado a lado: Suplementos y Desplazamientos */
+    /* Tarjetas lado a lado: extras */
     .tpl-cards-2{display:grid;gap:16px;margin-top:10px}
     @media (min-width: 780px){.tpl-cards-2{grid-template-columns:1fr 1fr}}
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
@@ -76,47 +77,60 @@
 
     <h1><i class="fa-solid fa-cat"></i> Visitas a domicilio (gatos)</h1>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Introducción cercana] -->
+    <!-- Intro -->
     <p class="lead">
-      Para que tu gato <strong>permanezca en su entorno</strong> y mantenga su <strong>rutina sin estrés</strong>.  
-      Trabajamos siempre a <strong>la misma hora cada día</strong> para respetar sus hábitos.  
-      Cuidamos, limpiamos, jugamos y administramos <strong>medicación si es necesario</strong>, con <strong>profesionales del sector veterinario titulados</strong>.
+      Para que tu gato <strong>permanezca en su casa</strong> y mantenga su <strong>rutina sin estrés</strong>.  
+      Trabajamos siempre a <strong>la misma hora</strong> para respetar sus hábitos.  
+      Cuidamos, limpiamos, jugamos y, si hace falta, administramos <strong>medicación</strong>. Siempre con <strong>auxiliares veterinarios titulados</strong>.
     </p>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <p>
       <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
-      <span class="badge"><i class="fa-solid fa-heart"></i> Rutina y bienestar felino</span>
-      <span class="badge"><i class="fa-solid fa-house"></i> Siempre en su casa</span>
+      <span class="badge"><i class="fa-solid fa-heart"></i> Rutina y bienestar</span>
+      <span class="badge"><i class="fa-solid fa-house"></i> En su propio hogar</span>
     </p>
 
     <h3>Duración y recomendación</h3>
     <div class="note">
-      <p><i class="fa-regular fa-clock"></i> Puedes elegir entre <strong>60 minutos</strong> o <strong>90 minutos</strong>.</p>
-      <p><i class="fa-solid fa-users"></i> Las <strong>visitas de 90 minutos</strong> son recomendables cuando hay <strong>4 o más gatos</strong>, para tener tiempo de <strong>limpiar, jugar con calma, cepillar y dedicar atención individual</strong>.</p>
+      <p><i class="fa-regular fa-clock"></i> Elige <strong>15</strong>, <strong>60</strong> o <strong>90 minutos</strong>.</p>
+      <p><i class="fa-solid fa-users"></i> Recomendamos <strong>90 minutos</strong> si hay <strong>4+ gatos</strong> (más tiempo para limpiar, jugar, cepillar y dedicar atención individual).</p>
     </div>
 
     <h3>¿Qué haremos en cada visita?</h3>
     <ul class="icon-list">
-      <li><i class="fa-solid fa-broom"></i><div><strong>Limpieza de areneros</strong> y zonas de alimentación/agua.</div></li>
-      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comida y agua</strong> según tus pautas (cantidades/horarios).</div></li>
-      <li><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>Juego y enriquecimiento</strong> (caña, plumas, olfato).</div></li>
-      <li><i class="fa-solid fa-brush"></i><div><strong>Cepillado</strong> si el gato lo tolera.</div></li>
-      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si es necesaria (comprimidos/ jarabes/ pomadas) según indicación veterinaria.</div></li>
-      <li><i class="fa-solid fa-camera"></i><div><strong>Fotos y vídeo-resumen</strong> para que veas cómo va todo.</div></li>
+      <li><i class="fa-solid fa-broom"></i><div><strong>Limpieza de areneros</strong> y zonas de comida/agua.</div></li>
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comida y agua</strong> según tus pautas.</div></li>
+      <li><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>Juego y enriquecimiento</strong> (si aplica por duración).</div></li>
+      <li><i class="fa-solid fa-brush"></i><div><strong>Cepillado</strong> (en visitas de 60/90 min y si el gato lo tolera).</div></li>
+      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si procede, según indicación veterinaria.</div></li>
+      <li><i class="fa-solid fa-camera"></i><div><strong>Fotos y vídeo-resumen</strong> tras la visita.</div></li>
     </ul>
 
     <h3>Precios</h3>
     <table class="price-table">
-      <thead><tr><th>Incluye 1 gato</th><th>60 min</th><th>90 min</th></tr></thead>
+      <thead><tr><th>Incluye 1 gato</th><th>15 min</th><th>60 min</th><th>90 min</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>Tarifa base</strong></td>
+          <td><strong>12 €</strong> <div class="subtle">Visita rápida solo medicación/verificación*</div></td>
           <td><strong>22 €</strong></td>
           <td><strong>30 €</strong></td>
         </tr>
+        <!-- TPL: INICIO BLOQUE NUEVO [Estancias largas/desde el día 11] -->
+        <tr>
+          <td><strong>Desde el día 11</strong></td>
+          <td class="subtle">—</td>
+          <td><strong>18 €</strong></td>
+          <td><strong>27 €</strong></td>
+        </tr>
+        <tr>
+          <td><strong>Segunda visita (misma jornada)</strong> <span class="subtle">desde el día 11</span></td>
+          <td colspan="3"><strong>10 €</strong></td>
+        </tr>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </tbody>
     </table>
+    <p class="note" style="margin-top:-4px"><small>* La visita de <strong>15 min (12 €)</strong> está pensada solo para <u>administrar medicación y verificar</u> que todo está correcto; no incluye juegos ni cepillado.</small></p>
 
     <h3>Suplementos (por nº de gatos)</h3>
     <ul class="icon-list">
@@ -127,16 +141,7 @@
 
     <h3>Extras independientes</h3>
     <div class="tpl-cards-2">
-      <!-- Tarjeta 1: Medicación -->
-      <div class="tpl-card">
-        <h4><i class="fa-solid fa-prescription-bottle-medical"></i> Medicación (visita breve solo medicación)</h4>
-        <ul>
-          <li><strong>17 €</strong> <small>(desde el día 11: <strong>14 €</strong>)</small></li>
-        </ul>
-        <p class="note" style="margin-top:8px">Este extra es aparte; <u>no</u> depende de si eliges 60 o 90 minutos.</p>
-      </div>
-
-      <!-- Tarjeta 2: Festivos -->
+      <!-- Tarjeta 1: Festivos -->
       <div class="tpl-card">
         <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por fecha</h4>
         <ul>
@@ -144,50 +149,49 @@
           <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
         </ul>
       </div>
+
+      <!-- Tarjeta 2: Desplazamiento y llaves -->
+      <div class="tpl-card">
+        <h4><i class="fa-solid fa-route"></i> Desplazamiento y llaves</h4>
+        <ul>
+          <li>Al ser en domicilio, se aplica <strong>suplemento de desplazamiento</strong>:</li>
+          <li>2–10 km → <strong>6 €</strong> · 10–25 km → <strong>10 €</strong> · 25–40 km → <strong>15 €</strong> · +40 km → <strong>20 €</strong></li>
+          <li><i class="fa-solid fa-location-dot"></i> <strong>Buscamos al cuidador más cercano</strong> a ti y que mejor se adapte a tus gatos.</li>
+          <li><i class="fa-solid fa-key"></i> <strong>Entrega/devolución de llaves:</strong> +8 € si el cuidador debe desplazarse aparte solo para este trámite.</li>
+        </ul>
+      </div>
     </div>
 
-    <h3>Desplazamientos (kilometraje)</h3>
-    <div class="note">
-      <ul style="margin:0 0 0 18px">
-        <li>2–10 km → <strong>6 €</strong></li>
-        <li>10–25 km → <strong>10 €</strong></li>
-        <li>25–40 km → <strong>15 €</strong></li>
-        <li>+40 km → <strong>20 €</strong></li>
-      </ul>
-      <p style="margin-top:8px">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-    </div>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos y salud] -->
     <h3>Requisitos y salud</h3>
     <div class="note alert">
-      <p><i class="fa-solid fa-file-shield"></i> <strong>Cuéntanos cualquier patología</strong>, alergia o pauta especial de tu gato.</p>
+      <p><i class="fa-solid fa-file-shield"></i> Cuéntanos cualquier <strong>patología</strong>, alergia o pauta especial.</p>
       <p><i class="fa-solid fa-syringe"></i> Cartilla al día de <strong>vacunas y desparasitaciones</strong>.</p>
-      <p><i class="fa-solid fa-shield"></i> <strong>Seguro de responsabilidad civil</strong> vigente (aplica como en el resto de servicios).</p>
+      <p><i class="fa-solid fa-shield"></i> <strong>Seguro de responsabilidad civil</strong> vigente (como en el resto de servicios).</p>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Nuestro método</h3>
     <ul class="icon-list">
       <li><i class="fa-regular fa-clock"></i><div><strong>Misma hora cada día</strong> para mantener su rutina.</div></li>
-      <li><i class="fa-solid fa-user-nurse"></i><div>Equipo de <strong>auxiliares veterinarios titulados</strong>, asignado según el carácter y necesidades de tus gatos.</div></li>
-      <li><i class="fa-solid fa-message"></i><div><strong>Comunicación clara</strong> por WhatsApp o email con fotos y notas.</div></li>
+      <li><i class="fa-solid fa-user-nurse"></i><div>Equipo de <strong>auxiliares veterinarios titulados</strong>, asignado según carácter y necesidades.</div></li>
+      <li><i class="fa-solid fa-message"></i><div><strong>Comunicación</strong> por WhatsApp o email con fotos y notas.</div></li>
     </ul>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Enlaces útiles] -->
     <ul class="links-list">
       <li><a href="condiciones.html#visitas-gatos"><i class="fa-solid fa-file-lines"></i> Condiciones específicas de Visitas</a></li>
       <li><a href="servicios.html#lista-servicios"><i class="fa-solid fa-grid-2"></i> Ver todos los servicios</a></li>
     </ul>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- CTA: Volver a la izquierda y Reservar grande a la derecha -->
     <div class="cta-row">
       <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
-      <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
+      <!-- TPL: INICIO BLOQUE NUEVO [Prefill a reserva] -->
+      <a href="reserva.html?service=visitas-gatos" class="service-cta" aria-label="Ir a la página de reservas">
+        Haz tu reserva
+      </a>
+      <!-- TPL: FIN BLOQUE NUEVO -->
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
+  <!-- Footer unificado -->
   <div id="tpl-footer"><noscript>
     <footer class="site-footer">
       <div class="container footer-row">
@@ -221,9 +225,7 @@
       </div>
     </footer>
   </noscript></div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Scripts -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
