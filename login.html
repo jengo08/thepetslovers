@@ -10,14 +10,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- Navbar/Footer templates -->
+  <!-- Navbar/Footer existentes -->
   <script defer src="tpl-navbar.js"></script>
   <script defer src="tpl-footer.js"></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs - compat] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
@@ -28,40 +27,58 @@
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
-    firebase.initializeApp(firebaseConfig);
+    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <style>
+    /* TPL: INICIO BLOQUE NUEVO [Ajuste mínimo de layout] */
+    .auth-page{max-width:680px;margin:120px auto 40px;padding:1rem}
+    .auth-form label{font-weight:700;color:var(--color-texto)}
+    .auth-form input{padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-family:var(--fuente-texto)}
+    .auth-form .row{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+    .auth-form .actions{margin-top:10px;display:flex;gap:10px;align-items:center}
+    .auth-note{color:#666;margin-top:8px}
+    .auth-error{color:#b00020;margin-top:8px}
+    /* TPL: FIN BLOQUE NUEVO */
+  </style>
 </head>
 <body>
   <header id="tpl-navbar"></header>
 
-  <main class="container" style="max-width:680px;margin:120px auto 40px;padding:1rem;">
+  <main class="container auth-page">
     <h1>Inicia sesión</h1>
-    <form id="tpl-login-form" class="tpl-form" autocomplete="on">
-      <label for="tpl-login-email">Email</label>
-      <input type="email" id="tpl-login-email" required />
-
-      <label for="tpl-login-pass">Contraseña</label>
-      <input type="password" id="tpl-login-pass" required minlength="6" />
-
-      <button type="submit" class="btn-primario">Entrar</button>
-      <p style="margin-top:0.75rem;">¿No tienes cuenta? <a href="registro.html">Crear cuenta</a></p>
-      <p id="tpl-login-error" style="color:#b00020;margin-top:0.5rem;"></p>
+    <form id="tpl-login-form" class="auth-form" autocomplete="on">
+      <div class="row">
+        <label for="tpl-login-email">Email</label>
+        <input type="email" id="tpl-login-email" required />
+      </div>
+      <div class="row">
+        <label for="tpl-login-pass">Contraseña</label>
+        <input type="password" id="tpl-login-pass" required minlength="6" />
+      </div>
+      <div class="actions">
+        <button type="submit" class="cta-button">Entrar</button>
+        <a href="registro.html" class="cta-button" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Crear cuenta</a>
+      </div>
+      <p class="auth-note"><a href="#" id="tpl-reset">¿Olvidaste tu contraseña?</a></p>
+      <p id="tpl-login-error" class="auth-error"></p>
     </form>
   </main>
 
   <footer id="tpl-footer"></footer>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Login logic] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Login + reset] -->
   <script>
-    document.getElementById('tpl-login-form').addEventListener('submit', async (e) => {
+    const loginForm = document.getElementById('tpl-login-form');
+    const out = document.getElementById('tpl-login-error');
+
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      out.textContent = '';
       const email = document.getElementById('tpl-login-email').value.trim();
       const pass  = document.getElementById('tpl-login-pass').value;
-      const out   = document.getElementById('tpl-login-error');
-      out.textContent = '';
-
       try {
         await auth.signInWithEmailAndPassword(email, pass);
         const params = new URLSearchParams(location.search);
@@ -69,6 +86,20 @@
         location.href = next;
       } catch (err) {
         out.textContent = err?.message || 'Error al iniciar sesión';
+      }
+    });
+
+    document.getElementById('tpl-reset').addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('tpl-login-email').value.trim();
+      if(!email){ out.textContent = 'Escribe tu email arriba para enviarte el enlace de restablecer.'; return; }
+      try{
+        await auth.sendPasswordResetEmail(email);
+        out.style.color = 'green';
+        out.textContent = 'Te hemos enviado un email para restablecer tu contraseña.';
+      }catch(err){
+        out.style.color = '#b00020';
+        out.textContent = err?.message || 'No se pudo enviar el email de restablecimiento.';
       }
     });
   </script>
