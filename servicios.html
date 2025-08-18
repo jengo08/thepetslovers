@@ -487,5 +487,78 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Auto-enlace a reserva con service + duración] -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // 1) Selecciona todos los enlaces que van a reserva
+  const links = Array.from(document.querySelectorAll('a[href*="reserva.html"]'));
+
+  // 2) Detección robusta del servicio
+  const detectService = (a) => {
+    // Prioridad: data-tpl-service (si la añades en el HTML de cada botón)
+    const dataSvc = (a.dataset.tplService || a.dataset.service || '').toLowerCase();
+    if (dataSvc) return dataSvc;
+
+    // Fallback: intenta deducir por texto cercano (título de la tarjeta o contenedor)
+    const container = a.closest('[class*="card"], [class*="tarjeta"], section, article, div') || document.body;
+    const blob = (container.innerText || container.textContent || '').toLowerCase();
+
+    if (/\bvisitas?\b/.test(blob) || /\bgato(s)?\b/.test(blob)) return 'visitas';
+    if (/\bpaseo(s)?\b/.test(blob)) return 'paseos';
+    if (/\bguard(e|é)r(i|í)a\b/.test(blob) && /d[ií]a/.test(blob)) return 'guarderia';
+    if (/\balojamiento\b|\bestancia\b/.test(blob)) return 'alojamiento';
+    if (/\bbodas?\b|exclusiv/.test(blob)) return 'bodas';
+    if (/\bex[oó]tico(s)?\b/.test(blob)) return 'exoticos';
+    if (/\btransporte\b/.test(blob)) return 'transporte';
+    if (/\bposoperat(orios?|orio)\b/.test(blob)) return 'posoperatorios';
+    return ''; // desconocido
+  };
+
+  // 3) Reescribe la URL al hacer click
+  links.forEach(a => {
+    a.addEventListener('click', (ev) => {
+      // Solo actuamos si apunta a reserva.html
+      const href = a.getAttribute('href') || '';
+      if (!/reserva\.html/i.test(href)) return;
+
+      const svc = detectService(a);
+      // Construye base URL limpia (conservando # si lo hay)
+      const u = new URL(href, location.href);
+      const hash = u.hash || '';
+      u.hash = '';
+
+      // Si es VISITAS → pedir duración 60/90 sin tocar el diseño
+      if (svc === 'visitas') {
+        ev.preventDefault();
+        let dur = (new URLSearchParams(u.search).get('duracion') || '').trim();
+        if (!/^(60|90)$/.test(dur)) {
+          dur = (window.prompt('Elige duración de la visita (60 o 90 min):', '60') || '').trim();
+        }
+        if (!/^(60|90)$/.test(dur)) dur = '60'; // por defecto 60
+
+        // Aplica params
+        u.searchParams.set('service', 'visitas');
+        u.searchParams.set('duracion', dur);
+
+        // Navega
+        location.href = u.pathname + '?' + u.searchParams.toString() + hash;
+        return;
+      }
+
+      // Otros servicios → solo añadimos ?service=...
+      if (svc) {
+        // Evita duplicados si ya viene en la URL del botón
+        if (!new URLSearchParams(u.search).get('service')) {
+          u.searchParams.set('service', svc);
+          a.setAttribute('href', u.pathname + '?' + u.searchParams.toString() + (u.hash || ''));
+        }
+      }
+      // Si no se detecta servicio, dejamos el enlace tal cual (no rompemos nada).
+    }, { capture:false });
+  });
+});
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
