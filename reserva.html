@@ -430,5 +430,36 @@
   <!-- Mini-injectors -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática] -->
+<!-- SDK principal de Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
+<!-- SDK de Analytics (opcional) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js"></script>
+<!-- SDK de Authentication (para login/registro) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
+<!-- SDK de Firestore (para guardar reservas) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
+
+<script>
+  // Configuración de tu proyecto (la que ya tienes)
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+    authDomain: "thepetslovers-c1111.firebaseapp.com",
+    projectId: "thepetslovers-c1111",
+    storageBucket: "thepetslovers-c1111.appspot.com",
+    messagingSenderId: "415914577533",
+    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+    measurementId: "G-FXPD69KXBG"
+  };
+
+  // Inicializar Firebase
+  const app = firebase.initializeApp(firebaseConfig);
+  const analytics = firebase.analytics();
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
