@@ -32,6 +32,11 @@
     .summary-total{ border-top:1px solid #e7e7e7; margin-top:8px; padding-top:8px; font-size:1.05rem; }
     .summary-badge{ display:inline-block; font-size:.85rem; padding:2px 8px; border-radius:999px; border:1px dashed #bbb; color:#666; }
     /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Pequeños detalles] */
+    .readonly-chip{ background:#f2f8f8; border:1px dashed #cfe7e7; border-radius:8px; padding:10px 12px; font-size:.95rem; }
+    .inline{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
@@ -71,10 +76,11 @@
       <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
     </div>
 
-    <!-- Formulario de reserva (bloqueado si no hay login) -->
+    <!-- Formulario de reserva -->
     <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree – endpoint ya configurado] -->
     <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
     <!-- TPL: FIN BLOQUE NUEVO -->
+
       <div class="booking-grid">
         <div class="booking-field">
           <label for="service">Servicio</label>
@@ -116,10 +122,16 @@
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
+        <!-- TPL: INICIO BLOQUE NUEVO [Fechas inicio/fin] -->
         <div class="booking-field">
-          <label for="date">Fecha</label>
-          <input type="date" id="date" name="Fecha" required>
+          <label for="date">Fecha de inicio</label>
+          <input type="date" id="date" name="Fecha_inicio" required>
         </div>
+        <div class="booking-field">
+          <label for="dateEnd">Fecha de fin</label>
+          <input type="date" id="dateEnd" name="Fecha_fin">
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="booking-field">
           <label for="start">Hora de inicio</label>
@@ -160,35 +172,43 @@
             <option value="1">1</option><option value="2">2</option>
             <option value="3">3</option><option value="4">4</option>
             <option value="5">5</option>
+            <option value="6+">6+</option>
+          </select>
+          <!-- TPL: INICIO BLOQUE NUEVO [Nº exacto >6] -->
+          <input id="numPetsExact" name="N_mascotas_exactas" type="number" min="6" step="1" placeholder="¿Cuántas en total?" style="margin-top:6px; display:none;">
+          <!-- TPL: FIN BLOQUE NUEVO -->
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Preferencia de contacto] -->
+        <div class="booking-field">
+          <label for="contactPref">¿Cómo prefieres que te contactemos?</label>
+          <select id="contactPref" name="Preferencia_contacto">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="telefono">Teléfono</option>
+            <option value="email">Email</option>
           </select>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Extras generales (autorrelleno)] -->
-        <div class="booking-field">
-          <label for="festivo">¿Es festivo?</label>
-          <select id="festivo" name="Festivo">
-            <option value="0">No</option>
-            <option value="10">Sí, +10 €</option>
-          </select>
+        <!-- TPL: INICIO BLOQUE NUEVO [Datos cliente autocompletados] -->
+        <div class="booking-field" style="grid-column:1/-1;">
+          <label>Tu información (desde tu cuenta)</label>
+          <div class="readonly-chip inline">
+            <span id="uiName">Nombre: —</span>
+            <span id="uiEmail">Email: —</span>
+            <span id="uiPhone">Tel.: —</span>
+          </div>
         </div>
+        <input type="hidden" id="custName" name="Cliente_nombre">
+        <input type="hidden" id="custEmail" name="Cliente_email">
+        <input type="hidden" id="custPhone" name="Cliente_telefono">
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <div class="booking-field">
-          <label for="senalado">¿Día señalado (Navidad, Nochevieja…)?</label>
-          <select id="senalado" name="Dia_senalado">
-            <option value="0">No</option>
-            <option value="30">Sí, +30 €</option>
-          </select>
-        </div>
-
-        <div class="booking-field">
-          <label for="depositPct">Depósito (retención)</label>
-          <select id="depositPct" name="Deposito_pct">
-            <option value="0.2">20% (recomendado)</option>
-            <option value="0.3">30%</option>
-            <option value="0.5">50%</option>
-          </select>
-        </div>
+        <!-- Campos festivo/señalado AUTOMÁTICOS (ocultos) -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Festivos automáticos ocultos] -->
+        <input type="hidden" id="festivo" name="Festivo" value="0">
+        <input type="hidden" id="senalado" name="Dia_senalado" value="0">
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="booking-field" style="grid-column: 1 / -1;">
@@ -213,11 +233,11 @@
             <div class="summary-value"><span id="sumPets">0.00</span> €</div>
           </div>
           <div class="summary-row">
-            <div class="summary-label">Festivo</div>
+            <div class="summary-label">Festivo (auto)</div>
             <div class="summary-value"><span id="sumFestivo">0.00</span> €</div>
           </div>
           <div class="summary-row">
-            <div class="summary-label">Día señalado</div>
+            <div class="summary-label">Día señalado (auto)</div>
             <div class="summary-value"><span id="sumSenalado">0.00</span> €</div>
           </div>
           <div class="summary-row">
@@ -259,9 +279,11 @@
       service: document.getElementById('service'),
       region: document.getElementById('region'),
       date: document.getElementById('date'),
+      dateEnd: document.getElementById('dateEnd'),
       species: document.getElementById('species'),
       isPuppy: document.getElementById('isPuppy'),
       numPets: document.getElementById('numPets'),
+      numPetsExact: document.getElementById('numPetsExact'),
       festivo: document.getElementById('festivo'),
       senalado: document.getElementById('senalado'),
       depositPct: document.getElementById('depositPct'),
@@ -274,9 +296,19 @@
       sumSenalado: document.getElementById('sumSenalado'),
       sumSubtotal: document.getElementById('sumSubtotal'),
       sumDeposit: document.getElementById('sumDeposit'),
-      summaryField: document.getElementById('summaryField')
+      summaryField: document.getElementById('summaryField'),
+      // cliente
+      uiName: document.getElementById('uiName'),
+      uiEmail: document.getElementById('uiEmail'),
+      uiPhone: document.getElementById('uiPhone'),
+      custName: document.getElementById('custName'),
+      custEmail: document.getElementById('custEmail'),
+      custPhone: document.getElementById('custPhone'),
+      // depósito (selector existente en tu versión)
+      depositPctSelect: document.getElementById('depositPct')
     };
 
+    // Base de precios (tu lógica)
     const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0 };
     const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01']; // Días señalados +30€
     const REGION_TO_COUNTY = {
@@ -335,6 +367,23 @@
       if(svc === 'visitas' && els.species) els.species.value = 'gato';
     }
 
+    // Nº mascotas exacto si 6+
+    function handleNumPetsExact(){
+      if(!els.numPets || !els.numPetsExact) return;
+      if(els.numPets.value === '6+'){
+        els.numPetsExact.style.display = 'block';
+        if(!els.numPetsExact.value) els.numPetsExact.value = 6;
+      }else{
+        els.numPetsExact.style.display = 'none';
+      }
+    }
+
+    function getEffectivePets(){
+      if(!els.numPets) return 1;
+      if(els.numPets.value === '6+') return Math.max(6, parseInt(els.numPetsExact.value || '6', 10));
+      return parseInt(els.numPets.value || '1', 10);
+    }
+
     // --- Preferencia: JSON local /festivos-es-YYYY.json (si existe) ---
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
@@ -364,12 +413,12 @@
       const nacional = new Set();
       const porCcaa = new Map();
       for(const h of data){
-        const date = h.date; // YYYY-MM-DD
+        const date = h.date;
         if(!h.counties || !h.counties.length){
           nacional.add(date);
         }else{
           for(const c of h.counties){
-            const key = COUNTY_TO_REGIONKEY[c] || c; // normaliza a "MD", "AN", etc.
+            const key = COUNTY_TO_REGIONKEY[c] || c;
             if(!porCcaa.has(key)) porCcaa.set(key, new Set());
             porCcaa.get(key).add(date);
           }
@@ -380,8 +429,6 @@
 
     async function fetchHolidaysForYear(year){
       if(_festivosCache.has(year)) return _festivosCache.get(year);
-
-      // 0) Si hay cache en localStorage (válida 24h), úsala
       try{
         const raw = localStorage.getItem(`tpl_festivos_${year}`);
         if(raw){
@@ -396,11 +443,9 @@
         }
       }catch(_){}
 
-      // 1) JSON local en el repo (si lo has subido)
       const local = await fetchLocalHolidays(year);
       if(local){ _festivosCache.set(year, local); return local; }
 
-      // 2) Nager.Date online
       try{
         const nager = await fetchNagerHolidays(year);
         _festivosCache.set(year, nager);
@@ -414,7 +459,6 @@
         return nager;
       }catch(_){}
 
-      // 3) Fallback nacional mínimo
       const basic = {
         nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]),
         porCcaa: new Map(),
@@ -433,8 +477,8 @@
       const pack = await fetchHolidaysForYear(year);
 
       const isNat = !!pack?.nacional?.has(iso);
-      const county = REGION_TO_COUNTY[ccaa || 'nacional'] || null;     // "ES-MD"
-      const regKey = COUNTY_TO_REGIONKEY[county] || county;            // "MD"
+      const county = REGION_TO_COUNTY[ccaa || 'nacional'] || null;
+      const regKey = COUNTY_TO_REGIONKEY[county] || county;
       const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
 
       const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
@@ -454,7 +498,7 @@
     function recalc(){
       const svc = els.service?.value || '';
       const species = (els.species?.value || 'perro');
-      const n = parseInt(els.numPets?.value || '1', 10);
+      const n = getEffectivePets();
 
       const base = getBasePrice(svc);
       const pets = calcPetSupplements(svc, species, n);
@@ -462,7 +506,7 @@
       const senalado = parseFloat(els.senalado?.value || 0);
 
       const subtotal = base + pets + festivo + senalado;
-      const depPct = parseFloat(els.depositPct?.value || 0.2);
+      const depPct = parseFloat((els.depositPctSelect?.value) || 0.2);
       const deposit = subtotal * depPct;
 
       if(els.sumBase)     els.sumBase.textContent = base ? currency(base) : '—';
@@ -474,18 +518,24 @@
     }
 
     async function recalcWithAuto(){
-      await autoFestivoSenalado(); // autocompleta festivo/señalado
-      recalc();                    // recalcula totales
+      await autoFestivoSenalado();
+      recalc();
     }
 
+    // Eventos
     ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','festivo','senalado','depositPct','region','date'].forEach(id=>{
+      ['service','species','isPuppy','numPets','numPetsExact','region','date','dateEnd'].forEach(id=>{
         const el = document.getElementById(id);
-        if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalcWithAuto(); });
+        if(el) el.addEventListener(ev, ()=>{ toggleFields(); handleNumPetsExact(); recalcWithAuto(); });
       });
     });
+    // Deposito selector puede estar en tu HTML original (si no, ignora)
+    if(els.depositPctSelect){
+      els.depositPctSelect.addEventListener('change', recalcWithAuto);
+    }
 
     toggleFields();
+    handleNumPetsExact();
     recalcWithAuto();
 
     // Guardar desglose para Formspree
@@ -495,24 +545,30 @@
         const speciesVal = (els.species && !els.fieldSpecies?.hidden)
           ? (speciesOther?.value ? `otros (${speciesOther.value.trim()})` : els.species.value)
           : '-';
+        const petCount = getEffectivePets();
         const summary = [
           `Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`,
-          `Fecha: ${els.date?.value || '-'}`,
+          `Fecha inicio: ${els.date?.value || '-'}`,
+          `Fecha fin: ${els.dateEnd?.value || '-'}`,
           `Tipo de animal: ${speciesVal}`,
-          `Cachorro: ${els.isPuppy && !els.fieldIsPuppy?.hidden ? els.isPuppy.value : '-'}`,
-          `Nº mascotas: ${els.numPets && !els.fieldNumPets?.hidden ? els.numPets.value : '1'}`,
+          `Cachorro: ${els.isPuppy && !els.fieldIsPuppy?.hidden ? els.isPuppy.value : (els.isPuppy?.value || '-')}`,
+          `Nº mascotas: ${petCount}`,
           `CCAA: ${els.region?.options?.[els.region.selectedIndex]?.text || 'España'}`,
-          `Festivo (auto): ${els.festivo?.value || '0'} €`,
+          `Festivo (auto sobre fecha inicio): ${els.festivo?.value || '0'} €`,
           `Día señalado (auto): ${els.senalado?.value || '0'} €`,
           `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal')?.textContent || '0.00'} €`,
           `Depósito a retener: ${document.getElementById('sumDeposit')?.textContent || '0.00'} €`,
+          `Preferencia contacto: ${document.getElementById('contactPref')?.value || '-'}`,
+          `Cliente: ${els.custName?.value || '-'} | ${els.custEmail?.value || '-'} | ${els.custPhone?.value || '-'}`,
           `Kilometraje: pendiente (al asignar cuidador)`
         ].join(' | ');
         if(els.summaryField) els.summaryField.value = summary;
+        // Normaliza Fecha_fin vacía => Fecha_inicio
+        if(!els.dateEnd.value && els.date.value){ els.dateEnd.value = els.date.value; }
       });
     }
 
-    // “Otros” animales: input dinámico sin tocar tu layout
+    // “Otros” animales: input dinámico
     (function speciesOtherToggle(){
       const sel = els.species;
       if(!sel) return;
@@ -536,6 +592,67 @@
       sel.addEventListener('change', ensureOtherInput);
       ensureOtherInput();
     })();
+
+    // ===== Autorrelleno de usuario (Firebase Auth + Firestore si existe) =====
+    async function fillUserFromAuth(user){
+      const name = user?.displayName || '';
+      const email = user?.email || '';
+      const phone = user?.phoneNumber || '';
+
+      // Intenta Firestore (si existe) para completar teléfono/nombre
+      let fsName = '', fsPhone = '';
+      try{
+        if(window.firebase && firebase.firestore){
+          const db = firebase.firestore();
+          const doc = await db.collection('users').doc(user.uid).get();
+          if(doc.exists){
+            const u = doc.data() || {};
+            fsName = u.name || u.fullName || '';
+            fsPhone = u.phone || '';
+            // Intenta última mascota para “cachorro” auto
+            if(u.pets && Array.isArray(u.pets) && u.pets.length){
+              const pet = u.pets.find(p=>p.primary) || u.pets[0];
+              if(pet?.species && els.species){ els.species.value = pet.species; }
+              if(pet?.dob){
+                const ageMonths = Math.floor((Date.now() - new Date(pet.dob).getTime()) / (30*24*3600*1000));
+                if(els.isPuppy){ els.isPuppy.value = (ageMonths <= 6) ? 'si' : 'no'; }
+              }
+            }
+          }
+        }
+      }catch(_){}
+
+      const finalName = fsName || name || '(sin nombre)';
+      const finalPhone = fsPhone || phone || '';
+
+      if(els.uiName)  els.uiName.textContent  = `Nombre: ${finalName}`;
+      if(els.uiEmail) els.uiEmail.textContent = `Email: ${email || '(sin email)'}`;
+      if(els.uiPhone) els.uiPhone.textContent = `Tel.: ${finalPhone || '(sin teléfono)'}`;
+
+      if(els.custName)  els.custName.value  = finalName;
+      if(els.custEmail) els.custEmail.value = email || '';
+      if(els.custPhone) els.custPhone.value = finalPhone || '';
+    }
+
+    // Fallback localStorage para “cachorro” si hay perfil local
+    (function fallbackLocalPet(){
+      try{
+        const raw = localStorage.getItem('tpl_last_pet');
+        if(!raw) return;
+        const p = JSON.parse(raw);
+        if(p?.species && els.species){ els.species.value = p.species; }
+        if(p?.dob && els.isPuppy){
+          const ageMonths = Math.floor((Date.now() - new Date(p.dob).getTime()) / (30*24*3600*1000));
+          els.isPuppy.value = (ageMonths <= 6) ? 'si' : 'no';
+        }
+      }catch(_){}
+    })();
+
+    // Observa cambios para recálculo
+    if(els.isPuppy){ els.isPuppy.addEventListener('change', recalcWithAuto); }
+
+    // Exponer función para Firebase Auth (se define más abajo)
+    window.__tpl_onAuthUser = (u)=>{ if(u){ fillUserFromAuth(u); } };
   });
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -600,12 +717,14 @@
       if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
+
       function updateAuthUI(user){
         const logged = !!user;
         const form = document.getElementById('bookingForm');
         const wall = document.getElementById('authWall');
         if (form) form.classList.toggle('disabled', !logged);
         if (wall) wall.style.display = logged ? 'none' : 'block';
+        if (logged && window.__tpl_onAuthUser) window.__tpl_onAuthUser(user);
       }
       auth.onAuthStateChanged(updateAuthUI);
     }
