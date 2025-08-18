@@ -15,7 +15,7 @@
     <noscript>
       <nav class="navbar">
         <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+          <a href="index.html"><img src="images/logo.png" alt="The Pets Lovers"></a>
         </div>
         <a href="index.html" class="home-button">Inicio</a>
         <ul class="nav-links">
@@ -33,8 +33,23 @@
   <main class="container page">
     <h1>Contacta con nosotros</h1>
     <p class="lead">Cuéntanos qué necesitas y te ayudamos a encontrar el mejor cuidado para tu mascota.</p>
-    <p>En breve añadiremos un formulario de contacto y opciones de WhatsApp.</p>
-    <a class="cta-button" href="reserva.html">Reservar ahora</a>
+
+    <!-- 🚀 FORMULARIO DE CONTACTO FUNCIONAL -->
+    <form action="https://formspree.io/f/TU_ENDPOINT" method="POST" class="contact-form">
+      <label for="name">Tu nombre</label>
+      <input type="text" id="name" name="name" required>
+
+      <label for="email">Tu email</label>
+      <input type="email" id="email" name="email" required>
+
+      <label for="message">Mensaje</label>
+      <textarea id="message" name="message" rows="5" required></textarea>
+
+      <!-- Redirect automático a gracias.html personalizado -->
+      <input type="hidden" name="_redirect" value="https://www.thepetslovers.es/gracias.html?type=contacto">
+
+      <button type="submit" class="cta-button">Enviar mensaje</button>
+    </form>
   </main>
 
   <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
@@ -77,10 +92,8 @@
 
   <!-- Scripts -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
