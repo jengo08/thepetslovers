@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión - The Pets Lovers</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Navbar/Footer templates -->
+  <script defer src="tpl-navbar.js"></script>
+  <script defer src="tpl-footer.js"></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.appspot.com",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</head>
+<body>
+  <header id="tpl-navbar"></header>
+
+  <main class="container" style="max-width:680px;margin:120px auto 40px;padding:1rem;">
+    <h1>Inicia sesión</h1>
+    <form id="tpl-login-form" class="tpl-form" autocomplete="on">
+      <label for="tpl-login-email">Email</label>
+      <input type="email" id="tpl-login-email" required />
+
+      <label for="tpl-login-pass">Contraseña</label>
+      <input type="password" id="tpl-login-pass" required minlength="6" />
+
+      <button type="submit" class="btn-primario">Entrar</button>
+      <p style="margin-top:0.75rem;">¿No tienes cuenta? <a href="registro.html">Crear cuenta</a></p>
+      <p id="tpl-login-error" style="color:#b00020;margin-top:0.5rem;"></p>
+    </form>
+  </main>
+
+  <footer id="tpl-footer"></footer>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Login logic] -->
+  <script>
+    document.getElementById('tpl-login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('tpl-login-email').value.trim();
+      const pass  = document.getElementById('tpl-login-pass').value;
+      const out   = document.getElementById('tpl-login-error');
+      out.textContent = '';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, pass);
+        const params = new URLSearchParams(location.search);
+        const next = params.get('next') || 'reserva.html';
+        location.href = next;
+      } catch (err) {
+        out.textContent = err?.message || 'Error al iniciar sesión';
+      }
+    });
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
