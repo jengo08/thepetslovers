@@ -61,19 +61,19 @@
       <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario iniciar sesión y tener los datos de tu mascota guardados.</p>
     </div>
 
-    <!-- Muro de autenticación (placeholder) -->
+    <!-- Muro de autenticación -->
     <div id="authWall" class="auth-wall">
       <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
       <div class="booking-actions">
-        <a href="#" class="cta-button" id="btnLogin">Iniciar sesión</a>
-        <a href="#" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
+        <a href="login.html?next=reserva.html" class="cta-button" id="btnLogin">Iniciar sesión</a>
+        <a href="registro.html?next=reserva.html" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
       </div>
-      <p class="note">Cuando activemos el área privada, podrás acceder aquí con tu usuario.</p>
+      <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
     </div>
 
     <!-- Formulario de reserva (bloqueado si no hay login) -->
     <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree] -->
-    <!-- Sustituye ACTION por tu endpoint de Formspree cuando lo tengas (ver pasos abajo) -->
+    <!-- Sustituye ACTION por tu endpoint real de Formspree cuando lo tengas -->
     <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/xxxxxxxx" method="POST">
     <!-- TPL: FIN BLOQUE NUEVO -->
       <div class="booking-grid">
@@ -223,22 +223,10 @@
   </div>
 
   <script>
-    // Placeholder de autenticación real
-    const isLoggedIn = false;
-
+    // ====== TPL: INICIO BLOQUE NUEVO [Lógica de UI y precios] ======
     const form = document.getElementById('bookingForm');
     const wall = document.getElementById('authWall');
 
-    function updateAuthUI(){
-      if(isLoggedIn){ form.classList.remove('disabled'); wall.style.display = 'none'; }
-      else { form.classList.add('disabled'); wall.style.display = 'block'; }
-    }
-    updateAuthUI();
-
-    document.getElementById('btnLogin').addEventListener('click', (e)=>{ e.preventDefault(); alert('Pantalla de Iniciar sesión (la añadiremos más adelante).'); });
-    document.getElementById('btnRegister').addEventListener('click', (e)=>{ e.preventDefault(); alert('Pantalla de Registro (la añadiremos más adelante).'); });
-
-    // ====== TPL: INICIO BLOQUE NUEVO [Lógica de precios] ======
     const els = {
       service: document.getElementById('service'),
       species: document.getElementById('species'),
@@ -321,7 +309,6 @@
 
       // Regla de cachorro:
       // - Alojamiento: cachorros 35 €
-      // - Guardería de día: sigue 20 € (sin cambio)
       if(service === 'alojamiento' && isPuppy){ base = 35; }
 
       return base;
@@ -360,15 +347,8 @@
     toggleFields();
     recalc();
 
+    // Antes de enviar a Formspree, guardamos el desglose en el campo oculto
     form.addEventListener('submit', (e)=>{
-      // Bloquea si no hay login (política que querías)
-      if(!isLoggedIn){
-        e.preventDefault();
-        alert('Debes iniciar sesión o registrarte para completar la reserva.');
-        return;
-      }
-
-      // Antes de enviar a Formspree, dejamos el desglose en el campo oculto
       const summary = [
         `Servicio: ${els.service.options[els.service.selectedIndex]?.text || ''}`,
         `Tipo de animal: ${els.species && !els.fieldSpecies.hidden ? els.species.value : '-'}`,
@@ -381,11 +361,6 @@
         `Kilometraje: pendiente (al asignar cuidador)`
       ].join(' | ');
       els.summaryField.value = summary;
-
-      // (Opcional) podrías mostrar una confirmación aquí
-      // alert('Enviando solicitud de reserva...');
-      // Si quieres evitar el envío real hasta probar, descomenta:
-      // e.preventDefault();
     });
     // ====== TPL: FIN BLOQUE NUEVO ======
   </script>
@@ -431,35 +406,44 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática] -->
-<!-- SDK principal de Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"></script>
-<!-- SDK de Analytics (opcional) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js"></script>
-<!-- SDK de Authentication (para login/registro) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js"></script>
-<!-- SDK de Firestore (para guardar reservas) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"></script>
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática - COMPAT correcto] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <!-- (Opcional) Analytics: solo si quieres métricas -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
 
-<script>
-  // Configuración de tu proyecto (la que ya tienes)
-  const firebaseConfig = {
-    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-    authDomain: "thepetslovers-c1111.firebaseapp.com",
-    projectId: "thepetslovers-c1111",
-    storageBucket: "thepetslovers-c1111.appspot.com",
-    messagingSenderId: "415914577533",
-    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-    measurementId: "G-FXPD69KXBG"
-  };
+  <script>
+    // Configuración de tu proyecto
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.appspot.com",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
 
-  // Inicializar Firebase
-  const app = firebase.initializeApp(firebaseConfig);
-  const analytics = firebase.analytics();
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+    // Inicialización (compat expone 'firebase' global)
+    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+    if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
+
+    // Mostrar/ocultar formulario según sesión
+    function updateAuthUI(user){
+      const logged = !!user;
+      if (form) {
+        form.classList.toggle('disabled', !logged);
+      }
+      if (wall) {
+        wall.style.display = logged ? 'none' : 'block';
+      }
+    }
+    auth.onAuthStateChanged(updateAuthUI);
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
