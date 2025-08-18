@@ -1,6 +1,5 @@
 <!-- ===== Lógica de UI y precios (REEMPLAZAR TODO ESTE BLOQUE) ===== -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('bookingForm');
   const wall = document.getElementById('authWall');
 
@@ -27,21 +26,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ========= Precios base y utilidades =========
   const BASES = { visitas:22, paseos:12, guarderia:20, alojamiento:30, bodas:0 };
-  function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
+  function currency(n){ return (Math.round(n * 100) / 100).toFixed(2); }
 
   // Suplementos por nº de mascotas
   function calcPetSupplements(service, species, n){
-    const num = parseInt(n || '1', 10);
-    if(num <= 1) return 0;
+    if(n <= 1) return 0;
     if(service === 'visitas'){
-      const extra = num - 1;
+      const extra = n - 1;
       if(extra === 1) return 12;
       if(extra === 2) return 8 * 2;
       if(extra >= 3) return 6 * extra;
       return 0;
     }
-    if(service === 'paseos'){ return 8 * (num - 1); }
-    if(service === 'alojamiento' && species === 'perro'){ return 25 * (num - 1); }
+    if(service === 'paseos'){ return 8 * (n - 1); }
+    if(service === 'alojamiento' && species === 'perro'){ return 25 * (n - 1); }
     return 0;
   }
 
@@ -54,8 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========= DEPÓSITO (inyectado para mantener tu estructura) =========
   (function injectDeposit(){
     if (document.getElementById('depositPct')) return;
-    const container = document.querySelector('.booking-grid') || form;
-    if(!container) return;
+    const container = document.querySelector('.booking-grid');
     const block = document.createElement('div');
     block.className = 'booking-field';
     block.innerHTML = `
@@ -70,6 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const depositSelect = document.getElementById('depositPct');
 
   // ========= FESTIVOS (auto) =========
+  // Intentamos cargar un JSON oficial por CCAA. Si no existe, usamos fallback nacional + especiales.
+  // Formato esperado del JSON: { "nacional":[ "2025-01-06", ... ], "madrid":[ ... ], "andalucia":[ ... ], ... }
   const SPECIAL_MMDD = ["12-24","12-25","12-31","01-01"]; // especiales
   let FESTIVOS = null; // se intentará cargar; si no, fallback
 
@@ -79,22 +78,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const res=[]; if(!from||!to) return res;
     const d1=new Date(from), d2=new Date(to);
     if(isNaN(d1)||isNaN(d2)||d2<d1) return res;
-    const cur=new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
-    const end=new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
-    while(cur<=end){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+    const cur=new Date(d1); cur.setHours(0,0,0,0); d2.setHours(0,0,0,0);
+    while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
     return res;
   }
 
   async function loadFestivos(){
     try{
-      // Ajusta la ruta si lo subes a otra carpeta (p.ej. /data/festivos-es-2025.json)
-      const resp = await fetch('/festivos-es-2025.json', {cache:'no-store'});
+      // Puedes cambiar la ruta si lo colocas en /data/festivos-es-2025.json
+      const resp = await fetch('festivos-es-2025.json', {cache:'no-store'});
       if(!resp.ok) throw new Error('no festivos file');
       FESTIVOS = await resp.json();
     }catch(_){
       // Fallback nacional básico (2025) si no hay JSON
       FESTIVOS = {
         nacional: ['2025-01-06','2025-03-19','2025-05-01','2025-08-15','2025-10-12','2025-11-01','2025-12-06','2025-12-08','2025-12-25']
+        // autonómicos se cargarán cuando subamos el JSON oficial
       };
     }
   }
@@ -104,15 +103,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let festivo = 0, senalado = 0;
 
     const nat = new Set((FESTIVOS?.nacional || []));
-    const reg = new Set((FESTIVOS?.[region] || [])); // p.ej. "madrid", "andalucia"…
+    const reg = new Set((FESTIVOS?.[region] || []));
 
     for(const d of days){
       const iso = ymd(d);
       const isNat = nat.has(iso);
       const isReg = reg.has(iso);
       const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
-      if(isNat || isReg) festivo += 10; // +10€ por festivo
-      if(isSpecial)      senalado += 30; // días especiales +30€
+      if(isNat || isReg) festivo += 10; // política: +10€ por festivo
+      if(isSpecial)      senalado += 30; // especiales +30€
     }
     return { festivo, senalado };
   }
@@ -124,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const map = { visitas:'visitas', paseos:'paseos', guarderia:'guarderia', alojamiento:'alojamiento', bodas:'bodas' };
     let svc = map[svcParam] || '';
 
+    // Si no viene por query, intentamos deducir por referrer: servicio-xxx.htm
     if(!svc && document.referrer){
       const m = document.referrer.match(/servicio-([a-z-]+)\.htm/i);
       if(m && map[m[1]]) svc = map[m[1]];
@@ -132,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if(svc && els.service){
       els.service.value = svc;
       els.service.setAttribute('disabled','disabled');
+      // espejo oculto para que el valor viaje incluso estando disabled
       let mirror = document.getElementById('svcMirror');
       if(!mirror){
         mirror = document.createElement('input');
@@ -160,8 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
           sel.parentElement.appendChild(extra);
         }
         extra.required = true;
-      }else if(extra){
-        extra.remove();
+      }else{
+        if(extra){ extra.remove(); }
       }
     }
     sel.addEventListener('change', ()=>{ ensureOtherInput(); recalc(); });
@@ -188,23 +189,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // ========= Autocompletar contacto (email/teléfono) =========
   (function autofillContact(){
     const qs = new URLSearchParams(location.search);
-    if(qs.get('email') && els.contactEmail && !els.contactEmail.value) els.contactEmail.value = qs.get('email');
-    if(qs.get('tel')   && els.contactPhone && !els.contactPhone.value) els.contactPhone.value = qs.get('tel');
+    // Querystring tiene prioridad
+    if(qs.get('email') && els.contactEmail) els.contactEmail.value = qs.get('email');
+    if(qs.get('tel')   && els.contactPhone) els.contactPhone.value = qs.get('tel');
 
+    // localStorage fallback
     try{
-      if(els.contactEmail && !els.contactEmail.value && localStorage.getItem('tpl_email')) els.contactEmail.value = localStorage.getItem('tpl_email');
-      if(els.contactPhone && !els.contactPhone.value && localStorage.getItem('tpl_phone')) els.contactPhone.value = localStorage.getItem('tpl_phone');
+      if(!els.contactEmail?.value && localStorage.getItem('tpl_email')) els.contactEmail.value = localStorage.getItem('tpl_email');
+      if(!els.contactPhone?.value && localStorage.getItem('tpl_phone')) els.contactPhone.value = localStorage.getItem('tpl_phone');
     }catch(_){}
 
+    // Firebase (cuando esté inicializado)
     function tryAuthFill(){
       try{
         if(typeof firebase === 'undefined') return;
         const auth = firebase.auth();
         auth.onAuthStateChanged(u=>{
           if(u?.email && els.contactEmail && !els.contactEmail.value) els.contactEmail.value = u.email;
+          // Si más adelante guardamos teléfono en users/{uid}, lo podemos leer aquí:
+          // db.collection('users').doc(u.uid).get()...
         });
       }catch(_){}
     }
+    // Intento inmediato y otro al load por si los SDKs cargan después
     tryAuthFill(); window.addEventListener('load', tryAuthFill);
   })();
 
@@ -219,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const snap = await db.collection('users').doc(u.uid).collection('mascotas').limit(1).get();
       if(!snap.empty){
         const pet = snap.docs[0].data();
-        if(pet?.birthdate && els.isPuppy){
+        if(pet?.birthdate){
           const b = new Date(pet.birthdate);
           const today = new Date();
           const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
@@ -254,12 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const depPct = parseFloat(depPctEl?.value || '0.2');
     const deposit = subtotal * depPct;
 
-    if(els.sumBase)     els.sumBase.textContent = base ? currency(base) : '—';
-    if(els.sumPets)     els.sumPets.textContent = currency(pets);
-    if(els.sumFestivo)  els.sumFestivo.textContent = currency(festivo);
-    if(els.sumSenalado) els.sumSenalado.textContent = currency(senalado);
-    if(els.sumSubtotal) els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
-    if(els.sumDeposit)  els.sumDeposit.textContent = base ? currency(deposit) : '—';
+    els.sumBase.textContent = base ? currency(base) : '—';
+    els.sumPets.textContent = currency(pets);
+    els.sumFestivo.textContent = currency(festivo);
+    els.sumSenalado.textContent = currency(senalado);
+    els.sumSubtotal.textContent = base ? currency(subtotal) : '—';
+    els.sumDeposit.textContent = base ? currency(deposit) : '—';
   }
 
   // ========= Eventos =========
@@ -270,49 +277,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Carga festivos y primer cálculo (defensivo)
+  // Carga festivos y primer cálculo
   (async function initCalc(){
-    try { await loadFestivos(); } catch(_){}
+    await loadFestivos();
     toggleFields();
     recalc();
   })();
 
   // ========= Validaciones + preparar resumen ANTES de enviar =========
-  if (form) {
-    form.addEventListener('submit', (e)=>{
-      const pref = (new FormData(form).get('Preferencia_contacto')) || '';
-      const tel  = els.contactPhone?.value?.trim();
-      const mail = els.contactEmail?.value?.trim();
-      if(pref === 'telefono' || pref === 'whatsapp'){
-        if(!tel){ e.preventDefault(); alert('Por favor, indícanos tu teléfono para poder contactarte.'); return; }
-      }else if(pref === 'email'){
-        if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return; }
-      }
+  form.addEventListener('submit', (e)=>{
+    // Preferencia de contacto -> validar campos mínimos
+    const pref = (new FormData(form).get('Preferencia_contacto')) || '';
+    const tel  = els.contactPhone?.value.trim();
+    const mail = els.contactEmail?.value.trim();
+    if(pref === 'telefono' || pref === 'whatsapp'){
+      if(!tel){ e.preventDefault(); alert('Por favor, indícanos tu teléfono para poder contactarte.'); return; }
+    }else if(pref === 'email'){
+      if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return; }
+    }
 
-      // Especie “Otros”
-      let especie = els.species?.value || '';
-      const speciesOther = document.getElementById('speciesOther');
-      if(especie === 'otros' && speciesOther?.value){
-        especie = `otros (${speciesOther.value.trim()})`;
-      }
+    // Especie “Otros”
+    let especie = els.species?.value || '';
+    const speciesOther = document.getElementById('speciesOther');
+    if(especie === 'otros' && speciesOther?.value){
+      especie = `otros (${speciesOther.value.trim()})`;
+    }
 
-      // Preparar desglose para el correo
-      const summary = [
-        `Servicio: ${document.getElementById('svcMirror')?.value || els.service?.options[els.service.selectedIndex]?.text || ''}`,
-        `Fecha: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`,
-        `Tipo de animal: ${especie}`,
-        `Cachorro: ${els.isPuppy?.value || 'no'}`,
-        `Nº mascotas: ${els.numPets?.value || '1'}`,
-        `Desplazamiento: ${els.needTravel?.value || 'no'}`,
-        `Festivos (auto): ${document.getElementById('sumFestivo')?.textContent || '0.00'} €`,
-        `Días especiales: ${document.getElementById('sumSenalado')?.textContent || '0.00'} €`,
-        `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal')?.textContent || '0.00'} €`,
-        `Depósito a retener: ${document.getElementById('sumDeposit')?.textContent || '0.00'} €`,
-        `CCAA: ${els.region?.options?.[els.region.selectedIndex]?.text || 'España'}`
-      ].join(' | ');
-      if(els.summaryField) els.summaryField.value = summary;
-    });
-  }
-}); 
-</script>
-<!-- ===== FIN Lógica de UI y precios ===== -->
+    // Preparar desglose para el correo
+    const summary = [
+      `Servicio: ${document.getElementById('svcMirror')?.value || els.service?.options[els.service.selectedIndex]?.text || ''}`,
+      `Fecha: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`,
+      `Tipo de animal: ${especie}`,
+      `Cachorro: ${els.isPuppy?.value || 'no'}`,
+      `Nº mascotas: ${els.numPets?.value || '1'}`,
+      `Desplazamiento: ${els.needTravel?.value || 'no'}`,
+      `Festivos (auto): ${document.getElementById('sumFestivo').textContent} €`,
+      `Días especiales: ${document.getElementById('sumSenalado').textContent} €`,
+      `Subtotal (sin desplazamiento): ${document.getElementById('sumSubtotal').textContent} €`,
+      `Depósito a retener: ${document.getElementById('sumDeposit').textContent} €`,
+      `CCAA: ${els.region?.options[els.region.selectedIndex]?.text || 'España'}`
+    ].join(' | ');
+    els.summaryField.value = summary;
+  });
+</script>  este era el ultimo que me funcionaba
