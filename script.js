@@ -223,3 +223,24 @@
 /* ===========================
    TPL: FIN BLOQUE NUEVO
    =========================== */
+<!-- TPL: INICIO BLOQUE NUEVO [Helper logout] -->
+<script>
+  // Si pones un botón con id="tpl-logout-btn" en tu navbar/menu, esto cierra sesión
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#tpl-logout-btn');
+    if (!btn) return;
+    try {
+      await auth.signOut();
+      const here = location.pathname.split('/').pop();
+      if (here === 'reserva.html') {
+        location.href = 'login.html?next=reserva.html';
+      } else {
+        location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  });
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
