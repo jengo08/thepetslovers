@@ -72,8 +72,12 @@
     </div>
 
     <!-- Formulario de reserva (bloqueado si no hay login) -->
-    <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree – endpoint ya configurado] -->
-    <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
+    <!-- TPL: INICIO BLOQUE NUEVO [Conexión Formspree a contacto@thepetslovers.es] -->
+    <form id="bookingForm" class="disabled" novalidate
+          action="https://formspree.io/f/mdkdvlpr" method="POST">
+      <!-- Metadatos de email -->
+      <input type="hidden" name="_subject" value="Nueva solicitud de reserva · The Pets Lovers">
+      <input type="hidden" name="_replyto" value="contacto@thepetslovers.es">
     <!-- TPL: FIN BLOQUE NUEVO -->
       <div class="booking-grid">
         <div class="booking-field">
@@ -249,22 +253,19 @@
       summaryField: document.getElementById('summaryField')
     };
 
-    // Precios base (coinciden con tu web actual)
+    // Precios base
     const BASES = {
-      visitas: 22,       // 60' (incluye 1 gato)
+      visitas: 22,
       paseos: 12,
-      guarderia: 20,     // día (hasta 8h)
-      alojamiento: 30,   // por día (perro/gato) — sube a 35€ si cachorro
-      bodas: 0           // a consultar
+      guarderia: 20,
+      alojamiento: 30, // 35 si cachorro
+      bodas: 0
     };
 
     function currency(n){ return (Math.round(n * 100) / 100).toFixed(2); }
 
-    // Suplementos dinámicos por nº de mascotas, según servicio
     function calcPetSupplements(service, species, n){
       if(n <= 1) return 0;
-
-      // Visitas (gatos): 1 extra +12; 2 extras +8 c/u; + de 3 extras +6 c/u
       if(service === 'visitas'){
         const extra = n - 1;
         if(extra === 1) return 12;
@@ -272,44 +273,27 @@
         if(extra >= 3) return 6 * extra;
         return 0;
       }
-
-      // Paseos: +8€ por cada mascota adicional
-      if(service === 'paseos'){
-        return 8 * (n - 1);
-      }
-
-      // Alojamiento: cada perro adicional 25€ / día
-      if(service === 'alojamiento' && species === 'perro'){
-        return 25 * (n - 1);
-      }
-
+      if(service === 'paseos'){ return 8 * (n - 1); }
+      if(service === 'alojamiento' && species === 'perro'){ return 25 * (n - 1); }
       return 0;
     }
 
     function toggleFields(){
       const svc = els.service.value;
-
-      // Mostrar tipo de animal y nº de mascotas en servicios que lo requieren
       const needSpeciesNum = (svc === 'visitas' || svc === 'alojamiento' || svc === 'paseos');
       els.fieldSpecies.hidden = !needSpeciesNum;
       els.fieldNumPets.hidden = !needSpeciesNum;
 
-      // Selector "cachorro" sólo para alojamiento y guardería
       const needPuppy = (svc === 'alojamiento' || svc === 'guarderia');
       els.fieldIsPuppy.hidden = !needPuppy;
 
-      // En visitas fijamos especie = gato
       if(svc === 'visitas'){ els.species.value = 'gato'; }
     }
 
     function getBasePrice(service){
       let base = BASES[service] || 0;
       const isPuppy = (els.isPuppy.value === 'si');
-
-      // Regla de cachorro:
-      // - Alojamiento: cachorros 35 €
       if(service === 'alojamiento' && isPuppy){ base = 35; }
-
       return base;
     }
 
@@ -346,8 +330,8 @@
     toggleFields();
     recalc();
 
-    // Antes de enviar a Formspree, guardamos el desglose en el campo oculto
-    form.addEventListener('submit', (e)=>{
+    // Antes de enviar a Formspree, dejamos el desglose en el hidden
+    form.addEventListener('submit', ()=>{
       const summary = [
         `Servicio: ${els.service.options[els.service.selectedIndex]?.text || ''}`,
         `Tipo de animal: ${els.species && !els.fieldSpecies.hidden ? els.species.value : '-'}`,
@@ -405,14 +389,11 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática - COMPAT correcto] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK para web estática - COMPAT] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics-compat.js"></script>
-
   <script>
-    // Configuración de tu proyecto
     const firebaseConfig = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -422,26 +403,18 @@
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
-
-    // Inicialización (compat expone 'firebase' global)
     if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
-    if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
 
-    // Mostrar/ocultar formulario según sesión
+    // Visibilidad form según sesión
     function updateAuthUI(user){
       const logged = !!user;
-      if (form) {
-        form.classList.toggle('disabled', !logged);
-      }
-      if (wall) {
-        wall.style.display = logged ? 'none' : 'block';
-      }
+      if (form) { form.classList.toggle('disabled', !logged); }
+      if (wall) { wall.style.display = logged ? 'none' : 'block'; }
     }
     auth.onAuthStateChanged(updateAuthUI);
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
-
 </body>
 </html>
