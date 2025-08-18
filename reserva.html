@@ -66,11 +66,31 @@
   })();
   const depositSelect = document.getElementById('depositPct');
 
-  // ========= FESTIVOS (auto) =========
-  // Intentamos cargar un JSON oficial por CCAA. Si no existe, usamos fallback nacional + especiales.
-  // Formato esperado del JSON: { "nacional":[ "2025-01-06", ... ], "madrid":[ ... ], "andalucia":[ ... ], ... }
-  const SPECIAL_MMDD = ["12-24","12-25","12-31","01-01"]; // especiales
-  let FESTIVOS = null; // se intentará cargar; si no, fallback
+  // ========= FESTIVOS (auto por API) =========
+  // Nager.Date: devuelve festivos nacionales y autonómicos por "county".
+  const REGION_TO_COUNTY = {
+    andalucia: 'ES-AN',
+    aragon: 'ES-AR',
+    asturias: 'ES-AS',
+    baleares: 'ES-IB',
+    canarias: 'ES-CN',
+    cantabria: 'ES-CB',
+    'castilla-la-mancha': 'ES-CM',
+    'castilla-y-leon': 'ES-CL',
+    cataluna: 'ES-CT',
+    ceuta: 'ES-CE',
+    valenciana: 'ES-VC',
+    extremadura: 'ES-EX',
+    galicia: 'ES-GA',
+    'la-rioja': 'ES-RI',
+    madrid: 'ES-MD',
+    melilla: 'ES-ML',
+    murcia: 'ES-MC',
+    navarra: 'ES-NC',
+    euskadi: 'ES-PV',
+    nacional: null
+  };
+  const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01']; // Especiales +30€
 
   function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
   function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -83,35 +103,70 @@
     return res;
   }
 
-  async function loadFestivos(){
+  // Cache en memoria por año -> { nacional:Set, porCcaa: Map(county -> Set) }
+  const _festivosCache = new Map();
+
+  async function fetchHolidaysForYear(year){
+    if(_festivosCache.has(year)) return _festivosCache.get(year);
     try{
-      // Puedes cambiar la ruta si lo colocas en /data/festivos-es-2025.json
-      const resp = await fetch('festivos-es-2025.json', {cache:'no-store'});
-      if(!resp.ok) throw new Error('no festivos file');
-      FESTIVOS = await resp.json();
+      const url = `https://date.nager.at/api/v3/PublicHolidays/${year}/ES`;
+      const resp = await fetch(url, {cache:'force-cache'});
+      if(!resp.ok) throw new Error('nager fail');
+      const data = await resp.json();
+      const nacional = new Set();
+      const porCcaa = new Map();
+      for(const h of data){
+        const date = h.date; // YYYY-MM-DD
+        if(!h.counties || h.counties.length===0){
+          nacional.add(date);
+        }else{
+          for(const county of h.counties){
+            if(!porCcaa.has(county)) porCcaa.set(county, new Set());
+            porCcaa.get(county).add(date);
+          }
+        }
+      }
+      const pack = { nacional, porCcaa };
+      _festivosCache.set(year, pack);
+      return pack;
     }catch(_){
-      // Fallback nacional básico (2025) si no hay JSON
-      FESTIVOS = {
-        nacional: ['2025-01-06','2025-03-19','2025-05-01','2025-08-15','2025-10-12','2025-11-01','2025-12-06','2025-12-08','2025-12-25']
-        // autonómicos se cargarán cuando subamos el JSON oficial
+      // Fallback mínimo por si la API falla
+      const pack = {
+        nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]),
+        porCcaa: new Map()
       };
+      _festivosCache.set(year, pack);
+      return pack;
     }
   }
 
-  function calcFestivosAuto(region, start, end){
+  async function ensureYearsLoaded(start, end){
+    const years = new Set();
+    const d1 = start ? new Date(start) : null;
+    const d2 = end   ? new Date(end)   : null;
+    if(d1 && !isNaN(d1)) years.add(d1.getFullYear());
+    if(d2 && !isNaN(d2)) years.add(d2.getFullYear());
+    if(years.size===0) years.add((new Date()).getFullYear());
+    const results = {};
+    for(const y of years){ results[y] = await fetchHolidaysForYear(y); }
+    return results;
+  }
+
+  async function calcFestivosAutoAsync(region, start, end){
+    const loaded = await ensureYearsLoaded(start, end);
     const days = eachDate(start, end);
     let festivo = 0, senalado = 0;
-
-    const nat = new Set((FESTIVOS?.nacional || []));
-    const reg = new Set((FESTIVOS?.[region] || []));
+    const county = REGION_TO_COUNTY[region || 'nacional'] || null;
 
     for(const d of days){
+      const y = d.getFullYear();
+      const pack = loaded[y];
       const iso = ymd(d);
-      const isNat = nat.has(iso);
-      const isReg = reg.has(iso);
+      const isNat = pack?.nacional?.has(iso);
+      const isReg = county ? (pack?.porCcaa?.get(county)?.has(iso) || false) : false;
       const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
-      if(isNat || isReg) festivo += 10; // política: +10€ por festivo
-      if(isSpecial)      senalado += 30; // especiales +30€
+      if(isNat || isReg) festivo += 10; // tu política
+      if(isSpecial) senalado += 30;     // especiales
     }
     return { festivo, senalado };
   }
@@ -123,7 +178,7 @@
     const map = { visitas:'visitas', paseos:'paseos', guarderia:'guarderia', alojamiento:'alojamiento', bodas:'bodas' };
     let svc = map[svcParam] || '';
 
-    // Si no viene por query, intentamos deducir por referrer: servicio-xxx.htm
+    // Intento por referrer: servicio-xxx.htm
     if(!svc && document.referrer){
       const m = document.referrer.match(/servicio-([a-z-]+)\.htm/i);
       if(m && map[m[1]]) svc = map[m[1]];
@@ -132,7 +187,7 @@
     if(svc && els.service){
       els.service.value = svc;
       els.service.setAttribute('disabled','disabled');
-      // espejo oculto para que el valor viaje incluso estando disabled
+      // espejo oculto para que el valor viaje aunque esté disabled
       let mirror = document.getElementById('svcMirror');
       if(!mirror){
         mirror = document.createElement('input');
@@ -165,7 +220,7 @@
         if(extra){ extra.remove(); }
       }
     }
-    sel.addEventListener('change', ()=>{ ensureOtherInput(); recalc(); });
+    sel.addEventListener('change', ()=>{ ensureOtherInput(); recalcWithHolidays(); });
     ensureOtherInput();
   })();
 
@@ -206,12 +261,10 @@
         const auth = firebase.auth();
         auth.onAuthStateChanged(u=>{
           if(u?.email && els.contactEmail && !els.contactEmail.value) els.contactEmail.value = u.email;
-          // Si más adelante guardamos teléfono en users/{uid}, lo podemos leer aquí:
-          // db.collection('users').doc(u.uid).get()...
+          // (Opcional) teléfono desde Firestore users/{uid}
         });
       }catch(_){}
     }
-    // Intento inmediato y otro al load por si los SDKs cargan después
     tryAuthFill(); window.addEventListener('load', tryAuthFill);
   })();
 
@@ -244,8 +297,8 @@
     if(svc === 'visitas' && els.species){ els.species.value = 'gato'; }
   }
 
-  // ========= Recalcular desglose =========
-  function recalc(){
+  // ========= Recalcular con festivos (async) =========
+  async function recalcWithHolidays(){
     const svc = els.service?.value || '';
     const speciesSel = els.species?.value || 'perro';
     const n = parseInt(els.numPets?.value || '1', 10);
@@ -254,7 +307,11 @@
     const base = getBasePrice(svc, isPuppy);
     const pets = calcPetSupplements(svc, speciesSel, n);
 
-    const { festivo, senalado } = calcFestivosAuto(els.region?.value || 'nacional', els.startDate?.value, els.endDate?.value);
+    const region = els.region?.value || 'nacional';
+    const start = els.startDate?.value;
+    const end   = els.endDate?.value;
+
+    const { festivo, senalado } = await calcFestivosAutoAsync(region, start, end);
 
     const subtotal = base + pets + festivo + senalado;
     const depPctEl = document.getElementById('depositPct');
@@ -269,19 +326,18 @@
     els.sumDeposit.textContent = base ? currency(deposit) : '—';
   }
 
-  // ========= Eventos =========
+  // Eventos
   ['change','input'].forEach(ev=>{
     ['service','species','isPuppy','numPets','startDate','endDate','region','needTravel','depositPct'].forEach(id=>{
       const el = document.getElementById(id);
-      if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalc(); });
+      if(el) el.addEventListener(ev, ()=>{ toggleFields(); recalcWithHolidays(); });
     });
   });
 
-  // Carga festivos y primer cálculo
+  // Primer cálculo
   (async function initCalc(){
-    await loadFestivos();
     toggleFields();
-    recalc();
+    await recalcWithHolidays();
   })();
 
   // ========= Validaciones + preparar resumen ANTES de enviar =========
