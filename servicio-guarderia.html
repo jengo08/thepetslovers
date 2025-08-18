@@ -11,22 +11,32 @@
   <meta name="description" content="Guardería de día para mascotas: hasta 8 horas desde las 07:00 h. Profesionales del sector veterinario titulados. Bonos 10, 20 y 30 días. Fotos y vídeos durante el día.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
+    /* Breadcrumb */
     .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
     .breadcrumb a{color:var(--color-principal);text-decoration:none}
     .breadcrumb a:hover{text-decoration:underline}
     .breadcrumb span{font-weight:600}
+    /* Badges e icon-list */
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
     .icon-list{list-style:none;padding-left:0}
     .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
     .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
+    /* Notas y avisos */
     .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
     .alert{background:#fff8e6;border:1px solid #ffd27f}
+    /* Tablas */
     .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
     .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
     .price-table thead th{background:#fafafa}
+    /* Enlaces extra */
+    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
+    .links-list li{margin:6px 0}
+    .links-list a{color:var(--color-principal);text-decoration:none}
+    .links-list a:hover{text-decoration:underline}
+    /* CTAs: Volver a la izquierda, Reservar grande a la derecha */
     .cta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
     .cta-row .ver-mas{border:2px solid var(--color-principal);color:var(--color-principal);text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:700}
     .cta-row .ver-mas:hover{background:var(--color-principal);color:#fff}
@@ -39,20 +49,6 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
-
-    /* Recuadro de Reserva Inline */
-    #reserva-rapida{scroll-margin-top:100px}
-    .tpl-reserva{border:2px dashed var(--color-principal);background:#f8ffff;border-radius:12px;padding:16px;margin-top:18px}
-    .tpl-reserva h3{margin-top:0}
-    .tpl-form{display:grid;gap:12px}
-    @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
-    .tpl-form .full{grid-column:1/-1}
-    .tpl-input, .tpl-select, .tpl-textarea{
-      width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit
-    }
-    .tpl-submit{background:var(--color-principal);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
-    .tpl-submit:hover{background:#2a7e80}
-    .tpl-help{font-size:.9rem;color:#555}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -167,7 +163,7 @@
           <li>25–40 km → <strong>15 €</strong></li>
           <li>+40 km → <strong>20 €</strong></li>
         </ul>
-        <p class="tpl-help">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+        <p class="note" style="margin-top:8px">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
       </div>
     </div>
 
@@ -184,48 +180,11 @@
     </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- CTA: Volver a la izquierda y Reservar abre el recuadro -->
+    <!-- CTA: Volver a la izquierda y Reservar grande a la derecha -->
     <div class="cta-row">
       <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
-      <a href="#reserva-rapida" class="service-cta" aria-label="Abrir reserva de guardería de día" id="btn-open-reserva">Haz tu reserva</a>
+      <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
     </div>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Recuadro de reserva inline] -->
-    <section id="reserva-rapida" class="tpl-reserva">
-      <h3><i class="fa-solid fa-calendar-check"></i> Reserva rápida — Guardería de día</h3>
-      <form id="tpl-form-reserva" class="tpl-form" action="#" method="post">
-        <input type="hidden" name="servicio" value="Guardería de día">
-        <div>
-          <label for="fecha">Fecha</label>
-          <input class="tpl-input" type="date" id="fecha" name="fecha" required>
-        </div>
-        <div>
-          <label for="hora">Hora estimada</label>
-          <input class="tpl-input" type="time" id="hora" name="hora" required>
-        </div>
-        <div>
-          <label for="nombre">Tu nombre</label>
-          <input class="tpl-input" type="text" id="nombre" name="nombre" placeholder="Nombre y apellidos" required>
-        </div>
-        <div>
-          <label for="telefono">Teléfono</label>
-          <input class="tpl-input" type="tel" id="telefono" name="telefono" inputmode="tel" placeholder="+34 ..." required>
-        </div>
-        <div class="full">
-          <label for="direccion">Dirección (si aplica)</label>
-          <input class="tpl-input" type="text" id="direccion" name="direccion" placeholder="Calle, nº, localidad">
-        </div>
-        <div class="full">
-          <label for="notas">Notas</label>
-          <textarea class="tpl-textarea" id="notas" name="notas" rows="3" placeholder="Hábitos, medicación, pautas del adiestrador..."></textarea>
-        </div>
-        <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <button type="submit" class="tpl-submit">Enviar solicitud</button>
-          <span class="tpl-help">Al enviar, nos pondremos en contacto para confirmar disponibilidad y el cuidador más adecuado.</span>
-        </div>
-      </form>
-    </section>
-    <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
   <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
@@ -264,40 +223,7 @@
   </noscript></div>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Scripts locales] -->
-  <script>
-    // Año en footer
-    document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear());
-
-    // Smooth scroll al recuadro de reserva si vienes con #reserva-rapida
-    (function(){
-      const hash = window.location.hash;
-      if (hash === '#reserva-rapida') {
-        const el = document.getElementById('reserva-rapida');
-        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
-      }
-    })();
-
-    // Botón "Haz tu reserva" desplaza suavemente al recuadro
-    document.getElementById('btn-open-reserva')?.addEventListener('click', function(e){
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({behavior:'smooth', block:'start'});
-      }
-    });
-
-    // (Opcional) Autorrellenar hora actual redondeada a próximo cuarto de hora
-    (function(){
-      const h = document.getElementById('hora');
-      if (!h) return;
-      const d = new Date();
-      d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15))%15, 0, 0);
-      h.value = d.toTimeString().slice(0,5);
-    })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
+  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 </body>
