@@ -1,192 +1,88 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reserva · The Pets Lovers</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guardería de día · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
-    .booking-wrapper{ max-width: 900px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
-    .booking-header{ text-align:center; margin-bottom: 18px; }
-    .booking-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
-    .booking-field{ display:flex; flex-direction:column; gap:6px; }
-    .booking-field label{ font-weight:700; font-size:.95rem; color: var(--color-texto); }
-    .booking-field input, .booking-field select, .booking-field textarea{
-      padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:var(--fuente-texto);
+    .page { padding-top:120px; }
+    .service-header { text-align:center; margin-bottom:30px; }
+    .service-header h1 { margin:0; }
+    .service-content { max-width:900px; margin:0 auto; }
+    .service-content h2 { margin-top:25px; }
+    .supplements a, .schedule a { color:var(--color-principal); font-weight:600; }
+    .alert-box {
+      border:2px solid var(--color-principal);
+      background:#f4f4f4;
+      padding:15px;
+      border-radius:10px;
+      margin:25px 0;
+      text-align:center;
+      font-weight:600;
     }
-    .booking-actions{ display:flex; gap:12px; justify-content:center; margin-top: 16px; }
-    .note{ font-size:.95rem; color:#666; text-align:center; margin: 10px 0 0; }
-    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
-    .auth-wall strong{ color: var(--color-texto); }
-    .disabled{ opacity:.6; pointer-events:none; }
+    .actions { display:flex; justify-content:space-between; margin-top:30px; }
+    .btn { padding:12px 25px; border-radius:8px; text-decoration:none; font-weight:bold; }
+    .btn-back { background:#ddd; color:#333; }
+    .btn-reserve { background:var(--color-principal); color:white; font-size:1.2em; flex:1; text-align:center; margin-left:20px; }
+    .conditions-link { text-align:center; margin-top:20px; }
   </style>
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- NAVBAR -->
+  <div id="tpl-navbar"></div>
 
-  <div class="booking-wrapper">
-    <div class="booking-header">
-      <h1>Reserva tu servicio</h1>
-      <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario estar registrada y haber añadido los datos de tu mascota.</p>
+  <main class="container page service-content">
+    <div class="service-header">
+      <h1><i class="fas fa-sun"></i> Guardería de día</h1>
+      <p>Un servicio pensado para que tu mascota disfrute, socialice y esté bien cuidada durante el día.</p>
     </div>
 
-    <!-- Muro de autenticación (placeholder) -->
-    <div id="authWall" class="auth-wall">
-      <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
-      <div class="booking-actions">
-        <a href="#" class="cta-button" id="btnLogin">Iniciar sesión</a>
-        <a href="#" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
-      </div>
-      <p class="note">Cuando activemos el área privada, podrás acceder aquí con tu usuario.</p>
+    <p>
+      Puedes dejar a tu mascota desde las <strong>7:00 am</strong>. La guardería cubre hasta <strong>8 horas de estancia</strong> durante el día.  
+      Durante la jornada se realizan paseos, juegos, descansos y, en caso necesario, administración de medicación siguiendo tus indicaciones o las pautas de su adiestrador.  
+      Para cachorros el precio es de <strong>20 €</strong>.
+    </p>
+
+    <h2>Precios</h2>
+    <ul>
+      <li>Guardería de día: <strong>15 €</strong></li>
+      <li>Bono 10 días: <strong>13,50 €/día</strong></li>
+      <li>Bono 20 días: <strong>12 €/día</strong></li>
+      <li>Bono 30 días: <strong>10 €/día</strong></li>
+    </ul>
+
+    <h2>Horarios</h2>
+    <p>La estancia incluye hasta 8 h. Si se supera este tiempo se aplicará un suplemento de <strong>5 €/hora</strong>.</p>
+
+    <h2>Suplementos</h2>
+    <ul class="supplements">
+      <li><a href="servicios.html#festivos">Festivos</a></li>
+      <li><a href="servicios.html#desplazamientos">Desplazamiento (kilometraje)</a></li>
+    </ul>
+
+    <div class="alert-box">
+      ⚠️ Tu mascota debe tener la cartilla al día de vacunas y desparasitaciones, además de contar con un seguro de responsabilidad civil obligatorio.
     </div>
 
-    <!-- Formulario de reserva (bloqueado si no hay login) -->
-    <form id="bookingForm" class="disabled">
-      <div class="booking-grid">
-        <div class="booking-field">
-          <label for="service">Servicio</label>
-          <select id="service" required>
-            <option value="">Elige un servicio…</option>
-            <option>Visitas a domicilio</option>
-            <option>Paseos</option>
-            <option>Guardería de día</option>
-            <option>Guardería en casa con cuidador</option>
-            <option>Bodas y servicios exclusivos</option>
-          </select>
-        </div>
+    <div class="actions">
+      <a href="servicios.html" class="btn btn-back">← Volver atrás</a>
+      <a href="reserva.html?servicio=guarderia-dia" class="btn btn-reserve">Haz tu reserva</a>
+    </div>
 
-        <div class="booking-field">
-          <label for="date">Fecha</label>
-          <input type="date" id="date" required>
-        </div>
+    <div class="conditions-link">
+      <p>📑 <a href="condiciones.html">Lee todas las condiciones de guardería de día</a></p>
+    </div>
+  </main>
 
-        <div class="booking-field">
-          <label for="start">Hora de inicio</label>
-          <input type="time" id="start" required>
-        </div>
-
-        <div class="booking-field">
-          <label for="end">Hora de fin</label>
-          <input type="time" id="end" required>
-        </div>
-
-        <div class="booking-field">
-          <label for="location">Lugar</label>
-          <input type="text" id="location" placeholder="Dirección o zona">
-        </div>
-
-        <div class="booking-field" style="grid-column: 1 / -1;">
-          <label for="notes">Notas (opcional)</label>
-          <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
-        </div>
-      </div>
-
-      <div class="booking-actions">
-        <button type="submit" class="cta-button">Solicitar reserva</button>
-      </div>
-      <p class="note">Tras enviar, te llamaremos para conocernos y confirmar detalles. La primera visita con el cuidador es gratuita.</p>
-    </form>
-  </div>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- FOOTER -->
+  <div id="tpl-footer"></div>
 
   <!-- Scripts -->
-  <script>
-    // Placeholder de autenticación: cambia esto a true cuando implementemos login real
-    const isLoggedIn = false;
-
-    const form = document.getElementById('bookingForm');
-    const wall = document.getElementById('authWall');
-
-    function updateAuthUI(){
-      if(isLoggedIn){
-        form.classList.remove('disabled');
-        wall.style.display = 'none';
-      }else{
-        form.classList.add('disabled');
-        wall.style.display = 'block';
-      }
-    }
-    updateAuthUI();
-
-    form.addEventListener('submit', (e)=>{
-      if(!isLoggedIn){
-        e.preventDefault();
-        alert('Debes iniciar sesión o registrarte para completar la reserva.');
-      }
-    });
-
-    document.getElementById('btnLogin').addEventListener('click', (e)=>{
-      e.preventDefault();
-      alert('Pantalla de Iniciar sesión (la añadiremos más adelante).');
-    });
-    document.getElementById('btnRegister').addEventListener('click', (e)=>{
-      e.preventDefault();
-      alert('Pantalla de Registro (la añadiremos más adelante).');
-    });
-  </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
 </body>
 </html>
