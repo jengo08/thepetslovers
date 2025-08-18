@@ -25,7 +25,6 @@
   <style>
     /* TPL: INICIO BLOQUE NUEVO [Estilos mínimos de esta página, respetando tu look&feel] */
     .hero-section.hero-servicios {
-      /* Volvemos a tu imagen clásica (evitamos la ruta con espacios y paréntesis) */
       background-image: url('images/hero.jpg.png');
       background-position: center top;
       background-repeat: no-repeat;
@@ -38,7 +37,6 @@
     }
     .services-section .service-icon i { color: #58425a; }
 
-    /* Grid como lo tenías (permite que Visitas ocupe dos columnas en desktop) */
     .services-section .services-grid {
       display: grid; gap: 20px; grid-template-columns: 1fr;
     }
@@ -66,7 +64,6 @@
     }
     .service-cta:hover{ background:#2a7e80; }
 
-    /* Tabla simple (para visitas) */
     table { width:100%; border-collapse: collapse; margin: 6px 0 10px; }
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
@@ -92,9 +89,9 @@
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (opcional, aparte)", "price": "17", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "14", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name": "90 min", "price": "32", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "2ª visita", "price": "12", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "2ª visita (≥ día 11)", "price": "10", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -189,17 +186,15 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-              <!-- TPL: INICIO BLOQUE NUEVO [Precios guardería como pediste] -->
               <ul>
                 <li><strong>Duración:</strong> hasta 8 horas.</li>
                 <li><strong>Tarifa diaria:</strong> <strong>15 €</strong>.</li>
                 <li><strong>Bonos:</strong> desde <strong>135 €</strong>.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> <strong>20 €</strong>.</li>
               </ul>
-              <!-- TPL: FIN BLOQUE NUEVO -->
               <p class="precio">Antes de reservar, te recomendamos leer los detalles para ver qué incluye.</p>
-              <!-- TPL: INICIO BLOQUE NUEVO [ÚNICO BOTÓN → subpágina] -->
-              <a href="servicios-guarderia.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina guardería] -->
+              <a href="servicio-guarderia.html" class="service-cta">Haz tu reserva</a>
               <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
@@ -225,13 +220,13 @@
                   <tr>
                     <td><strong>Tarifa base</strong></td>
                     <td><strong>22 €</strong></td>
-                    <td><strong>30 €</strong></td>
+                    <td><strong>32 €</strong></td>
                   </tr>
                 </tbody>
               </table>
 
               <ul>
-                <li><strong>Medicación (solo medicación, visita breve):</strong> 17 € <small>(desde el día 11: 14 €)</small>. <em>Este extra es aparte; no está ligado a 60/90 min.</em></li>
+                <li><strong>2ª visita del día:</strong> 12 € <small>(desde el día 11: 10 €)</small>.</li>
               </ul>
 
               <ul>
@@ -241,10 +236,11 @@
                 <li>+ de 3 gatos: <strong>6 €</strong> <small>cada uno</small></li>
               </ul>
 
-              <p class="precio">Calcula tu precio final: <strong>tarifa base</strong> (60 o 90 min) + suplementos por nº de gatos + (opcional) medicación.</p>
+              <p class="precio">El precio final se calcula en la reserva: base (60 o 90) + 2ª visita (si procede) + nº de gatos.</p>
 
-              <!-- ÚNICO BOTÓN -->
-              <a href="servicios-visitas.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina visitas] -->
+              <a href="servicio-visitas.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
@@ -255,9 +251,7 @@
           <h3>Alojamiento nocturno</h3>
           <p>Como en familia: día y noche con un cuidador.</p>
           <details class="service-details" data-hover>
-            <!-- TPL: INICIO BLOQUE NUEVO [Fix comilla en class] -->
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-            <!-- TPL: FIN BLOQUE NUEVO -->
             <div class="content">
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
@@ -266,7 +260,9 @@
                 <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
-              <a href="servicios-alojamiento.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina estancias] -->
+              <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
@@ -276,17 +272,19 @@
           <div class="service-icon"><i class="fa-solid fa-person-walking"></i></div>
           <h3>Paseos</h3>
           <p>Paseos seguros y estimulantes.</p>
-        <details class="service-details" data-hover>
-          <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
-          <div class="content">
-            <ul>
-              <li><strong>Paseo estándar:</strong> 12 €.</li>
-              <li><strong>2ª mascota:</strong> +8 €.</li>
-            </ul>
-            <p class="precio">Consulta los detalles para ver cómo organizamos la ruta y los tiempos.</p>
-            <a href="servicios-paseos.html" class="service-cta">Haz tu reserva</a>
-          </div>
-        </details>
+          <details class="service-details" data-hover>
+            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
+            <div class="content">
+              <ul>
+                <li><strong>Paseo estándar:</strong> 12 €.</li>
+                <li><strong>2ª mascota:</strong> +8 €.</li>
+              </ul>
+              <p class="precio">Consulta los detalles para ver cómo organizamos la ruta y los tiempos.</p>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina paseos] -->
+              <a href="servicio-paseos.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
+            </div>
+          </details>
         </div>
 
         <!-- Transporte -->
@@ -302,7 +300,9 @@
                 <li>Se calcula según distancia y tiempos de espera.</li>
               </ul>
               <p class="precio">Lee los detalles para saber qué incluye y cómo calculamos la distancia.</p>
-              <a href="servicios-transporte.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina transporte] -->
+              <a href="servicio-transporte.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
@@ -317,22 +317,26 @@
             <div class="content">
               <p>Logística, coordinación y cuidado durante la ceremonia, reportaje y celebración. Transporte opcional.</p>
               <p class="precio">Precio: <strong>a consultar</strong> según agenda y horas.</p>
-              <a href="servicios-bodas.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina bodas] -->
+              <a href="servicio-bodas.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
 
-        <!-- Postoperatorio -->
+        <!-- Postquirúrgico -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-briefcase-medical"></i></div>
-          <h3>Postoperatorio</h3>
+          <h3>Postquirúrgico</h3>
           <p>Curar, medicar y vigilar con profesionales.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <p>Supervisión de puntos, administración de medicación, control del dolor y coordinación con tu clínica si es necesario.</p>
               <p class="precio">Precio: <strong>a consultar</strong> según complejidad.</p>
-              <a href="servicios-postoperatorio.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina postquirúrgico] -->
+              <a href="servicio-postquirurgico.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
@@ -354,27 +358,7 @@
           </details>
         </div>
 
-        <!-- Desplazamientos (kilometraje tarifado) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-route"></i></div>
-          <h3>Desplazamientos</h3>
-          <p>Kilometraje adicional cuando el cuidador se moviliza.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <ul>
-                <li>2–10 km → <strong>6 €</strong></li>
-                <li>10–25 km → <strong>10 €</strong></li>
-                <li>25–40 km → <strong>15 €</strong></li>
-                <li>+40 km → <strong>20 €</strong></li>
-              </ul>
-              <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-              <a href="condiciones.html" class="service-cta">Ver condiciones</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- TPL: INICIO BLOQUE NUEVO [Servicio Exóticos — igual estética, 1 botón] -->
+        <!-- Exóticos -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -384,20 +368,20 @@
             <div class="content">
               <p>Disponible solo si contamos con un cuidador de exóticos en tu zona.</p>
               <p class="precio">Precio: <strong>a consultar</strong></p>
-              <a href="servicios-exoticos.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA → subpágina exóticos] -->
+              <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </details>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Tarjeta de Ayuda — igual estética] -->
+        <!-- Ayuda -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
           <h3>¿No sabes qué servicio elegir?</h3>
           <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
           <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
       </div>
     </div>
