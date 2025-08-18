@@ -244,3 +244,286 @@
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
 
+/* ================================================
+   TPL: INICIO BLOQUE NUEVO [Hotfix reservas robusto - no dejar la página en blanco]
+   - No rompe tu diseño ni clases existentes.
+   - Renderiza un calendario básico si falla algo.
+   - Marca festivos cuando el JSON esté disponible.
+================================================== */
+
+(function () {
+  // -------- Utilidades pequeñas y seguras
+  const $ = (sel, ctx = document) => ctx.querySelector(sel);
+  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+
+  // Formato YYYY-MM-DD
+  const fmt = (d) => d.toISOString().slice(0, 10);
+
+  // Parse seguro de fechas "YYYY-MM-DD"
+  const parseISO = (s) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  // Set de fechas deshabilitadas (festivos + personalizadas)
+  const disabledDates = new Set();
+
+  // Intenta cargar festivos si existe el JSON (no rompe si falla)
+  async function tryLoadHolidays(year, ccaa) {
+    // Si ya están en memoria global (por otro script), úsalos
+    if (window.TPL_FESTIVOS && Array.isArray(window.TPL_FESTIVOS)) {
+      window.TPL_FESTIVOS.forEach((iso) => disabledDates.add(iso));
+      return;
+    }
+
+    // Carga consolidado 2025/2026 si existen en raíz (opcional)
+    const files = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
+    for (const url of files) {
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) continue;
+        const data = await res.json();
+
+        // nacionales
+        if (Array.isArray(data.national)) {
+          data.national.forEach((f) => f?.date && disabledDates.add(f.date));
+        }
+        // autonómicos
+        if (data.regions && ccaa && data.regions[ccaa]) {
+          data.regions[ccaa].forEach((f) => f?.date && disabledDates.add(f.date));
+        }
+        // Si viene en formato plano (otra implementación), normalízalo
+        if (Array.isArray(data)) {
+          data.forEach((f) => {
+            if (typeof f === "string" && /^\d{4}-\d{2}-\d{2}$/.test(f)) disabledDates.add(f);
+            if (f?.date) disabledDates.add(f.date);
+          });
+        }
+        return; // cargado alguno, salimos
+      } catch (_) {
+        // Silencioso: si falla uno, probamos el siguiente
+      }
+    }
+  }
+
+  // Render calendario mínimo en un contenedor
+  function renderCalendar(container, year, month /* 0-11 */) {
+    container.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "tpl-cal-header";
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.margin = "0 0 12px 0";
+
+    const btnPrev = document.createElement("button");
+    btnPrev.type = "button";
+    btnPrev.setAttribute("aria-label", "Mes anterior");
+    btnPrev.textContent = "‹";
+    btnPrev.style.border = "1px solid #eee";
+    btnPrev.style.borderRadius = "8px";
+    btnPrev.style.padding = "6px 10px";
+    btnPrev.style.background = "#fff";
+    btnPrev.style.cursor = "pointer";
+
+    const btnNext = btnPrev.cloneNode(true);
+    btnNext.textContent = "›";
+    btnNext.setAttribute("aria-label", "Mes siguiente");
+
+    const title = document.createElement("div");
+    title.style.fontWeight = "700";
+    title.style.fontFamily = "Poppins, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif";
+    title.style.color = "var(--color-texto, #58425a)";
+    const monthNames = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    title.textContent = `${monthNames[month]} ${year}`;
+
+    header.append(btnPrev, title, btnNext);
+
+    const grid = document.createElement("table");
+    grid.className = "tpl-cal-grid";
+    grid.style.width = "100%";
+    grid.style.borderCollapse = "collapse";
+    grid.style.tableLayout = "fixed";
+    grid.style.fontFamily = "Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif";
+
+    const thead = document.createElement("thead");
+    const trHead = document.createElement("tr");
+    ["L","M","X","J","V","S","D"].forEach((d) => {
+      const th = document.createElement("th");
+      th.textContent = d;
+      th.style.padding = "6px 0";
+      th.style.fontWeight = "600";
+      th.style.color = "var(--color-texto, #58425a)";
+      th.style.fontSize = "0.9rem";
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    const tbody = document.createElement("tbody");
+
+    // Primer día del mes (comenzando Lunes)
+    const first = new Date(year, month, 1);
+    const startIdx = (first.getDay() + 6) % 7; // convertir: dom=0 -> 6
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let day = 1 - startIdx;
+    for (let r = 0; r < 6; r++) {
+      const tr = document.createElement("tr");
+      for (let c = 0; c < 7; c++, day++) {
+        const td = document.createElement("td");
+        td.style.height = "44px";
+        td.style.border = "1px solid #eee";
+        td.style.textAlign = "center";
+        td.style.verticalAlign = "middle";
+        td.style.fontSize = "0.95rem";
+        td.style.userSelect = "none";
+
+        if (day < 1 || day > daysInMonth) {
+          td.style.background = "#fafafa";
+          tr.appendChild(td);
+          continue;
+        }
+
+        const d = new Date(year, month, day);
+        const iso = fmt(d);
+
+        td.textContent = String(day);
+
+        // Hoy
+        const today = new Date();
+        if (d.toDateString() === new Date(today.getFullYear(), today.getMonth(), today.getDate()).toDateString()) {
+          td.style.outline = "2px solid var(--color-principal, #339496)";
+          td.style.outlineOffset = "-2px";
+          td.style.fontWeight = "700";
+        }
+
+        // Festivo / deshabilitado
+        const isDisabled = disabledDates.has(iso);
+        if (isDisabled) {
+          td.setAttribute("aria-disabled", "true");
+          td.style.background = "#f4f4f4";
+          td.style.color = "#b0a5b5";
+        } else {
+          td.style.cursor = "pointer";
+          td.addEventListener("click", () => {
+            // seleccionar fecha
+            $$(".tpl-cal-grid td.is-selected", container).forEach((n) => {
+              n.classList.remove("is-selected");
+              n.style.background = "";
+              n.style.color = "";
+              n.style.fontWeight = "";
+            });
+            td.classList.add("is-selected");
+            td.style.background = "rgba(51,148,150,0.12)";
+            td.style.fontWeight = "700";
+            container.dispatchEvent(new CustomEvent("tpl:date-select", { detail: { date: iso } }));
+          });
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+
+    grid.append(thead, tbody);
+    container.append(header, grid);
+
+    // Navegación de meses
+    btnPrev.addEventListener("click", () => {
+      const prev = new Date(year, month, 1);
+      prev.setMonth(prev.getMonth() - 1);
+      renderCalendar(container, prev.getFullYear(), prev.getMonth());
+    });
+    btnNext.addEventListener("click", () => {
+      const next = new Date(year, month, 1);
+      next.setMonth(next.getMonth() + 1);
+      renderCalendar(container, next.getFullYear(), next.getMonth());
+    });
+
+    // Leyenda mínima (opcional, no invasiva)
+    const legend = document.createElement("div");
+    legend.style.display = "flex";
+    legend.style.gap = "12px";
+    legend.style.marginTop = "10px";
+    legend.style.fontSize = "0.9rem";
+    const item = (label, bg = "rgba(51,148,150,0.12)") => {
+      const span = document.createElement("span");
+      span.style.display = "inline-flex";
+      span.style.alignItems = "center";
+      span.style.gap = "6px";
+      const dot = document.createElement("i");
+      dot.style.display = "inline-block";
+      dot.style.width = "14px";
+      dot.style.height = "14px";
+      dot.style.borderRadius = "3px";
+      dot.style.background = bg;
+      span.append(dot, document.createTextNode(label));
+      return span;
+    };
+    legend.append(item("Seleccionado"), item("Festivo / no disponible", "#f4f4f4"));
+    container.append(legend);
+  }
+
+  // --------- Entrada principal segura
+  document.addEventListener("DOMContentLoaded", async () => {
+    // Detecta si la página actual tiene módulo de reservas
+    const root =
+      $('[data-tpl="reservas"]') ||
+      $('#tpl-reservas') ||
+      $('#tpl-calendar') ||
+      $('#calendar') ||
+      $('.tpl-reservas');
+
+    // Si no hay contenedor, no hacemos nada (no rompemos otras páginas)
+    if (!root) return;
+
+    // Comportamiento de login: si existe tplAuth lo respetamos; si no existe, no bloqueamos
+    const requiresLogin = !!(window.tplAuth && typeof window.tplAuth.isLoggedIn === "function");
+    if (requiresLogin) {
+      try {
+        const logged = await Promise.resolve(window.tplAuth.isLoggedIn());
+        if (!logged) {
+          // Muestra un aviso discreto en vez de dejar la página en blanco
+          const box = document.createElement("div");
+          box.setAttribute("role", "status");
+          box.style.margin = "12px 0 16px";
+          box.style.padding = "12px";
+          box.style.border = "1px dashed #ddd";
+          box.style.borderRadius = "10px";
+          box.style.background = "#fff";
+          box.style.color = "var(--color-texto, #58425a)";
+          box.innerHTML = "<strong>Inicia sesión</strong> para completar tu reserva. Si ya has iniciado sesión, recarga la página.";
+          root.prepend(box);
+        }
+      } catch (_) {
+        // Si falla la comprobación de login, seguimos mostrando el calendario (no bloqueamos)
+      }
+    }
+
+    // Año/CCAA por defecto
+    const now = new Date();
+    const year = now.getFullYear();
+    const ccaa =
+      (root.getAttribute("data-ccaa") || "MD").trim(); // por defecto Madrid
+
+    // Carga de festivos (si no existe el JSON, no rompe la UI)
+    await tryLoadHolidays(year, ccaa);
+
+    // Render inicial
+    renderCalendar(root, now.getFullYear(), now.getMonth());
+
+    // Exponemos un hook pequeño para que tu otro JS pueda escuchar la fecha elegida
+    root.addEventListener("tpl:date-select", (ev) => {
+      // Puedes leer ev.detail.date (YYYY-MM-DD)
+      // Ejemplo: auto-rellenar un input oculto si existe
+      const hidden = $('#tpl-fecha-seleccionada');
+      if (hidden) hidden.value = ev.detail.date;
+    });
+  });
+})();
+
+/* ================================================
+   TPL: FIN BLOQUE NUEVO [Hotfix reservas robusto]
+================================================== */
+
