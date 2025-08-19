@@ -1,3 +1,4 @@
+// TPL: INICIO tpl-footer.js (fix: JS puro, sin <script> ni comentarios HTML)
 (function () {
   function setYear() {
     document.querySelectorAll('.year-span').forEach(function (s) {
@@ -9,23 +10,15 @@
     var mount = document.getElementById('tpl-footer');
     if (!mount) return;
 
-    var paths = ['tpl-footer.html', './tpl-footer.html', '/tpl-footer.html'];
-
-    paths.reduce(function(chain, path){
-      return chain.catch(function(){
-        return fetch(path, { cache: 'no-store' }).then(function(res){
-          if(!res.ok) throw new Error('HTTP '+res.status+' en '+path);
-          return res.text();
-        });
+    fetch('tpl-footer.html', { cache: 'no-store' })
+      .then(function (res) { return res.text(); })
+      .then(function (html) {
+        mount.outerHTML = html;
+        setYear();
+      })
+      .catch(function (err) {
+        console.error('TPL: Error al cargar el footer:', err);
       });
-    }, Promise.reject())
-    .then(function (html) {
-      mount.outerHTML = html;
-      setYear();
-    })
-    .catch(function (err) {
-      console.error('TPL FOOTER: No se pudo cargar el footer.', err);
-    });
   }
 
   if (document.readyState === 'loading') {
@@ -34,3 +27,4 @@
     injectFooter();
   }
 })();
+// TPL: FIN tpl-footer.js
