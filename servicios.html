@@ -69,8 +69,9 @@
     thead th { background:#fafafa; }
 
     /* ===== BLOQUE PRIMERA VISITA ===== */
+    /* TPL: CAMBIO DE COLOR DEL RECUADRO (#f4fdfd -> #eaf6f6) */
     .highlight-box {
-      background: #f4fdfd;
+      background: #eaf6f6; /* TPL: verde claro que pega con la paleta */
       border: 2px solid var(--color-principal);
       border-radius: 12px;
       padding: 24px;
@@ -80,6 +81,16 @@
     }
     .highlight-box h2 { margin: 0 0 10px; font-size: 1.6rem; color: var(--color-principal); }
     .highlight-box p { margin: 0; font-size: 1.1rem; color: var(--color-texto); }
+
+    /* ====== TPL: INICIO BLOQUE NUEVO [Botón secundario morado solo para “Saber más”] ====== */
+    .service-cta-secondary {
+      background: #58425a;
+      color: #fff;
+    }
+    .service-cta-secondary:hover {
+      background: #403244;
+    }
+    /* ====== TPL: FIN BLOQUE NUEVO ====== */
 
     /* ====== TPL: INICIO BLOQUE NUEVO [Restaurar estilo anterior de “Ayuda + Desplazamientos + Festivos”] ====== */
     /* Suplementos (lateral) con tarjetas blancas (borde y botón) como antes */
@@ -95,8 +106,9 @@
     .supp-actions .service-cta { margin-top:0; }
     /* Tarjeta de ayuda centrada como en la captura */
     .service-card.help-card { justify-self:center; max-width: 420px; }
-    /* Cierre con menos espacio */
-    .closing-subtitle { text-align:center; margin:22px 0 8px; }
+    /* Cierre con menos espacio (AJUSTE PEDIDO) */
+    /* TPL: ACTUALIZACIÓN DE MÁRGENES DE .closing-subtitle */
+    .closing-subtitle { text-align:center; margin:40px 0 16px; font-size:1.05rem; line-height:1.6; }
     /* ====== TPL: FIN BLOQUE NUEVO ====== */
   </style>
 
@@ -218,7 +230,7 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Restaurar “Primera visita gratuita” con huellita] -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Restaurar “Primera visita gratuita” con huellita + botón] -->
       <div class="highlight-box" id="primera-visita-box">
         <h2><i class="fa-solid fa-paw"></i> Primera visita gratuita</h2>
         <p>
@@ -226,6 +238,7 @@
           para conocernos, comentar <strong>rutinas</strong>, <strong>dónde están las cosas</strong> y
           coordinar <strong>entrega de llaves</strong>. Así tu mascota nos reconoce y todo queda claro desde el principio.
         </p>
+        <a href="como-funciona.html#como-funciona-detallada" class="service-cta service-cta-secondary">Saber más</a>
       </div>
       <!-- TPL: FIN BLOQUE NUEVO -->
 
