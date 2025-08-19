@@ -415,45 +415,50 @@
           </details>
         </div>
 
-        <!-- Suplementos (izquierda) + Festivos (izquierda) + AYUDA (derecha) -->
-        <div class="supp-side" style="grid-column: span 2;">
-          <div class="supp-grid">
-            <!-- Desplazamientos (izquierda) -->
-            <article class="supp-card">
-              <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
-              <ul>
-                <li>2–10 km → <strong>6 €</strong></li>
-                <li>10–25 km → <strong>10 €</strong></li>
-                <li>25–40 km → <strong>15 €</strong></li>
-                <li>+40 km → <strong>20 €</strong></li>
-              </ul>
-              <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-              <div class="supp-actions">
-                <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
-              </div>
-            </article>
+        <!-- Suplementos + AYUDA (versión original: ayuda izquierda, suplementos derecha) -->
+<div class="supp-side" style="grid-column: span 2;">
+  <div class="supp-grid" style="grid-template-columns: 1fr 1fr;">
+    
+    <!-- AYUDA (izquierda) -->
+    <div class="service-card help-card">
+      <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
+      <h3>¿No sabes qué servicio elegir?</h3>
+      <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
+      <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
+    </div>
 
-            <!-- Festivos (centro/izquierda) -->
-            <article class="supp-card">
-              <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
-              <ul>
-                <li><strong>Festivos:</strong> +10 €</li>
-                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-              </ul>
-              <div class="supp-actions">
-                <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
-              </div>
-            </article>
-
-            <!-- AYUDA (derecha) -->
-            <div class="service-card help-card">
-              <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
-              <h3>¿No sabes qué servicio elegir?</h3>
-              <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
-              <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
-            </div>
-          </div>
+    <!-- Suplementos (derecha) -->
+    <div>
+      <!-- Desplazamientos -->
+      <article class="supp-card">
+        <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
+        <ul>
+          <li>2–10 km → <strong>6 €</strong></li>
+          <li>10–25 km → <strong>10 €</strong></li>
+          <li>25–40 km → <strong>15 €</strong></li>
+          <li>+40 km → <strong>20 €</strong></li>
+        </ul>
+        <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+        <div class="supp-actions">
+          <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
         </div>
+      </article>
+
+      <!-- Festivos -->
+      <article class="supp-card" style="margin-top:16px;">
+        <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
+        <ul>
+          <li><strong>Festivos:</strong> +10 €</li>
+          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+        </ul>
+        <div class="supp-actions">
+          <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
+        </div>
+      </article>
+    </div>
+
+  </div>
+
 
       </div>
 
