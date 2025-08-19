@@ -96,10 +96,14 @@
     }
     /* TPL: FIN BLOQUE NUEVO */
  
-    /* Primera visita gratuita */
+  /* Primera visita gratuita */
 .primera-visita {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 18px 14px;
+  min-height: 140px; /* asegura que el contenido quede centrado */
 }
 .primera-visita h3 {
   margin: 0 0 8px;
@@ -107,15 +111,11 @@
   color: var(--color-principal);
 }
 .primera-visita p {
-  margin: 0;
+  margin: 0 0 10px;
   font-size: 1.05rem;
   line-height: 1.5;
   color: var(--color-texto);
 }
-.primera-visita .cta-wrap {
-  margin-top: 12px;
-}
-
   </style>
 
   <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España)] -->
@@ -402,15 +402,15 @@
           <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
         </div>
 
-       <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita destacada] -->
+     <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita destacada] -->
 <div class="note primera-visita">
-  <h3>🎉 Primera visita totalmente gratuita</h3>
-  <p>
-    Antes de cualquier servicio concertamos un <strong>encuentro sin coste</strong> con el cuidador.  
-    Así tu mascota puede conocerlo, reconocer su voz, sus paseos y su entorno,  
-    evitando que sea alguien completamente desconocido y dandote tranquilidad.
-  </p>
-  <div class="cta-wrap">
+  <div class="pv-contenido">
+    <h3>🎉 Primera visita gratuita</h3>
+    <p>
+      Antes de cualquier servicio realizamos un <strong>encuentro sin coste</strong> con el cuidador.  
+      Así tu mascota puede conocerlo, reconocer su entorno y sentirse segura  
+      antes de empezar la experiencia.
+    </p>
     <a href="condiciones.html#primera-visita" class="service-cta">Ver condiciones</a>
   </div>
 </div>
