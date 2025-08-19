@@ -11,7 +11,7 @@
   <meta name="description" content="Visitas a domicilio para gatos de 15, 60 o 90 minutos. Limpieza, juego, cepillado, medicación si es necesario y reportes con fotos. Profesionales del sector veterinario.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local mínimo: layout, listas, tablas] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
     /* Breadcrumb */
@@ -44,6 +44,7 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
+    /* Nota: estilos del botón .tpl-btn-sm y el centrado .cancelaciones-btn están en style.css */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -83,7 +84,7 @@
       <span class="badge"><i class="fa-solid fa-house"></i> En su propio hogar</span>
     </p>
 
-       <h3>Duración y recomendación</h3>
+    <h3>Duración y recomendación</h3>
     <div class="note">
       <p><i class="fa-regular fa-clock"></i> Puedes reservar visitas de <strong>60</strong> o <strong>90 minutos</strong>, según lo que necesite tu gato.</p>
       <p><i class="fa-solid fa-syringe"></i> Existe una <strong>visita especial de 15 minutos</strong> pensada únicamente para la <strong>administración de medicación y verificación</strong>.  
@@ -92,7 +93,6 @@
       Esto nos permite dedicar tiempo suficiente a cada uno, asegurar que todos comen y beben, limpiar areneros y zonas de descanso, y darles atención individual sin prisas.  
       Así garantizamos un entorno limpio, tranquilo y con la dedicación que necesitan para reducir su estrés.</p>
     </div>
-
 
     <h3>¿Qué haremos en cada visita?</h3>
     <ul class="icon-list">
@@ -124,12 +124,11 @@
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita + punto de encuentro] -->
-<div class="note alert" style="margin-top:10px">
-  <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita inicial en el hogar del propietario.  
-  En esta primera toma de contacto podrás mostrar <strong>dónde están las cosas, rutinas y llaves</strong>, y tu mascota reconocerá al cuidador.</p>
-</div>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
+    <div class="note alert" style="margin-top:10px">
+      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita inicial en el hogar del propietario.  
+      En esta primera toma de contacto podrás mostrar <strong>dónde están las cosas, rutinas y llaves</strong>, y tu mascota reconocerá al cuidador.</p>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <!-- TPL: INICIO BLOQUE NUEVO [Tabla 15 min separada] -->
     <h3>Precios — 15 minutos (solo medicación)</h3>
@@ -185,35 +184,40 @@
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Condiciones especiales — igual que guardería de día] -->
-    <div class="note alert" style="margin-top:14px">
-      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos obligatorios:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, y <strong>seguro de responsabilidad civil</strong> vigente. Informa de cualquier <strong>patología</strong> o pauta especial.</p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones — unificados] -->
+    <h3 style="margin-top:18px">Requisitos y Cancelaciones</h3>
+    <div class="tpl-cards-2" style="margin-top:14px">
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
+        <ul>
+          <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
+          <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
+          <li>Informa de cualquier <strong>patología</strong> o pauta especial.</li>
+          <li>Si hay <strong>cámaras en casa</strong>, hay que avisar al cuidador e indicar <strong>dónde están</strong>.</li>
+        </ul>
+      </div>
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
+        <ul>
+          <li><strong>Sin coste</strong> hasta 48h antes del servicio.</li>
+          <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
+          <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50% del servicio</strong>.</li>
+        </ul>
+        <p class="cancelaciones-btn" style="margin-top:10px">
+          <a href="condiciones.html#cancelaciones" class="tpl-btn-sm" aria-label="Leer política de cancelaciones completa">Saber más</a>
+        </p>
+      </div>
     </div>
-    <!-- TPL: INICIO BLOQUE NUEVO [Condiciones del servicio - Visitas] -->
-<div class="tpl-card alert" style="margin-top:16px">
-  <h4 style="margin:0 0 8px">
-    <i class="fa-solid fa-file-lines"></i> Condiciones del servicio
-  </h4>
-  <p>
-    Consulta las <strong>condiciones generales y específicas</strong> en 
-    <a href="condiciones.html">esta página de condiciones</a>.  
-    Incluyen requisitos sanitarios, seguros, <strong>política de cancelaciones</strong>, suplementos y el uso de cámaras cuando corresponda.
-  </p>
-</div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-<!-- CTA: Volver + Reservar -->
-<div class="cta-row">
-  <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
-  <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
-</div>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
+    <!-- TPL: INICIO BLOQUE NUEVO [Enlace a condiciones - Visitas] -->
     <p class="note" style="margin-top:12px">
       <i class="fa-solid fa-file-lines"></i> Lee todas las <strong>condiciones de visitas</strong> en 
       <a href="condiciones.html#visitas-gatos">esta página de condiciones</a>.
     </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- CTA: Volver + Reservar -->
     <div class="cta-row">
       <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
       <a href="reserva.html?service=visitas-gatos" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
