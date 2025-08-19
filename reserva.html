@@ -22,13 +22,12 @@
     .auth-wall strong{ color: var(--color-texto); }
     .disabled{ opacity:.6; pointer-events:none; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Robustez de ocultación por defecto] */
+    /* Robustez de ocultación por defecto */
     .booking-field[hidden]{ display:none !important; }
-    .tpl-visitas-only{ display:none !important; }               /* siempre oculto por defecto */
-    .tpl-visitas-on .tpl-visitas-only{ display:block !important; } /* solo se muestran si el form añade esta clase */
-    /* TPL: FIN BLOQUE NUEVO */
+    .tpl-visitas-only{ display:none !important; }
+    .tpl-visitas-on .tpl-visitas-only{ display:block !important; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Desglose de pago] */
+    /* Desglose de pago */
     .summary-panel{ margin-top: 16px; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:16px; }
     .summary-grid{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
     .summary-row{ display:contents; }
@@ -36,18 +35,16 @@
     .summary-value{ font-weight:700; color: var(--color-texto); text-align:right; }
     .summary-muted{ color:#999; font-weight:400; }
     .summary-total{ border-top:1px solid #e7e7e7; margin-top:8px; padding-top:8px; font-size:1.05rem; }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Buscador de dirección ligero] */
+    /* Buscador de dirección ligero */
     .tpl-addr-wrap{ position: relative; }
     .tpl-addr-suggest{ position:absolute; inset:auto 0 0 0; transform: translateY(calc(100% + 6px));
       background:#fff; border:1px solid #ddd; border-radius:10px; box-shadow: 0 6px 18px rgba(0,0,0,.08); z-index: 999;
       max-height: 240px; overflow:auto; display:none; }
     .tpl-addr-item{ padding:10px 12px; cursor:pointer; }
     .tpl-addr-item:hover, .tpl-addr-item:focus{ background:#f5f7f8; outline:none; }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Acciones: submit centrado + ayuda derecha (sin mover ayuda)] */
+    /* Acciones: submit centrado + ayuda derecha (sin mover ayuda) */
     .tpl-actions{
       display:grid;
       grid-template-columns: 1fr auto 1fr;
@@ -55,16 +52,13 @@
     }
     .tpl-actions .tpl-spacer{ display:block; }
     .tpl-actions .tpl-help{ font-size:.9rem; padding:8px 10px; border:2px solid var(--color-principal); color:var(--color-principal); background:#fff; border-radius:8px; justify-self:end; }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Burbuja desplazamiento] */
+    /* Burbuja desplazamiento */
     .travel-bubble{ display:none; margin-top:6px; padding:10px 12px; border:1px dashed #bbb; border-radius:10px; background:#f9f9f9; color:#666; text-align:left;}
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Separadores de sección] */
+    /* Separadores de sección */
     .tpl-section{ margin-top: 18px; }
     .tpl-section h2{ margin: 6px 0 8px; font-size:1.15rem; }
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
@@ -161,7 +155,6 @@
           </div>
 
           <!-- SOLO para visitas (gatos) -->
-          <!-- TPL: INICIO BLOQUE NUEVO [Marcar como visitas-only + oculto por defecto] -->
           <div class="booking-field tpl-visitas-only" id="fieldVisitDuration" hidden>
             <label for="visitDuration">Duración de la visita (gatos)</label>
             <select id="visitDuration" name="Visita_duracion">
@@ -176,7 +169,6 @@
               <option value="2">2 visitas/día (2ª es medicación)</option>
             </select>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <div class="booking-field" id="fieldIsPuppy">
             <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
@@ -186,18 +178,8 @@
             </select>
           </div>
 
-          <div class="booking-field">
-            <label for="needTravel">¿Necesitas desplazamiento?</label>
-            <select id="needTravel" name="Desplazamiento">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-            <div id="travelBubble" class="travel-bubble">
-              <i class="fa-solid fa-circle-info"></i>
-              El desplazamiento se cobrará cuando asignemos al cuidador/a más cercano y adecuado.
-              <br>Este importe quedará <strong>pendiente</strong> en la factura final.
-            </div>
-          </div>
+          <!-- TPL: BLOQUE MOVIDO (necesitas desplazamiento) 
+               * Antes estaba aquí; lo hemos bajado junto a “Notas” como pediste -->
         </div>
       </section>
 
@@ -284,6 +266,21 @@
             <input type="time" id="contactTime" name="Hora_preferida_contacto">
           </div>
 
+          <!-- TPL: INICIO BLOQUE NUEVO [Desplazamiento reubicado aquí, antes de Notas] -->
+          <div class="booking-field" style="grid-column: 1 / -1;">
+            <label for="needTravel">¿Necesitas desplazamiento?</label>
+            <select id="needTravel" name="Desplazamiento">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+            <div id="travelBubble" class="travel-bubble">
+              <i class="fa-solid fa-circle-info"></i>
+              El desplazamiento se cobrará cuando asignemos al cuidador/a más cercano y adecuado.
+              <br>Este importe quedará <strong>pendiente</strong> en la factura final.
+            </div>
+          </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
+
           <div class="booking-field" style="grid-column: 1 / -1;">
             <label for="notes">Notas (opcional)</label>
             <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
@@ -295,7 +292,7 @@
       <div class="summary-panel" id="summary">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
           <strong>Desglose preliminar</strong>
-          <!-- (Eliminada la badge de kilometraje, como pediste) -->
+          <!-- (sin badge de kilometraje, como pediste) -->
         </div>
         <div class="summary-grid">
           <div class="summary-row">
@@ -461,13 +458,14 @@
     }
     function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-    // Preselección por referrer o ?service=
+    /* TPL: INICIO BLOQUE NUEVO [Preselección por referrer: añade 'servicio-estancias'] */
     function inferServiceFromReferrer(){
       try{
         const u = new URL(document.referrer || '');
         const p = (u.pathname || '').toLowerCase();
         if(p.includes('servicio-guarderia') || p.includes('guarderia')) return 'guarderia';
         if(p.includes('servicio-alojamiento') || p.includes('alojamiento')) return 'alojamiento';
+        if(p.includes('servicio-estancias') || p.includes('/estancias')) return 'alojamiento'; /* NUEVO */
         if(p.includes('servicio-paseos') || p.includes('paseos')) return 'paseos';
         if(p.includes('servicio-visitas') || p.includes('visitas')) return 'visitas';
       }catch(_){}
@@ -476,27 +474,35 @@
     (function presetService(){
       const raw = (qs('service') || qs('svc') || '').toLowerCase();
       const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
-      const map = { visitas:'visitas', 'visitas-gatos':'visitas', paseos:'paseos', guarderia:'guarderia', 'guarderia-dia':'guarderia', alojamiento:'alojamiento', bodas:'bodas' };
+      const map = {
+        visitas:'visitas',
+        'visitas-gatos':'visitas',
+        paseos:'paseos',
+        guarderia:'guarderia',
+        'guarderia-dia':'guarderia',
+        alojamiento:'alojamiento',
+        estancias:'alojamiento', /* NUEVO: por si algún día se usa ?service=estancias */
+        bodas:'bodas'
+      };
       let val = map[norm] || inferServiceFromReferrer();
       if(val && els.service){ els.service.value = val; els.service.disabled = true; }
     })();
+    /* TPL: FIN BLOQUE NUEVO */
 
     // Mostrar/ocultar campos según servicio
     function toggleFields(){
       const svc = els.service?.value;
       const isVisitas = (svc === 'visitas');
 
-      /* TPL: INICIO BLOQUE NUEVO [Activar clase de modo visitas] */
       if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
-      /* TPL: FIN BLOQUE NUEVO */
 
-      // SOLO visibles y activos en Visitas
+      // SOLO visibles/activos en Visitas
       if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
       if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
       if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value = '60'; }
       if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value = '1'; }
 
-      // Tipo animal visible; "cachorro" (auto) solo guardería/alojamiento
+      // "cachorro" (auto) solo guardería/alojamiento
       const species = els.species?.value || 'perro';
       const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
       if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
@@ -556,13 +562,13 @@
       els.petsListHidden.value = names.join(', ');
     }
 
-    // Desplazamiento
+    // Desplazamiento (sin cambio de lógica; solo movido en el HTML)
     function travelSync(){
       if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
       if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
     }
 
-    // Festivos (igual que antes) ...
+    // Festivos (igual que antes)
     const _festivosCache = new Map();
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
@@ -631,12 +637,12 @@
       let festivo = 0, senalado = 0;
       for(const d of days){
         const year = d.getFullYear();
-        theIso = ymd(d);
+        const iso = ymd(d);
         const pack = await fetchHolidaysForYear(year);
         const county = REGION_TO_COUNTY[region || 'nacional'] || null;
         const regKey = COUNTY_TO_REGIONKEY[county] || county;
-        const isNat = !!pack?.nacional?.has(theIso);
-        const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(theIso) || pack?.porCcaa?.get(county)?.has(theIso)) : false;
+        const isNat = !!pack?.nacional?.has(iso);
+        const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
         const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
         if(isNat || isReg) festivo += 10;
         if(isSpecial) senalado += 30;
