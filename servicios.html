@@ -68,13 +68,13 @@
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
 
-    /* ===== NUEVO DISEÑO: BLOQUE PRIMERA VISITA (fondo como tarjetas) ===== */
+    /* ===== Bloque PRIMERA VISITA (fondo igual que tarjetas) ===== */
     .highlight-box {
       background: #fff; /* igual que las tarjetas */
       border: 2px solid var(--color-principal);
       border-radius: 12px;
       padding: 24px;
-      margin: 16px 0 28px; /* mantiene respiro sin pegarse */
+      margin: 16px 0 28px;
       text-align: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -82,17 +82,21 @@
       margin: 0 0 10px;
       font-size: 1.6rem;
       color: var(--color-principal);
+      display:flex; align-items:center; justify-content:center; gap:10px;
     }
-    .highlight-box p {
-      margin: 0;
-      font-size: 1.1rem;
-      color: var(--color-texto);
-    }
+    .highlight-box p { margin: 0 0 12px; font-size: 1.05rem; color: var(--color-texto); }
 
-    /* Suplementos (lateral) */
+    /* Suplementos (bloque lateral) */
     .supp-side { border:0; padding:0; }
-    .supp-side .supp-grid { display:grid; gap:16px; grid-template-columns: 1fr; }
-    @media (min-width: 900px){ .supp-side { grid-column: span 2; } }
+    .supp-grid {
+      display:grid; gap:16px; grid-template-columns: 1fr;
+      align-items: start;
+    }
+    @media (min-width: 900px){
+      .supp-side { grid-column: span 2; }
+      /* tres columnas para colocar la ayuda en el centro entre Desplazamientos y Festivos */
+      .supp-grid { grid-template-columns: repeat(3, 1fr); }
+    }
     .supp-card {
       border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; text-align:left;
     }
@@ -101,14 +105,24 @@
     .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
     .supp-actions .service-cta { margin-top:0; }
 
-    /* Centrado y descenso de la tarjeta de ayuda (≈2cm) */
-    .service-card.help-card { justify-self:center; max-width: 420px; margin-top: 2cm; }
+    /* Tarjeta de ayuda centrada ENTRE los suplementos y más arriba */
+    .help-card {
+      align-self: start;           /* que “suba” un poco */
+      justify-self: center;        /* centrado horizontal */
+      max-width: 420px;
+      margin-top: 8px;             /* ligera subida */
+      text-align: center;
+    }
 
-    /* Menos espacio antes del footer */
-    .closing-subtitle { text-align:center; margin:22px 0 0; }
-    /* Eliminar margen/padding inferior del bloque de servicios para pegar más el footer */
-    #lista-servicios { margin-bottom: 0; padding-bottom: 0; }
-    #lista-servicios .container { padding-bottom: 0; }
+    /* Frase final: misma copia, más “a lo largo” y tipografía más pequeña */
+    .closing-subtitle {
+      text-align:center;
+      margin:22px auto 8px;
+      max-width: 1000px; /* más ancho para que vaya a lo largo */
+      font-size: 0.95rem; /* más pequeña */
+      line-height: 1.55;
+      color: var(--color-texto);
+    }
   </style>
 
   <!-- JSON-LD servicios (España) -->
@@ -194,7 +208,7 @@
 </head>
 <body>
 
-  <!-- Navbar (inyectada con fallback) -->
+  <!-- Navbar (inyectada) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -227,13 +241,14 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- BLOQUE DESTACADO: Primera visita gratuita (fondo menos contrastado) -->
+      <!-- BLOQUE DESTACADO: Primera visita gratuita -->
       <div class="highlight-box" id="primera-visita-box">
-        <h2>🎉 Primera visita gratuita</h2>
+        <h2><i class="fa-solid fa-paw"></i> Primera visita gratuita</h2>
         <p>
           Antes de contratar cualquier servicio, concertamos una primera visita sin coste
           para conocer a tu mascota y daros tranquilidad desde el primer momento.
         </p>
+        <a href="condiciones.html#primera-visita" class="service-cta" aria-label="Leer condiciones de la primera visita gratuita">Saber más</a>
       </div>
 
       <div class="services-grid">
@@ -386,7 +401,7 @@
           </details>
         </div>
 
-        <!-- Exóticos (antes de suplementos) -->
+        <!-- Exóticos -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -401,18 +416,10 @@
           </details>
         </div>
 
-        <!-- ¿No sabes qué servicio elegir? (centrada y más abajo) -->
-        <div class="service-card help-card">
-          <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
-          <h3>¿No sabes qué servicio elegir?</h3>
-          <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
-          <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
-        </div>
-
-        <!-- Suplementos a la derecha -->
+        <!-- Suplementos + AYUDA centrada entre ambos -->
         <div class="supp-side" style="grid-column: span 2;">
           <div class="supp-grid">
-            <!-- Desplazamientos -->
+            <!-- Desplazamientos (izquierda) -->
             <article class="supp-card">
               <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
               <ul>
@@ -426,7 +433,16 @@
                 <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
               </div>
             </article>
-            <!-- Festivos -->
+
+            <!-- AYUDA (centro) -->
+            <div class="service-card help-card">
+              <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
+              <h3>¿No sabes qué servicio elegir?</h3>
+              <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
+              <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
+            </div>
+
+            <!-- Festivos (derecha) -->
             <article class="supp-card">
               <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
               <ul>
@@ -442,16 +458,15 @@
 
       </div>
 
-      <!-- Cierre profesional con menos espacio -->
+      <!-- Cierre profesional (misma frase, más a lo largo y letra más pequeña) -->
       <p class="subtitle closing-subtitle">
-        Atención realizada por <strong>profesionales del sector veterinario titulados</strong>.<br>
-        Nos adaptamos a la rutina y necesidades de cada mascota.
+        Atención realizada por <strong>profesionales del sector veterinario titulados</strong>. Nos adaptamos a la rutina y necesidades de cada mascota.
       </p>
 
     </div>
   </section>
 
-  <!-- Footer (inyectado con fallback) -->
+  <!-- Footer (inyectado) -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
