@@ -464,8 +464,7 @@
         const u = new URL(document.referrer || '');
         const p = (u.pathname || '').toLowerCase();
         if(p.includes('servicio-guarderia') || p.includes('guarderia')) return 'guarderia';
-        if(p.includes('servicio-alojamiento') || p.includes('alojamiento')) return 'alojamiento';
-        if(p.includes('servicio-estancias') || p.includes('/estancias')) return 'alojamiento'; /* NUEVO */
+        if(p.includes('servicio-estancias') || p.includes('alojamiento')) return 'alojamiento';
         if(p.includes('servicio-paseos') || p.includes('paseos')) return 'paseos';
         if(p.includes('servicio-visitas') || p.includes('visitas')) return 'visitas';
       }catch(_){}
