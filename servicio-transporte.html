@@ -11,7 +11,7 @@
   <meta name="description" content="Transporte de mascotas con recogida y entrega, seguridad y acompañamiento básico. Precios claros: fijo + tramos por distancia.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: patrón Estancias] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: patrón Estancias + botón pequeño] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
     /* Breadcrumb */
@@ -41,6 +41,9 @@
     .cta-row .ver-mas:hover{background:var(--color-principal);color:#fff}
     .cta-row .service-cta{background:var(--color-principal);color:#fff;padding:16px 22px;font-weight:700;border-radius:6px;text-decoration:none;font-size:1.05rem}
     .cta-row .service-cta:hover{background:#2a7e80}
+    /* Botón pequeño para “Saber más” */
+    .tpl-btn-sm{display:inline-block;font-size:.85rem;line-height:1;border:1.5px solid var(--color-principal);color:var(--color-principal);padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700}
+    .tpl-btn-sm:hover{background:var(--color-principal);color:#fff}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -142,32 +145,29 @@
       <strong>Ej. 2:</strong> Peluquería a 12 km → 20 € + 10 € = <strong>30 €</strong>.</p>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos] -->
-    <div class="note alert" style="margin-top:14px">
-      <p style="margin:0 0 6px">
-        <i class="fa-solid fa-file-shield"></i>
-        <strong>Requisitos:</strong>
-      </p>
-      <ul style="margin:6px 0 0 18px">
-        <li>Cartilla al día de <strong>vacunas y desparasitaciones</strong>.</li>
-        <li><strong>Identificación: microchip</strong>.</li>
-        <li><strong>Transportín/arnés/cinturón homologado</strong> durante el trayecto.</li>
-        <li>Indica <strong>patologías o medicación</strong> para adaptar el traslado.</li>
-      </ul>
-    </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Cancelaciones] -->
-    <div class="note alert" style="margin-top:12px">
-      <p style="margin:0 0 6px">
-        <i class="fa-solid fa-ban"></i>
-        <strong>Cancelaciones:</strong>
-      </p>
-      <ul style="margin:6px 0 0 18px">
-        <li><strong>Sin coste</strong> hasta <strong>48h</strong> antes del servicio.</li>
-        <li>Con <strong>menos de 48h</strong>: <strong>no se devolverá la reserva</strong>.</li>
-        <li>Con <strong>menos de 24h</strong>: se descontará el <strong>50% de la estancia/servicio</strong>.</li>
-      </ul>
+    <!-- TPL: INICIO BLOQUE NUEVO [Fila: Requisitos + Cancelaciones] -->
+    <div class="tpl-cards-2" style="margin-top:14px">
+      <div class="tpl-card alert">
+        <h4 style="margin:0 0 8px"><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
+        <ul>
+          <li>Cartilla al día de <strong>vacunas y desparasitaciones</strong>.</li>
+          <li><strong>Identificación: microchip</strong>.</li>
+          <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
+          <li><strong>Transportín/arnés/cinturón homologado</strong> durante el trayecto.</li>
+          <li>Indica <strong>patologías o medicación</strong> para adaptar el traslado.</li>
+        </ul>
+      </div>
+      <div class="tpl-card alert">
+        <h4 style="margin:0 0 8px"><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
+        <ul>
+          <li><strong>Sin coste</strong> hasta <strong>48h</strong> antes del servicio.</li>
+          <li>Con <strong>menos de 48h</strong>: <strong>no se devolverá la reserva</strong>.</li>
+          <li>Con <strong>menos de 24h</strong>: se descontará el <strong>50% de la estancia/servicio</strong>.</li>
+        </ul>
+        <p style="margin-top:10px">
+          <a href="condiciones.html#cancelaciones" class="tpl-btn-sm" aria-label="Leer política de cancelaciones completa">Saber más</a>
+        </p>
+      </div>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -176,7 +176,7 @@
       <p>
         <i class="fa-solid fa-file-lines"></i>
         Consulta las <strong>condiciones del servicio</strong> en
-        <a href="condiciones.html#estancias">esta página de condiciones</a>.
+        <a href="condiciones.html">esta página de condiciones</a>.
       </p>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
