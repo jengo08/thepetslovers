@@ -415,12 +415,12 @@
           </details>
         </div>
 
-        <!-- Suplementos + AYUDA (versión original: ayuda izquierda, suplementos derecha) -->
+       <!-- Suplementos + AYUDA (alineados e iguales en tamaño) -->
 <div class="supp-side" style="grid-column: span 2;">
-  <div class="supp-grid" style="grid-template-columns: 1fr 1fr;">
+  <div class="supp-grid" style="grid-template-columns: 1fr 1fr; gap:20px; align-items: stretch;">
     
     <!-- AYUDA (izquierda) -->
-    <div class="service-card help-card">
+    <div class="service-card help-card" style="height:100%;">
       <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
       <h3>¿No sabes qué servicio elegir?</h3>
       <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
@@ -428,9 +428,10 @@
     </div>
 
     <!-- Suplementos (derecha) -->
-    <div>
+    <div class="service-card" style="height:100%; display:flex; flex-direction:column; justify-content:space-between;">
+      
       <!-- Desplazamientos -->
-      <article class="supp-card">
+      <div>
         <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
         <ul>
           <li>2–10 km → <strong>6 €</strong></li>
@@ -439,28 +440,14 @@
           <li>+40 km → <strong>20 €</strong></li>
         </ul>
         <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-        <div class="supp-actions">
-          <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
-        </div>
-      </article>
+      </div>
 
       <!-- Festivos -->
-      <article class="supp-card" style="margin-top:16px;">
+      <div style="margin-top:16px;">
         <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
         <ul>
           <li><strong>Festivos:</strong> +10 €</li>
-          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-        </ul>
-        <div class="supp-actions">
-          <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
-        </div>
-      </article>
-    </div>
-
-  </div>
-
-
-      </div>
+          <li><strong>Día
 
       <!-- Cierre profesional (misma frase, más a lo largo y letra más pequeña) -->
       <p class="subtitle closing-subtitle">
