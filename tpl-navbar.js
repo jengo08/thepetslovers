@@ -1,13 +1,12 @@
-// TPL: INICIO tpl-navbar.js (fix: JS puro, sin <script> ni comentarios HTML)
+<!-- TPL: INICIO tpl-navbar.js (FIX: sin etiquetas <script> internas) -->
 (function () {
   function highlightActiveLink() {
-    var path = (location.pathname.split('/').pop() || 'index.html').split('#')[0];
+    var path = location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-links a, .home-button').forEach(function (a) {
-      var href = a.getAttribute('href');
-      if (!href) return;
-      var file = (href.split('#')[0] || '');
+      var href = a.getAttribute('href'); if (!href) return;
+      var file = href.split('#')[0] || '';
       if ((file && file === path) || (!file && path === 'index.html')) {
-        a.classList.add('active'); // aplica tu estilo .active en CSS si lo deseas
+        a.classList.add('active'); // se verá si tienes CSS para .active
       }
     });
   }
@@ -33,4 +32,4 @@
     injectNavbar();
   }
 })();
-// TPL: FIN tpl-navbar.js
+<!-- TPL: FIN tpl-navbar.js -->
