@@ -49,8 +49,23 @@
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
 
-    /* TPL: INICIO BLOQUE NUEVO [Centrar botón Saber más de Cancelaciones] */
+    /* TPL: INICIO BLOQUE NUEVO [Centrar botón Saber más de Cancelaciones + estilo botón] */
     .cancelaciones-btn{ text-align:center; }
+    .tpl-btn-sm {
+      display:inline-block;
+      font-size:.85rem;
+      line-height:1;
+      border:1.5px solid var(--color-principal);
+      color:var(--color-principal);
+      padding:7px 10px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:700;
+    }
+    .tpl-btn-sm:hover {
+      background:var(--color-principal);
+      color:#fff;
+    }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -73,19 +88,16 @@
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
-    <!-- TPL: INICIO BLOQUE NUEVO [Breadcrumb] -->
+    <!-- Breadcrumb -->
     <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html">Servicios</a> &gt; <span>Estancias (alojamiento nocturno)</span></nav>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h1><i class="fa-solid fa-moon"></i> Estancias (alojamiento nocturno)</h1>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Introducción cercana] -->
     <p class="lead">
       Estancia <strong>en casa del cuidador</strong>, con compañía día y noche en un entorno tranquilo y familiar.  
       Nos <strong>adaptamos a sus rutinas y necesidades</strong>: horarios de comida, paseos, medicación y hábitos.  
       Siempre con <strong>profesionales del sector veterinario</strong> y el cuidador que mejor encaja con su carácter.
     </p>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <p>
       <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
@@ -95,155 +107,84 @@
 
     <h3>¿Cómo cuidamos durante la estancia?</h3>
     <ul class="icon-list">
-      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> exactamente como nos indiques (cantidades/horarios).</div></li>
-      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas adaptadas a su energía y costumbres.</div></li>
-      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y estimulación</strong> (olfativa y mental) para reducir estrés.</div></li>
+      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> exactamente como nos indiques.</div></li>
+      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> adaptados a su energía y costumbres.</div></li>
+      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y estimulación</strong> para reducir estrés.</div></li>
       <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si es necesaria, siguiendo tus pautas.</div></li>
-      <li><i class="fa-solid fa-heart-circle-check"></i><div><strong>Bienestar</strong>: respetamos tiempos, espacios y señales de calma.</div></li>
+      <li><i class="fa-solid fa-heart-circle-check"></i><div><strong>Bienestar</strong>: respetamos tiempos y señales de calma.</div></li>
     </ul>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita + punto de encuentro] -->
     <div class="note alert" style="margin-top:10px">
-      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita con el cuidador para conoceros y resolver dudas. Podréis veros en un <strong>punto intermedio</strong> o <strong>en la zona del cuidador</strong>. Recomendamos hacerlo en su hogar para que la mascota <strong>vaya reconociendo entorno, parques y rutinas</strong>.</p>
+      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita con el cuidador para conoceros.</p>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Precios</h3>
     <table class="price-table">
       <thead><tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr></thead>
       <tbody>
-        <tr>
-          <td><strong>Tarifa estándar</strong></td>
-          <td><strong>30 € / día</strong></td>
-          <td>Incluye cuidados completos, paseos y seguimiento.</td>
-        </tr>
-        <tr>
-          <td><strong>Cachorros (≤ 6 meses)</strong></td>
-          <td><strong>35 € / día</strong></td>
-          <td>Mayor supervisión y rutinas más frecuentes.</td>
-        </tr>
-        <!-- TPL: INICIO BLOQUE NUEVO [Descuento a partir del día 11] -->
-        <tr>
-          <td><strong>Desde el día 11 (estándar)</strong></td>
-          <td><strong>27 € / día</strong></td>
-          <td>Descuento para estancias largas (aplicado desde la noche 11).</td>
-        </tr>
-        <tr>
-          <td><strong>Desde el día 11 (cachorros)</strong></td>
-          <td><strong>32 € / día</strong></td>
-          <td>Mismo descuento adaptado a cachorros.</td>
-        </tr>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <tr><td><strong>Tarifa estándar</strong></td><td><strong>30 € / día</strong></td><td>Incluye cuidados completos.</td></tr>
+        <tr><td><strong>Cachorros (≤ 6 meses)</strong></td><td><strong>35 € / día</strong></td><td>Mayor supervisión.</td></tr>
+        <tr><td><strong>Desde el día 11 (estándar)</strong></td><td><strong>27 € / día</strong></td><td>Descuento estancias largas.</td></tr>
+        <tr><td><strong>Desde el día 11 (cachorros)</strong></td><td><strong>32 € / día</strong></td><td>Mismo descuento adaptado.</td></tr>
       </tbody>
     </table>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Nota 2º perro + precio desde día 11] -->
     <div class="note" style="margin-top:8px">
       <p><i class="fa-solid fa-dog"></i> <strong>2º perro:</strong> 25 € / día. <br>
       <i class="fa-solid fa-tags"></i> <strong>Desde el día 11 (2º perro):</strong> 22 € / día.</p>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Suplementos y Kilometraje</h3>
     <div class="tpl-cards-2">
       <div class="tpl-card">
-        <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por festivos</h4>
-        <ul>
-          <li><strong>Festivos:</strong> +10 €</li>
-          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-        </ul>
+        <h4><i class="fa-solid fa-calendar-day"></i> Suplementos</h4>
+        <ul><li><strong>Festivos:</strong> +10 €</li><li><strong>Días señalados:</strong> +30 €</li></ul>
       </div>
       <div class="tpl-card">
-        <h4><i class="fa-solid fa-route"></i> Desplazamientos (kilometraje)</h4>
-        <ul>
-          <li>2–10 km → <strong>6 €</strong></li>
-          <li>10–25 km → <strong>10 €</strong></li>
-          <li>25–40 km → <strong>15 €</strong></li>
-          <li>+40 km → <strong>20 €</strong></li>
-        </ul>
+        <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
+        <ul><li>2–10 km → <strong>6 €</strong></li><li>10–25 km → <strong>10 €</strong></li><li>25–40 km → <strong>15 €</strong></li><li>+40 km → <strong>20 €</strong></li></ul>
         <p class="note" style="margin-top:8px">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Título sección requisitos+cancelaciones] -->
     <h3 style="margin-top:18px">Requisitos y Cancelaciones</h3>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones (formato Transporte)] -->
     <div class="tpl-cards-2" style="margin-top:14px">
       <div class="tpl-card alert">
         <h4><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
         <ul>
           <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
           <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
-          <!-- TPL: INICIO BLOQUE NUEVO [Patologías/medicación] -->
           <li>Indica <strong>patologías o medicación</strong> para un mejor servicio.</li>
-          <!-- TPL: FIN BLOQUE NUEVO -->
         </ul>
       </div>
       <div class="tpl-card alert">
         <h4><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
         <ul>
-          <li><strong>Sin coste</strong> hasta 48h antes del servicio.</li>
+          <li><strong>Sin coste</strong> hasta 48h antes.</li>
           <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
-          <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50% del servicio</strong>.</li>
+          <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50%</strong>.</li>
         </ul>
         <p class="cancelaciones-btn" style="margin-top:10px">
           <a href="condiciones.html#cancelaciones" class="tpl-btn-sm" aria-label="Leer política de cancelaciones completa">Saber más</a>
         </p>
       </div>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Enlace a condiciones específicas] -->
     <p class="note" style="margin-top:12px">
       <i class="fa-solid fa-file-lines"></i> Consulta las <strong>condiciones del servicio</strong> en 
-      <a href="condiciones.html#estancias">esta página de condiciones</a>.
+      <a href="condiciones.html#estancias">esta página</a>.
     </p>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- CTA: Volver a la izquierda y Reservar grande a la derecha -->
     <div class="cta-row">
-      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
-      <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
+      <a href="servicios.html" class="ver-mas">← Volver a servicios</a>
+      <a href="reserva.html" class="service-cta">Haz tu reserva</a>
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
+  <!-- Footer unificado -->
   <div id="tpl-footer"><noscript>
-    <footer class="site-footer">
-      <div class="container footer-row">
-        <div class="footer-left">
-          <nav class="footer-links-row">
-            <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-            <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-            <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-            <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-            <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-            <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-            <a href="digital-services-act.html">Digital Services Act</a>
-          </nav>
-          <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-        </div>
-        <div class="footer-right socials">
-          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        </div>
-      </div>
-      <div class="footer-bottom footer-bottom--inline">
-        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-        <nav class="footer-bottom-right legal-links">
-          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-          <a href="cookies.html">Cookies</a><span class="sep">|</span>
-          <a href="canal-denuncias.html">Canal de denuncias</a>
-        </nav>
-      </div>
-    </footer>
+    <footer class="site-footer">…</footer>
   </noscript></div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
