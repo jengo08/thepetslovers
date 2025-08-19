@@ -68,13 +68,13 @@
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
 
-    /* ===== Bloque PRIMERA VISITA (fondo igual que tarjetas) ===== */
+    /* ===== NUEVO DISEÑO: BLOQUE PRIMERA VISITA ===== */
     .highlight-box {
-      background: #fff; /* igual que las tarjetas */
+      background: #f4fdfd;
       border: 2px solid var(--color-principal);
       border-radius: 12px;
       padding: 24px;
-      margin: 16px 0 28px;
+      margin: 16px 0 28px; /* un poco más arriba y respiro abajo */
       text-align: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -82,46 +82,41 @@
       margin: 0 0 10px;
       font-size: 1.6rem;
       color: var(--color-principal);
-      display:flex; align-items:center; justify-content:center; gap:10px;
     }
-    .highlight-box p { margin: 0 0 12px; font-size: 1.05rem; color: var(--color-texto); }
-
-    /* Suplementos (bloque lateral) */
-    .supp-side { border:0; padding:0; }
-    .supp-grid {
-      display:grid; gap:16px; grid-template-columns: 1fr;
-      align-items: start;
-    }
-    @media (min-width: 900px){
-      .supp-side { grid-column: span 2; }
-      .supp-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    .supp-card {
-      border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; text-align:left;
-    }
-    .supp-card h4 { margin: 0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto); }
-    .supp-card ul { margin:8px 0 0 18px; }
-    .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
-    .supp-actions .service-cta { margin-top:0; }
-
-    /* Tarjeta de ayuda (misma forma) */
-    .help-card {
-      align-self: start;
-      justify-self: center;
-      max-width: 420px;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    /* Frase final: más a lo largo y tipografía más pequeña */
-    .closing-subtitle {
-      text-align:center;
-      margin:22px auto 8px;
-      max-width: 1000px;
-      font-size: 0.95rem;
-      line-height: 1.55;
+    .highlight-box p {
+      margin: 0;
+      font-size: 1.1rem;
       color: var(--color-texto);
     }
+
+    /* Suplementos (lateral) – dejamos la estética morada, sin “tarjeta” */
+    .supp-side { border:0; padding:0; }
+    .supp-side .supp-grid { display:grid; gap:20px; grid-template-columns: 1fr; }
+    @media (min-width: 900px){
+      .supp-side { grid-column: span 2; }
+      .supp-side .supp-grid { grid-template-columns: 1fr 1fr; align-items:start; }
+    }
+
+    /* Columna derecha: bloques apilados con estética morada ligera (no caja) */
+    .supp-column-right .supp-item{
+      padding: 12px 14px;
+      border-left: 4px solid var(--color-principal);
+      background: rgba(88,66,90,0.06); /* morado MUY suave */
+      border-radius: 10px;
+    }
+    .supp-column-right .supp-item + .supp-item{ margin-top: 16px; }
+
+    .supp-column-right h4{
+      margin:0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto);
+      font-size: 1.05rem;
+    }
+    .supp-column-right ul{ margin:8px 0 0 18px; }
+
+    /* Tarjeta de ayuda (izquierda) */
+    .service-card.help-card { justify-self:start; max-width: 420px; }
+
+    /* Frase final: menos espacio y más a lo largo */
+    .closing-subtitle { text-align:center; margin:18px 0 8px; font-size: 0.95rem; line-height:1.55; }
   </style>
 
   <!-- JSON-LD servicios (España) -->
@@ -207,7 +202,7 @@
 </head>
 <body>
 
-  <!-- Navbar (inyectada) -->
+  <!-- Navbar (inyectada con fallback) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -240,14 +235,13 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- BLOQUE DESTACADO: Primera visita gratuita -->
+      <!-- BLOQUE DESTACADO: Primera visita gratuita (nuevo diseño + nuevo copy) -->
       <div class="highlight-box" id="primera-visita-box">
-        <h2><i class="fa-solid fa-paw"></i> Primera visita gratuita</h2>
+        <h2>🎉 Primera visita gratuita</h2>
         <p>
           Antes de contratar cualquier servicio, concertamos una primera visita sin coste
           para conocer a tu mascota y daros tranquilidad desde el primer momento.
         </p>
-        <a href="condiciones.html#primera-visita" class="service-cta" aria-label="Leer condiciones de la primera visita gratuita">Saber más</a>
       </div>
 
       <div class="services-grid">
@@ -326,7 +320,7 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><em>Estancias largas:</em> desde el día 11 → <strong>28 €</strong>/día.</li>
+                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
               <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
@@ -400,7 +394,7 @@
           </details>
         </div>
 
-        <!-- Exóticos -->
+        <!-- Exóticos (antes de suplementos) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -415,49 +409,59 @@
           </details>
         </div>
 
-       <!-- Suplementos + AYUDA (alineados e iguales en tamaño) -->
-<div class="supp-side" style="grid-column: span 2;">
-  <div class="supp-grid" style="grid-template-columns: 1fr 1fr; gap:20px; align-items: stretch;">
-    
-    <!-- AYUDA (izquierda) -->
-    <div class="service-card help-card" style="height:100%;">
-      <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
-      <h3>¿No sabes qué servicio elegir?</h3>
-      <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
-      <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
-    </div>
+        <!-- BLOQUE: Ayuda (izquierda) + Desplazamientos & Festivos apilados a la derecha (estética morada sin tarjeta) -->
+        <div class="supp-side" style="grid-column: span 2;">
+          <div class="supp-grid">
+            <!-- AYUDA (izquierda) -->
+            <div class="service-card help-card">
+              <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
+              <h3>¿No sabes qué servicio elegir?</h3>
+              <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
+              <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
+            </div>
 
-    <!-- Suplementos (derecha) -->
-    <div class="service-card" style="height:100%; display:flex; flex-direction:column; justify-content:space-between;">
-      
-      <!-- Desplazamientos -->
-      <div>
-        <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
-        <ul>
-          <li>2–10 km → <strong>6 €</strong></li>
-          <li>10–25 km → <strong>10 €</strong></li>
-          <li>25–40 km → <strong>15 €</strong></li>
-          <li>+40 km → <strong>20 €</strong></li>
-        </ul>
-        <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+            <!-- DERECHA: Desplazamientos + Festivos apilados -->
+            <div class="supp-column-right">
+              <div class="supp-item">
+                <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
+                <ul>
+                  <li>2–10 km → <strong>6 €</strong></li>
+                  <li>10–25 km → <strong>10 €</strong></li>
+                  <li>25–40 km → <strong>15 €</strong></li>
+                  <li>+40 km → <strong>20 €</strong></li>
+                </ul>
+                <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+                <div class="supp-actions">
+                  <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
+                </div>
+              </div>
+
+              <div class="supp-item">
+                <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
+                <ul>
+                  <li><strong>Festivos:</strong> +10 €</li>
+                  <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+                </ul>
+                <div class="supp-actions">
+                  <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Festivos -->
-      <div style="margin-top:16px;">
-        <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
-        <ul>
-          <li><strong>Festivos:</strong> +10 €</li>
-          <li><strong>Día
-
-      <!-- Cierre profesional (misma frase, más a lo largo y letra más pequeña) -->
+      <!-- Frase final justo debajo -->
       <p class="subtitle closing-subtitle">
-        Atención realizada por <strong>profesionales del sector veterinario titulados</strong>. Nos adaptamos a la rutina y necesidades de cada mascota.
+        Atención realizada por <strong>profesionales del sector veterinario titulados</strong>.<br>
+        Nos adaptamos a la rutina y necesidades de cada mascota.
       </p>
 
     </div>
   </section>
 
-  <!-- Footer (inyectado) -->
+  <!-- Footer (inyectado con fallback) -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
