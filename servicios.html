@@ -10,16 +10,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- SEO on-page -->
-  <meta name="description" content="Servicios de The Pets Lovers en toda España: visitas a domicilio para gatos, paseos, guardería de día, estancias nocturnas, transporte, bodas, exóticos y más. Profesionales del sector veterinario titulados.">
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page reforzado] -->
+  <meta name="description" content="Servicios de The Pets Lovers en toda España: visitas a domicilio para gatos, paseos, guardería de día, estancias nocturnas, transporte, bodas con mascotas (desde 150 €), postquirúrgico y exóticos. Profesionales del sector veterinario titulados.">
+  <link rel="canonical" href="https://www.thepetslovers.es/servicios.html">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+
   <meta property="og:title" content="Servicios | The Pets Lovers">
-  <meta property="og:description" content="Visitas a domicilio, paseos, guardería de día, estancias nocturnas, transporte y bodas en toda España. Equipo de profesionales del sector veterinario titulados.">
+  <meta property="og:description" content="Cuidado profesional de mascotas en España: visitas a gatos, paseos, guardería de día, estancias nocturnas, transporte y bodas con mascotas desde 150 €. Equipo de profesionales del sector veterinario titulados.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.thepetslovers.es/servicios.html">
+  <meta property="og:site_name" content="The Pets Lovers">
   <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
+  <meta property="og:image:alt" content="Cuidadores profesionales de mascotas - The Pets Lovers">
+
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Servicios | The Pets Lovers">
-  <meta name="twitter:description" content="Cuidado profesional de mascotas en toda España. Profesionales del sector veterinario titulados.">
+  <meta name="twitter:description" content="Guardería, estancias, paseos, visitas a gatos, transporte y bodas con mascotas desde 150 € en toda España. Profesionales del sector veterinario titulados.">
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <style>
     /* Manteniendo tu estética base */
@@ -142,7 +149,7 @@
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name":"Paseo estándar", "price": "12", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"2ª mascota (suplemento)", "price": "8", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name":"2ª mascota (suplemento)", "price": "8", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Bonos (desde)", "price": "115", "priceCurrency": "EUR"}
         ]
       },
@@ -163,9 +170,7 @@
         "offers": [
           {"@type": "Offer", "name":"Día completo", "price": "30", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "35", "priceCurrency": "EUR"},
-          <!-- TPL: INICIO BLOQUE NUEVO [Actualizar 27→28 en JSON-LD] -->
           {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "28", "priceCurrency": "EUR"}
-          <!-- TPL: FIN BLOQUE NUEVO -->
         ]
       },
       {
@@ -178,7 +183,8 @@
         "@type": "Service",
         "name": "Bodas",
         "areaServed": "España",
-        "offers": [{"@type": "Offer", "name":"Precio a consultar", "price": "0", "priceCurrency": "EUR"}]
+        "offers": [{"@type": "Offer", "name":"Pack básico (desde)", "price": "150", "priceCurrency": "EUR"}],
+        "description": "Otros packs (media jornada, jornada completa, postboda) a consulta."
       },
       {
         "@type": "Service",
@@ -319,9 +325,7 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <!-- TPL: INICIO BLOQUE NUEVO [Actualizar 27→28 en tarjeta] -->
                 <li><em>Estancias largas:</em> desde el día 11 → <strong>28 €</strong>/día.</li>
-                <!-- TPL: FIN BLOQUE NUEVO -->
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
               <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
@@ -365,7 +369,7 @@
           </details>
         </div>
 
-        <!-- Bodas -->
+        <!-- Bodas (ACTUALIZADA) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
           <h3>Bodas</h3>
@@ -374,7 +378,9 @@
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <p>Logística, coordinación y cuidado durante la ceremonia, reportaje y celebración. Transporte opcional.</p>
-              <p class="precio">Precio: <strong>a consultar</strong> según agenda y horas.</p>
+              <!-- TPL: INICIO BLOQUE NUEVO [Precio desde 150€] -->
+              <p class="precio">Precio: <strong>desde 150 €</strong> (otros packs a consulta).</p>
+              <!-- TPL: FIN BLOQUE NUEVO -->
               <a href="servicio-bodas.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
