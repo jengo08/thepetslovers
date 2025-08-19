@@ -1,4 +1,4 @@
-// TPL: INICIO tpl-footer.js (fix: JS puro, sin <script> ni comentarios HTML)
+<!-- TPL: INICIO tpl-footer.js (FIX: sin etiquetas <script> internas) -->
 (function () {
   function setYear() {
     document.querySelectorAll('.year-span').forEach(function (s) {
@@ -27,4 +27,4 @@
     injectFooter();
   }
 })();
-// TPL: FIN tpl-footer.js
+<!-- TPL: FIN tpl-footer.js -->
