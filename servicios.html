@@ -68,6 +68,37 @@
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
     /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Estilos ligeros para aviso y suplementos] */
+    .services-extra { text-align:center; }
+    .tpl-highlight {
+      margin: 16px auto 0; padding: 14px 16px; max-width: 980px;
+      border: 2px solid rgba(51,148,150,.25); background: rgba(51,148,150,.06);
+      border-radius: 12px;
+    }
+    .tpl-highlight strong { color: var(--color-texto); }
+    .tpl-divider {
+      margin: 24px auto 12px; max-width: 1080px;
+      border-top: 1px dashed #e6e6e6;
+    }
+    .supplements {
+      max-width: 1080px; margin: 8px auto 0; padding: 0 4px;
+    }
+    .supplements h3 {
+      margin: 8px 0 12px; text-align: left; color: var(--color-texto);
+      display:flex; align-items:center; gap:8px;
+      font-family: 'Poppins', sans-serif;
+    }
+    .supp-grid { display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media (min-width: 780px){ .supp-grid { grid-template-columns: 1fr 1fr; } }
+    .supp-card {
+      border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; text-align:left;
+    }
+    .supp-card h4 { margin: 0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto); }
+    .supp-card ul { margin:8px 0 0 18px; }
+    .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .supp-actions .service-cta { margin-top:0; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 
   <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España)] -->
@@ -331,9 +362,7 @@
           </details>
         </div>
 
-        <!-- ============================ -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Mover EXÓTICOS antes que suplementos] -->
-        <!-- Exóticos -->
+        <!-- Exóticos (como servicio, antes de suplementos) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -344,45 +373,6 @@
               <p>Disponible solo si contamos con un cuidador de exóticos en tu zona.</p>
               <p class="precio">Precio: <strong>a consultar</strong></p>
               <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
-            </div>
-          </details>
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
-        <!-- ============================ -->
-
-        <!-- Festivos -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
-          <h3>Festivos</h3>
-          <p>Suplementos por fecha especial.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <ul>
-                <li><strong>Festivos:</strong> +10 €</li>
-                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-              </ul>
-              <a href="condiciones.html" class="service-cta">Ver condiciones</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- Desplazamientos (kilometraje) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-route"></i></div>
-          <h3>Desplazamientos</h3>
-          <p>Kilometraje adicional cuando el cuidador se moviliza.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <ul>
-                <li>2–10 km → <strong>6 €</strong></li>
-                <li>10–25 km → <strong>10 €</strong></li>
-                <li>25–40 km → <strong>15 €</strong></li>
-                <li>+40 km → <strong>20 €</strong></li>
-              </ul>
-              <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-              <a href="condiciones.html" class="service-cta">Ver condiciones</a>
             </div>
           </details>
         </div>
@@ -397,15 +387,52 @@
 
       </div>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Aviso “Primera visita gratuita” + botón condiciones] -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Aviso destacado “Primera visita gratuita”] -->
       <div class="services-extra">
-        <p style="text-align:center;margin-top:14px">
-          La <strong>primera visita es gratuita</strong> en todos los servicios.
-        </p>
-        <p style="text-align:center;margin:8px 0 0">
-          <a href="condiciones.html#generales" class="service-cta" aria-label="Leer condiciones generales">Saber más (condiciones)</a>
-        </p>
+        <div class="tpl-highlight">
+          <p style="margin:0;">
+            <i class="fa-solid fa-house-circle-check" aria-hidden="true"></i>
+            &nbsp;La <strong>primera visita es gratuita</strong> en todos los servicios, para conoceros y ajustar el cuidado.
+          </p>
+          <p style="margin:10px 0 0;">
+            <a href="condiciones.html#generales" class="service-cta" aria-label="Leer condiciones generales">Saber más (condiciones)</a>
+          </p>
+        </div>
       </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Separador + Apartado Suplementos con tarjetas] -->
+      <div class="tpl-divider" role="separator" aria-hidden="true"></div>
+      <section class="supplements" aria-labelledby="supp-title">
+        <h3 id="supp-title"><i class="fa-solid fa-plus"></i> Suplementos</h3>
+        <div class="supp-grid">
+          <!-- Tarjeta Festivos -->
+          <article class="supp-card">
+            <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
+            <ul>
+              <li><strong>Festivos:</strong> +10 €</li>
+              <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+            </ul>
+            <div class="supp-actions">
+              <a href="condiciones.html#generales" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
+            </div>
+          </article>
+          <!-- Tarjeta Desplazamientos -->
+          <article class="supp-card">
+            <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
+            <ul>
+              <li>2–10 km → <strong>6 €</strong></li>
+              <li>10–25 km → <strong>10 €</strong></li>
+              <li>25–40 km → <strong>15 €</strong></li>
+              <li>+40 km → <strong>20 €</strong></li>
+            </ul>
+            <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+            <div class="supp-actions">
+              <a href="condiciones.html#generales" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
+            </div>
+          </article>
+        </div>
+      </section>
       <!-- TPL: FIN BLOQUE NUEVO -->
 
     </div>
