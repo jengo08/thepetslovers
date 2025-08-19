@@ -89,7 +89,7 @@
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "90 min", "price": "32", "priceCurrency": "EUR"},
           {"@type": "Offer", "name": "2ª visita solo medicación (~20 min)", "price": "12", "priceCurrency": "EUR"},
           {"@type": "Offer", "name": "2ª visita (≥ día 11)", "price": "10", "priceCurrency": "EUR"}
         ]
@@ -331,6 +331,25 @@
           </details>
         </div>
 
+        <!-- ============================ -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Mover EXÓTICOS antes que suplementos] -->
+        <!-- Exóticos -->
+        <div class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
+          <h3>Exóticos</h3>
+          <p>Cuidado de aves, reptiles, pequeños mamíferos y otras especies.</p>
+          <details class="service-details" data-hover>
+            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
+            <div class="content">
+              <p>Disponible solo si contamos con un cuidador de exóticos en tu zona.</p>
+              <p class="precio">Precio: <strong>a consultar</strong></p>
+              <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
+            </div>
+          </details>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+        <!-- ============================ -->
+
         <!-- Festivos -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
@@ -348,7 +367,7 @@
           </details>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO (RESTAURADO TAL CUAL) [Desplazamientos (kilometraje tarifado)] -->
+        <!-- Desplazamientos (kilometraje) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-route"></i></div>
           <h3>Desplazamientos</h3>
@@ -367,22 +386,6 @@
             </div>
           </details>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
-
-        <!-- Exóticos -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
-          <h3>Exóticos</h3>
-          <p>Cuidado de aves, reptiles, pequeños mamíferos y otras especies.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <p>Disponible solo si contamos con un cuidador de exóticos en tu zona.</p>
-              <p class="precio">Precio: <strong>a consultar</strong></p>
-              <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
-            </div>
-          </details>
-        </div>
 
         <!-- Ayuda -->
         <div class="service-card">
@@ -393,6 +396,18 @@
         </div>
 
       </div>
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Aviso “Primera visita gratuita” + botón condiciones] -->
+      <div class="services-extra">
+        <p style="text-align:center;margin-top:14px">
+          La <strong>primera visita es gratuita</strong> en todos los servicios.
+        </p>
+        <p style="text-align:center;margin:8px 0 0">
+          <a href="condiciones.html#generales" class="service-cta" aria-label="Leer condiciones generales">Saber más (condiciones)</a>
+        </p>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
     </div>
   </section>
 
