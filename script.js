@@ -35,7 +35,43 @@
   style.textContent = css;
   document.head.appendChild(style);
 
-  // Inyectar HTML del modal
+  <!-- TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + interceptar enlaces — SOLO muestra duración y nº visitas en VISITAS GATOS] -->
+<script>
+(function () {
+  const SERVICE_LABELS = {
+    "guarderia-dia": "Guardería de día",
+    "visitas": "Visitas a domicilio (gatos)",
+    "alojamiento": "Alojamiento nocturno",
+    "paseos": "Paseos",
+    "transporte": "Transporte",
+    "bodas": "Bodas",
+    "postoperatorio": "Postoperatorio",
+    "exoticos": "Exóticos"
+  };
+
+  // CSS mínimo del modal (no toca tu CSS global)
+  const css = `
+  .tpl-modal{position:fixed;inset:0;z-index:9999;display:none}
+  .tpl-modal[aria-hidden="false"]{display:block}
+  .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+  .tpl-modal__dialog{position:relative;max-width:640px;margin:5vh auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+  .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:var(--color-texto, #333)}
+  .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
+  .tpl-modal__close:hover{background:#e9e9e9}
+  .tpl-form{display:grid;gap:12px}
+  @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
+  .tpl-form .full{grid-column:1 / -1}
+  .tpl-input,.tpl-select,.tpl-textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit}
+  .tpl-submit{background:var(--color-principal,#339496);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
+  .tpl-submit:hover{background:#2a7e80}
+  .tpl-help{font-size:.9rem;color:#555}
+  `;
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+
+  // HTML del modal (añadimos los grupos específicos de VISITAS GATOS)
   const modal = document.createElement('div');
   modal.className = 'tpl-modal';
   modal.id = 'tpl-modal-reserva';
@@ -57,9 +93,27 @@
           </select>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [ANCLA para insertar campos SOLO de visitas gatos] -->
-        <div class="full" id="tpl-anchor-visitas"></div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <!-- SOLO para VISITAS GATOS -->
+        <div id="tpl-visitas-block" class="full" style="display:none">
+          <div class="tpl-form">
+            <div>
+              <label for="tpl-visitas-duracion">Duración de la visita (gatos)</label>
+              <select id="tpl-visitas-duracion" name="visitas_duracion" class="tpl-select">
+                <option value="60">60 minutos</option>
+                <option value="90">90 minutos</option>
+              </select>
+            </div>
+            <div>
+              <label for="tpl-visitas-diarias">Visitas diarias</label>
+              <select id="tpl-visitas-diarias" name="visitas_diarias" class="tpl-select">
+                <option value="1">1 visita al día</option>
+                <option value="2">2 visitas al día</option>
+              </select>
+              <small class="tpl-help">La 2ª visita del día es de medicación y se tarifica como tal.</small>
+            </div>
+          </div>
+        </div>
+        <!-- FIN SOLO VISITAS GATOS -->
 
         <div>
           <label for="tpl-fecha">Fecha</label>
@@ -96,7 +150,6 @@
 
   const els = {
     modal,
-    backdrop: modal.querySelector('[data-close]'),
     closeBtn: modal.querySelector('.tpl-modal__close'),
     form: modal.querySelector('#tpl-reserva-form'),
     servicioHidden: modal.querySelector('#tpl-servicio'),
@@ -104,8 +157,116 @@
     fecha: modal.querySelector('#tpl-fecha'),
     hora: modal.querySelector('#tpl-hora'),
     title: modal.querySelector('#tpl-modal-title'),
-    anchorVisitas: modal.querySelector('#tpl-anchor-visitas')
+    visitasBlock: modal.querySelector('#tpl-visitas-block')
   };
+
+  function setMinDateToday() {
+    const t = new Date();
+    els.fecha.min = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  }
+  function roundTimeToNextQuarter() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15))%15, 0, 0);
+    els.hora.value = d.toTimeString().slice(0,5);
+  }
+  function labelFromKey(key) { return SERVICE_LABELS[key] || key || 'Servicio'; }
+
+  // Mostrar/ocultar campos exclusivos de VISITAS GATOS
+  function syncVisitFields() {
+    const isVisitas = (els.servicioSelect.value === 'visitas');
+    if (els.visitasBlock) els.visitasBlock.style.display = isVisitas ? 'block' : 'none';
+  }
+
+  function preselectService(key) {
+    if (!key) return;
+    els.servicioHidden.value = key;
+    els.servicioSelect.value = key;
+    els.title.textContent = `Reserva rápida — ${labelFromKey(key)}`;
+    syncVisitFields();
+  }
+
+  function openModal(key) {
+    preselectService(key);
+    setMinDateToday();
+    roundTimeToNextQuarter();
+    modal.setAttribute('aria-hidden','false');
+    setTimeout(()=> els.servicioSelect.focus(), 0);
+    document.documentElement.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    modal.setAttribute('aria-hidden','true');
+    document.documentElement.style.overflow = '';
+  }
+
+  modal.addEventListener('click', (e)=>{
+    if (e.target.matches('[data-close]')) closeModal();
+  });
+  els.closeBtn.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
+  });
+
+  // Cambio de servicio => sincroniza campos VISITAS
+  els.servicioSelect.addEventListener('change', syncVisitFields);
+
+  // Submit (placeholder; integra Formspree/EmailJS si quieres)
+  els.form.addEventListener('submit', (e)=>{
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(els.form).entries());
+    console.log('Solicitud de reserva enviada:', data);
+    alert('¡Gracias! Hemos recibido tu solicitud. Te contactaremos para confirmar.');
+    closeModal();
+    els.form.reset();
+    syncVisitFields();
+  });
+
+  // Global para abrir desde botones: onclick="abrirReserva('guarderia-dia')"
+  window.abrirReserva = function(key){ openModal(key); };
+
+  // Intercepta enlaces a #reserva-rapida o reserva.html[?servicio=...]
+  document.addEventListener('click', function(e){
+    const a = e.target.closest('a'); if (!a) return;
+
+    if (a.getAttribute('href') === '#reserva-rapida') {
+      e.preventDefault(); openModal('guarderia-dia'); return;
+    }
+
+    const href = a.getAttribute('href') || '';
+    if (href.startsWith('reserva.html')) {
+      e.preventDefault();
+      const params = new URLSearchParams((href.split('?')[1]||''));
+      const key = params.get('servicio') || guessServiceFromContext(a);
+      openModal(key || '');
+    }
+  });
+
+  function guessServiceFromContext(anchor) {
+    const card = anchor.closest('.service-card');
+    const h3 = card ? card.querySelector('h3') : null;
+    const txt = (h3 ? h3.textContent : '').toLowerCase();
+    if (txt.includes('guardería')) return 'guarderia-dia';
+    if (txt.includes('visitas')) return 'visitas';
+    if (txt.includes('alojamiento')) return 'alojamiento';
+    if (txt.includes('paseos')) return 'paseos';
+    if (txt.includes('transporte')) return 'transporte';
+    if (txt.includes('bodas')) return 'bodas';
+    if (txt.includes('post')) return 'postoperatorio';
+    if (txt.includes('exót') || txt.includes('exot')) return 'exoticos';
+    return '';
+  }
+
+  // Auto-abrir si ya viene ?servicio= en la URL actual
+  (function autoOpenFromQuery(){
+    try {
+      const params = new URLSearchParams(location.search);
+      const key = params.get('servicio');
+      if (key) openModal(key);
+    } catch(e){}
+  })();
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 
   // ====== TPL: INICIO BLOQUE NUEVO [Campos SOLO para "visitas"] ======
   function ensureVisitFields(show){
@@ -279,3 +440,4 @@
  /* ===========================
     TPL: FIN BLOQUE NUEVO
     =========================== */
+
