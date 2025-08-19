@@ -150,7 +150,9 @@
         "offers": [
           {"@type": "Offer", "name":"Día completo", "price": "30", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "35", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "27", "priceCurrency": "EUR"}
+          <!-- TPL: INICIO BLOQUE NUEVO [Actualizar 27→28 en JSON-LD] -->
+          {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "28", "priceCurrency": "EUR"}
+          <!-- TPL: FIN BLOQUE NUEVO -->
         ]
       },
       {
@@ -216,14 +218,16 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- BLOQUE DESTACADO: Primera visita gratuita -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Restaurar “Primera visita gratuita” con huellita] -->
       <div class="highlight-box" id="primera-visita-box">
-        <h2>🎉 Primera visita gratuita</h2>
+        <h2><i class="fa-solid fa-paw"></i> Primera visita gratuita</h2>
         <p>
-          Antes de contratar cualquier servicio, concertamos una primera visita sin coste
-          para conocer a tu mascota y daros tranquilidad desde el primer momento.
+          <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita en tu domicilio
+          para conocernos, comentar <strong>rutinas</strong>, <strong>dónde están las cosas</strong> y
+          coordinar <strong>entrega de llaves</strong>. Así tu mascota nos reconoce y todo queda claro desde el principio.
         </p>
       </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="services-grid">
         <!-- Guardería de día -->
@@ -301,7 +305,9 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
+                <!-- TPL: INICIO BLOQUE NUEVO [Actualizar 27→28 en tarjeta] -->
+                <li><em>Estancias largas:</em> desde el día 11 → <strong>28 €</strong>/día.</li>
+                <!-- TPL: FIN BLOQUE NUEVO -->
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
               <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
@@ -390,7 +396,6 @@
           </details>
         </div>
 
-        <!-- ====== TPL: INICIO BLOQUE NUEVO [Ayuda + Desplazamientos + Festivos (layout y estilo anteriores)] ====== -->
         <!-- ¿No sabes qué servicio elegir? (centrada) -->
         <div class="service-card help-card">
           <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
@@ -429,7 +434,6 @@
             </article>
           </div>
         </div>
-        <!-- ====== TPL: FIN BLOQUE NUEVO ====== -->
 
       </div>
 
