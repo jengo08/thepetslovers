@@ -68,55 +68,36 @@
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
 
-    /* ===== NUEVO DISEÑO: BLOQUE PRIMERA VISITA ===== */
+    /* ===== BLOQUE PRIMERA VISITA ===== */
     .highlight-box {
       background: #f4fdfd;
       border: 2px solid var(--color-principal);
       border-radius: 12px;
       padding: 24px;
-      margin: 16px 0 28px; /* un poco más arriba y respiro abajo */
+      margin: 16px 0 28px;
       text-align: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .highlight-box h2 {
-      margin: 0 0 10px;
-      font-size: 1.6rem;
-      color: var(--color-principal);
-    }
-    .highlight-box p {
-      margin: 0;
-      font-size: 1.1rem;
-      color: var(--color-texto);
-    }
+    .highlight-box h2 { margin: 0 0 10px; font-size: 1.6rem; color: var(--color-principal); }
+    .highlight-box p { margin: 0; font-size: 1.1rem; color: var(--color-texto); }
 
-    /* Suplementos (lateral) – dejamos la estética morada, sin “tarjeta” */
+    /* ====== TPL: INICIO BLOQUE NUEVO [Restaurar estilo anterior de “Ayuda + Desplazamientos + Festivos”] ====== */
+    /* Suplementos (lateral) con tarjetas blancas (borde y botón) como antes */
     .supp-side { border:0; padding:0; }
-    .supp-side .supp-grid { display:grid; gap:20px; grid-template-columns: 1fr; }
-    @media (min-width: 900px){
-      .supp-side { grid-column: span 2; }
-      .supp-side .supp-grid { grid-template-columns: 1fr 1fr; align-items:start; }
+    .supp-side .supp-grid { display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media (min-width: 900px){ .supp-side { grid-column: span 2; } }
+    .supp-card {
+      border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; text-align:left;
     }
-
-    /* Columna derecha: bloques apilados con estética morada ligera (no caja) */
-    .supp-column-right .supp-item{
-      padding: 12px 14px;
-      border-left: 4px solid var(--color-principal);
-      background: rgba(88,66,90,0.06); /* morado MUY suave */
-      border-radius: 10px;
-    }
-    .supp-column-right .supp-item + .supp-item{ margin-top: 16px; }
-
-    .supp-column-right h4{
-      margin:0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto);
-      font-size: 1.05rem;
-    }
-    .supp-column-right ul{ margin:8px 0 0 18px; }
-
-    /* Tarjeta de ayuda (izquierda) */
-    .service-card.help-card { justify-self:start; max-width: 420px; }
-
-    /* Frase final: menos espacio y más a lo largo */
-    .closing-subtitle { text-align:center; margin:18px 0 8px; font-size: 0.95rem; line-height:1.55; }
+    .supp-card h4 { margin: 0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto); }
+    .supp-card ul { margin:8px 0 0 18px; }
+    .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .supp-actions .service-cta { margin-top:0; }
+    /* Tarjeta de ayuda centrada como en la captura */
+    .service-card.help-card { justify-self:center; max-width: 420px; }
+    /* Cierre con menos espacio */
+    .closing-subtitle { text-align:center; margin:22px 0 8px; }
+    /* ====== TPL: FIN BLOQUE NUEVO ====== */
   </style>
 
   <!-- JSON-LD servicios (España) -->
@@ -235,7 +216,7 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- BLOQUE DESTACADO: Primera visita gratuita (nuevo diseño + nuevo copy) -->
+      <!-- BLOQUE DESTACADO: Primera visita gratuita -->
       <div class="highlight-box" id="primera-visita-box">
         <h2>🎉 Primera visita gratuita</h2>
         <p>
@@ -394,7 +375,7 @@
           </details>
         </div>
 
-        <!-- Exóticos (antes de suplementos) -->
+        <!-- Exóticos -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -409,7 +390,8 @@
           </details>
         </div>
 
-              <!-- ¿No sabes qué servicio elegir? (centrada) -->
+        <!-- ====== TPL: INICIO BLOQUE NUEVO [Ayuda + Desplazamientos + Festivos (layout y estilo anteriores)] ====== -->
+        <!-- ¿No sabes qué servicio elegir? (centrada) -->
         <div class="service-card help-card">
           <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
           <h3>¿No sabes qué servicio elegir?</h3>
@@ -417,7 +399,7 @@
           <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
         </div>
 
-        <!-- Suplementos a la derecha -->
+        <!-- Suplementos a la derecha (2 tarjetas blancas) -->
         <div class="supp-side" style="grid-column: span 2;">
           <div class="supp-grid">
             <!-- Desplazamientos -->
@@ -447,10 +429,10 @@
             </article>
           </div>
         </div>
+        <!-- ====== TPL: FIN BLOQUE NUEVO ====== -->
 
       </div>
 
-      <!-- Cierre profesional con menos espacio -->
       <p class="subtitle closing-subtitle">
         Atención realizada por <strong>profesionales del sector veterinario titulados</strong>.<br>
         Nos adaptamos a la rutina y necesidades de cada mascota.
