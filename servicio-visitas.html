@@ -10,10 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page servicios (España)] -->
-  <meta name="description" content="Servicios de The Pets Lovers en toda España: visitas a domicilio para gatos, paseos, guardería de día, alojamiento nocturno, transporte, bodas, exóticos y más. Profesionales del sector veterinario titulados.">
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page servicios (España) integrado del script] -->
+  <meta name="description" content="Servicios de The Pets Lovers en toda España: visitas a domicilio para gatos, paseos, guardería de día, estancias nocturnas, transporte, bodas, exóticos y más. Profesionales del sector veterinario titulados.">
   <meta property="og:title" content="Servicios | The Pets Lovers">
-  <meta property="og:description" content="Visitas a domicilio, paseos, guardería de día, alojamiento nocturno, transporte y bodas en toda España. Equipo de profesionales del sector veterinario titulados.">
+  <meta property="og:description" content="Visitas a domicilio, paseos, guardería de día, estancias nocturnas, transporte y bodas en toda España. Equipo de profesionales del sector veterinario titulados.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.thepetslovers.es/servicios.html">
   <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
@@ -23,7 +23,7 @@
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <style>
-    /* TPL: INICIO BLOQUE NUEVO [Estilos mínimos de esta página, respetando tu look&feel] */
+    /* Mantengo tus estilos tal cual */
     .hero-section.hero-servicios {
       background-image: url('images/hero.jpg.png');
       background-position: center top;
@@ -67,9 +67,8 @@
     table { width:100%; border-collapse: collapse; margin: 6px 0 10px; }
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Estilos ligeros para aviso y suplementos] */
+    /* Bloques que ya tenías: highlight (primera visita) y suplementos laterales */
     .services-extra { text-align:center; }
     .tpl-highlight {
       margin: 16px auto 0; padding: 14px 16px; max-width: 980px;
@@ -78,7 +77,6 @@
     }
     .tpl-highlight strong { color: var(--color-texto); }
 
-    /* Suplementos a la derecha de “Ayuda” (bloque doble ancho) */
     .supp-side { border:0; padding:0; }
     .supp-side .supp-grid { display:grid; gap:16px; grid-template-columns: 1fr; }
     @media (min-width: 900px){ .supp-side { grid-column: span 2; } }
@@ -89,10 +87,9 @@
     .supp-card ul { margin:8px 0 0 18px; }
     .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
     .supp-actions .service-cta { margin-top:0; }
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España) integrado del script y actualizado] -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -137,13 +134,12 @@
       },
       {
         "@type": "Service",
-        "name": "Alojamiento nocturno",
+        "name": "Estancias nocturnas",
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name":"Día completo", "price": "30", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "35", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Recogida después de 14:00 (suplemento)", "price": "15", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Estancias largas (desde día 11)", "price": "27", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "27", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -165,7 +161,7 @@
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada con fallback] -->
+  <!-- Navbar (inyectada) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -183,7 +179,6 @@
       </nav>
     </noscript>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- HERO -->
   <header class="hero-section hero-servicios">
@@ -193,13 +188,13 @@
     </div>
   </header>
 
-  <!-- LISTA DE SERVICIOS -->
+  <!-- SERVICIOS -->
   <section id="lista-servicios" class="services-section">
     <div class="container">
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita - ARRIBA, igual que ahora] -->
+      <!-- AVISO: Primera visita (arriba, tal y como lo tienes) -->
       <div class="services-extra">
         <div class="tpl-highlight">
           <p style="margin:0;">
@@ -211,7 +206,6 @@
           </p>
         </div>
       </div>
-      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="services-grid">
         <!-- Guardería de día -->
@@ -242,7 +236,6 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-
               <table>
                 <thead>
                   <tr>
@@ -255,12 +248,11 @@
                   <tr>
                     <td><strong>Tarifa base</strong></td>
                     <td><strong>22 €</strong></td>
-                    <td><strong>30 €</strong></td>
+                    <td><strong>30 €</strong></td><!-- actualizado -->
                   </tr>
                 </tbody>
               </table>
 
-              <!-- 2ª visita -->
               <div class="precio">
                 <strong>2ª visita del día (solo medicación, aprox. 20 min):</strong>
                 12 € <small>(desde el día 11: 10 €)</small>.
@@ -280,10 +272,10 @@
           </details>
         </div>
 
-        <!-- Alojamiento nocturno (por día) -->
+        <!-- Estancias nocturnas -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
-          <h3>Alojamiento nocturno</h3>
+          <h3>Estancias nocturnas</h3>
           <p>Como en familia: día y noche con un cuidador.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
@@ -291,7 +283,6 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><strong>Recogida después de las 14:00 h:</strong> suplemento de <strong>15 €</strong>.</li>
                 <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
@@ -381,7 +372,7 @@
           </details>
         </div>
 
-        <!-- Ayuda -->
+        <!-- ¿No sabes qué servicio elegir? -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
           <h3>¿No sabes qué servicio elegir?</h3>
@@ -389,7 +380,7 @@
           <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Suplementos a la derecha de Ayuda: bloque de dos tarjetas] -->
+        <!-- Suplementos a la derecha de “¿No sabes qué servicio elegir?” -->
         <div class="supp-side" style="grid-column: span 2;">
           <div class="supp-grid">
             <!-- Desplazamientos (primero) -->
@@ -419,21 +410,19 @@
             </article>
           </div>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
       </div>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Frase profesional final] -->
+      <!-- Cierre profesional (frase al final, como pediste) -->
       <p class="subtitle" style="text-align:center; margin-top:22px;">
         Atención realizada por <strong>profesionales del sector veterinario titulados</strong>.  
         Nos adaptamos a la rutina y necesidades de cada mascota.
       </p>
-      <!-- TPL: FIN BLOQUE NUEVO -->
 
     </div>
   </section>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado con fallback] -->
+  <!-- Footer (inyectado) -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
@@ -469,22 +458,17 @@
       </footer>
     </noscript>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <script>
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-
-    // TPL: INICIO BLOQUE NUEVO [Abrir/cerrar detalles al pasar el ratón]
     document.querySelectorAll('details[data-hover]').forEach(d => {
       d.addEventListener('mouseenter', () => d.setAttribute('open',''));
       d.addEventListener('mouseleave', () => d.removeAttribute('open'));
     });
-    // TPL: FIN BLOQUE NUEVO
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar injectors navbar y footer] -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
+
