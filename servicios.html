@@ -94,7 +94,6 @@
     }
     @media (min-width: 900px){
       .supp-side { grid-column: span 2; }
-      /* tres columnas para colocar la ayuda en el centro entre Desplazamientos y Festivos */
       .supp-grid { grid-template-columns: repeat(3, 1fr); }
     }
     .supp-card {
@@ -105,21 +104,21 @@
     .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
     .supp-actions .service-cta { margin-top:0; }
 
-    /* Tarjeta de ayuda centrada ENTRE los suplementos y más arriba */
+    /* Tarjeta de ayuda (misma forma) */
     .help-card {
-      align-self: start;           /* que “suba” un poco */
-      justify-self: center;        /* centrado horizontal */
+      align-self: start;
+      justify-self: center;
       max-width: 420px;
-      margin-top: 8px;             /* ligera subida */
+      margin-top: 8px;
       text-align: center;
     }
 
-    /* Frase final: misma copia, más “a lo largo” y tipografía más pequeña */
+    /* Frase final: más a lo largo y tipografía más pequeña */
     .closing-subtitle {
       text-align:center;
       margin:22px auto 8px;
-      max-width: 1000px; /* más ancho para que vaya a lo largo */
-      font-size: 0.95rem; /* más pequeña */
+      max-width: 1000px;
+      font-size: 0.95rem;
       line-height: 1.55;
       color: var(--color-texto);
     }
@@ -327,7 +326,7 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
+                <li><em>Estancias largas:</em> desde el día 11 → <strong>28 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
               <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
@@ -416,7 +415,7 @@
           </details>
         </div>
 
-        <!-- Suplementos + AYUDA centrada entre ambos -->
+        <!-- Suplementos (izquierda) + Festivos (izquierda) + AYUDA (derecha) -->
         <div class="supp-side" style="grid-column: span 2;">
           <div class="supp-grid">
             <!-- Desplazamientos (izquierda) -->
@@ -434,15 +433,7 @@
               </div>
             </article>
 
-            <!-- AYUDA (centro) -->
-            <div class="service-card help-card">
-              <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
-              <h3>¿No sabes qué servicio elegir?</h3>
-              <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
-              <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
-            </div>
-
-            <!-- Festivos (derecha) -->
+            <!-- Festivos (centro/izquierda) -->
             <article class="supp-card">
               <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
               <ul>
@@ -453,6 +444,14 @@
                 <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
               </div>
             </article>
+
+            <!-- AYUDA (derecha) -->
+            <div class="service-card help-card">
+              <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
+              <h3>¿No sabes qué servicio elegir?</h3>
+              <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
+              <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
+            </div>
           </div>
         </div>
 
