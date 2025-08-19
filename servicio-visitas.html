@@ -11,7 +11,7 @@
   <meta name="description" content="Visitas a domicilio para gatos de 15, 60 o 90 minutos. Limpieza, juego, cepillado, medicación si es necesario y reportes con fotos. Profesionales del sector veterinario.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local mínimo: layout, listas, tablas] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local mínimo + botón tpl-btn-sm y centrado] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
     /* Breadcrumb */
@@ -44,7 +44,24 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
-    /* Nota: estilos del botón .tpl-btn-sm y el centrado .cancelaciones-btn están en style.css */
+
+    /* TPL: INICIO BLOQUE NUEVO [Botón pequeño igual que Transporte/Guardería + centrado] */
+    .cancelaciones-btn{ text-align:center; }
+    .tpl-btn-sm{
+      display:inline-block;
+      font-size:.85rem;
+      line-height:1;
+      border:1.5px solid var(--color-principal);
+      color:var(--color-principal);
+      padding:7px 10px;
+      border-radius:999px;
+      font-weight:700;
+      background:transparent;
+      cursor:pointer;
+      text-decoration:none; /* por consistencia si se usa en <a> */
+    }
+    .tpl-btn-sm:hover{ background:var(--color-principal); color:#fff }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -73,9 +90,8 @@
     <h1><i class="fa-solid fa-cat"></i> Visitas a domicilio (gatos)</h1>
 
     <p class="lead">
-      Para que tu gato <strong>permanezca en su casa</strong> y mantenga su <strong>rutina sin estrés</strong>.  
-      Somos <strong>profesionales del sector veterinario</strong> y estamos formados en <strong>manejo y estrés felino</strong>.  
-      Sabemos lo importante que es su <strong>entorno</strong>: no les movemos, les damos su tiempo, no les perseguimos y respetamos sus <strong>señales</strong>, para que se sientan seguros.
+      Para que tu gato <strong>permanezca en su casa</strong> y mantenga su <strong>rutina sin estrés</strong>.<br>
+      Somos <strong>profesionales del sector veterinario</strong> y estamos formados en <strong>manejo y estrés felino</strong>.
     </p>
 
     <p>
@@ -87,18 +103,15 @@
     <h3>Duración y recomendación</h3>
     <div class="note">
       <p><i class="fa-regular fa-clock"></i> Puedes reservar visitas de <strong>60</strong> o <strong>90 minutos</strong>, según lo que necesite tu gato.</p>
-      <p><i class="fa-solid fa-syringe"></i> Existe una <strong>visita especial de 15 minutos</strong> pensada únicamente para la <strong>administración de medicación y verificación</strong>.  
-      No es una visita estándar ni sustituye a las de 60/90 minutos.</p>
-      <p><i class="fa-solid fa-users"></i> Si conviven <strong>4 o más gatos</strong>, recomendamos la opción de <strong>90 minutos</strong>.  
-      Esto nos permite dedicar tiempo suficiente a cada uno, asegurar que todos comen y beben, limpiar areneros y zonas de descanso, y darles atención individual sin prisas.  
-      Así garantizamos un entorno limpio, tranquilo y con la dedicación que necesitan para reducir su estrés.</p>
+      <p><i class="fa-solid fa-syringe"></i> Existe una <strong>visita especial de 15 minutos</strong> solo para <strong>medicación y verificación</strong> (no sustituye a las de 60/90 min).</p>
+      <p><i class="fa-solid fa-users"></i> Con <strong>4+ gatos</strong>, recomendamos <strong>90 minutos</strong> para atender a todos con calma.</p>
     </div>
 
     <h3>¿Qué haremos en cada visita?</h3>
     <ul class="icon-list">
       <li><i class="fa-solid fa-broom"></i><div><strong>Limpieza de areneros</strong> y zonas de comida/agua.</div></li>
       <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comida y agua</strong> según tus pautas.</div></li>
-      <li><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>Juego y enriquecimiento</strong> (según duración y tolerancia del gato).</div></li>
+      <li><i class="fa-solid fa-wand-magic-sparkles"></i><div><strong>Juego y enriquecimiento</strong> (según tolerancia).</div></li>
       <li><i class="fa-solid fa-brush"></i><div><strong>Cepillado</strong> (en 60/90 min y si lo tolera).</div></li>
       <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si procede, según indicación veterinaria.</div></li>
       <li><i class="fa-solid fa-camera"></i><div><strong>Fotos y vídeo-resumen</strong> tras la visita.</div></li>
@@ -109,48 +122,29 @@
     <table class="price-table">
       <thead><tr><th>Incluye 1 gato</th><th>60 min</th><th>90 min</th></tr></thead>
       <tbody>
-        <tr>
-          <td><strong>Tarifa base</strong></td>
-          <td><strong>22 €</strong></td>
-          <td><strong>30 €</strong></td>
-        </tr>
-        <tr>
-          <td><strong>Desde el día 11</strong></td>
-          <td><strong>18 €</strong></td>
-          <td><strong>27 €</strong></td>
-        </tr>
+        <tr><td><strong>Tarifa base</strong></td><td><strong>22 €</strong></td><td><strong>30 €</strong></td></tr>
+        <tr><td><strong>Desde el día 11</strong></td><td><strong>18 €</strong></td><td><strong>27 €</strong></td></tr>
       </tbody>
     </table>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita + punto de encuentro] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita] -->
     <div class="note alert" style="margin-top:10px">
-      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita inicial en el hogar del propietario.  
-      En esta primera toma de contacto podrás mostrar <strong>dónde están las cosas, rutinas y llaves</strong>, y tu mascota reconocerá al cuidador.</p>
+      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> tras crear tu reserva, concertamos una visita inicial en tu hogar para ver <strong>rutinas, ubicación de cosas y llaves</strong>.</p>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Tabla 15 min separada] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Tabla 15 min] -->
     <h3>Precios — 15 minutos (solo medicación)</h3>
     <table class="price-table">
       <thead><tr><th>Incluye 1 gato</th><th>15 min</th></tr></thead>
       <tbody>
-        <tr>
-          <td><strong>Visita de medicación</strong></td>
-          <td><strong>12 €</strong></td>
-        </tr>
-        <tr>
-          <td><strong>Desde el día 11</strong></td>
-          <td><strong>10 €</strong></td>
-        </tr>
+        <tr><td><strong>Visita de medicación</strong></td><td><strong>12 €</strong></td></tr>
+        <tr><td><strong>Desde el día 11</strong></td><td><strong>10 €</strong></td></tr>
       </tbody>
     </table>
-    <p class="subtle" style="margin: -6px 0 10px;">
-      <small>
-        Esta visita de <strong>15 minutos</strong> está diseñada exclusivamente para la <strong>administración de medicación</strong> y una <strong>supervisión básica</strong>.
-        <u>No incluye</u> juego ni enriquecimiento, <u>no incluye</u> cepillado y <u>no incluye</u> limpieza de areneros o zonas de comida/agua. 
-        Es una intervención breve y tranquila, enfocada a minimizar el estrés.
-      </small>
+    <p class="subtle" style="margin:-6px 0 10px;">
+      <small>Visita breve enfocada a <strong>administrar medicación</strong> y <strong>verificación básica</strong> (no incluye juego, cepillado ni limpieza completa).</small>
     </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -163,7 +157,6 @@
 
     <h3>Extras independientes</h3>
     <div class="tpl-cards-2">
-      <!-- Tarjeta 1: Festivos -->
       <div class="tpl-card">
         <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por fecha</h4>
         <ul>
@@ -171,20 +164,17 @@
           <li><strong>Días señalados</strong> (Navidad, Nochevieja…): <strong>+30 €</strong></li>
         </ul>
       </div>
-
-      <!-- Tarjeta 2: Desplazamiento y llaves -->
       <div class="tpl-card">
         <h4><i class="fa-solid fa-route"></i> Desplazamiento y llaves</h4>
         <ul>
-          <li>Al ser en domicilio, se aplica <strong>suplemento de desplazamiento</strong>:</li>
           <li>2–10 km → <strong>6 €</strong> · 10–25 km → <strong>10 €</strong> · 25–40 km → <strong>15 €</strong> · +40 km → <strong>20 €</strong></li>
-          <li><i class="fa-solid fa-location-dot"></i> <strong>Buscamos al cuidador más cercano</strong> a ti.</li>
-          <li><i class="fa-solid fa-key"></i> <strong>Entrega/devolución de llaves:</strong> <strong>+8 €</strong> si el cuidador debe desplazarse aparte solo para este trámite.</li>
+          <li><i class="fa-solid fa-location-dot"></i> Elegimos al cuidador <strong>más cercano</strong> a tu zona.</li>
+          <li><i class="fa-solid fa-key"></i> <strong>Entrega/devolución de llaves:</strong> <strong>+8 €</strong> si hay desplazamiento solo para ese trámite.</li>
         </ul>
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones — unificados] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones — botón real centrado] -->
     <h3 style="margin-top:18px">Requisitos y Cancelaciones</h3>
     <div class="tpl-cards-2" style="margin-top:14px">
       <div class="tpl-card alert">
@@ -193,7 +183,7 @@
           <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
           <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
           <li>Informa de cualquier <strong>patología</strong> o pauta especial.</li>
-          <li>Si hay <strong>cámaras en casa</strong>, hay que avisar al cuidador e indicar <strong>dónde están</strong>.</li>
+          <li>Si hay <strong>cámaras en casa</strong>, <strong>avisa al cuidador</strong> e indica <strong>dónde están</strong>.</li>
         </ul>
       </div>
       <div class="tpl-card alert">
@@ -203,13 +193,11 @@
           <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
           <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50% del servicio</strong>.</li>
         </ul>
-        <!-- TPL: INICIO BLOQUE NUEVO [Botón Saber más como <button> centrado (estilo Transporte)] -->
         <p class="cancelaciones-btn" style="margin-top:10px">
           <button class="tpl-btn-sm" onclick="window.location.href='condiciones.html#cancelaciones'" aria-label="Leer política de cancelaciones completa">
             Saber más
           </button>
         </p>
-        <!-- TPL: FIN BLOQUE NUEVO -->
       </div>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
