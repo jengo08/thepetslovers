@@ -11,49 +11,39 @@
   <meta name="description" content="Guardería de día para mascotas: hasta 8 horas desde las 07:00 h. Profesionales del sector veterinario titulados. Bonos 10, 20 y 30 días. Fotos y vídeos durante el día.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [CSS local: breadcrumb, listas, tablas, CTAs, avisos] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CSS local extra] -->
   <style>
     .page{padding-top:120px}.lead{color:#666}
-    /* Breadcrumb */
     .breadcrumb{font-size:.9rem;margin:20px 0;color:var(--color-texto)}
     .breadcrumb a{color:var(--color-principal);text-decoration:none}
     .breadcrumb a:hover{text-decoration:underline}
     .breadcrumb span{font-weight:600}
-    /* Badges e icon-list */
     .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#f4f4f4;margin-right:6px;margin-bottom:6px}
     .icon-list{list-style:none;padding-left:0}
     .icon-list li{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
     .icon-list i{color:#58425a;margin-top:3px;min-width:18px;text-align:center}
-    /* Notas y avisos */
     .note{background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px}
     .alert{background:#fff8e6;border:1px solid #ffd27f}
-    /* Tablas */
     .price-table{width:100%;border-collapse:collapse;margin:8px 0 14px}
     .price-table th,.price-table td{border:1px solid #eee;padding:10px;text-align:center}
     .price-table thead th{background:#fafafa}
-    /* Enlaces extra */
-    .links-list{list-style:none;padding-left:0;margin:10px 0 0}
-    .links-list li{margin:6px 0}
-    .links-list a{color:var(--color-principal);text-decoration:none}
-    .links-list a:hover{text-decoration:underline}
-    /* CTAs: Volver a la izquierda, Reservar grande a la derecha */
     .cta-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
     .cta-row .ver-mas{border:2px solid var(--color-principal);color:var(--color-principal);text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:700}
     .cta-row .ver-mas:hover{background:var(--color-principal);color:#fff}
     .cta-row .service-cta{background:var(--color-principal);color:#fff;padding:16px 22px;font-weight:700;border-radius:6px;text-decoration:none;font-size:1.05rem}
     .cta-row .service-cta:hover{background:#2a7e80}
-
-    /* Tarjetas lado a lado: Suplementos y Desplazamientos */
     .tpl-cards-2{display:grid;gap:16px;margin-top:10px}
     @media (min-width: 780px){.tpl-cards-2{grid-template-columns:1fr 1fr}}
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
+    /* Centrar botón saber más */
+    .cancelaciones-btn { text-align:center; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
+  <!-- Navbar -->
   <div id="tpl-navbar"><noscript>
     <nav class="navbar">
       <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
@@ -67,22 +57,17 @@
       <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
     </nav>
   </noscript></div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page">
-    <!-- TPL: INICIO BLOQUE NUEVO [Breadcrumb] -->
     <nav class="breadcrumb"><a href="index.html">Inicio</a> &gt; <a href="servicios.html">Servicios</a> &gt; <span>Guardería de día</span></nav>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h1><i class="fa-solid fa-sun"></i> Guardería de día</h1>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Introducción cercana] -->
     <p class="lead">
       Para que <strong>tu mascota</strong> pase el día <strong>acompañada, activa y segura</strong> mientras tú haces tus cosas.  
-      Empezamos desde las <strong>07:00 h</strong> y la guardería cubre <strong>hasta 8 horas</strong> (hasta la tarde).  
-      Siempre con <strong>profesionales del sector veterinario titulados</strong> y buscando al <strong>cuidador que mejor se adapta</strong> a su carácter y necesidades.
+      Empezamos desde las <strong>07:00 h</strong> y la guardería cubre <strong>hasta 8 horas</strong>.  
+      Siempre con <strong>profesionales del sector veterinario titulados</strong>.
     </p>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <p>
       <span class="badge"><i class="fa-solid fa-user-graduate"></i> Profesionales titulados</span>
@@ -92,153 +77,84 @@
 
     <h3>¿Qué haremos durante el día?</h3>
     <ul class="icon-list">
-      <li><i class="fa-solid fa-bowl-food"></i><div><strong>Comidas</strong> según tus indicaciones (cantidad/horarios).</div></li>
-      <li><i class="fa-solid fa-person-walking"></i><div><strong>Paseos</strong> y salidas adaptadas a su energía.</div></li>
-      <li><i class="fa-solid fa-puzzle-piece"></i><div><strong>Juegos y enriquecimiento</strong> (olfato y estímulos mentales).</div></li>
-      <li><i class="fa-solid fa-syringe"></i><div><strong>Medicación</strong> si se requiere, exactamente como nos indiques.</div></li>
-      <li><i class="fa-solid fa-chalkboard-user"></i><div>Si es <strong>cachorro</strong> o está con <strong>adiestrador</strong>, seguimos sus pautas.</div></li>
+      <li><i class="fa-solid fa-bowl-food"></i> Comidas según tus indicaciones.</li>
+      <li><i class="fa-solid fa-person-walking"></i> Paseos adaptados a su energía.</li>
+      <li><i class="fa-solid fa-puzzle-piece"></i> Juegos y enriquecimiento.</li>
+      <li><i class="fa-solid fa-syringe"></i> Medicación si se requiere.</li>
+      <li><i class="fa-solid fa-chalkboard-user"></i> Seguimos pautas de adiestrador/cachorro.</li>
     </ul>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Comunicación de fotos/vídeos] -->
-    <div class="note">
-      <i class="fa-solid fa-camera"></i> Durante la jornada te <strong>enviaremos fotos y vídeos</strong> para que veas cómo va todo.
-    </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita – añadido sin tocar nada más] -->
-    <div class="note alert" style="margin-top:12px">
-      <p><i class="fa-solid fa-house-circle-check"></i> <strong>Primera visita gratuita:</strong> al aceptar la reserva, concertamos una visita con el cuidador para conoceros. Puede ser en un <strong>punto intermedio</strong> o <strong>en la zona del cuidador</strong>. Recomendamos hacerlo en su entorno para que la mascota <strong>reconozca parques y rutinas</strong> antes de venir a la guardería.</p>
-    </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <h3>Horarios</h3>
-    <div class="note">
-      <p><i class="fa-regular fa-clock"></i> Inicio disponible desde <strong>07:00 h</strong>.</p>
-      <p><i class="fa-regular fa-hourglass-half"></i> Cobertura de <strong>hasta 8 horas</strong> (hasta la tarde).</p>
-      <p><i class="fa-solid fa-circle-plus"></i> Si se superan las 8 h, se aplica <strong>suplemento de 5 € por cada hora extra</strong>.</p>
-    </div>
+    <div class="note"><i class="fa-solid fa-camera"></i> Te enviamos <strong>fotos y vídeos</strong> durante el día.</div>
 
     <h3>Precios</h3>
     <table class="price-table">
       <thead><tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr></thead>
       <tbody>
-        <tr>
-          <td><strong>Tarifa estándar (hasta 8 h)</strong></td>
-          <td><strong>15 € / día</strong></td>
-          <td>Incluye actividades, seguimiento y reportes.</td>
-        </tr>
-        <tr>
-          <td><strong>Cachorros (≤ 6 meses)</strong></td>
-          <td><strong>20 € / día</strong></td>
-          <td>Seguimos tus pautas y/o las del adiestrador.</td>
-        </tr>
-        <tr>
-          <td><strong>Bono 10 días</strong></td>
-          <td><strong>135 €</strong> <small>(13,50 € / día)</small></td>
-          <td>Ahorro frente a tarifa diaria.</td>
-        </tr>
-        <tr>
-          <td><strong>Bono 20 días</strong></td>
-          <td><strong>250 €</strong> <small>(12,50 € / día)</small></td>
-          <td>Descuento por volumen.</td>
-        </tr>
-        <tr>
-          <td><strong>Bono 30 días</strong></td>
-          <td><strong>315 €</strong> <small>(10,50 € / día)</small></td>
-          <td>La opción más económica.</td>
-        </tr>
-        <!-- TPL: INICIO BLOQUE NUEVO [Bonos cachorros] -->
-        <tr>
-          <td><strong>Bono 10 días (cachorros)</strong></td>
-          <td><strong>185 €</strong> <small>(18,50 € / día)</small></td>
-          <td>Ahorro frente a tarifa diaria de cachorro.</td>
-        </tr>
-        <tr>
-          <td><strong>Bono 20 días (cachorros)</strong></td>
-          <td><strong>350 €</strong> <small>(17,50 € / día)</small></td>
-          <td>Descuento por volumen.</td>
-        </tr>
-        <tr>
-          <td><strong>Bono 30 días (cachorros)</strong></td>
-          <td><strong>465 €</strong> <small>(15,50 € / día)</small></td>
-          <td>La opción más económica para cachorros.</td>
-        </tr>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <tr><td><strong>Tarifa estándar</strong></td><td><strong>15 € / día</strong></td><td>Incluye actividades y reportes.</td></tr>
+        <tr><td><strong>Cachorros (≤ 6 meses)</strong></td><td><strong>20 € / día</strong></td><td>Seguimos pautas específicas.</td></tr>
+        <tr><td><strong>Bono 10 días</strong></td><td><strong>135 €</strong></td><td>Ahorro frente a tarifa diaria.</td></tr>
+        <tr><td><strong>Bono 20 días</strong></td><td><strong>250 €</strong></td><td>Descuento por volumen.</td></tr>
+        <tr><td><strong>Bono 30 días</strong></td><td><strong>315 €</strong></td><td>La opción más económica.</td></tr>
+        <tr><td><strong>Bono 10 días (cachorros)</strong></td><td><strong>185 €</strong></td><td>Ahorro frente a tarifa diaria cachorro.</td></tr>
+        <tr><td><strong>Bono 20 días (cachorros)</strong></td><td><strong>350 €</strong></td><td>Descuento por volumen.</td></tr>
+        <tr><td><strong>Bono 30 días (cachorros)</strong></td><td><strong>465 €</strong></td><td>Opción más económica cachorro.</td></tr>
       </tbody>
     </table>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Suplemento mascotas extra] -->
+    <div class="note alert" style="margin-top:10px">
+      <p><i class="fa-solid fa-dog"></i> <strong>Suplemento por más mascotas:</strong><br>
+        La <strong>primera mascota siempre 15 €</strong>.  
+        <strong>2ª mascota:</strong> 12 €.  
+        <strong>A partir de la 3ª:</strong> 8 € cada una.  
+        <em>No aplicable a bonos: en bonos se suma el coste de cada mascota (ej. 135 € + 120 € para dos, 160 € si son tres...).</em>
+      </p>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Suplementos y Kilometraje</h3>
     <div class="tpl-cards-2">
       <div class="tpl-card">
-        <h4><i class="fa-solid fa-calendar-day"></i> Suplementos por festivos</h4>
-        <ul>
-          <li><strong>Festivos:</strong> +10 €</li>
-          <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-        </ul>
+        <h4><i class="fa-solid fa-calendar-day"></i> Suplementos festivos</h4>
+        <ul><li>Festivos: +10 €</li><li>Días señalados: +30 €</li></ul>
       </div>
       <div class="tpl-card">
-        <h4><i class="fa-solid fa-route"></i> Desplazamientos (kilometraje)</h4>
-        <ul>
-          <li>2–10 km → <strong>6 €</strong></li>
-          <li>10–25 km → <strong>10 €</strong></li>
-          <li>25–40 km → <strong>15 €</strong></li>
-          <li>+40 km → <strong>20 €</strong></li>
-        </ul>
-        <p class="note" style="margin-top:8px">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
+        <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
+        <ul><li>2–10 km → 6 €</li><li>10–25 km → 10 €</li><li>25–40 km → 15 €</li><li>+40 km → 20 €</li></ul>
       </div>
     </div>
 
-    <div class="note alert" style="margin-top:14px">
-      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos obligatorios:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, y <strong>seguro de responsabilidad civil</strong> vigente.</p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones] -->
+    <div class="tpl-cards-2" style="margin-top:14px">
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
+        <ul>
+          <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
+          <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
+        </ul>
+      </div>
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
+        <ul>
+          <li><strong>Sin coste</strong> hasta 48h antes del servicio.</li>
+          <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
+          <li>Con <strong>menos de 24h</strong>: se descuenta el 50% del servicio.</li>
+        </ul>
+        <p class="cancelaciones-btn" style="margin-top:10px">
+          <a href="condiciones.html#cancelaciones" class="tpl-btn-sm">Saber más</a>
+        </p>
+      </div>
     </div>
-
-    <p class="note" style="margin-top:12px">
-      <i class="fa-solid fa-file-lines"></i> Lee todas las <strong>condiciones de guardería de día</strong> en 
-      <a href="condiciones.html#guarderia-dia">esta página de condiciones</a>.
-    </p>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <div class="cta-row">
-      <a href="servicios.html" class="ver-mas" aria-label="Volver a todos los servicios">← Volver a servicios</a>
-      <a href="reserva.html" class="service-cta" aria-label="Ir a la página de reservas">Haz tu reserva</a>
+      <a href="servicios.html" class="ver-mas">← Volver a servicios</a>
+      <a href="reserva.html" class="service-cta">Haz tu reserva</a>
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
-  <div id="tpl-footer"><noscript>
-    <footer class="site-footer">
-      <div class="container footer-row">
-        <div class="footer-left">
-          <nav class="footer-links-row">
-            <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-            <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-            <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-            <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-            <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-            <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-            <a href="digital-services-act.html">Digital Services Act</a>
-          </nav>
-          <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-        </div>
-        <div class="footer-right socials">
-          <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-          <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        </div>
-      </div>
-      <div class="footer-bottom footer-bottom--inline">
-        <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-        <nav class="footer-bottom-right legal-links">
-          <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-          <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-          <a href="cookies.html">Cookies</a><span class="sep">|</span>
-          <a href="canal-denuncias.html">Canal de denuncias</a>
-        </nav>
-      </div>
-    </footer>
-  </noscript></div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
+  <!-- Footer -->
+  <div id="tpl-footer"><noscript>…</noscript></div>
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
