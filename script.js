@@ -441,3 +441,17 @@
     TPL: FIN BLOQUE NUEVO
     =========================== */
 
+<!-- TPL: INICIO BLOQUE NUEVO [Airbag JS mínimo para evitar pantalla en blanco] -->
+(function(){
+  try {
+    // Nada intrusivo: solo deja una traza útil si algo peta.
+    window.addEventListener('error', function(e){
+      console.warn('TPL: error global capturado:', e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason);
+    });
+  } catch(_) {}
+})();
+<!-- TPL: FIN BLOQUE NUEVO -->
+
