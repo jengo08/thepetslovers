@@ -48,6 +48,10 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
+
+    <!-- TPL: INICIO BLOQUE NUEVO [CSS botón centrado en Cancelaciones] -->
+    .cancelaciones-btn{ text-align:center; }
+    <!-- TPL: FIN BLOQUE NUEVO -->
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -105,45 +109,43 @@
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Precios</h3>
-<table class="price-table">
-  <thead><tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><strong>Paseo estándar (60 min)</strong></td>
-      <td><strong>12 €</strong></td>
-      <td>Incluye fotos y pequeño informe del paseo.</td>
-    </tr>
-    <tr>
-      <td><strong>2ª mascota (mismo hogar)</strong></td>
-      <td><strong>+8 €</strong></td>
-      <td>Se pasean juntos o separados según convenga.</td>
-    </tr>
-  </tbody>
-</table>
+    <table class="price-table">
+      <thead><tr><th>Modalidad</th><th>Precio</th><th>Notas</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Paseo estándar (60 min)</strong></td>
+          <td><strong>12 €</strong></td>
+          <td>Incluye fotos y pequeño informe del paseo.</td>
+        </tr>
+        <tr>
+          <td><strong>2ª mascota (mismo hogar)</strong></td>
+          <td><strong>+8 €</strong></td>
+          <td>Se pasean juntos o separados según convenga.</td>
+        </tr>
+      </tbody>
+    </table>
 
-<!-- TPL: INICIO BLOQUE NUEVO [Bonos de paseos] -->
-<h3>Bonos de paseos (1 perro)</h3>
-<table class="price-table" aria-describedby="nota-bonos">
-  <thead>
-    <tr>
-      <th>Bonos</th>
-      <th>Total</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td><strong>10 paseos</strong></td><td><strong>115 €</strong></td></tr>
-    <tr><td><strong>15 paseos</strong></td><td><strong>168 €</strong></td></tr>
-    <tr><td><strong>20 paseos</strong></td><td><strong>220 €</strong></td></tr>
-    <tr><td><strong>25 paseos</strong></td><td><strong>270 €</strong></td></tr>
-    <tr><td><strong>30 paseos</strong></td><td><strong>318 €</strong></td></tr>
-  </tbody>
-</table>
-<p id="nota-bonos" class="note" style="margin-top:10px">
-  <i class="fa-solid fa-circle-info"></i> <strong>Segundo perro (mismo paseo):</strong> +8 €/paseo fijo. 
-  Los bonos son <strong>transferibles dentro del mismo hogar</strong> y se descuentan a medida que se usan.
-</p>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
+    <!-- TPL: INICIO BLOQUE NUEVO [Bonos de paseos] -->
+    <h3>Bonos de paseos (1 perro)</h3>
+    <table class="price-table" aria-describedby="nota-bonos">
+      <thead>
+        <tr>
+          <th>Bonos</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>10 paseos</strong></td><td><strong>115 €</strong></td></tr>
+        <tr><td><strong>15 paseos</strong></td><td><strong>168 €</strong></td></tr>
+        <tr><td><strong>20 paseos</strong></td><td><strong>220 €</strong></td></tr>
+        <tr><td><strong>25 paseos</strong></td><td><strong>270 €</strong></td></tr>
+        <tr><td><strong>30 paseos</strong></td><td><strong>318 €</strong></td></tr>
+      </tbody>
+    </table>
+    <p id="nota-bonos" class="note" style="margin-top:10px">
+      <i class="fa-solid fa-circle-info"></i> <strong>Segundo perro (mismo paseo):</strong> +8 €/paseo fijo. 
+      Los bonos son <strong>transferibles dentro del mismo hogar</strong> y se descuentan a medida que se usan.
+    </p>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <h3>Suplementos y Kilometraje</h3>
@@ -167,23 +169,31 @@
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos] -->
-    <div class="note alert" style="margin-top:14px">
-      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, <strong>identificación</strong> (placa/chapa), correa/arnés en buen estado y <strong>seguro de responsabilidad civil</strong> si corresponde. Para razas que lo exijan, <strong>bozal homologado</strong>. Indícanos patologías o medicación para adaptar el paseo.</p>
-    </div> 
-    <!-- TPL: INICIO BLOQUE NUEVO [Condiciones de cancelación] -->
-<div class="note" style="margin-top:10px">
-  <p>
-    <i class="fa-solid fa-ban"></i>
-    <strong>Cancelaciones:</strong>
-    sin coste hasta <strong>48h</strong> antes.
-    Con menos de <strong>48h</strong> no se devolverá la reserva.
-    Con menos de <strong>24h</strong> se descontará el <strong>50% de la estancia/servicio</strong>.
-    <a href="condiciones.html#cancelaciones" class="tpl-link" style="margin-left:6px; text-decoration:underline">Saber más</a>
-  </p>
-</div>
-<!-- TPL: FIN BLOQUE NUEVO -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Título sección requisitos+cancelaciones] -->
+    <h3 style="margin-top:18px">Requisitos y Cancelaciones</h3>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones (formato Transporte)] -->
+    <div class="tpl-cards-2" style="margin-top:14px">
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
+        <ul>
+          <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
+          <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
+        </ul>
+      </div>
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
+        <ul>
+          <li><strong>Sin coste</strong> hasta 48h antes del servicio.</li>
+          <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
+          <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50% del servicio</strong>.</li>
+        </ul>
+        <p class="cancelaciones-btn" style="margin-top:10px">
+          <a href="condiciones.html#cancelaciones" class="tpl-btn-sm" aria-label="Leer política de cancelaciones completa">Saber más</a>
+        </p>
+      </div>
+    </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <!-- TPL: INICIO BLOQUE NUEVO [Enlace a condiciones] -->
