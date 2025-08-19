@@ -42,8 +42,19 @@
     .tpl-addr-item:hover, .tpl-addr-item:focus{ background:#f5f7f8; outline:none; }
     /* TPL: FIN BLOQUE NUEVO */
 
+    /* TPL: INICIO BLOQUE NUEVO [Acciones: submit centrado + ayuda derecha] */
+    .tpl-actions{ display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap:12px; width:100%; }
+    .tpl-actions .tpl-spacer{ display:block; }
+    .tpl-actions .tpl-help{ font-size:.9rem; padding:8px 10px; border:2px solid var(--color-principal); color:var(--color-principal); background:#fff; border-radius:8px; }
+    /* TPL: FIN BLOQUE NUEVO */
+
     /* TPL: INICIO BLOQUE NUEVO [Burbuja desplazamiento] */
     .travel-bubble{ display:none; margin-top:6px; padding:10px 12px; border:1px dashed #bbb; border-radius:10px; background:#f9f9f9; color:#666; text-align:left;}
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Separadores de sección] */
+    .tpl-section{ margin-top: 18px; }
+    .tpl-section h2{ margin: 6px 0 8px; font-size:1.15rem; }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
@@ -72,13 +83,7 @@
     <div class="booking-header">
       <h1>Reserva tu servicio</h1>
       <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario iniciar sesión y tener los datos de tu mascota guardados.</p>
-      <!-- TPL: INICIO BLOQUE NUEVO [Botón ayuda] -->
-      <div class="booking-actions" style="margin-top:8px;">
-        <a class="cta-button" href="ayuda.html#reservas" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">
-          <i class="fa-regular fa-circle-question" aria-hidden="true"></i> ¿Necesitas ayuda?
-        </a>
-      </div>
-      <!-- TPL: FIN BLOQUE NUEVO -->
+      <!-- (Se ha quitado el botón de ayuda superior, como pediste) -->
     </div>
 
     <!-- Muro de autenticación -->
@@ -93,181 +98,203 @@
 
     <!-- Formulario de reserva (Formspree activo) -->
     <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
-      <div class="booking-grid">
-        <!-- ===== DATOS DEL SERVICIO ===== -->
-        <div class="booking-field">
-          <label for="service">Servicio</label>
-          <select id="service" name="Servicio" required>
-            <option value="">Elige un servicio…</option>
-            <option value="visitas">Visitas a domicilio (gatos)</option>
-            <option value="paseos">Paseos</option>
-            <option value="guarderia">Guardería de día</option>
-            <option value="alojamiento">Alojamiento (por día)</option>
-            <option value="bodas">Bodas y servicios exclusivos</option>
-          </select>
-        </div>
 
-        <!-- CCAA -->
-        <div class="booking-field">
-          <label for="region">Comunidad Autónoma</label>
-          <select id="region" name="CCAA" required>
-            <option value="" disabled hidden>Selecciona tu CCAA…</option>
-            <option value="madrid" selected>Comunidad de Madrid</option>
-            <option value="andalucia">Andalucía</option>
-            <option value="aragon">Aragón</option>
-            <option value="asturias">Asturias</option>
-            <option value="baleares">Illes Balears</option>
-            <option value="canarias">Canarias</option>
-            <option value="cantabria">Cantabria</option>
-            <option value="castilla-la-mancha">Castilla-La Mancha</option>
-            <option value="castilla-y-leon">Castilla y León</option>
-            <option value="cataluna">Cataluña</option>
-            <option value="valenciana">Comunitat Valenciana</option>
-            <option value="extremadura">Extremadura</option>
-            <option value="galicia">Galicia</option>
-            <option value="la-rioja">La Rioja</option>
-            <option value="melilla">Melilla</option>
-            <option value="murcia">Región de Murcia</option>
-            <option value="navarra">Navarra</option>
-            <option value="euskadi">País Vasco</option>
-            <option value="ceuta">Ceuta</option>
-            <option value="nacional">Solo festivos nacionales</option>
-          </select>
-        </div>
-
-        <!-- Rango de fechas -->
-        <div class="booking-field">
-          <label for="startDate">Fecha de inicio</label>
-          <input type="date" id="startDate" name="Fecha_inicio" required>
-        </div>
-        <div class="booking-field">
-          <label for="endDate">Fecha de fin</label>
-          <input type="date" id="endDate" name="Fecha_fin" required>
-        </div>
-
-        <div class="booking-field">
-          <label for="start">Hora de inicio</label>
-          <input type="time" id="start" name="Hora_inicio" required>
-        </div>
-        <div class="booking-field">
-          <label for="end">Hora de fin</label>
-          <input type="time" id="end" name="Hora_fin" required>
-        </div>
-
-        <!-- Dirección -->
-        <div class="booking-field" style="grid-column: 1 / -1;">
-          <label for="location">Dirección</label>
-          <!-- TPL: INICIO BLOQUE NUEVO [Wrapper con sugerencias] -->
-          <div class="tpl-addr-wrap">
-            <input type="text" id="location" name="Direccion" placeholder="Calle y número, piso…" autocomplete="street-address" required>
-            <div id="tplAddrSuggest" class="tpl-addr-suggest" role="listbox" aria-label="Sugerencias de direcciones"></div>
+      <!-- =================== DATOS DEL SERVICIO =================== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Sección: Datos del servicio] -->
+      <section class="tpl-section" aria-labelledby="sec-servicio">
+        <h2 id="sec-servicio">Datos del servicio</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="service">Servicio</label>
+            <select id="service" name="Servicio" required>
+              <option value="">Elige un servicio…</option>
+              <option value="visitas">Visitas a domicilio (gatos)</option>
+              <option value="paseos">Paseos</option>
+              <option value="guarderia">Guardería de día</option>
+              <option value="alojamiento">Alojamiento (por día)</option>
+              <option value="bodas">Bodas y servicios exclusivos</option>
+            </select>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-        </div>
 
-        <!-- Tipo de animal, nº y cachorro -->
-        <div class="booking-field" id="fieldSpecies">
-          <label for="species">Tipo de animal</label>
-          <select id="species" name="Tipo_animal">
-            <option value="perro">Perro</option>
-            <option value="gato">Gato</option>
-            <option value="otros">Otros</option>
-          </select>
-        </div>
-
-        <div class="booking-field" id="fieldIsPuppy">
-          <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
-          <!-- TPL: INICIO BLOQUE NUEVO [Auto-cachorro: bloqueado] -->
-          <select id="isPuppy" name="Cachorro" disabled title="Se calcula automáticamente según la edad de tu mascota">
-            <option value="no" selected>No</option>
-            <option value="si">Sí</option>
-          </select>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-        </div>
-
-        <div class="booking-field" id="fieldNumPets">
-          <label for="numPets">Nº de mascotas</label>
-          <select id="numPets" name="N_mascotas">
-            <option value="1">1</option><option value="2">2</option>
-            <option value="3">3</option><option value="4">4</option>
-            <option value="5">5</option><option value="6+">6+</option>
-          </select>
-          <input type="number" id="numPetsExact" name="N_mascotas_exactas" min="6" step="1" placeholder="Indica cuántas" style="display:none;margin-top:6px;">
-        </div>
-
-        <!-- TPL: INICIO BLOQUE NUEVO [Visitas gatos: duración + visitas diarias] -->
-        <div class="booking-field" id="fieldVisitDuration" hidden>
-          <label for="visitDuration">Duración de la visita (gatos)</label>
-          <select id="visitDuration" name="Visita_duracion">
-            <option value="60">60 minutos</option>
-            <option value="90">90 minutos</option>
-          </select>
-        </div>
-        <div class="booking-field" id="fieldVisitDaily" hidden>
-          <label for="visitDaily">Visitas diarias</label>
-          <select id="visitDaily" name="Visitas_diarias">
-            <option value="1">1 visita/día</option>
-            <option value="2">2 visitas/día (2ª es medicación)</option>
-          </select>
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
-
-        <!-- Desplazamiento -->
-        <div class="booking-field">
-          <label for="needTravel">¿Necesitas desplazamiento?</label>
-          <select id="needTravel" name="Desplazamiento">
-            <option value="no">No</option>
-            <option value="si">Sí</option>
-          </select>
-          <!-- TPL: INICIO BLOQUE NUEVO [Burbuja aviso desplazamiento] -->
-          <div id="travelBubble" class="travel-bubble">
-            <i class="fa-solid fa-circle-info"></i>
-            El desplazamiento se cobrará cuando asignemos al cuidador/a más cercano y adecuado.
-            <br>Este importe quedará <strong>pendiente</strong> en la factura final.
+          <div class="booking-field">
+            <label for="startDate">Fecha de inicio</label>
+            <input type="date" id="startDate" name="Fecha_inicio" required>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-        </div>
+          <div class="booking-field">
+            <label for="endDate">Fecha de fin</label>
+            <input type="date" id="endDate" name="Fecha_fin" required>
+          </div>
 
-        <!-- ===== DATOS PERSONALES ===== -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Datos personales estructurados] -->
-        <div class="booking-field">
-          <label for="firstName">Nombre</label>
-          <input type="text" id="firstName" name="Nombre" placeholder="Tu nombre" autocomplete="given-name" required>
-        </div>
-        <div class="booking-field">
-          <label for="lastName">Apellidos</label>
-          <input type="text" id="lastName" name="Apellidos" placeholder="Tus apellidos" autocomplete="family-name" required>
-        </div>
-        <div class="booking-field">
-          <label for="postalCode">Código Postal</label>
-          <input type="text" id="postalCode" name="CP" placeholder="Ej. 28001" inputmode="numeric" pattern="\\d{5}" autocomplete="postal-code" required>
-        </div>
-        <div class="booking-field">
-          <label for="phone">Teléfono</label>
-          <input type="tel" id="phone" name="Telefono" placeholder="Tu número de teléfono" autocomplete="tel">
-        </div>
-        <div class="booking-field">
-          <label for="email">Email</label>
-          <input type="email" id="email" name="Email" placeholder="Tu correo electrónico" autocomplete="email">
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+          <div class="booking-field">
+            <label for="start">Hora de inicio</label>
+            <input type="time" id="start" name="Hora_inicio" required>
+          </div>
+          <div class="booking-field">
+            <label for="end">Hora de fin</label>
+            <input type="time" id="end" name="Hora_fin" required>
+          </div>
 
-        <!-- Preferencia de contacto -->
-        <div class="booking-field" style="grid-column: 1 / -1;">
-          <label>¿Por dónde prefieres que contactemos?</label>
-          <div>
-            <label><input type="radio" name="Preferencia_contacto" value="telefono"> Teléfono</label>
-            <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="whatsapp"> WhatsApp</label>
-            <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="email"> Email</label>
-            <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="cualquiera" checked> Cualquiera</label>
+          <div class="booking-field" id="fieldNumPets">
+            <label for="numPets">Nº de mascotas</label>
+            <select id="numPets" name="N_mascotas">
+              <option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6+">6+</option>
+            </select>
+            <input type="number" id="numPetsExact" name="N_mascotas_exactas" min="6" step="1" placeholder="Indica cuántas" style="display:none;margin-top:6px;">
+          </div>
+
+          <div class="booking-field" id="fieldSpecies">
+            <label for="species">Tipo de animal</label>
+            <select id="species" name="Tipo_animal">
+              <option value="perro">Perro</option>
+              <option value="gato">Gato</option>
+              <option value="otros">Otros</option>
+            </select>
+          </div>
+
+          <!-- SOLO para visitas (gatos) -->
+          <div class="booking-field" id="fieldVisitDuration" hidden>
+            <label for="visitDuration">Duración de la visita (gatos)</label>
+            <select id="visitDuration" name="Visita_duracion">
+              <option value="60">60 minutos</option>
+              <option value="90">90 minutos</option>
+            </select>
+          </div>
+          <div class="booking-field" id="fieldVisitDaily" hidden>
+            <label for="visitDaily">Visitas diarias</label>
+            <select id="visitDaily" name="Visitas_diarias">
+              <option value="1">1 visita/día</option>
+              <option value="2">2 visitas/día (2ª es medicación)</option>
+            </select>
+          </div>
+
+          <div class="booking-field" id="fieldIsPuppy">
+            <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
+            <!-- TPL: INICIO BLOQUE NUEVO [Auto-cachorro: bloqueado] -->
+            <select id="isPuppy" name="Cachorro" disabled title="Se calcula automáticamente según la edad de tu mascota">
+              <option value="no" selected>No</option>
+              <option value="si">Sí</option>
+            </select>
+            <!-- TPL: FIN BLOQUE NUEVO -->
+          </div>
+
+          <div class="booking-field">
+            <label for="needTravel">¿Necesitas desplazamiento?</label>
+            <select id="needTravel" name="Desplazamiento">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+            <!-- TPL: INICIO BLOQUE NUEVO [Burbuja aviso desplazamiento] -->
+            <div id="travelBubble" class="travel-bubble">
+              <i class="fa-solid fa-circle-info"></i>
+              El desplazamiento se cobrará cuando asignemos al cuidador/a más cercano y adecuado.
+              <br>Este importe quedará <strong>pendiente</strong> en la factura final.
+            </div>
+            <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
         </div>
+      </section>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <div class="booking-field" style="grid-column: 1 / -1;">
-          <label for="notes">Notas (opcional)</label>
-          <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
+      <!-- =================== MASCOTAS (NOMBRES) =================== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Sección: Mascotas y nombres dinámicos] -->
+      <section class="tpl-section" aria-labelledby="sec-mascotas">
+        <h2 id="sec-mascotas">Mascotas</h2>
+        <div class="booking-grid" id="petsContainer">
+          <!-- Se renderiza al vuelo según Nº de mascotas (siempre 1 como mínimo) -->
         </div>
-      </div>
+        <!-- lista reutilizable para sugerencias desde perfil -->
+        <datalist id="tplPetNamesList"></datalist>
+      </section>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- =================== DATOS DE LA PERSONA =================== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Sección: Datos de la persona] -->
+      <section class="tpl-section" aria-labelledby="sec-titular">
+        <h2 id="sec-titular">Datos de la persona titular</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="firstName">Nombre</label>
+            <input type="text" id="firstName" name="Nombre" placeholder="Tu nombre" autocomplete="given-name" required>
+          </div>
+          <div class="booking-field">
+            <label for="lastName">Apellidos</label>
+            <input type="text" id="lastName" name="Apellidos" placeholder="Tus apellidos" autocomplete="family-name" required>
+          </div>
+
+          <div class="booking-field" style="grid-column: 1 / -1;">
+            <label for="location">Dirección</label>
+            <div class="tpl-addr-wrap">
+              <input type="text" id="location" name="Direccion" placeholder="Calle y número, piso…" autocomplete="street-address" required>
+              <div id="tplAddrSuggest" class="tpl-addr-suggest" role="listbox" aria-label="Sugerencias de direcciones"></div>
+            </div>
+          </div>
+
+          <div class="booking-field">
+            <label for="region">Comunidad Autónoma</label>
+            <select id="region" name="CCAA" required>
+              <option value="" disabled hidden>Selecciona tu CCAA…</option>
+              <option value="madrid" selected>Comunidad de Madrid</option>
+              <option value="andalucia">Andalucía</option>
+              <option value="aragon">Aragón</option>
+              <option value="asturias">Asturias</option>
+              <option value="baleares">Illes Balears</option>
+              <option value="canarias">Canarias</option>
+              <option value="cantabria">Cantabria</option>
+              <option value="castilla-la-mancha">Castilla-La Mancha</option>
+              <option value="castilla-y-leon">Castilla y León</option>
+              <option value="cataluna">Cataluña</option>
+              <option value="valenciana">Comunitat Valenciana</option>
+              <option value="extremadura">Extremadura</option>
+              <option value="galicia">Galicia</option>
+              <option value="la-rioja">La Rioja</option>
+              <option value="melilla">Melilla</option>
+              <option value="murcia">Región de Murcia</option>
+              <option value="navarra">Navarra</option>
+              <option value="euskadi">País Vasco</option>
+              <option value="ceuta">Ceuta</option>
+              <option value="nacional">Solo festivos nacionales</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="postalCode">Código Postal</label>
+            <input type="text" id="postalCode" name="CP" placeholder="Ej. 28001" inputmode="numeric" pattern="\\d{5}" autocomplete="postal-code" required>
+          </div>
+
+          <div class="booking-field">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="Email" placeholder="Tu correo electrónico" autocomplete="email">
+          </div>
+          <div class="booking-field">
+            <label for="phone">Teléfono</label>
+            <input type="tel" id="phone" name="Telefono" placeholder="Tu número de teléfono" autocomplete="tel">
+          </div>
+
+          <div class="booking-field" style="grid-column: 1 / -1;">
+            <label>¿Por dónde prefieres que contactemos?</label>
+            <div>
+              <label><input type="radio" name="Preferencia_contacto" value="telefono"> Teléfono</label>
+              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="whatsapp"> WhatsApp</label>
+              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="email"> Email</label>
+              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="cualquiera" checked> Cualquiera</label>
+            </div>
+          </div>
+
+          <!-- TPL: INICIO BLOQUE NUEVO [Hora preferida de contacto] -->
+          <div class="booking-field">
+            <label for="contactTime">¿A qué hora prefieres que te contactemos?</label>
+            <input type="time" id="contactTime" name="Hora_preferida_contacto">
+          </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
+
+          <div class="booking-field" style="grid-column: 1 / -1;">
+            <label for="notes">Notas (opcional)</label>
+            <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
+          </div>
+        </div>
+      </section>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <!-- Resumen / Desglose -->
       <div class="summary-panel" id="summary">
@@ -280,7 +307,6 @@
             <div class="summary-label">Precio base</div>
             <div class="summary-value"><span id="sumBase">—</span> €</div>
           </div>
-          <!-- TPL: INICIO BLOQUE NUEVO [Desglose específico visitas] -->
           <div class="summary-row" id="rowVisit1" style="display:none;">
             <div class="summary-label">1ª visita (60/90)</div>
             <div class="summary-value"><span id="sumVisit1">0.00</span> €</div>
@@ -289,7 +315,6 @@
             <div class="summary-label">2ª visita (medicación)</div>
             <div class="summary-value"><span id="sumVisit2">0.00</span> €</div>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
           <div class="summary-row">
             <div class="summary-label">Suplementos por mascotas</div>
             <div class="summary-value"><span id="sumPets">0.00</span> €</div>
@@ -306,12 +331,10 @@
             <div class="summary-label">Desplazamiento</div>
             <div class="summary-value"><span id="sumTravel" class="summary-muted">pendiente</span></div>
           </div>
-          <!-- TPL: INICIO BLOQUE NUEVO [Bonos guardería] -->
           <div class="summary-row" id="rowBono" style="display:none;">
             <div class="summary-label">Bono guardería (descuento)</div>
             <div class="summary-value">−<span id="sumBono">0.00</span> €</div>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
           <div class="summary-row summary-total">
             <div class="summary-label">Subtotal (sin desplazamiento)</div>
             <div class="summary-value"><span id="sumSubtotal">—</span> €</div>
@@ -327,36 +350,35 @@
         </p>
       </div>
 
-      <!-- Campos ocultos para email (resumen) -->
+      <!-- Campos ocultos para email (resumen y mascotas) -->
       <input type="hidden" name="Desglose" id="summaryField">
+      <!-- TPL: INICIO BLOQUE NUEVO [Mascotas en lista para email] -->
+      <input type="hidden" name="Mascotas_lista" id="petsListHidden">
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <div class="booking-actions">
+      <!-- Acciones: submit centrado + ayuda derecha -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Barra de acciones] -->
+      <div class="booking-actions tpl-actions">
+        <span class="tpl-spacer" aria-hidden="true"></span>
         <button type="submit" class="cta-button">Solicitar reserva</button>
-        <!-- TPL: INICIO BLOQUE NUEVO [Atajo de ayuda secundario] -->
-        <a class="cta-button" href="ayuda.html#reservas" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">
-          Centro de ayuda
-        </a>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <a class="tpl-help" href="ayuda.html#reservas" aria-label="Centro de ayuda">Centro de ayuda</a>
       </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <p class="note">Tras enviar, te llamaremos para conocernos y confirmar detalles. La primera visita con el cuidador es gratuita.</p>
     </form>
   </div>
 
   <!-- ====== TPL: INICIO BLOQUE NUEVO [Constantes de precios y bonos] ====== -->
   <script>
-    // Precios base y visitas
     const PRICES = {
-      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0 }, // guardería adulto 15 €/día
-      puppyBase: { guarderia: 20, alojamiento: 35 }, // guardería cachorro 20 €/día
-      visita60: 22,
-      visita90: 30,
-      visita60_larga: 18,  // desde día 11
-      visita90_larga: 27,  // desde día 11
-      visitaMed: 12,       // 2ª visita (medicación) diaria
-      visitaMed_larga: 10, // 2ª visita (medicación) diaria desde día 11
+      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0 },
+      puppyBase: { guarderia: 20, alojamiento: 35 },
+      visita60: 22, visita90: 30,
+      visita60_larga: 18, visita90_larga: 27,
+      visitaMed: 12, visitaMed_larga: 10,
       depositPct: 0.20
     };
-    // Bonos guardería: precio total del bono (adulto y cachorro)
     const BUNDLE_GUARDERIA = {
       adult:  { 10: 135, 20: 250, 30: 315 },
       puppy:  { 10: 185, 20: 350, 30: 465 }
@@ -391,10 +413,6 @@
       needTravel: byId('needTravel'),
       travelBubble: byId('travelBubble'),
 
-      fieldSpecies: byId('fieldSpecies'),
-      fieldIsPuppy: byId('fieldIsPuppy'),
-      fieldNumPets: byId('fieldNumPets'),
-
       // visitas gatos
       visitDuration: byId('visitDuration'),
       visitDaily: byId('visitDaily'),
@@ -406,6 +424,12 @@
       lastName: byId('lastName'),
       phone: byId('phone'),
       email: byId('email'),
+      contactTime: byId('contactTime'),
+
+      // mascotas dinámicas
+      petsContainer: byId('petsContainer'),
+      petsListHidden: byId('petsListHidden'),
+      petNamesList: byId('tplPetNamesList'),
 
       // sumario
       sumBase: byId('sumBase'),
@@ -445,31 +469,30 @@
     function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function eachDate(from,to){
       const res=[]; if(!from||!to) return res;
-      const d1=new Date(from), d2=new Date(to);
+      const d1=new Date(from), d2=new Date(end.value || to);
       if(isNaN(d1)||isNaN(d2)||d2<d1) return res;
       const cur=new Date(d1); cur.setHours(0,0,0,0); d2.setHours(0,0,0,0);
       while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
       return res;
     }
-    // Debounce simple
     function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-    // ---------- Preselección de servicio (robusta)
+    // ---------- Preselección de servicio por querystring
     (function presetService(){
       const raw = (qs('service') || qs('svc') || '').toLowerCase();
       const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
       const map = {
-        'visitas':'visitas','visitas-gatos':'visitas','servicio-visitas':'visitas','servicios-visitas':'visitas',
-        'paseos':'paseos','servicio-paseos':'paseos','servicios-paseos':'paseos',
-        'guarderia':'guarderia','guarderia-dia':'guarderia','servicio-guarderia':'guarderia','servicios-guarderia':'guarderia',
-        'alojamiento':'alojamiento','servicio-alojamiento':'alojamiento','servicios-alojamiento':'alojamiento',
-        'bodas':'bodas','servicios-bodas':'bodas'
+        'visitas':'visitas','visitas-gatos':'visitas',
+        'paseos':'paseos',
+        'guarderia':'guarderia','guarderia-dia':'guarderia',
+        'alojamiento':'alojamiento',
+        'bodas':'bodas'
       };
       const val = map[norm];
       if(val && els.service){ els.service.value = val; els.service.disabled = true; }
     })();
 
-    // ---------- Mostrar/ocultar campos según servicio (duración/visitas SOLO en visitas)
+    // ---------- Mostrar/ocultar campos según servicio
     function toggleFields(){
       const svc = els.service?.value;
       const isVisitas = (svc === 'visitas');
@@ -477,41 +500,76 @@
       if(els.fieldVisitDuration) els.fieldVisitDuration.hidden = !isVisitas;
       if(els.fieldVisitDaily) els.fieldVisitDaily.hidden = !isVisitas;
 
-      // Tipo animal y nº mascotas visibles; "cachorro" (auto) solo guardería/alojamiento
-      if(els.fieldSpecies) els.fieldSpecies.hidden = false;
-      if(els.fieldNumPets) els.fieldNumPets.hidden = false;
-
+      // Tipo animal visible; "cachorro" (auto) solo guardería/alojamiento
       const species = els.species?.value || 'perro';
       const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
-      if(els.fieldIsPuppy) els.fieldIsPuppy.hidden = !puppyApplies;
+      if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
 
       if(isVisitas && els.species) els.species.value = 'gato';
     }
 
-    // 6+ mascotas → input exacto
-    (function petsExactToggle(){
-      function sync(){
-        if(els.numPets?.value === '6+'){
-          els.numPetsExact.style.display = 'block';
-          els.numPetsExact.required = true;
-        }else{
-          els.numPetsExact.style.display = 'none';
-          els.numPetsExact.required = false;
-        }
+    // ---------- Nº mascotas: exacto 6+ y render de nombres
+    function getNumMascotas(){
+      let n = els.numPets?.value || '1';
+      if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
+      return parseInt(n,10);
+    }
+    function syncPetsExact(){
+      if(els.numPets?.value === '6+'){
+        els.numPetsExact.style.display = 'block';
+        els.numPetsExact.required = true;
+      }else{
+        els.numPetsExact.style.display = 'none';
+        els.numPetsExact.required = false;
       }
-      if(els.numPets){ els.numPets.addEventListener('change', sync); sync(); }
-    })();
+    }
 
-    // Desplazamiento: burbuja + resumen “pendiente”
-    (function travelBubble(){
-      function sync(){
-        if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
-        if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
+    // ---------- Render dinámico de nombres de mascotas
+    let PROFILE_PET_NAMES = [];
+    function fillPetDatalist(){
+      if(!els.petNamesList) return;
+      els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
+        .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
+    }
+    function renderPetNameFields(n){
+      n = Math.max(1, n|0);
+      const wrap = els.petsContainer; if(!wrap) return;
+      const current = wrap.querySelectorAll('[data-pet-row]').length;
+      // Añadir los que falten
+      for(let i=current+1;i<=n;i++){
+        const row = document.createElement('div');
+        row.className = 'booking-field';
+        row.setAttribute('data-pet-row', i.toString());
+        row.innerHTML = `
+          <label for="petName_${i}">Nombre de la mascota ${n>1?`#${i}`:''}</label>
+          <input type="text" id="petName_${i}" name="Mascota_${i}" list="tplPetNamesList" placeholder="Ej. Nala" autocomplete="off">
+        `;
+        wrap.appendChild(row);
       }
-      if(els.needTravel){ els.needTravel.addEventListener('change', sync); sync(); }
-    })();
+      // Quitar los que sobren
+      const rows = wrap.querySelectorAll('[data-pet-row]');
+      rows.forEach(r=>{
+        const idx = parseInt(r.getAttribute('data-pet-row'),10);
+        if(idx>n) r.remove();
+      });
+      updatePetsListHidden();
+      // Listeners
+      wrap.querySelectorAll('input[id^="petName_"]').forEach(inp=>{
+        inp.addEventListener('input', updatePetsListHidden);
+      });
+    }
+    function updatePetsListHidden(){
+      const names = [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].map(i=>i.value.trim()).filter(Boolean);
+      els.petsListHidden.value = names.join(', ');
+    }
 
-    // ---------- Festivos automáticos (cache 24h, JSON local → Nager → básico)
+    // ---------- Desplazamiento: burbuja + resumen “pendiente”
+    function travelSync(){
+      if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
+      if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
+    }
+
+    // ---------- Festivos automáticos (cache 24h)
     const _festivosCache = new Map();
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
@@ -522,9 +580,7 @@
           const data = await r.json();
           const nacional = new Set((data.national || data.nacional || []).map(x => x.date || x));
           const porCcaa = new Map();
-          if(data.regions){
-            Object.entries(data.regions).forEach(([k, arr])=>{ porCcaa.set(k, new Set((arr||[]).map(x => x.date || x))); });
-          }
+          if(data.regions){ Object.entries(data.regions).forEach(([k, arr])=>{ porCcaa.set(k, new Set((arr||[]).map(x => x.date || x))); }); }
           return { nacional, porCcaa, _src:'local' };
         }catch(_){}
       }
@@ -538,9 +594,8 @@
       const porCcaa = new Map();
       for(const h of data){
         const date = h.date;
-        if(!h.counties || !h.counties.length){
-          nacional.add(date);
-        }else{
+        if(!h.counties || !h.counties.length){ nacional.add(date); }
+        else{
           for(const c of h.counties){
             const key = COUNTY_TO_REGIONKEY[c] || c;
             if(!porCcaa.has(key)) porCcaa.set(key, new Set());
@@ -560,8 +615,7 @@
             const nacional = new Set(parsed.d || []);
             const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
             const cached = {nacional, porCcaa, _src:'localStorage'};
-            _festivosCache.set(year, cached);
-            return cached;
+            _festivosCache.set(year, cached); return cached;
           }
         }
       }catch(_){}
@@ -575,16 +629,11 @@
         }catch(_){}
         return nager;
       }catch(_){}
-      const basic = {
-        nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]),
-        porCcaa: new Map(),
-        _src:'basic'
-      };
-      _festivosCache.set(year, basic);
-      return basic;
+      const basic = { nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]), porCcaa: new Map(), _src:'basic' };
+      _festivosCache.set(year, basic); return basic;
     }
-    async function calcFestivosAutoAsync(region, start, end){
-      const days = eachDate(start, end);
+    async function calcFestivosAutoAsync(region, start, endVal){
+      const days = eachDate(start, endVal);
       if(!days.length) return { festivo:0, senalado:0, nDias:0 };
       let festivo = 0, senalado = 0;
       for(const d of days){
@@ -603,11 +652,6 @@
     }
 
     // ---------- Cálculo de suplementos por nº mascotas
-    function getNumMascotas(){
-      let n = els.numPets?.value || '1';
-      if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
-      return parseInt(n,10);
-    }
     function calcPetSupplements(service, species, n){
       if(n <= 1) return 0;
       if(service === 'visitas'){
@@ -624,7 +668,7 @@
 
     // ---------- Bases y lógica de visitas (solo gatos)
     function getBasePrice(service, species, isPuppy){
-      if(service === 'visitas') return 0; // visitas calculan por duración
+      if(service === 'visitas') return 0;
       if(service === 'alojamiento'){
         return isPuppy ? (PRICES.puppyBase.alojamiento ?? PRICES.base.alojamiento) : PRICES.base.alojamiento;
       }
@@ -635,21 +679,15 @@
     }
     function calcVisitas(visitDurationMin, dailyVisits, nDias){
       const longStay = (nDias >= 11);
-      const price1 = (visitDurationMin === 90)
-        ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
-        : (longStay ? PRICES.visita60_larga : PRICES.visita60);
-      const price2 = dailyVisits === 2
-        ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed)
-        : 0;
+      const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) : (longStay ? PRICES.visita60_larga : PRICES.visita60);
+      const price2 = dailyVisits === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0;
       return { price1, price2 };
     }
-
-    // ---------- Bonos guardería (solo 10/20/30)
     function calcBonoGuarderia(nDias, isPuppy){
       const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
       const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
       const bundlePrice = table[nDias];
-      if (!bundlePrice) return 0; // solo aplica en 10/20/30 exactos
+      if (!bundlePrice) return 0;
       const normalTotal = perDay * nDias;
       return Math.max(0, normalTotal - bundlePrice);
     }
@@ -706,13 +744,16 @@
       els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
       els.sumDeposit.textContent = (subtotal>0) ? currency(deposit) : '—';
     }
-    async function recalcAll(){ toggleFields(); await recalc(); }
+    async function recalcAll(){ toggleFields(); syncPetsExact(); renderPetNameFields(getNumMascotas()); await recalc(); }
 
+    // Listeners
     ['change','input'].forEach(ev=>{
       ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel'].forEach(id=>{
         const el = byId(id); if(el) el.addEventListener(ev, recalcAll);
       });
     });
+    // Init
+    renderPetNameFields(1);
     recalcAll();
 
     // ---------- AUTOCOMPLETADO DE DIRECCIÓN (sugerencias OSM, editable)
@@ -725,7 +766,7 @@
     function renderAddrSuggestions(list){
       if(!els.addrSuggest) return;
       if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; return; }
-      els.addrSuggest.innerHTML = list.map((it,idx)=>(
+      els.addrSuggest.innerHTML = list.map((it)=>(
         `<div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
           ${it.display_name}
         </div>`
@@ -745,10 +786,8 @@
     const addressInputHandler = debounce(async ()=>{
       const q = (els.address?.value || '').trim();
       if(q.length < 4){ renderAddrSuggestions([]); return; }
-      try{
-        const results = await searchAddresses(q);
-        renderAddrSuggestions(results || []);
-      }catch(_){ renderAddrSuggestions([]); }
+      try{ renderAddrSuggestions(await searchAddresses(q) || []); }
+      catch(_){ renderAddrSuggestions([]); }
     }, 380);
     if(els.address){
       els.address.addEventListener('input', addressInputHandler);
@@ -775,16 +814,14 @@
             const svc = els.service?.value || '';
             const species = els.species?.value || 'perro';
             const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && species !== 'otros' && svc !== 'visitas';
-            if(els.isPuppy && puppyAllowed){
-              els.isPuppy.value = isP ? 'si' : 'no';
-            }
+            if(els.isPuppy && puppyAllowed){ els.isPuppy.value = isP ? 'si' : 'no'; }
             await recalc();
           }
         }
       }catch(_){}
     }
 
-    // ---------- Autorrelleno de contacto desde Firebase (editable)
+    // ---------- Autorrelleno de contacto + nombres de mascotas desde Firebase (editable)
     async function autoContactFromProfile(u){
       try{
         if(!u || typeof firebase === 'undefined') return;
@@ -795,14 +832,16 @@
         els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
         els.email.value     = d?.email || u.email || '';
         els.phone.value     = d?.telefono || u.phoneNumber || '';
-        // TPL: INICIO BLOQUE NUEVO [Dirección/CP/CCAA desde perfil si existen]
         if(d?.direccion) els.address.value = d.direccion;
         if(d?.cp)        els.postalCode.value = d.cp;
         if(d?.ccaa && els.region){
           const val = (''+d.ccaa).toLowerCase();
           if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
         }
-        // TPL: FIN BLOQUE NUEVO
+        // Mascotas (sugerencias)
+        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
+        PROFILE_PET_NAMES = petsSnap.docs.map(x=> (x.data()?.nombre || '').trim()).filter(Boolean);
+        fillPetDatalist();
       }catch(_){}
     }
 
@@ -825,13 +864,12 @@
       const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
       let petsVal = els.numPets?.value || '1';
       if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
+      updatePetsListHidden();
 
       const lines = [];
       lines.push(`Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`);
       lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
       lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      lines.push(`Dirección: ${els.address?.value || '-'}`);
-      lines.push(`CP: ${els.postalCode?.value || '-'}`);
       if(els.service?.value === 'visitas'){
         lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
       }else{
@@ -840,8 +878,13 @@
         lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
       }
       lines.push(`Nº mascotas: ${petsVal}`);
-      lines.push(`Desplazamiento: ${els.needTravel?.value || 'no'}`);
+      const petNames = els.petsListHidden.value || '';
+      if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
+      lines.push(`Dirección: ${els.address?.value || '-'}`);
+      lines.push(`CP: ${els.postalCode?.value || '-'}`);
       lines.push(`CCAA: ${regionText}`);
+      lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
+      if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
       lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
       lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
       if(els.service?.value === 'guarderia' && els.rowBono?.style.display !== 'none'){
@@ -863,6 +906,14 @@
       }
       auth.onAuthStateChanged(updateAuthUI);
     }
+
+    // Event hooks específicos
+    els.numPets && els.numPets.addEventListener('change', ()=>{ syncPetsExact(); renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
+    els.numPetsExact && els.numPetsExact.addEventListener('input', ()=>{ renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
+
+    // Desplazamiento
+    els.needTravel && els.needTravel.addEventListener('change', travelSync);
+    travelSync();
   });
   </script>
   <!-- ====== TPL: FIN BLOQUE NUEVO ====== -->
