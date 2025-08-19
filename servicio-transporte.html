@@ -1,41 +1,137 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Transporte de mascotas · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <meta name="description" content="Traslados seguros a clínica, peluquería o domicilio. Servicio base + km.">
-  <style>.page{padding-top:120px}.lead{color:#666}</style>
+  <style>
+    .page { padding-top: 120px; }
+    .page h1 { margin: 0 0 10px; }
+    .page p.lead { color:#666; margin:0 0 24px; }
+    .info-card ul { margin:0 0 10px 18px; }
+    .precio-ejemplo { font-weight:600; margin:6px 0; color:var(--color-texto); }
+  </style>
 </head>
 <body>
-  <div id="tpl-navbar"><noscript><!-- navbar fallback --><nav class="navbar"><div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div><a href="index.html" class="home-button">Inicio</a><ul class="nav-links"><li><a href="como-funciona.html">Cómo funciona</a></li><li><a href="servicios.html">Servicios</a></li><li><a href="index.html#contactanos">Contáctanos</a></li><li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li></ul><a class="login-button" href="#iniciar-sesion">Iniciar sesión</a></nav></noscript></div>
 
+  <!-- NAVBAR -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero-section" style="background-image:url('images/hero.jpg.png')">
+    <div class="hero-content">
+      <h1>Transporte de mascotas</h1>
+      <p>Traslados seguros, transparentes y con acompañamiento básico.</p>
+    </div>
+  </header>
+
+  <!-- CONTENIDO -->
   <main class="container page">
-    <h1>Transporte</h1>
-    <p class="lead">Traslados seguros y puntuales para tu mascota: a clínica, peluquería o donde necesites.</p>
+    <h1>Cómo funciona</h1>
+    <p class="lead">Ofrecemos transporte de mascotas con seguridad y comodidad. Ideal para traslados a clínica, peluquería u otros domicilios.</p>
 
-    <h3>Tarifas</h3>
-    <ul>
-      <li>Servicio base: <strong>20 €</strong> + kilometraje.</li>
-      <li>Km y tiempos de espera se calculan al confirmar la ruta.</li>
-      <li>Festivos según <a href="condiciones.html">condiciones</a>.</li>
-    </ul>
+    <div class="info-duo">
+      <div class="info-card">
+        <h4><i class="fa-solid fa-box-open"></i> Qué incluye</h4>
+        <ul>
+          <li>Recogida en domicilio y entrega en el destino.</li>
+          <li>Mínimo de desplazamiento: <strong>5 €</strong>.</li>
+          <li>Espera extra: <strong>5 € / 15 min</strong>.</li>
+          <li>Festivos o urgencias: <strong>+20% sobre el total</strong> (opcional).</li>
+          <li>Prestamos transportín/arnés si hace falta: <strong>3 €</strong> (opcional).</li>
+          <li>Seguridad: transportín, arnés o cinturón homologado.</li>
+          <li>Acompañamiento básico en la cita si es necesario.</li>
+        </ul>
+      </div>
 
-    <h3>Qué incluye</h3>
-    <ul>
-      <li>Vehículo adecuado y medidas de seguridad.</li>
-      <li>Comunicación al llegar a destino.</li>
-      <li>Opción de ida y vuelta.</li>
-    </ul>
+      <div class="info-card">
+        <h4><i class="fa-solid fa-euro-sign"></i> Precios</h4>
+        <ul>
+          <li><strong>Suplemento fijo:</strong> 20 € (gestión + recogida + acompañamiento básico).</li>
+          <li><strong>Desplazamiento:</strong> según tu tabla de tramos.</li>
+          <li><strong>Importe mínimo:</strong> X € (ajusta a tu realidad).</li>
+        </ul>
+        <p class="precio-ejemplo">Ejemplo 1: Clínica a 5 km (tramo 0–5 km = 5 €) → 20 € + 5 € = 25 €</p>
+        <p class="precio-ejemplo">Ejemplo 2: Peluquería a 12 km (tramo 11–15 km = 12 €) → 20 € + 12 € = 32 €</p>
+      </div>
+    </div>
 
-    <p><a href="reserva.html" class="service-cta">Solicitar transporte</a> <a href="servicios.html" class="ver-mas">Volver a servicios</a></p>
+    <div class="info-card" style="margin-top:20px">
+      <h4><i class="fa-solid fa-circle-info"></i> Condiciones y notas</h4>
+      <ul>
+        <li>Espera y acompañamiento hasta 30 min incluidos. Si se alarga, suplemento: Y €/15 min.</li>
+        <li>Traslados solo con transportín o arnés adecuado (posibilidad de alquiler).</li>
+        <li>Horarios según disponibilidad. Festivos/urgencias pueden llevar suplemento.</li>
+        <li>Paradas adicionales (recoger llaves, otro punto intermedio) pueden sumar tramo extra.</li>
+        <li>Recomendamos avisar si hay cámaras en el domicilio.</li>
+        <li><strong>Cancelaciones:</strong> sin coste hasta 24h antes del servicio; después, se aplica el fijo de 20 €.</li>
+      </ul>
+    </div>
+
+    <div class="cta-panel">
+      <h3>Reserva tu transporte</h3>
+      <p>Calcula tu precio final con el suplemento fijo y tu tramo de desplazamiento.</p>
+      <a href="reserva.html" class="cta-button">Reservar ahora</a>
+    </div>
   </main>
 
-  <div id="tpl-footer"><noscript><!-- footer fallback --></noscript></div>
+  <!-- FOOTER -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+            </nav>
+            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          </div>
+          <div class="footer-right socials">
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
 
-  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
+  <!-- Scripts -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 </body>
