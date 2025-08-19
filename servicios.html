@@ -68,13 +68,13 @@
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
 
-    /* ===== NUEVO DISEÑO: BLOQUE PRIMERA VISITA ===== */
+    /* ===== NUEVO DISEÑO: BLOQUE PRIMERA VISITA (fondo como tarjetas) ===== */
     .highlight-box {
-      background: #f4fdfd;
+      background: #fff; /* igual que las tarjetas */
       border: 2px solid var(--color-principal);
       border-radius: 12px;
       padding: 24px;
-      margin: 16px 0 28px; /* un poco más arriba y respiro abajo */
+      margin: 16px 0 28px; /* mantiene respiro sin pegarse */
       text-align: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
@@ -101,11 +101,14 @@
     .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
     .supp-actions .service-cta { margin-top:0; }
 
-    /* Centrado tarjeta de ayuda */
-    .service-card.help-card { justify-self:center; max-width: 420px; }
+    /* Centrado y descenso de la tarjeta de ayuda (≈2cm) */
+    .service-card.help-card { justify-self:center; max-width: 420px; margin-top: 2cm; }
 
-    /* Menos espacio antes del footer: ajustamos el margen del cierre */
-    .closing-subtitle { text-align:center; margin:22px 0 8px; }
+    /* Menos espacio antes del footer */
+    .closing-subtitle { text-align:center; margin:22px 0 0; }
+    /* Eliminar margen/padding inferior del bloque de servicios para pegar más el footer */
+    #lista-servicios { margin-bottom: 0; padding-bottom: 0; }
+    #lista-servicios .container { padding-bottom: 0; }
   </style>
 
   <!-- JSON-LD servicios (España) -->
@@ -224,7 +227,7 @@
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <!-- BLOQUE DESTACADO: Primera visita gratuita (nuevo diseño + nuevo copy) -->
+      <!-- BLOQUE DESTACADO: Primera visita gratuita (fondo menos contrastado) -->
       <div class="highlight-box" id="primera-visita-box">
         <h2>🎉 Primera visita gratuita</h2>
         <p>
@@ -398,7 +401,7 @@
           </details>
         </div>
 
-        <!-- ¿No sabes qué servicio elegir? (centrada) -->
+        <!-- ¿No sabes qué servicio elegir? (centrada y más abajo) -->
         <div class="service-card help-card">
           <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
           <h3>¿No sabes qué servicio elegir?</h3>
