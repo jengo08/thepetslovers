@@ -48,6 +48,10 @@
     .tpl-card{border:1px solid #eee;border-radius:12px;padding:14px;background:#fff}
     .tpl-card h4{margin:0 0 8px}
     .tpl-card ul{margin:8px 0 0 18px}
+
+    /* TPL: INICIO BLOQUE NUEVO [Centrar botón Saber más de Cancelaciones] */
+    .cancelaciones-btn{ text-align:center; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -154,9 +158,30 @@
       </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos y salud] -->
-    <div class="note alert" style="margin-top:14px">
-      <p><i class="fa-solid fa-file-shield"></i> <strong>Requisitos obligatorios:</strong> cartilla al día de <strong>vacunas y desparasitaciones</strong>, y <strong>seguro de responsabilidad civil</strong> vigente. Si tu mascota tiene <strong>patologías</strong> o necesita cuidados específicos, cuéntanoslo para adaptar el plan.</p>
+    <!-- TPL: INICIO BLOQUE NUEVO [Título sección requisitos+cancelaciones] -->
+    <h3 style="margin-top:18px">Requisitos y Cancelaciones</h3>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Requisitos + Cancelaciones (formato Transporte)] -->
+    <div class="tpl-cards-2" style="margin-top:14px">
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-file-shield"></i> Requisitos</h4>
+        <ul>
+          <li><strong>Cartilla al día</strong> de vacunas y desparasitaciones.</li>
+          <li><strong>Seguro de responsabilidad civil</strong> vigente.</li>
+        </ul>
+      </div>
+      <div class="tpl-card alert">
+        <h4><i class="fa-solid fa-ban"></i> Cancelaciones</h4>
+        <ul>
+          <li><strong>Sin coste</strong> hasta 48h antes del servicio.</li>
+          <li>Con <strong>menos de 48h</strong>: no se devuelve la reserva.</li>
+          <li>Con <strong>menos de 24h</strong>: se descuenta el <strong>50% del servicio</strong>.</li>
+        </ul>
+        <p class="cancelaciones-btn" style="margin-top:10px">
+          <a href="condiciones.html#cancelaciones" class="tpl-btn-sm" aria-label="Leer política de cancelaciones completa">Saber más</a>
+        </p>
+      </div>
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
