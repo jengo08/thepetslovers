@@ -10,20 +10,20 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page servicios (España) reforzado] -->
-  <meta name="description" content="Servicios en toda España: visitas a domicilio para gatos, paseos, guardería de día, alojamiento nocturno, transporte, bodas desde 150 €, postquirúrgico y exóticos (pájaros, reptiles y pequeños mamíferos). Auxiliares veterinarios titulados.">
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO reforzado] -->
+  <meta name="description" content="Servicios en toda España: visitas a domicilio para gatos, paseos, guardería de día, estancias nocturnas, transporte, bodas con mascotas (desde 150 €), postquirúrgico y exóticos (aves, reptiles y pequeños mamíferos). Auxiliares veterinarios titulados.">
   <meta property="og:title" content="Servicios | The Pets Lovers">
-  <meta property="og:description" content="Visitas a domicilio, paseos, guardería, estancias, transporte, bodas desde 150 €, postquirúrgico y exóticos. Equipo de auxiliares veterinarios titulados en toda España.">
+  <meta property="og:description" content="Visitas a domicilio, paseos, guardería de día, estancias, transporte, bodas desde 150 €, postquirúrgico y exóticos. Equipo de auxiliares veterinarios titulados.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.thepetslovers.es/servicios.html">
   <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Servicios | The Pets Lovers">
-  <meta name="twitter:description" content="Cuidado profesional de mascotas: bodas desde 150 €, postquirúrgico y exóticos (pájaros, reptiles, pequeños mamíferos).">
+  <meta name="twitter:description" content="Cuidado profesional de mascotas en toda España.">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Estilos mínimos SOLO para esta página (tal cual tu diseño) -->
   <style>
+    /* Manteniendo tu estética base */
     .hero-section.hero-servicios {
       background-image: url('images/hero.jpg.png');
       background-position: center top;
@@ -32,27 +32,14 @@
       height: 45vh;
       min-height: 340px;
     }
-    @media (max-width: 768px) {
-      .hero-section.hero-servicios { height: 42vh; min-height: 300px; background-position: center 15%; }
-    }
-    .services-section .service-icon i { color: #58425a; }
+    @media (max-width: 768px) { .hero-section.hero-servicios { height: 42vh; min-height: 300px; background-position: center 15%; } }
 
-    /* === OVERRIDE LOCAL: grid para permitir la tarjeta doble === */
-    .services-section .services-grid {
-      display: grid;
-      gap: 20px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 900px) {
-      .services-section .services-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
+    .services-section .service-icon i { color: #58425a; }
+    .services-section .services-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .services-section .services-grid { grid-template-columns: repeat(3, 1fr); } }
 
     .service-details summary {
-      list-style: none;
-      cursor: pointer;
-      font-weight: 700;
+      list-style: none; cursor: pointer; font-weight: 700;
       display: flex; align-items: center; gap: 8px;
       padding: 10px 12px; border: 1px solid #eee; border-radius: 8px;
       background: #fff; color: var(--color-texto); user-select: none; margin-top: 8px;
@@ -63,22 +50,43 @@
     .service-details .content { padding: 12px 8px 6px; text-align: left; }
     .service-details .content ul { margin: 0 0 8px 18px; }
     .service-details .precio { margin: 6px 0 10px; font-weight: 600; color: var(--color-texto); }
-    .service-cta, .ver-mas {
-      display: inline-block; padding: 10px 14px; border-radius: 6px;
-      text-decoration: none; font-weight: 700; margin-right: 8px; margin-top: 4px;
-    }
-    .service-cta { background: var(--color-principal); color: #fff; }
-    .service-cta:hover { background:#2a7e80; }
-    .ver-mas { border: 2px solid var(--color-principal); color: var(--color-principal); }
-    .ver-mas:hover { background: var(--color-principal); color:#fff; }
 
-    /* Tabla simple (para visitas) */
+    .service-cta{
+      display:inline-block; padding:10px 14px; border-radius:6px;
+      text-decoration:none; font-weight:700; margin-top:6px;
+      background:var(--color-principal); color:#fff;
+    }
+    .service-cta:hover{ background:#2a7e80; }
+
     table { width:100%; border-collapse: collapse; margin: 6px 0 10px; }
     th, td { border:1px solid #eee; padding:8px; text-align:center; }
     thead th { background:#fafafa; }
+
+    /* TPL: INICIO BLOQUE NUEVO [Estilos highlight + ayuda + suplementos ya existentes] */
+    .highlight-box {
+      background: #eaf6f6; border: 2px solid var(--color-principal);
+      border-radius: 12px; padding: 24px; margin: 16px 0 28px; text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .highlight-box h2 { margin: 0 0 10px; font-size: 1.6rem; color: var(--color-principal); }
+    .highlight-box p { margin: 0; font-size: 1.05rem; color: var(--color-texto); }
+    .service-cta-secondary { background:#58425a; color:#fff; }
+    .service-cta-secondary:hover { background:#403244; }
+
+    .supp-side { border:0; padding:0; }
+    .supp-side .supp-grid { display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media (min-width: 900px){ .supp-side { grid-column: span 2; } }
+    .supp-card { border:1px solid #eee; border-radius:12px; padding:14px; background:#fff; text-align:left; }
+    .supp-card h4 { margin: 0 0 8px; display:flex; gap:8px; align-items:center; color: var(--color-texto); }
+    .supp-card ul { margin:8px 0 0 18px; }
+    .supp-actions { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+    .supp-actions .service-cta { margin-top:0; }
+    .service-card.help-card { justify-self:center; max-width: 420px; }
+    .closing-subtitle { text-align:center; margin:40px 0 16px; font-size:1.05rem; line-height:1.6; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD servicios (España) actualizado] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD actualizado con Bodas y Exóticos] -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -98,8 +106,8 @@
         "offers": [
           {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
           {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (opcional, aparte)", "price": "17", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (desde día 11)", "price": "14", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name": "2ª visita solo medicación (~20 min)", "price": "12", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name": "2ª visita (≥ día 11)", "price": "10", "priceCurrency": "EUR"}
         ]
       },
       {
@@ -116,47 +124,35 @@
         "name": "Guardería de día",
         "areaServed": "España",
         "offers": [
-          {"@type": "Offer", "name":"Jornada día (hasta 8h)", "price": "20", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name":"Tarifa diaria (hasta 8h)", "price": "15", "priceCurrency": "EUR"},
+          {"@type": "Offer", "name":"Bonos (desde)", "price": "135", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "20", "priceCurrency": "EUR"}
         ]
       },
       {
         "@type": "Service",
-        "name": "Alojamiento nocturno",
+        "name": "Estancias nocturnas",
         "areaServed": "España",
         "offers": [
           {"@type": "Offer", "name":"Día completo", "price": "30", "priceCurrency": "EUR"},
           {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "35", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Recogida después de 14:00 (suplemento)", "price": "15", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Estancias largas (desde día 11)", "price": "27", "priceCurrency": "EUR"}
+          {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "28", "priceCurrency": "EUR"}
         ]
       },
-      {
-        "@type": "Service",
-        "name": "Transporte",
-        "areaServed": "España",
+      { "@type": "Service", "name": "Transporte", "areaServed": "España",
         "offers": [{"@type": "Offer", "name":"Servicio base + km", "price": "20", "priceCurrency": "EUR"}]
       },
-      {
-        "@type": "Service",
-        "name": "Bodas",
-        "areaServed": "España",
-        "offers": [{"@type": "Offer", "name":"Pack desde", "price": "150", "priceCurrency": "EUR"}]
+      { "@type": "Service", "name": "Bodas", "areaServed": "España",
+        "offers": [{"@type": "Offer", "name":"Pack básico (desde)", "price": "150", "priceCurrency": "EUR"}]
       },
-      {
-        "@type": "Service",
-        "name": "Postquirúrgico",
-        "areaServed": "España",
+      { "@type": "Service", "name": "Postquirúrgico", "areaServed": "España",
         "offers": [{"@type": "Offer", "name":"Precio a consultar", "price": "0", "priceCurrency": "EUR"}]
       },
-      {
-        "@type": "Service",
-        "name": "Exóticos",
-        "areaServed": "España",
+      { "@type": "Service", "name": "Exóticos", "areaServed": "España",
         "offers": [
-          {"@type":"Offer","name":"Visita a domicilio · Pájaros","price":"20","priceCurrency":"EUR"},
-          {"@type":"Offer","name":"Visita a domicilio · Reptiles","price":"15","priceCurrency":"EUR"},
-          {"@type":"Offer","name":"Estancia en casa del cuidador · Pequeños mamíferos","price":"25","priceCurrency":"EUR"}
+          {"@type":"Offer","name":"Visita aves (pájaros)","price":"20","priceCurrency":"EUR"},
+          {"@type":"Offer","name":"Visita reptiles","price":"15","priceCurrency":"EUR"},
+          {"@type":"Offer","name":"Pequeños mamíferos — estancia en casa del cuidador (por día)","price":"25","priceCurrency":"EUR"}
         ]
       }
     ]
@@ -166,41 +162,52 @@
 </head>
 <body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="logo">
-      <a href="index.html">
-        <img src="images/logo.png.png" alt="The Pets Lovers Logo">
-      </a>
-    </div>
-    <a href="index.html" class="home-button">Inicio</a>
-    <ul class="nav-links">
-      <li><a href="como-funciona.html">Cómo funciona</a></li>
-      <li><a href="servicios.html">Servicios</a></li>
-      <li><a href="index.html#contactanos">Contáctanos</a></li>
-      <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-    </ul>
-    <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
-  </nav>
+  <!-- Navbar (inyectada con fallback) -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html" aria-current="page">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
 
   <!-- HERO -->
   <header class="hero-section hero-servicios">
     <div class="hero-content">
       <h1>Servicios</h1>
       <p>Elige el cuidado perfecto para tu mascota: cómodo, seguro y a tu medida.</p>
-      <!-- Botón "Ver servicios" eliminado a petición -->
     </div>
   </header>
 
-  <!-- LISTA DE SERVICIOS -->
+  <!-- SERVICIOS -->
   <section id="lista-servicios" class="services-section">
     <div class="container">
       <h2>Nuestros Servicios</h2>
       <p class="subtitle">Cuidamos de tu mascota como si fuera nuestra. Explora todas las opciones y descubre cómo adaptamos cada servicio a sus necesidades, con atención profesional y personalizada.</p>
 
-      <div class="services-grid">
-        <!-- ===== Fila 1: Guardería | Visitas (ancha) | Alojamiento ===== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Primera visita gratuita] -->
+      <div class="highlight-box" id="primera-visita-box">
+        <h2><i class="fa-solid fa-paw"></i> Primera visita gratuita</h2>
+        <p>
+          Tras crear tu reserva, concertamos una visita en tu domicilio para conocernos, comentar <strong>rutinas</strong>,
+          <strong>dónde están las cosas</strong> y coordinar la <strong>entrega de llaves</strong>. Así tu mascota nos reconoce y todo
+          queda claro desde el principio.
+        </p>
+        <a href="como-funciona.html#como-funciona-detallada" class="service-cta service-cta-secondary">Saber más</a>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
+      <div class="services-grid">
         <!-- Guardería de día -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-sun"></i></div>
@@ -210,13 +217,13 @@
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <ul>
-                <li><strong>Duración:</strong> 8 horas.</li>
-                <li><strong>Precio:</strong> 20 €.</li>
-                <li><strong>Cachorros (≤ 6 meses):</strong> 20 €.</li>
+                <li><strong>Duración:</strong> hasta 8 horas.</li>
+                <li><strong>Tarifa diaria:</strong> <strong>15 €</strong>.</li>
+                <li><strong>Bonos:</strong> desde <strong>135 €</strong>.</li>
+                <li><strong>Cachorros (≤ 6 meses):</strong> <strong>20 €</strong>.</li>
               </ul>
               <p class="precio">Antes de reservar, te recomendamos leer los detalles para ver qué incluye.</p>
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-guarderia.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-guarderia.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
@@ -229,7 +236,6 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-
               <table>
                 <thead>
                   <tr>
@@ -247,9 +253,10 @@
                 </tbody>
               </table>
 
-              <ul>
-                <li><strong>Medicación (solo medicación, visita breve):</strong> 17 € <small>(desde el día 11: 14 €)</small>. <em>Este extra es aparte; no está ligado a 60/90 min.</em></li>
-              </ul>
+              <div class="precio">
+                <strong>2ª visita del día (solo medicación, aprox. 20 min):</strong>
+                12 € <small>(desde el día 11: 10 €)</small>.
+              </div>
 
               <ul>
                 <li><strong>Suplementos por nº de gatos:</strong></li>
@@ -258,18 +265,17 @@
                 <li>+ de 3 gatos: <strong>6 €</strong> <small>cada uno</small></li>
               </ul>
 
-              <p class="precio">Calcula tu precio final: <strong>tarifa base</strong> (60 o 90 min) + suplementos por nº de gatos + (opcional) medicación.</p>
+              <p class="precio">El precio final se calcula en la reserva: base (60 o 90) + 2ª visita (si procede) + nº de gatos.</p>
 
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-visitas.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-visitas.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
 
-        <!-- Alojamiento nocturno (por día) -->
+        <!-- Estancias nocturnas -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-moon"></i></div>
-          <h3>Alojamiento nocturno</h3>
+          <h3>Estancias nocturnas</h3>
           <p>Como en familia: día y noche con un cuidador.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
@@ -277,17 +283,13 @@
               <ul>
                 <li><strong>Precio:</strong> 30 € por día.</li>
                 <li><strong>Cachorros (≤ 6 meses):</strong> 35 €.</li>
-                <li><strong>Recogida después de las 14:00 h:</strong> suplemento de <strong>15 €</strong>.</li>
-                <li><em>Estancias largas:</em> desde el día 11 → <strong>27 €</strong>/día.</li>
+                <li><em>Estancias largas:</em> desde el día 11 → <strong>28 €</strong>/día.</li>
               </ul>
               <p class="precio">Antes de reservar, echa un vistazo a los detalles y condiciones.</p>
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-estancias.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-estancias.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
-
-        <!-- ===== Fila 2 ===== -->
 
         <!-- Paseos -->
         <div class="service-card">
@@ -302,8 +304,7 @@
                 <li><strong>2ª mascota:</strong> +8 €.</li>
               </ul>
               <p class="precio">Consulta los detalles para ver cómo organizamos la ruta y los tiempos.</p>
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-paseos.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-paseos.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
@@ -321,13 +322,12 @@
                 <li>Se calcula según distancia y tiempos de espera.</li>
               </ul>
               <p class="precio">Lee los detalles para saber qué incluye y cómo calculamos la distancia.</p>
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-transporte.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-transporte.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
 
-        <!-- Bodas (actualizado) -->
+        <!-- Bodas -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-champagne-glasses"></i></div>
           <h3>Bodas</h3>
@@ -335,50 +335,47 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-              <!-- TPL: INICIO BLOQUE NUEVO [Bodas: desde 150 € + opcional peluquería] -->
+              <!-- TPL: INICIO BLOQUE NUEVO [Bodas desde 150 € + opcionales] -->
               <ul>
                 <li>Presencia en <strong>ceremonia</strong>, <strong>reportaje</strong> y <strong>celebración</strong>.</li>
                 <li><strong>Coordinación</strong> con fotógrafos/maître para entradas y momentos clave.</li>
                 <li><strong>Logística</strong> y cuidado continuo (agua, paseos, descansos, premios).</li>
-                <li><em>Opcional:</em> <strong>peluquería canina</strong> el mismo día: lo llevamos y lo dejamos listo y guapo.</li>
+                <li><em>Opcional:</em> <strong>peluquería canina</strong> el mismo día (lo llevamos y lo dejamos listo y guapo).</li>
                 <li><em>Opcional:</em> <strong>cuidados en casa del cuidador</strong> antes/después del evento.</li>
               </ul>
               <p class="precio">Precio: <strong>desde 150 €</strong> (según horas, desplazamientos y extras).</p>
               <!-- TPL: FIN BLOQUE NUEVO -->
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-bodas.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-bodas.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
 
-        <!-- Postoperatorio (actualizado) -->
+        <!-- Postquirúrgico -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-briefcase-medical"></i></div>
-          <h3>Postoperatorio</h3>
+          <h3>Postquirúrgico</h3>
           <p>Curar, medicar y vigilar con profesionales.</p>
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
               <!-- TPL: INICIO BLOQUE NUEVO [Postquirúrgico detallado] -->
               <ul>
-                <li><strong>Vigilancia</strong> y confort postanestesia, control del dolor.</li>
-                <li><strong>Administración de medicación</strong> oral/inyectable según pauta.</li>
+                <li><strong>Vigilancia</strong> y confort postanestesia; control del dolor.</li>
+                <li><strong>Administración de medicación</strong> (oral/inyectable) según pauta.</li>
                 <li><strong>Curas</strong> de herida, revisión de puntos y collar isabelino.</li>
                 <li><strong>Vendajes</strong> básicos y control de sangrado/edema.</li>
-                <li><strong>Toma de constantes</strong> (TRC, T°, apetito, hidratación) y registro.</li>
+                <li><strong>Toma de constantes</strong> y registro (T°, apetito, hidratación…).</li>
                 <li><strong>Comunicación</strong> con tu clínica ante cualquier incidencia.</li>
                 <li><em>Opcional:</em> traslado a revisiones o curas en clínica.</li>
               </ul>
               <p class="precio">Precio: <strong>a consultar</strong> según pauta veterinaria, horas y necesidades.</p>
               <!-- TPL: FIN BLOQUE NUEVO -->
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-postquirurgico.html" class="ver-mas">Leer detalles del servicio</a>
+              <a href="servicio-postquirurgico.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
         </div>
 
-        <!-- Exóticos (NUEVO) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Tarjeta Exóticos con precios por especie] -->
+        <!-- Exóticos (con precios por especie) -->
         <div class="service-card">
           <div class="service-icon"><i class="fa-solid fa-dove"></i></div>
           <h3>Exóticos</h3>
@@ -386,53 +383,33 @@
           <details class="service-details" data-hover>
             <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles y precio</summary>
             <div class="content">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Servicio</th>
-                    <th>Especie</th>
-                    <th>Precio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>Visita a domicilio</td><td><strong>Pájaros</strong></td><td><strong>20 €</strong></td></tr>
-                  <tr><td>Visita a domicilio</td><td><strong>Reptiles</strong></td><td><strong>15 €</strong></td></tr>
-                  <tr><td>Estancia en casa del cuidador</td><td><strong>Pequeños mamíferos</strong></td><td><strong>25 €</strong></td></tr>
-                </tbody>
-              </table>
-              <p class="precio">Confírmamos disponibilidad según zona y especie.</p>
-              <a href="reserva.html" class="service-cta">Reservar ahora</a>
-              <a href="servicio-exoticos.html" class="ver-mas">Leer detalles del servicio</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [Exóticos por especie] -->
+              <ul>
+                <li><strong>Visita aves (pájaros):</strong> <strong>20 €</strong></li>
+                <li><strong>Visita reptiles:</strong> <strong>15 €</strong></li>
+                <li><strong>Pequeños mamíferos — estancia en casa del cuidador (por día):</strong> <strong>25 €</strong></li>
+              </ul>
+              <!-- TPL: FIN BLOQUE NUEVO -->
+              <a href="servicio-exoticos.html" class="service-cta">Haz tu reserva</a>
             </div>
           </details>
+        </div>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Tarjeta de ayuda centrada] -->
+        <div class="service-card help-card">
+          <div class="service-icon"><i class="fa-solid fa-circle-question"></i></div>
+          <h3>¿No sabes qué servicio elegir?</h3>
+          <p>Estamos aquí para ayudarte a encontrar la mejor opción para tu mascota.</p>
+          <a href="ayuda.html" class="service-cta">Contacta con nosotros</a>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- Festivos -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-calendar-day"></i></div>
-          <h3>Festivos</h3>
-          <p>Suplementos por fecha especial.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
-              <ul>
-                <li><strong>Festivos:</strong> +10 €</li>
-                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
-              </ul>
-              <a href="condiciones.html" class="ver-mas">Leer detalles del servicio</a>
-            </div>
-          </details>
-        </div>
-
-        <!-- Desplazamientos (kilometraje tarifado) -->
-        <div class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-route"></i></div>
-          <h3>Desplazamientos</h3>
-          <p>Kilometraje adicional cuando el cuidador se moviliza.</p>
-          <details class="service-details" data-hover>
-            <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> Ver detalles</summary>
-            <div class="content">
+        <!-- Suplementos a la derecha (2 tarjetas blancas) -->
+        <div class="supp-side" style="grid-column: span 2;">
+          <div class="supp-grid">
+            <!-- Desplazamientos -->
+            <article class="supp-card">
+              <h4><i class="fa-solid fa-route"></i> Desplazamientos</h4>
               <ul>
                 <li>2–10 km → <strong>6 €</strong></li>
                 <li>10–25 km → <strong>10 €</strong></li>
@@ -440,54 +417,83 @@
                 <li>+40 km → <strong>20 €</strong></li>
               </ul>
               <p class="precio">Se aplica aparte en <u>todos los servicios</u> que requieran desplazamiento.</p>
-              <a href="condiciones.html" class="ver-mas">Leer detalles del servicio</a>
-            </div>
-          </details>
+              <div class="supp-actions">
+                <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de desplazamientos">Ver condiciones</a>
+              </div>
+            </article>
+            <!-- Festivos -->
+            <article class="supp-card">
+              <h4><i class="fa-solid fa-calendar-day"></i> Festivos</h4>
+              <ul>
+                <li><strong>Festivos:</strong> +10 €</li>
+                <li><strong>Días señalados</strong> (Navidad, Nochevieja…): +30 €</li>
+              </ul>
+              <div class="supp-actions">
+                <a href="condiciones.html#suplementos" class="service-cta" aria-label="Ver condiciones de festivos">Ver condiciones</a>
+              </div>
+            </article>
+          </div>
         </div>
 
       </div>
+
+      <p class="subtitle closing-subtitle">
+        Atención realizada por <strong>profesionales del sector veterinario titulados</strong>.<br>
+        Nos adaptamos a la rutina y necesidades de cada mascota.
+      </p>
+
     </div>
   </section>
 
-  <!-- FOOTER -->
-  <footer class="site-footer">
-    <div class="container footer-row">
-      <nav class="footer-links-row">
-        <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-        <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-        <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-        <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-        <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-        <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-        <a href="digital-services-act.html">Digital Services Act</a>
-        <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
-      </nav>
-
-      <div class="footer-right socials">
-        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-      </div>
-    </div>
-
-    <div class="footer-bottom footer-bottom--inline">
-      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-      <nav class="footer-bottom-right legal-links">
-        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-        <a href="cookies.html">Cookies</a><span class="sep">|</span>
-        <a href="canal-denuncias.html">Canal de denuncias</a>
-      </nav>
-    </div>
-  </footer>
+  <!-- Footer (inyectado con fallback) -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+            </nav>
+            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          </div>
+          <div class="footer-right socials">
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
 
   <script>
+    // Año en footer
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+    // Abrir/cerrar detalles al pasar el ratón (hover)
     document.querySelectorAll('details[data-hover]').forEach(d => {
       d.addEventListener('mouseenter', () => d.setAttribute('open',''));
       d.addEventListener('mouseleave', () => d.removeAttribute('open'));
     });
   </script>
+
+  <!-- Inyectores -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
 </body>
 </html>
