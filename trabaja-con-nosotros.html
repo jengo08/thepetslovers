@@ -1,25 +1,274 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trabaja con nosotros · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <style>.page{padding-top:120px}.page h1{margin:0 0 10px}.page p.lead{color:#666;margin:0 0 24px}</style>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page mínimo] -->
+  <meta name="description" content="Únete a The Pets Lovers. Buscamos auxiliares de veterinaria y veterinarios/as titulados con disponibilidad y pasión por los animales.">
+  <meta property="og:title" content="Trabaja con nosotros · The Pets Lovers">
+  <meta property="og:description" content="Auxiliares y veterinarios/as titulados. Cuida mascotas con un equipo profesional y con vocación.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.thepetslovers.es/trabaja-con-nosotros.html">
+  <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos del hero] -->
+  <style>
+    .hero-section.hero-trabaja{
+      background-image: url('images/hero.jpg.png');
+      background-position: center top;
+      background-repeat: no-repeat;
+      background-size: cover;
+      height: 42vh; min-height: 320px;
+    }
+    @media (max-width: 768px){ .hero-section.hero-trabaja{ height: 40vh; min-height: 280px; background-position: center 15%; } }
+
+    .apply-cta{
+      display:inline-block; padding:12px 18px; border-radius:8px;
+      background: var(--color-principal); color:#fff; font-weight:700; text-decoration:none;
+    }
+    .apply-cta:hover{ background:#2a7e80; }
+
+    .tpl-badges{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }
+    .tpl-badge{ background:#eaf6f6; border:1px solid var(--color-principal); color:var(--color-texto);
+      padding:6px 10px; border-radius:999px; font-size:.9rem; }
+
+    .tpl-grid-3{ display:grid; gap:20px; grid-template-columns:1fr; }
+    @media (min-width:900px){ .tpl-grid-3{ grid-template-columns: repeat(3,1fr); } }
+
+    .tpl-card{
+      background:#fff; border:1px solid #eee; border-radius:12px; padding:16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .tpl-card h3{ margin-top:0; }
+    .tpl-list{ margin:8px 0 0 18px; }
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [JobPosting JSON-LD opcional: 2 perfiles] -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@graph":[
+      {
+        "@type":"JobPosting",
+        "title":"Auxiliar de Veterinaria (colaborador/a)",
+        "description":"Únete a The Pets Lovers como auxiliar de veterinaria titulado/a. Cuidado profesional (visitas, paseos, guardería, estancias, bodas, postquirúrgico) con un equipo acreditado.",
+        "employmentType":"CONTRACTOR",
+        "hiringOrganization":{
+          "@type":"Organization",
+          "name":"The Pets Lovers",
+          "sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/",
+          "logo":"https://www.thepetslovers.es/images/logo.png.png"
+        },
+        "applicantLocationRequirements": { "@type":"Country", "name":"España" },
+        "datePosted":"2025-09-01",
+        "validThrough":"2026-09-01",
+        "industry":"Cuidado de mascotas",
+        "qualifications":"Título formativo de Auxiliar de Veterinaria.",
+        "skills":"Manejo y bienestar animal, comunicación con clientes, responsabilidad.",
+        "incentiveCompensation":"Por servicio.",
+        "jobLocationType":"TELECOMMUTE",
+        "directApply": false
+      },
+      {
+        "@type":"JobPosting",
+        "title":"Veterinario/a (colaborador/a)",
+        "description":"Colabora con The Pets Lovers como veterinario/a para servicios especializados y coordinación clínica cuando sea necesario. Perfil con vocación y enfoque de bienestar.",
+        "employmentType":"CONTRACTOR",
+        "hiringOrganization":{
+          "@type":"Organization",
+          "name":"The Pets Lovers",
+          "sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/",
+          "logo":"https://www.thepetslovers.es/images/logo.png.png"
+        },
+        "applicantLocationRequirements": { "@type":"Country", "name":"España" },
+        "datePosted":"2025-09-01",
+        "validThrough":"2026-09-01",
+        "industry":"Cuidado de mascotas",
+        "qualifications":"Grado/Licenciatura en Veterinaria (colegiación valorable).",
+        "skills":"Comunicación con clientes, trato con animales, responsabilidad.",
+        "incentiveCompensation":"Por servicio.",
+        "jobLocationType":"TELECOMMUTE",
+        "directApply": false
+      }
+    ]
+  }
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
+  <!-- Navbar (inyectada con fallback) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
-        <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
         <a href="index.html" class="home-button">Inicio</a>
         <ul class="nav-links">
           <li><a href="como-funciona.html">Cómo funciona</a></li>
           <li><a href="servicios.html">Servicios</a></li>
           <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+          <li><a href="trabaja-con-nosotros.html" aria-current="page">Conviértete en cuidador</a></li>
         </ul>
         <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+
+  <!-- HERO -->
+  <header class="hero-section hero-trabaja">
+    <div class="hero-content">
+      <h1>Trabaja con nosotros</h1>
+      <p>Buscamos <strong>Auxiliares de Veterinaria y Veterinarios/as titulados</strong> que amen a los animales.</p>
+    </div>
+  </header>
+
+  <!-- CONTENIDO -->
+  <section class="services-section">
+    <div class="container">
+      <!-- Intro -->
+      <h2>Conviértete en cuidador/a profesional</h2>
+      <p class="subtitle">
+        Únete a una red de <strong>profesionales del sector veterinario</strong> que ofrecen cuidados en casa, paseos,
+        guardería de día, estancias, apoyo en bodas y servicios postquirúrgicos.
+      </p>
+
+      <!-- Grid 3 columnas -->
+      <div class="tpl-grid-3">
+        <!-- Requisitos -->
+        <article class="tpl-card">
+          <h3><i class="fa-solid fa-list-check"></i> Requisitos</h3>
+          <ul class="tpl-list">
+            <li><strong>Titulación:</strong> Auxiliar de Veterinaria <em>o</em> Grado/Licenciatura en Veterinaria.</li>
+            <li><strong>Disponibilidad</strong> para cuidar animales (horarios flexibles según servicio).</li>
+            <li><strong>Vocación y amor</strong> por los animales; trato excelente con familias.</li>
+          </ul>
+          <div class="tpl-badges">
+            <span class="tpl-badge">Auxiliar</span>
+            <span class="tpl-badge">Veterinario/a</span>
+            <span class="tpl-badge">España</span>
+          </div>
+        </article>
+
+        <!-- Qué ofrecemos -->
+        <article class="tpl-card">
+          <h3><i class="fa-solid fa-gift"></i> Qué ofrecemos</h3>
+          <ul class="tpl-list">
+            <li>Ingresos por servicio y agenda flexible.</li>
+            <li>Soporte de marca y materiales (plantillas, pautas, buenas prácticas).</li>
+            <li>Comunidad de profesionales y derivación de casos.</li>
+          </ul>
+        </article>
+
+        <!-- Proceso -->
+        <article class="tpl-card">
+          <h3><i class="fa-solid fa-flag-checkered"></i> Proceso</h3>
+          <ul class="tpl-list">
+            <li>1) Rellena el cuestionario.</li>
+            <li>2) Revisión de perfil y validación de titulación.</li>
+            <li>3) Onboarding y primeras reservas.</li>
+          </ul>
+        </article>
+      </div>
+
+      <!-- CTA principal -->
+      <div style="text-align:center; margin-top:22px;">
+        <!-- TPL: INICIO BLOQUE NUEVO [CTA Cuestionario] -->
+        <a href="cuestionario-candidatos.html" class="apply-cta" aria-label="Rellenar cuestionario de candidatura">
+          <i class="fa-solid fa-pen-to-square"></i> Rellenar cuestionario
+        </a>
+        <p style="margin:10px 0 0; color:var(--color-texto); font-size:.95rem;">
+          Cuando tengas tu formulario (Google Forms u otro), sustituye este enlace.
+        </p>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+      </div>
+
+      <!-- FAQ breve -->
+      <div class="tpl-card" style="margin-top:22px;">
+        <h3><i class="fa-solid fa-circle-question"></i> Preguntas frecuentes</h3>
+        <details class="service-details" style="margin-top:8px;">
+          <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> ¿Puedo aplicar si solo soy Auxiliar?</summary>
+          <div class="content">
+            Sí. Buscamos <strong>auxiliares veterinarios titulados</strong> y también <strong>veterinarios/as</strong>. Ambos perfiles son bienvenidos.
+          </div>
+        </details>
+        <details class="service-details">
+          <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> ¿Cómo se organizan los servicios?</summary>
+          <div class="content">
+            Según tu disponibilidad: visitas a domicilio, paseos, guardería de día, estancias, bodas y apoyo postquirúrgico.
+          </div>
+        </details>
+        <details class="service-details">
+          <summary><span class="chev"><i class="fa-solid fa-angle-right"></i></span> ¿Qué documentación necesito?</summary>
+          <div class="content">
+            Identificación, <strong>titulación</strong> (Auxiliar o Veterinaria/o), y datos básicos para alta como colaborador/a.
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Footer (inyectado con fallback) -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+            </nav>
+            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          </div>
+          <div class="footer-right socials">
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
+
+  <script>
+    // Año en footer
+    document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+    // UX de summary (mismo patrón que servicios)
+    document.querySelectorAll('details.service-details').forEach(d => {
+      d.addEventListener('mouseenter', () => d.setAttribute('open',''));
+      d.addEventListener('mouseleave', () => d.removeAttribute('open'));
+    });
+  </script>
+
+  <!-- Inyectores -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+</body>
+</html>
