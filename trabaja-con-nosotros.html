@@ -11,16 +11,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
   <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page mínimo] -->
-  <meta name="description" content="Únete a The Pets Lovers. Buscamos auxiliares de veterinaria y veterinarios/as titulados con disponibilidad y pasión por los animales.">
+  <meta name="description" content="Únete a The Pets Lovers. Buscamos auxiliares de veterinaria y veterinarios/as titulados con disponibilidad, actitud y muchas ganas de trabajar.">
   <meta property="og:title" content="Trabaja con nosotros · The Pets Lovers">
-  <meta property="og:description" content="Auxiliares y veterinarios/as titulados. Cuida mascotas con un equipo profesional y con vocación.">
+  <meta property="og:description" content="Auxiliares y veterinarios/as titulados. Cuidado profesional con vocación, actitud y amor por los animales.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.thepetslovers.es/trabaja-con-nosotros.html">
   <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
   <meta name="twitter:card" content="summary_large_image">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos del hero] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos del hero + mejoras visuales] -->
   <style>
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
@@ -31,16 +31,14 @@
     }
     @media (max-width: 768px){ .hero-section.hero-trabaja{ height: 40vh; min-height: 280px; background-position: center 15%; } }
 
+    /* CTA principal */
     .apply-cta{
       display:inline-block; padding:12px 18px; border-radius:8px;
       background: var(--color-principal); color:#fff; font-weight:700; text-decoration:none;
     }
     .apply-cta:hover{ background:#2a7e80; }
 
-    .tpl-badges{ display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 0; }
-    .tpl-badge{ background:#eaf6f6; border:1px solid var(--color-principal); color:var(--color-texto);
-      padding:6px 10px; border-radius:999px; font-size:.9rem; }
-
+    /* Tarjetas y grid (match con tu estética) */
     .tpl-grid-3{ display:grid; gap:20px; grid-template-columns:1fr; }
     @media (min-width:900px){ .tpl-grid-3{ grid-template-columns: repeat(3,1fr); } }
 
@@ -49,7 +47,31 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
     .tpl-card h3{ margin-top:0; }
+
     .tpl-list{ margin:8px 0 0 18px; }
+
+    /* TPL: INICIO BLOQUE NUEVO [Timeline de pasos + “Qué buscamos” más vistoso] */
+    .tpl-timeline{ position:relative; padding-left:26px; margin:10px 0 0; }
+    .tpl-timeline::before{
+      content:""; position:absolute; left:10px; top:2px; bottom:2px; width:2px; background:#e6eeee;
+    }
+    .tpl-step{ position:relative; margin:0 0 12px 0; }
+    .tpl-step::before{
+      content:""; position:absolute; left:-18px; top:2px; width:12px; height:12px; border-radius:50%;
+      background:#339496; box-shadow:0 0 0 3px #eaf6f6;
+    }
+
+    .tpl-chip{
+      display:inline-flex; align-items:center; gap:6px;
+      background:#eaf6f6; border:1px solid var(--color-principal); border-radius:999px;
+      padding:6px 10px; font-size:.9rem; color:var(--color-texto);
+    }
+
+    .tpl-emph{
+      background:#eaf6f6; border-left:4px solid var(--color-principal);
+      padding:10px 12px; border-radius:8px; margin-top:10px;
+    }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -61,7 +83,7 @@
       {
         "@type":"JobPosting",
         "title":"Auxiliar de Veterinaria (colaborador/a)",
-        "description":"Únete a The Pets Lovers como auxiliar de veterinaria titulado/a. Cuidado profesional (visitas, paseos, guardería, estancias, bodas, postquirúrgico) con un equipo acreditado.",
+        "description":"Únete a The Pets Lovers como auxiliar de veterinaria titulado/a. Buscamos actitud, disponibilidad y ganas de trabajar. Servicios: visitas, paseos, guardería, estancias, bodas, postquirúrgico.",
         "employmentType":"CONTRACTOR",
         "hiringOrganization":{
           "@type":"Organization",
@@ -74,7 +96,7 @@
         "validThrough":"2026-09-01",
         "industry":"Cuidado de mascotas",
         "qualifications":"Título formativo de Auxiliar de Veterinaria.",
-        "skills":"Manejo y bienestar animal, comunicación con clientes, responsabilidad.",
+        "skills":"Manejo y bienestar animal, comunicación con clientes, responsabilidad, proactividad.",
         "incentiveCompensation":"Por servicio.",
         "jobLocationType":"TELECOMMUTE",
         "directApply": false
@@ -82,7 +104,7 @@
       {
         "@type":"JobPosting",
         "title":"Veterinario/a (colaborador/a)",
-        "description":"Colabora con The Pets Lovers como veterinario/a para servicios especializados y coordinación clínica cuando sea necesario. Perfil con vocación y enfoque de bienestar.",
+        "description":"Colabora con The Pets Lovers como veterinario/a titulado/a. Valorable colegiación. Actitud resolutiva, empatía y ganas de trabajar en equipo.",
         "employmentType":"CONTRACTOR",
         "hiringOrganization":{
           "@type":"Organization",
@@ -95,7 +117,7 @@
         "validThrough":"2026-09-01",
         "industry":"Cuidado de mascotas",
         "qualifications":"Grado/Licenciatura en Veterinaria (colegiación valorable).",
-        "skills":"Comunicación con clientes, trato con animales, responsabilidad.",
+        "skills":"Comunicación, trato con animales, responsabilidad, proactividad.",
         "incentiveCompensation":"Por servicio.",
         "jobLocationType":"TELECOMMUTE",
         "directApply": false
@@ -130,7 +152,7 @@
   <header class="hero-section hero-trabaja">
     <div class="hero-content">
       <h1>Trabaja con nosotros</h1>
-      <p>Buscamos <strong>Auxiliares de Veterinaria y Veterinarios/as titulados</strong> que amen a los animales.</p>
+      <p>Buscamos <strong>Auxiliares de Veterinaria y Veterinarios/as titulados</strong> con actitud, disponibilidad y <strong>muchas ganas de trabajar</strong>.</p>
     </div>
   </header>
 
@@ -146,19 +168,16 @@
 
       <!-- Grid 3 columnas -->
       <div class="tpl-grid-3">
-        <!-- Requisitos -->
+        <!-- Requisitos (sin badges) -->
         <article class="tpl-card">
           <h3><i class="fa-solid fa-list-check"></i> Requisitos</h3>
           <ul class="tpl-list">
             <li><strong>Titulación:</strong> Auxiliar de Veterinaria <em>o</em> Grado/Licenciatura en Veterinaria.</li>
             <li><strong>Disponibilidad</strong> para cuidar animales (horarios flexibles según servicio).</li>
-            <li><strong>Vocación y amor</strong> por los animales; trato excelente con familias.</li>
+            <li><strong>Actitud</strong>: responsabilidad, comunicación con familias y <strong>muchas ganas de trabajar</strong>.</li>
+            <li><strong>Amor por los animales</strong> y enfoque de bienestar.</li>
           </ul>
-          <div class="tpl-badges">
-            <span class="tpl-badge">Auxiliar</span>
-            <span class="tpl-badge">Veterinario/a</span>
-            <span class="tpl-badge">España</span>
-          </div>
+          <!-- (Eliminadas chips/badges inferiores tal y como pediste) -->
         </article>
 
         <!-- Qué ofrecemos -->
@@ -166,25 +185,55 @@
           <h3><i class="fa-solid fa-gift"></i> Qué ofrecemos</h3>
           <ul class="tpl-list">
             <li>Ingresos por servicio y agenda flexible.</li>
-            <li>Soporte de marca y materiales (plantillas, pautas, buenas prácticas).</li>
-            <li>Comunidad de profesionales y derivación de casos.</li>
+            <li>Soporte de marca: pautas, plantillas y buenas prácticas.</li>
+            <li>Comunidad profesional y derivación de casos.</li>
           </ul>
+          <div class="tpl-emph">
+            <i class="fa-solid fa-handshake-angle"></i> Crecemos contigo: empezamos con servicios que encajan con tu experiencia y disponibilidad.
+          </div>
         </article>
 
-        <!-- Proceso -->
+        <!-- Proceso con timeline -->
         <article class="tpl-card">
           <h3><i class="fa-solid fa-flag-checkered"></i> Proceso</h3>
-          <ul class="tpl-list">
-            <li>1) Rellena el cuestionario.</li>
-            <li>2) Revisión de perfil y validación de titulación.</li>
-            <li>3) Onboarding y primeras reservas.</li>
-          </ul>
+          <div class="tpl-timeline">
+            <div class="tpl-step"><strong>1)</strong> Rellena el cuestionario y sube tu titulación.</div>
+            <div class="tpl-step"><strong>2)</strong> Revisión del perfil y verificación (rápida y sencilla).</div>
+            <div class="tpl-step"><strong>3)</strong> Onboarding y primeras reservas.</div>
+          </div>
         </article>
       </div>
 
+      <!-- TPL: INICIO BLOQUE NUEVO [Qué buscamos – actitud y ganas] -->
+      <div class="tpl-card" style="margin-top:20px;">
+        <h3><i class="fa-solid fa-bolt"></i> Qué buscamos</h3>
+        <p style="margin:8px 0 10px;">
+          Personas con <strong>ganas de trabajar</strong>, proactivas y con trato cercano. Valoramos la puntualidad,
+          la comunicación clara y el cuidado respetuoso.
+        </p>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <span class="tpl-chip"><i class="fa-solid fa-check"></i> Proactividad</span>
+          <span class="tpl-chip"><i class="fa-solid fa-check"></i> Responsabilidad</span>
+          <span class="tpl-chip"><i class="fa-solid fa-check"></i> Empatía</span>
+          <span class="tpl-chip"><i class="fa-solid fa-check"></i> Comunicación</span>
+        </div>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Valores] -->
+      <div class="tpl-card" style="margin-top:20px;">
+        <h3><i class="fa-solid fa-heart"></i> Nuestros valores</h3>
+        <ul class="tpl-list">
+          <li><strong>Bienestar animal</strong> por encima de todo.</li>
+          <li><strong>Transparencia</strong> con familias y equipo.</li>
+          <li><strong>Profesionalidad</strong> y aprendizaje continuo.</li>
+        </ul>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <!-- CTA principal -->
       <div style="text-align:center; margin-top:22px;">
-        <!-- TPL: INICIO BLOQUE NUEVO [CTA Cuestionario con control de sesión] -->
+        <!-- Botón cuestionario con gate de sesión (sin cambios en la lógica) -->
         <a id="tpl-cta-cuestionario"
            class="apply-cta"
            href="cuestionario-candidatos.html"
@@ -195,7 +244,6 @@
         <p style="margin:10px 0 0; color:var(--color-texto); font-size:.95rem;">
           <small>Para continuar, debes <strong>iniciar sesión</strong>.</small>
         </p>
-        <!-- TPL: FIN BLOQUE NUEVO -->
       </div>
 
       <!-- FAQ breve -->
@@ -261,16 +309,13 @@
     </noscript>
   </div>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Gate de sesión para el cuestionario] -->
+  <!-- Gate de sesión para el cuestionario (igual que antes) -->
   <script>
     (function(){
       const btn = document.getElementById('tpl-cta-cuestionario');
       if(!btn) return;
 
       function isLogged(){
-        // Marca simple: cualquiera de estos vale para considerarlo logueado.
-        // - localStorage 'tpl-auth' = '1' (placeholder)
-        // - variable global __TPL_AUTH = true (si ya la define tu login)
         try{
           if (window.__TPL_AUTH === true) return true;
           return localStorage.getItem('tpl-auth') === '1';
@@ -278,21 +323,17 @@
       }
 
       btn.addEventListener('click', function(ev){
-        // Siempre evitamos la navegación directa para controlar el flujo
         ev.preventDefault();
         const target = btn.getAttribute('data-target') || btn.getAttribute('href') || 'cuestionario-candidatos.html';
         if(isLogged()){
-          // Sesión OK → vamos al cuestionario
           window.location.href = target;
         }else{
-          // Sin sesión → enviamos a iniciar sesión con redirect al cuestionario
           const redirectTo = encodeURIComponent(target);
           window.location.href = 'index.html#iniciar-sesion?redirect=' + redirectTo;
         }
       }, {passive:false});
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <script>
     // Año en footer
