@@ -184,12 +184,16 @@
 
       <!-- CTA principal -->
       <div style="text-align:center; margin-top:22px;">
-        <!-- TPL: INICIO BLOQUE NUEVO [CTA Cuestionario] -->
-        <a href="cuestionario-candidatos.html" class="apply-cta" aria-label="Rellenar cuestionario de candidatura">
+        <!-- TPL: INICIO BLOQUE NUEVO [CTA Cuestionario con control de sesión] -->
+        <a id="tpl-cta-cuestionario"
+           class="apply-cta"
+           href="cuestionario-candidatos.html"
+           data-target="cuestionario-candidatos.html"
+           aria-label="Rellenar cuestionario de candidatura (requiere iniciar sesión)">
           <i class="fa-solid fa-pen-to-square"></i> Rellenar cuestionario
         </a>
         <p style="margin:10px 0 0; color:var(--color-texto); font-size:.95rem;">
-          Cuando tengas tu formulario (Google Forms u otro), sustituye este enlace.
+          <small>Para continuar, debes <strong>iniciar sesión</strong>.</small>
         </p>
         <!-- TPL: FIN BLOQUE NUEVO -->
       </div>
@@ -256,6 +260,39 @@
       </footer>
     </noscript>
   </div>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Gate de sesión para el cuestionario] -->
+  <script>
+    (function(){
+      const btn = document.getElementById('tpl-cta-cuestionario');
+      if(!btn) return;
+
+      function isLogged(){
+        // Marca simple: cualquiera de estos vale para considerarlo logueado.
+        // - localStorage 'tpl-auth' = '1' (placeholder)
+        // - variable global __TPL_AUTH = true (si ya la define tu login)
+        try{
+          if (window.__TPL_AUTH === true) return true;
+          return localStorage.getItem('tpl-auth') === '1';
+        }catch(e){ return false; }
+      }
+
+      btn.addEventListener('click', function(ev){
+        // Siempre evitamos la navegación directa para controlar el flujo
+        ev.preventDefault();
+        const target = btn.getAttribute('data-target') || btn.getAttribute('href') || 'cuestionario-candidatos.html';
+        if(isLogged()){
+          // Sesión OK → vamos al cuestionario
+          window.location.href = target;
+        }else{
+          // Sin sesión → enviamos a iniciar sesión con redirect al cuestionario
+          const redirectTo = encodeURIComponent(target);
+          window.location.href = 'index.html#iniciar-sesion?redirect=' + redirectTo;
+        }
+      }, {passive:false});
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <script>
     // Año en footer
