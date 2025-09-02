@@ -45,16 +45,15 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase compat (alineado con tu proyecto) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase: reutiliza la misma de reserva.html] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase: misma que reserva.html] -->
   <script>
     (function(){
       if (typeof firebase === 'undefined') return;
       if (!firebase.apps.length) {
-        // MISMA CONFIG QUE EN reserva.html:
         const firebaseConfig = {
           apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
           authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -81,13 +80,15 @@
 
       function setStatus(t){ msg.textContent = t || ''; }
       function getNext(){
-        try{ return new URLSearchParams(location.search).get('next') || 'index.html'; }
-        catch(_){ return 'index.html'; }
+        try{
+          // Si llega ?next=... volvemos ahí. Si no, a perfil una vez logueado/registrado.
+          return new URLSearchParams(location.search).get('next') || 'perfil.html';
+        }catch(_){ return 'perfil.html'; }
       }
 
       auth.onAuthStateChanged(function(user){
         if (user){
-          localStorage.setItem('tpl-auth','1'); // tu web ya usa esto
+          localStorage.setItem('tpl-auth','1');
           btnLogout.style.display = 'inline-block';
           setStatus('Sesión iniciada');
         } else {
@@ -101,7 +102,7 @@
         try{
           await auth.signInWithEmailAndPassword(email.value, pass.value);
           setStatus('¡Bienvenido/a!');
-          setTimeout(function(){ location.href = getNext(); }, 400);
+          setTimeout(function(){ location.href = getNext(); }, 300);
         }catch(e){
           setStatus('No se pudo iniciar sesión. Revisa email/contraseña.');
         }
@@ -111,7 +112,7 @@
         try{
           await auth.createUserWithEmailAndPassword(email.value, pass.value);
           setStatus('Cuenta creada. Has iniciado sesión.');
-          setTimeout(function(){ location.href = getNext(); }, 400);
+          setTimeout(function(){ location.href = getNext(); }, 300);
         }catch(e){
           setStatus('No se pudo crear la cuenta. ¿Ya existe ese email?');
         }
