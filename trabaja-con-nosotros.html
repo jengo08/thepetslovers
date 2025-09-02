@@ -45,11 +45,10 @@
     .services-section .services-grid{
       display:grid; gap:20px; grid-template-columns: 1fr; align-items:stretch;
     }
-    /* TPL: INICIO BLOQUE NUEVO [Fila de 4 tarjetas “en una línea” en desktop] */
+    /* Fila de 4 tarjetas “en una línea” en desktop */
     @media (min-width: 1100px){
       .services-section .services-grid{ grid-template-columns: repeat(4, 1fr); }
     }
-    /* TPL: FIN BLOQUE NUEVO */
 
     /* Tarjetas compactas */
     .services-section .service-card{
@@ -61,21 +60,29 @@
     .services-section .service-icon { margin-bottom:6px; }
     .services-section .service-icon i { color:#58425a; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Doble ancho flexible para secciones más largas] */
     .tpl-span2{ grid-column: span 1; }
     @media (min-width: 1100px){ .tpl-span2{ grid-column: span 2; } }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Beneficios: rejilla fluida sin huecos (6 elementos) */
-    .tpl-beneficios{
-      display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      margin-top:8px;
-    }
+    /* Beneficios (cards) */
     .tpl-beneficio{
       border:1px solid #eee; border-radius:10px; padding:10px; background:#fafafa;
       display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start;
     }
     .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
+
+    /* TPL: INICIO BLOQUE NUEVO [Beneficios en horizontal: una fila de 6 en desktop] */
+    /* Antes: auto-fit que podía dejar huecos; ahora columnas fijas por breakpoint */
+    .tpl-beneficios{
+      display:grid; gap:10px; margin-top:8px;
+      grid-template-columns: 1fr 1fr;                 /* móvil: 2 por fila */
+    }
+    @media (min-width: 700px){
+      .tpl-beneficios{ grid-template-columns: repeat(3, 1fr); } /* tablet: 3 por fila */
+    }
+    @media (min-width: 1100px){
+      .tpl-beneficios{ grid-template-columns: repeat(6, 1fr); } /* desktop: 6 en una sola línea */
+    }
+    /* TPL: FIN BLOQUE NUEVO */
 
     /* Candidatura centrada y compacta */
     .auth-wall{
@@ -84,16 +91,13 @@
     .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
     .auth-actions .cta-button{ padding:10px 16px; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Candidatura centrada en el grid] */
     .tpl-center-card{
-      grid-column: 1 / -1;           /* ocupa toda la fila del grid */
-      justify-self: center;          /* centrado horizontal */
+      grid-column: 1 / -1;
+      justify-self: center;
       width: 100%;
-      max-width: 860px;              /* ancho máximo para que no “flote” a un lado */
+      max-width: 860px;
     }
-    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Última tarjeta sin extra-espacio abajo en mobile */
     .services-section .services-grid > .service-card:last-child{ margin-bottom: 0; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -216,7 +220,7 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios y políticas (DOBLE ANCHO, ahora 6 items, sin huecos) -->
+        <!-- 5. Beneficios y políticas (DOBLE ANCHO, 6 items, ahora en UNA LÍNEA en desktop) -->
         <article class="service-card tpl-span2">
           <div class="service-icon"><i class="fa-solid fa-shield-heart"></i></div>
           <h3>Beneficios y políticas</h3>
@@ -241,16 +245,14 @@
               <i class="fa-solid fa-headset" aria-hidden="true"></i>
               <div><strong>Consulta 24h</strong><br>Primera orientación telemática con veterinarios.</div>
             </div>
-            <!-- TPL: INICIO BLOQUE NUEVO [Nuevo beneficio #6: desplazamiento] -->
             <div class="tpl-beneficio">
               <i class="fa-solid fa-route" aria-hidden="true"></i>
               <div><strong>Desplazamiento pagado</strong><br>El desplazamiento se <strong>paga siempre</strong> según distancia.</div>
             </div>
-            <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
         </article>
 
-        <!-- 6. Candidatura (centrada, no a un lado) -->
+        <!-- 6. Candidatura (centrada) -->
         <article class="service-card help-card tpl-center-card">
           <div class="service-icon"><i class="fa-solid fa-pen-to-square"></i></div>
           <h3>Envía tu candidatura</h3>
