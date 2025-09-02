@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <style>
     .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
-    .tpl-profile h1{ margin:0 0 8px; }
     .tpl-sub{ color:#666; margin-bottom:18px; }
     .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
     .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; }
@@ -20,6 +19,7 @@
 </head>
 <body>
   <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
 
   <main class="tpl-profile" aria-labelledby="t">
     <h1 id="t">Mi perfil</h1>
@@ -28,34 +28,31 @@
     <section class="tpl-cards">
       <article class="tpl-card">
         <h2>Datos de cliente</h2>
-        <p>Nombre, teléfono, dirección, preferencias de contacto.</p>
+        <p>Nombre, teléfono, dirección, preferencias.</p>
         <div class="tpl-actions">
-          <a class="cta-button" href="perfil-datos.html">Editar datos</a>
+          <a class="cta-button" href="registro.html?next=perfil.html">Editar datos</a>
         </div>
       </article>
 
       <article class="tpl-card">
         <h2>Mis mascotas</h2>
-        <p>Añade o edita tus mascotas (especie, edad, medicación, conducta).</p>
+        <p>Añade o edita tus mascotas.</p>
         <div class="tpl-actions">
           <a class="cta-button" href="perfil-mascotas.html">Gestionar mascotas</a>
         </div>
       </article>
 
       <article class="tpl-card">
-        <h2>Cuestionario inicial</h2>
-        <p>Unos pocos pasos para personalizar tus servicios. Es rápido.</p>
+        <h2>Reservas</h2>
+        <p>Cuando tu perfil esté completo podrás reservar.</p>
         <div class="tpl-actions">
-          <a class="cta-button link" href="registro.html">Comenzar</a>
+          <a class="cta-button link" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
     </section>
   </main>
 
   <div id="tpl-footer"></div>
-  <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-
-  <!-- Opcional: en el futuro conectaremos Firebase/Firestore aquí para leer/escribir el perfil -->
 </body>
 </html>
