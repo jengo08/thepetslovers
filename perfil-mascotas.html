@@ -2,26 +2,68 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mascotas · The Pets Lovers</title>
+  <title>Perfil de mascota · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <!-- TPL: INICIO BLOQUE NUEVO [Iconos] -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos específicos del formulario de mascota] -->
   <style>
-    .page{padding-top:120px}
-    .lead{color:#666;margin:0 0 18px}
-    .tpl-form{max-width:820px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:18px}
-    .tpl-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-    .tpl-field label{font-weight:700;color:var(--color-texto)}
-    .tpl-field input,.tpl-field select,.tpl-field textarea{padding:12px;border:1px solid #ddd;border-radius:10px}
-    .tpl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .cta-button{ background:#339496;color:#fff;padding:10px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center}
-    .link{ background:#fff;color:#339496;border:2px solid #339496}
+    :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
+    .page{ padding-top:120px }
+    .lead{ color:#666; margin:0 0 18px }
+    .tpl-card{
+      max-width: 980px; margin: 0 auto 60px;
+      background:#fff; border:1px solid #eee; border-radius:16px;
+      box-shadow:0 6px 24px rgba(0,0,0,.06); overflow:hidden;
+    }
+    .tpl-card-head{
+      background: linear-gradient(135deg, rgba(51,148,150,.12), rgba(88,66,90,.08));
+      padding:18px 18px 14px; border-bottom:1px solid #ececec;
+    }
+    .tpl-card-head h1{ margin:0; font-size:26px; color:var(--tpl-ink); }
+    .tpl-card-head p{ margin:6px 0 0; color:#555 }
+
+    .tpl-form{
+      padding:18px; display:grid; gap:14px; grid-template-columns: 1fr;
+    }
+    @media(min-width:860px){ .tpl-form{ grid-template-columns: 1fr 1fr; } .col-span-2{ grid-column: span 2; } }
+
+    .tpl-field{ display:flex; flex-direction:column; gap:8px; }
+    .tpl-field label{ font-weight:700; color:var(--tpl-ink); display:flex; align-items:center; gap:8px; }
+    .tpl-field small{ color:#666 }
+    .tpl-field input, .tpl-field textarea, .tpl-field select {
+      padding:12px 12px; border:1px solid #ddd; border-radius:10px; font: inherit; outline:none;
+    }
+    .tpl-field input:focus, .tpl-field textarea:focus, .tpl-field select:focus{
+      border-color: var(--tpl-primary); box-shadow:0 0 0 3px rgba(51,148,150,.18);
+    }
+
+    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+    .cta-button{ background:#339496;color:#fff;padding:12px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center }
+    .link{ background:#fff;color:#339496;border:2px solid #339496 }
     .danger{ background:#fff;color:#b00020;border:2px solid #b00020 }
-    .tpl-msg{margin:10px 0 0;color:#2a7e80;display:none}
-    .tpl-error{color:#b00020}
+    .muted{ color:#666; font-size:.95rem }
+
+    /* Foto + previsualización */
+    .tpl-photo-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}
+    .tpl-photo{width:120px;height:120px;border-radius:12px;object-fit:cover;border:1px solid #eee;background:#fafafa}
+    .tpl-photo-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .tpl-note{font-size:.9rem;color:#666}
+    @media (max-width:600px){ .tpl-photo-row{grid-template-columns:1fr} .tpl-photo{width:100%;height:180px} }
+
+    /* Banner inteligente */
+    .tpl-banner{display:none;border:1px solid #ffddc1;background:#fff8f0;border-radius:10px;padding:12px;margin:8px 0}
+    .tpl-banner i{color:#c66600;margin-right:6px}
+    .tpl-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+    .tpl-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid #eee;border-radius:999px;padding:6px 10px;background:#fafafa;font-size:.9rem}
+    .tpl-badge i{color:var(--tpl-primary)}
+
+    .msg{ display:none; margin-top:6px; }
+    .msg.ok{ color:#2a7e80 }
+    .msg.err{ color:#b00020 }
   </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -31,49 +73,180 @@
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page" aria-labelledby="t">
-    <h1 id="t">Mascotas</h1>
-    <p class="lead">Añade o edita la ficha de tu mascota. Puedes crear varias.</p>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Formulario Mascota] -->
-    <form id="tpl-form-mascota" class="tpl-form" novalidate>
-      <div class="tpl-field">
-        <label for="nombre">Nombre</label>
-        <input id="nombre" name="nombre" type="text" required>
+    <div class="tpl-card" role="region" aria-labelledby="t">
+      <div class="tpl-card-head">
+        <h1 id="t"><i class="fa-solid fa-paw"></i> Perfil de tu mascota</h1>
+        <p class="muted">Solo datos de la mascota. <span class="muted">Se reutiliza en tus reservas.</span></p>
       </div>
 
-      <div class="tpl-field">
-        <label for="especie">Especie</label>
-        <select id="especie" name="especie" required>
-          <option value="">Elige…</option>
-          <option>Perro</option>
-          <option>Gato</option>
-          <option>Otro</option>
-        </select>
+      <!-- TPL: INICIO BLOQUE NUEVO [Banner inteligente oculto] -->
+      <div id="tpl-banner" class="tpl-banner" role="status" aria-live="polite" style="margin:12px">
+        <p style="margin:0 0 6px"><i class="fa-solid fa-circle-exclamation"></i><strong>Notas importantes para el cuidador:</strong></p>
+        <div id="tpl-badges" class="tpl-badges"></div>
       </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <div class="tpl-field">
-        <label for="notas">Notas</label>
-        <textarea id="notas" name="notas" rows="3" placeholder="Medicaciones, carácter, alergias…"></textarea>
-      </div>
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario SOLO mascota] -->
+      <form id="tpl-form-mascota" class="tpl-form" novalidate>
+        <!-- Foto -->
+        <div class="tpl-field col-span-2">
+          <label for="foto"><i class="fa-regular fa-image"></i> Foto de la mascota</label>
+          <div class="tpl-photo-row">
+            <img id="preview" class="tpl-photo" alt="Previsualización de la mascota" src="" />
+            <div>
+              <div class="tpl-photo-actions">
+                <input id="foto" name="foto" type="file" accept="image/*" aria-describedby="fotoHelp">
+                <button id="btnQuitarFoto" type="button" class="cta-button link">Quitar foto</button>
+              </div>
+              <p id="fotoHelp" class="tpl-note">Opcional. JPG/PNG. Se redimensiona máx. 1024px para guardar.</p>
+            </div>
+          </div>
+        </div>
 
-      <div class="tpl-actions">
-        <button type="submit" class="cta-button">Guardar</button>
-        <a href="perfil.html" class="cta-button link">Volver al perfil</a>
-        <button type="button" id="tpl-btn-eliminar" class="cta-button danger" style="display:none">Eliminar</button>
-      </div>
+        <!-- Identificación básica -->
+        <div class="tpl-field">
+          <label for="nombre"><i class="fa-solid fa-signature"></i> Nombre *</label>
+          <input id="nombre" name="nombre" type="text" required>
+        </div>
 
-      <p id="tpl-msg" class="tpl-msg"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</p>
-      <p id="tpl-err" class="tpl-msg tpl-error"></p>
-    </form>
-    <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="tpl-field">
+          <label for="microchip"><i class="fa-solid fa-barcode"></i> Nº de microchip *</label>
+          <input id="microchip" name="microchip" type="text" required
+                 pattern="^[A-Za-z0-9-]{5,20}$" title="Usa 5–20 caracteres (letras/números/guiones).">
+        </div>
+
+        <div class="tpl-field">
+          <label for="especie"><i class="fa-solid fa-dog"></i> Especie *</label>
+          <select id="especie" name="especie" required>
+            <option value="">Elige…</option>
+            <option>Perro</option>
+            <option>Gato</option>
+            <option>Exótico</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div class="tpl-field">
+          <label for="raza"><i class="fa-solid fa-dna"></i> Raza *</label>
+          <input id="raza" name="raza" type="text" required placeholder="Si es mestizo/a, indícalo">
+        </div>
+
+        <div class="tpl-field">
+          <label for="edad"><i class="fa-regular fa-calendar"></i> Edad aproximada (años) *</label>
+          <input id="edad" name="edad" type="number" inputmode="numeric" min="0" step="1" required>
+        </div>
+
+        <div class="tpl-field">
+          <label for="peso"><i class="fa-solid fa-weight-scale"></i> Peso (kg) *</label>
+          <input id="peso" name="peso" type="number" inputmode="numeric" min="0" step="0.1" required>
+        </div>
+
+        <div class="tpl-field">
+          <label for="sexo"><i class="fa-solid fa-venus-mars"></i> Sexo *</label>
+          <select id="sexo" name="sexo" required>
+            <option value="">Elige…</option>
+            <option>Macho</option>
+            <option>Hembra</option>
+          </select>
+        </div>
+
+        <div class="tpl-field">
+          <label for="esterilizado"><i class="fa-solid fa-scissors"></i> ¿Está esterilizado/a? *</label>
+          <select id="esterilizado" name="esterilizado" required>
+            <option value="">Elige…</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+
+        <!-- Salud y rutinas -->
+        <div class="tpl-field col-span-2">
+          <label for="patologias"><i class="fa-solid fa-briefcase-medical"></i> ¿Patología o tratamiento? (breve) *</label>
+          <textarea id="patologias" name="patologias" rows="3" required placeholder="Patología/diagnóstico, medicación activa, alergias, etc."></textarea>
+        </div>
+
+        <div class="tpl-field">
+          <label for="via"><i class="fa-solid fa-syringe"></i> Vía, dosis y horario (medicación)</label>
+          <textarea id="via" name="via" rows="2" placeholder="Ej.: Vía oral, 5 mg cada 12h (08:00 y 20:00)"></textarea>
+        </div>
+
+        <div class="tpl-field">
+          <label for="comidas"><i class="fa-solid fa-bowl-food"></i> Horario de comidas y dosis</label>
+          <textarea id="comidas" name="comidas" rows="2" placeholder="Ej.: 08:30 y 19:30 · 90 g pienso c/u"></textarea>
+        </div>
+
+        <div class="tpl-field">
+          <label for="salidas"><i class="fa-solid fa-person-walking"></i> ¿Cuántas salidas al día?</label>
+          <input id="salidas" name="salidas" type="number" inputmode="numeric" min="0" step="1" placeholder="Ej.: 3">
+        </div>
+
+        <div class="tpl-field">
+          <label for="clinica"><i class="fa-solid fa-hospital"></i> Clínica veterinaria habitual</label>
+          <input id="clinica" name="clinica" type="text" placeholder="Nombre de la clínica">
+        </div>
+
+        <div class="tpl-field">
+          <label for="hospital"><i class="fa-solid fa-truck-medical"></i> Hospital preferido en urgencias</label>
+          <input id="hospital" name="hospital" type="text" placeholder="Nombre del hospital 24h">
+        </div>
+
+        <div class="tpl-field">
+          <label for="vacunas"><i class="fa-solid fa-shield-dog"></i> ¿Vacunas y desparasitación al día? *</label>
+          <select id="vacunas" name="vacunas" required>
+            <option value="">Elige…</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+
+        <div class="tpl-field col-span-2">
+          <label for="comportamiento"><i class="fa-solid fa-comments"></i> Comportamiento con animales/personas *</label>
+          <textarea id="comportamiento" name="comportamiento" rows="3" required placeholder="Sociable, tímido, reactivo a perros, protectivo con comida, etc."></textarea>
+        </div>
+
+        <!-- Extras (OPCIONALES, siguen siendo de la mascota) -->
+        <div class="tpl-field">
+          <label for="seguroVet"><i class="fa-solid fa-file-medical"></i> ¿Tiene seguro veterinario?</label>
+          <select id="seguroVet" name="seguroVet">
+            <option value="">Elige…</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+
+        <div class="tpl-field">
+          <label for="seguroRC"><i class="fa-solid fa-scale-balanced"></i> ¿Tiene seguro de responsabilidad civil?</label>
+          <select id="seguroRC" name="seguroRC">
+            <option value="">Elige…</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </div>
+
+        <div class="tpl-field col-span-2">
+          <label for="comentarios"><i class="fa-regular fa-note-sticky"></i> Comentarios / detalles importantes</label>
+          <textarea id="comentarios" name="comentarios" rows="3" placeholder="Miedos, triggers, cosas que le encantan, etc."></textarea>
+        </div>
+
+        <!-- Acciones -->
+        <div class="tpl-actions col-span-2">
+          <button type="submit" class="cta-button">Guardar</button>
+          <a href="perfil.html" class="cta-button link">Cancelar</a>
+          <button type="button" id="tpl-btn-eliminar" class="cta-button danger" style="display:none">Eliminar</button>
+          <span class="msg ok" id="tpl-msg-ok"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</span>
+          <span class="msg err" id="tpl-msg-err"></span>
+        </div>
+      </form>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica (Firestore + fallback local)] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -95,19 +268,70 @@
 
       const LS_PETS_KEY = 'tpl-pets';
 
-      const form = document.getElementById('tpl-form-mascota');
+      const form   = document.getElementById('tpl-form-mascota');
+      const ok     = document.getElementById('tpl-msg-ok');
+      const err    = document.getElementById('tpl-msg-err');
       const btnDel = document.getElementById('tpl-btn-eliminar');
-      const msg  = document.getElementById('tpl-msg');
-      const err  = document.getElementById('tpl-err');
+
+      const fotoInput = document.getElementById('foto');
+      const preview   = document.getElementById('preview');
+      const btnQuitar = document.getElementById('btnQuitarFoto');
+
+      const banner = document.getElementById('tpl-banner');
+      const badges = document.getElementById('tpl-badges');
 
       function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name) || fb; }
-      function show(el, ok=true){ el.style.display = ok ? 'block' : 'none'; }
-      function hide(el){ el.style.display='none'; }
+      function show(el, yes=true){ el.style.display = yes ? 'inline-flex' : 'none'; }
+      function hide(el){ el.style.display = 'none'; }
 
       const MODE_NEW = qsp('mode','') === 'new';
       let   PET_ID   = qsp('id','');   // Firestore doc id
       let   PET_IDX  = qsp('idx','');  // Fallback local index
+      let   photoDataUrl = '';         // DataURL redimensionada
 
+      // Redimensiona imagen a máx 1024px para almacenar como DataURL (simple/ligero)
+      function resizeImage(file, maxDim=1024){
+        return new Promise((resolve,reject)=>{
+          const reader = new FileReader();
+          reader.onload = e=>{
+            const img = new Image();
+            img.onload = ()=>{
+              const canvas = document.createElement('canvas');
+              let { width, height } = img;
+              if (width > height) {
+                if (width > maxDim) { height *= maxDim/width; width = maxDim; }
+              } else {
+                if (height > maxDim) { width *= maxDim/height; height = maxDim; }
+              }
+              canvas.width = width; canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg', 0.9));
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      fotoInput.addEventListener('change', async ()=>{
+        const f = fotoInput.files?.[0];
+        if(!f){ return; }
+        try{
+          photoDataUrl = await resizeImage(f, 1024);
+          preview.src = photoDataUrl;
+        }catch(e){ console.warn('No se pudo previsualizar la foto', e); }
+      });
+
+      btnQuitar.addEventListener('click', ()=>{
+        fotoInput.value = '';
+        photoDataUrl = '';
+        preview.src = '';
+      });
+
+      // CRUD
       async function getPet(uid){
         if (uid && PET_ID){
           const doc = await db.collection('users').doc(uid).collection('pets').doc(PET_ID).get();
@@ -147,21 +371,79 @@
       }
 
       function fill(p){
-        form.nombre.value  = p?.nombre || '';
-        form.especie.value = p?.especie || '';
-        form.notas.value   = p?.notas || '';
+        if(!p) return;
+        // foto
+        if (p.fotoDataUrl){ photoDataUrl = p.fotoDataUrl; preview.src = photoDataUrl; }
+
+        form.nombre.value          = p.nombre || '';
+        form.microchip.value       = p.microchip || '';
+        form.especie.value         = p.especie || '';
+        form.raza.value            = p.raza || '';
+        form.edad.value            = p.edad ?? '';
+        form.peso.value            = p.peso ?? '';
+        form.sexo.value            = p.sexo || '';
+        form.esterilizado.value    = p.esterilizado || '';
+        form.patologias.value      = p.patologias || '';
+        form.via.value             = p.via || '';
+        form.comidas.value         = p.comidas || '';
+        form.salidas.value         = p.salidas ?? '';
+        form.clinica.value         = p.clinica || '';
+        form.hospital.value        = p.hospital || '';
+        form.vacunas.value         = p.vacunas || '';
+        form.comportamiento.value  = p.comportamiento || '';
+        form.seguroVet.value       = p.seguroVet || '';
+        form.seguroRC.value        = p.seguroRC || '';
+        form.comentarios.value     = p.comentarios || '';
+
+        updateBanner();
       }
 
       function toggleDeleteVisibility(uid){
-        // Mostrar eliminar si estamos editando (id o idx) y no estamos en modo new
         const isEditing = (!MODE_NEW) && ( (uid && PET_ID) || (!uid && PET_IDX!=='') );
-        show(btnDel, isEditing);
+        btnDel.style.display = isEditing ? 'inline-flex' : 'none';
       }
+
+      // Banner inteligente (avisos útiles para cuidador)
+      function updateBanner(){
+        badges.innerHTML = '';
+        const items = [];
+
+        if ((form.patologias.value||'').trim().length > 0) {
+          items.push('<span class="tpl-badge"><i class="fa-solid fa-briefcase-medical"></i> Tiene patología/medicación</span>');
+        }
+        if ((form.vacunas.value||'') === 'No') {
+          items.push('<span class="tpl-badge"><i class="fa-solid fa-shield"></i> Vacunas/desparasitación NO al día</span>');
+        }
+        if ((form.esterilizado.value||'') === 'No' && (form.sexo.value||'') === 'Hembra') {
+          items.push('<span class="tpl-badge"><i class="fa-solid fa-venus"></i> Hembra no esterilizada</span>');
+        }
+        const peso = Number(form.peso.value || 0);
+        if (peso >= 35) {
+          items.push('<span class="tpl-badge"><i class="fa-solid fa-weight-scale"></i> Peso elevado (manejo)</span>');
+        }
+        const comp = (form.comportamiento.value||'').toLowerCase();
+        if (/(reactiv|agres|miedo|protege|ansiedad)/.test(comp)) {
+          items.push('<span class="tpl-badge"><i class="fa-solid fa-face-frown"></i> Observaciones de comportamiento</span>');
+        }
+
+        if (items.length){
+          badges.innerHTML = items.join('');
+          banner.style.display = 'block';
+        } else {
+          banner.style.display = 'none';
+        }
+      }
+
+      ['input','change','keyup'].forEach(ev=>{
+        form.addEventListener(ev, (e)=>{
+          if (['patologias','vacunas','esterilizado','sexo','peso','comportamiento'].includes(e.target.id)) {
+            updateBanner();
+          }
+        });
+      });
 
       auth.onAuthStateChanged(async (u)=>{
         const uid = u?.uid || null;
-
-        // Preload si editamos
         if (!MODE_NEW){
           const p = await getPet(uid);
           fill(p);
@@ -170,21 +452,45 @@
       });
 
       form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        hide(err); hide(msg);
+        e.preventDefault(); hide(ok); hide(err);
         if (!form.checkValidity()){ form.reportValidity(); return; }
 
         const data = {
-          nombre : form.nombre.value.trim(),
-          especie: form.especie.value,
-          notas  : form.notas.value.trim()
+          // foto (DataURL redimensionada)
+          fotoDataUrl   : photoDataUrl || '',
+
+          // campos oblig/opt
+          nombre        : form.nombre.value.trim(),
+          microchip     : form.microchip.value.trim(),
+          especie       : form.especie.value,
+          raza          : form.raza.value.trim(),
+          edad          : Number(form.edad.value || 0),
+          peso          : Number(form.peso.value || 0),
+          sexo          : form.sexo.value,
+          esterilizado  : form.esterilizado.value,
+
+          patologias    : form.patologias.value.trim(),
+          via           : form.via.value.trim(),
+          comidas       : form.comidas.value.trim(),
+          salidas       : form.salidas.value ? Number(form.salidas.value) : null,
+          clinica       : form.clinica.value.trim(),
+          hospital      : form.hospital.value.trim(),
+          vacunas       : form.vacunas.value,
+          comportamiento: form.comportamiento.value.trim(),
+
+          seguroVet     : form.seguroVet.value,
+          seguroRC      : form.seguroRC.value,
+          comentarios   : form.comentarios.value.trim(),
+
+          updatedAt     : new Date().toISOString()
         };
 
         try{
           const u = auth.currentUser;
           await savePet(u?.uid || null, data);
-          show(msg,true);
-          setTimeout(()=>{ location.href='perfil.html'; }, 400);
+          show(ok,true);
+          // pequeña pausa UX y volver a perfil general
+          setTimeout(()=>{ location.href='perfil.html'; }, 450);
         }catch(e){
           err.textContent = 'No se pudo guardar: ' + (e?.message || e);
           show(err,true);
@@ -193,13 +499,13 @@
 
       btnDel.addEventListener('click', async ()=>{
         if (!confirm('¿Eliminar esta mascota?')) return;
-        hide(err); hide(msg);
+        hide(ok); hide(err);
         try{
           const u = auth.currentUser;
           await deletePet(u?.uid || null);
-          show(msg,true);
-          msg.textContent = 'Eliminada correctamente.';
-          setTimeout(()=>{ location.href='perfil.html'; }, 350);
+          ok.textContent = 'Eliminada correctamente.';
+          show(ok,true);
+          setTimeout(()=>{ location.href='perfil.html'; }, 400);
         }catch(e){
           err.textContent = 'No se pudo eliminar: ' + (e?.message || e);
           show(err,true);
