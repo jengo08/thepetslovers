@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mascotas · The Pets Lovers</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <!-- TPL: INICIO BLOQUE NUEVO [Iconos] -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: FIN BLOQUE NUEVO -->
+  <style>
+    .page{padding-top:120px}
+    .lead{color:#666;margin:0 0 18px}
+    .tpl-form{max-width:820px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:18px}
+    .tpl-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .tpl-field label{font-weight:700;color:var(--color-texto)}
+    .tpl-field input,.tpl-field select,.tpl-field textarea{padding:12px;border:1px solid #ddd;border-radius:10px}
+    .tpl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .cta-button{ background:#339496;color:#fff;padding:10px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center}
+    .link{ background:#fff;color:#339496;border:2px solid #339496}
+    .danger{ background:#fff;color:#b00020;border:2px solid #b00020 }
+    .tpl-msg{margin:10px 0 0;color:#2a7e80;display:none}
+    .tpl-error{color:#b00020}
+  </style>
+</head>
+<body>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
+  <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <main class="container page" aria-labelledby="t">
+    <h1 id="t">Mascotas</h1>
+    <p class="lead">Añade o edita la ficha de tu mascota. Puedes crear varias.</p>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Formulario Mascota] -->
+    <form id="tpl-form-mascota" class="tpl-form" novalidate>
+      <div class="tpl-field">
+        <label for="nombre">Nombre</label>
+        <input id="nombre" name="nombre" type="text" required>
+      </div>
+
+      <div class="tpl-field">
+        <label for="especie">Especie</label>
+        <select id="especie" name="especie" required>
+          <option value="">Elige…</option>
+          <option>Perro</option>
+          <option>Gato</option>
+          <option>Otro</option>
+        </select>
+      </div>
+
+      <div class="tpl-field">
+        <label for="notas">Notas</label>
+        <textarea id="notas" name="notas" rows="3" placeholder="Medicaciones, carácter, alergias…"></textarea>
+      </div>
+
+      <div class="tpl-actions">
+        <button type="submit" class="cta-button">Guardar</button>
+        <a href="perfil.html" class="cta-button link">Volver al perfil</a>
+        <button type="button" id="tpl-btn-eliminar" class="cta-button danger" style="display:none">Eliminar</button>
+      </div>
+
+      <p id="tpl-msg" class="tpl-msg"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</p>
+      <p id="tpl-err" class="tpl-msg tpl-error"></p>
+    </form>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+  </main>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer] -->
+  <div id="tpl-footer"></div>
+  <script src="tpl-footer.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+
+    (function(){
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db   = firebase.firestore();
+
+      const LS_PETS_KEY = 'tpl-pets';
+
+      const form = document.getElementById('tpl-form-mascota');
+      const btnDel = document.getElementById('tpl-btn-eliminar');
+      const msg  = document.getElementById('tpl-msg');
+      const err  = document.getElementById('tpl-err');
+
+      function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name) || fb; }
+      function show(el, ok=true){ el.style.display = ok ? 'block' : 'none'; }
+      function hide(el){ el.style.display='none'; }
+
+      const MODE_NEW = qsp('mode','') === 'new';
+      let   PET_ID   = qsp('id','');   // Firestore doc id
+      let   PET_IDX  = qsp('idx','');  // Fallback local index
+
+      async function getPet(uid){
+        if (uid && PET_ID){
+          const doc = await db.collection('users').doc(uid).collection('pets').doc(PET_ID).get();
+          return doc.exists ? { id: doc.id, ...doc.data() } : null;
+        }
+        if (PET_IDX !== ''){
+          try{
+            const list = JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]');
+            return list[Number(PET_IDX)] || null;
+          }catch(e){ return null; }
+        }
+        return null;
+      }
+      async function savePet(uid, data){
+        if (uid){
+          if (PET_ID){ // update
+            await db.collection('users').doc(uid).collection('pets').doc(PET_ID).set(data, {merge:true});
+          } else { // create
+            const ref = await db.collection('users').doc(uid).collection('pets').add(data);
+            PET_ID = ref.id;
+          }
+        } else {
+          const list = JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]');
+          if (PET_IDX !== ''){ list[Number(PET_IDX)] = { ...(list[Number(PET_IDX)]||{}), ...data }; }
+          else { list.push(data); PET_IDX = String(list.length-1); }
+          localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
+        }
+      }
+      async function deletePet(uid){
+        if (uid && PET_ID){
+          await db.collection('users').doc(uid).collection('pets').doc(PET_ID).delete();
+        } else if (PET_IDX !== ''){
+          const list = JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]');
+          list.splice(Number(PET_IDX),1);
+          localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
+        }
+      }
+
+      function fill(p){
+        form.nombre.value  = p?.nombre || '';
+        form.especie.value = p?.especie || '';
+        form.notas.value   = p?.notas || '';
+      }
+
+      function toggleDeleteVisibility(uid){
+        // Mostrar eliminar si estamos editando (id o idx) y no estamos en modo new
+        const isEditing = (!MODE_NEW) && ( (uid && PET_ID) || (!uid && PET_IDX!=='') );
+        show(btnDel, isEditing);
+      }
+
+      auth.onAuthStateChanged(async (u)=>{
+        const uid = u?.uid || null;
+
+        // Preload si editamos
+        if (!MODE_NEW){
+          const p = await getPet(uid);
+          fill(p);
+        }
+        toggleDeleteVisibility(uid);
+      });
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        hide(err); hide(msg);
+        if (!form.checkValidity()){ form.reportValidity(); return; }
+
+        const data = {
+          nombre : form.nombre.value.trim(),
+          especie: form.especie.value,
+          notas  : form.notas.value.trim()
+        };
+
+        try{
+          const u = auth.currentUser;
+          await savePet(u?.uid || null, data);
+          show(msg,true);
+          setTimeout(()=>{ location.href='perfil.html'; }, 400);
+        }catch(e){
+          err.textContent = 'No se pudo guardar: ' + (e?.message || e);
+          show(err,true);
+        }
+      });
+
+      btnDel.addEventListener('click', async ()=>{
+        if (!confirm('¿Eliminar esta mascota?')) return;
+        hide(err); hide(msg);
+        try{
+          const u = auth.currentUser;
+          await deletePet(u?.uid || null);
+          show(msg,true);
+          msg.textContent = 'Eliminada correctamente.';
+          setTimeout(()=>{ location.href='perfil.html'; }, 350);
+        }catch(e){
+          err.textContent = 'No se pudo eliminar: ' + (e?.message || e);
+          show(err,true);
+        }
+      });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
