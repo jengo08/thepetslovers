@@ -6,15 +6,38 @@
   <title>Mi perfil · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <!-- TPL: INICIO BLOQUE NUEVO [Iconos footer visibles en esta página] -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <style>
     .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
     .tpl-sub{ color:#666; margin-bottom:18px; }
     .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; }
+    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; }
     .tpl-card h2{ font-size:18px; margin:0 0 8px; color:#58425a; }
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
+
+    /* TPL: INICIO BLOQUE NUEVO [estilos mínimos para vistas de datos + UI no intrusiva] */
+    .tpl-field{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+    .tpl-field label{ font-weight:700; color:var(--color-texto); }
+    .tpl-field input, .tpl-field select, .tpl-field textarea{
+      padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:var(--fuente-texto);
+    }
+    .tpl-view{ background:#fafafa; border:1px solid #eee; border-radius:10px; padding:12px; }
+    .tpl-view dl{ margin:0; display:grid; grid-template-columns: 140px 1fr; row-gap:6px; column-gap:10px; }
+    .tpl-view dt{ font-weight:700; color:#58425a; }
+    .tpl-empty{ color:#666; font-style:italic; }
+    .tpl-list{ margin:0; padding-left:18px; }
+    .tpl-note{ color:#666; font-size:.95rem; margin:6px 0 0; }
+    .tpl-hidden{ display:none !important; }
+    .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
+    .tpl-status i{ font-size:1rem; }
+    .tpl-pet-actions{ display:inline-flex; gap:6px; margin-left:8px; }
+    .tpl-pet-actions .cta-button{ padding:6px 10px; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
@@ -26,22 +49,112 @@
     <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
 
     <section class="tpl-cards">
-      <article class="tpl-card">
+
+      <!-- ====== DATOS DE CLIENTE ====== -->
+      <article class="tpl-card" id="tpl-card-cliente">
+        <div id="tpl-cliente-status" class="tpl-status tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-circle-check"></i> Perfil completo
+        </div>
         <h2>Datos de cliente</h2>
-        <p>Nombre, teléfono, dirección, preferencias.</p>
-        <div class="tpl-actions">
-          <a class="cta-button" href="registro.html?next=perfil.html">Editar datos</a>
+        <p id="tpl-cliente-empty" class="tpl-empty">Aún no has creado tu perfil. Crea tu ficha para poder reservar.</p>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista de datos de cliente] -->
+        <div id="tpl-cliente-view" class="tpl-view tpl-hidden" aria-live="polite">
+          <dl>
+            <dt>Nombre</dt><dd id="tpl-view-nombre">—</dd>
+            <dt>Teléfono</dt><dd id="tpl-view-telefono">—</dd>
+            <dt>Email</dt><dd id="tpl-view-email">—</dd>
+            <dt>Dirección</dt><dd id="tpl-view-direccion">—</dd>
+            <dt>Código postal</dt><dd id="tpl-view-cp">—</dd>
+            <dt>Preferencias</dt><dd id="tpl-view-pref">—</dd>
+          </dl>
+          <div class="tpl-actions" style="margin-top:12px">
+            <button type="button" class="cta-button" id="tpl-btn-editar-cliente">Editar</button>
+          </div>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Formulario de cliente] -->
+        <form id="tpl-form-cliente" class="tpl-form" novalidate>
+          <div class="tpl-field">
+            <label for="tpl-nombre">Nombre y apellidos</label>
+            <input id="tpl-nombre" name="nombre" type="text" autocomplete="name" required>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-telefono">Teléfono</label>
+            <!-- Validación ES: 9 dígitos -->
+            <input id="tpl-telefono" name="telefono" type="tel" inputmode="numeric" pattern="\\d{9}" placeholder="Ej. 612345678" autocomplete="tel" required>
+            <small class="tpl-note">Introduce 9 dígitos. Ejemplo: 612345678</small>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-email">Email</label>
+            <input id="tpl-email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-direccion">Dirección</label>
+            <input id="tpl-direccion" name="direccion" type="text" autocomplete="address-line1">
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-cp">Código postal</label>
+            <!-- Validación España: 5 dígitos -->
+            <input id="tpl-cp" name="cp" type="text" inputmode="numeric" pattern="\\d{5}" placeholder="Ej. 28013" required>
+            <small class="tpl-note">Introduce 5 dígitos. Ejemplo: 28013</small>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-preferencias">Preferencias</label>
+            <textarea id="tpl-preferencias" name="preferencias" rows="2" placeholder="Rutinas, alergias, instrucciones…"></textarea>
+          </div>
+          <div class="tpl-actions">
+            <button type="submit" class="cta-button">Guardar</button>
+            <button type="button" class="cta-button link" id="tpl-cancel-cliente">Cancelar</button>
+          </div>
+        </form>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </article>
 
-      <article class="tpl-card">
+      <!-- ====== MASCOTAS ====== -->
+      <article class="tpl-card" id="tpl-card-mascotas">
         <h2>Mis mascotas</h2>
-        <p>Añade o edita tus mascotas.</p>
-        <div class="tpl-actions">
-          <a class="cta-button" href="perfil-mascotas.html">Gestionar mascotas</a>
+        <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Lista de mascotas] -->
+        <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
+          <ul id="tpl-mascotas-list" class="tpl-list"></ul>
+          <div class="tpl-actions" style="margin-top:12px">
+            <button type="button" class="cta-button" id="tpl-btn-anadir-mascota">Añadir mascota</button>
+          </div>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Formulario mascota simple] -->
+        <form id="tpl-form-mascota" class="tpl-form tpl-hidden" novalidate>
+          <div class="tpl-field">
+            <label for="tpl-mascota-nombre">Nombre</label>
+            <input id="tpl-mascota-nombre" name="nombre" type="text" required>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-mascota-especie">Especie</label>
+            <select id="tpl-mascota-especie" name="especie" required>
+              <option value="">Elige…</option>
+              <option>Perro</option>
+              <option>Gato</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="tpl-field">
+            <label for="tpl-mascota-notas">Notas</label>
+            <textarea id="tpl-mascota-notas" name="notas" rows="2" placeholder="Medicaciones, carácter…"></textarea>
+          </div>
+          <div class="tpl-actions">
+            <button type="submit" class="cta-button">Guardar mascota</button>
+            <button type="button" class="cta-button link" id="tpl-cancel-mascota">Cancelar</button>
+          </div>
+        </form>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
       </article>
 
+      <!-- ====== RESERVAS ====== -->
       <article class="tpl-card">
         <h2>Reservas</h2>
         <p>Cuando tu perfil esté completo podrás reservar.</p>
@@ -50,19 +163,321 @@
         </div>
       </article>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Cerrar sesión] -->
+      <!-- ====== SESIÓN ====== -->
       <article class="tpl-card">
         <h2>Sesión</h2>
         <p>Cierra tu sesión de forma segura.</p>
         <div class="tpl-actions">
-          <a class="cta-button link" href="index.html" onclick="alert('Has cerrado sesión.');">Cerrar sesión</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [Cerrar sesión real] -->
+          <button type="button" class="cta-button link" id="tpl-logout-btn">Cerrar sesión</button>
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
-      <!-- TPL: FIN BLOQUE NUEVO -->
     </section>
   </main>
 
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs] -->
+  <!-- Mantengo CDN para no añadir dependencias pesadas; si no configuras, hará fallback a localStorage -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script>
+    // Rellena tus credenciales cuando las tengas (si se queda vacío, usamos localStorage sin romper nada)
+    const firebaseConfig = {
+      // apiKey: "TU_API_KEY",
+      // authDomain: "TU_AUTH_DOMAIN",
+      // projectId: "TU_PROJECT_ID",
+      // storageBucket: "TU_STORAGE_BUCKET",
+      // messagingSenderId: "TU_SENDER_ID",
+      // appId: "TU_APP_ID"
+    };
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica Auth + Firestore + fallback localStorage] -->
+  <script>
+    (function(){
+      const hasFirebase = typeof firebase !== 'undefined' && firebaseConfig && Object.keys(firebaseConfig).length > 0;
+      let app, auth, db, user = null;
+      const LS_PROFILE_KEY = 'tpl-profile';
+      const LS_PETS_KEY = 'tpl-pets';
+
+      // ===== UI REFS
+      const formCliente = document.getElementById('tpl-form-cliente');
+      const viewCliente = document.getElementById('tpl-cliente-view');
+      const emptyCliente = document.getElementById('tpl-cliente-empty');
+      const btnEditarCliente = document.getElementById('tpl-btn-editar-cliente');
+      const btnCancelCliente = document.getElementById('tpl-cancel-cliente');
+      const statusCliente = document.getElementById('tpl-cliente-status');
+
+      const mascotasView = document.getElementById('tpl-mascotas-view');
+      const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
+      const mascotasList = document.getElementById('tpl-mascotas-list');
+      const formMascota = document.getElementById('tpl-form-mascota');
+      const btnAddMascota = document.getElementById('tpl-btn-anadir-mascota');
+      const btnCancelMascota = document.getElementById('tpl-cancel-mascota');
+
+      const logoutBtn = document.getElementById('tpl-logout-btn');
+
+      // ===== Helpers localStorage
+      function lsReadProfile(){ try{ return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); }catch(e){ return null; } }
+      function lsWriteProfile(p){ localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(p)); }
+      function lsReadPets(){ try{ return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); }catch(e){ return []; } }
+      function lsWritePets(list){ localStorage.setItem(LS_PETS_KEY, JSON.stringify(list)); }
+
+      // ===== Firebase init (si hay config)
+      if (hasFirebase) {
+        app = firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.firestore();
+        // Opcional: persistencia local
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.warn);
+      }
+
+      // ===== Validación inputs (CP 5 dígitos + Tel 9 dígitos)
+      const cpInput = document.getElementById('tpl-cp');
+      if (cpInput) {
+        cpInput.addEventListener('invalid', function(){
+          cpInput.setCustomValidity('');
+          if (!cpInput.validity.valid) {
+            if (cpInput.validity.patternMismatch) cpInput.setCustomValidity('Introduce un código postal de 5 dígitos (ej. 28013).');
+            else if (cpInput.validity.valueMissing) cpInput.setCustomValidity('El código postal es obligatorio.');
+          }
+        });
+        cpInput.addEventListener('input', function(){ cpInput.setCustomValidity(''); });
+      }
+      const telInput = document.getElementById('tpl-telefono');
+      if (telInput) {
+        telInput.addEventListener('invalid', function(){
+          telInput.setCustomValidity('');
+          if (!telInput.validity.valid) {
+            if (telInput.validity.patternMismatch) telInput.setCustomValidity('Introduce un teléfono móvil español de 9 dígitos (ej. 612345678).');
+            else if (telInput.validity.valueMissing) telInput.setCustomValidity('El teléfono es obligatorio.');
+          }
+        });
+        telInput.addEventListener('input', function(){ telInput.setCustomValidity(''); });
+      }
+
+      // ===== Render perfil
+      async function getProfile(){
+        if (hasFirebase && user) {
+          const doc = await db.collection('users').doc(user.uid).collection('private').doc('profile').get();
+          return doc.exists ? doc.data() : null;
+        }
+        return lsReadProfile();
+      }
+      async function setProfile(data){
+        if (hasFirebase && user) {
+          await db.collection('users').doc(user.uid).collection('private').doc('profile').set(data, { merge: true });
+        } else {
+          lsWriteProfile(data);
+        }
+      }
+      function updateStatusBadge(p){
+        const complete = p && p.nombre && p.telefono && p.email && p.cp;
+        statusCliente.classList.toggle('tpl-hidden', !complete);
+        statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
+      }
+      async function renderCliente(){
+        const p = await getProfile();
+        updateStatusBadge(p);
+        if (p && p.nombre) {
+          document.getElementById('tpl-view-nombre').textContent = p.nombre || '—';
+          document.getElementById('tpl-view-telefono').textContent = p.telefono || '—';
+          document.getElementById('tpl-view-email').textContent = p.email || '—';
+          document.getElementById('tpl-view-direccion').textContent = p.direccion || '—';
+          document.getElementById('tpl-view-cp').textContent = p.cp || '—';
+          document.getElementById('tpl-view-pref').textContent = p.preferencias || '—';
+
+          emptyCliente.classList.add('tpl-hidden');
+          viewCliente.classList.remove('tpl-hidden');
+          formCliente.classList.add('tpl-hidden');
+        } else {
+          emptyCliente.classList.remove('tpl-hidden');
+          viewCliente.classList.add('tpl-hidden');
+          formCliente.classList.remove('tpl-hidden');
+        }
+      }
+      async function fillFormFromProfile(){
+        const p = await getProfile() || {};
+        formCliente.nombre.value = p.nombre || '';
+        formCliente.telefono.value = p.telefono || '';
+        formCliente.email.value = p.email || '';
+        formCliente.direccion.value = p.direccion || '';
+        formCliente.cp.value = p.cp || '';
+        formCliente.preferencias.value = p.preferencias || '';
+      }
+
+      formCliente.addEventListener('submit', async function(e){
+        e.preventDefault();
+        if (!formCliente.checkValidity()) { formCliente.reportValidity(); return; }
+        const data = {
+          nombre: formCliente.nombre.value.trim(),
+          telefono: formCliente.telefono.value.trim(),
+          email: formCliente.email.value.trim(),
+          direccion: formCliente.direccion.value.trim(),
+          cp: formCliente.cp.value.trim(),
+          preferencias: formCliente.preferencias.value.trim()
+        };
+        await setProfile(data);
+        await renderCliente();
+      });
+      if (btnEditarCliente) {
+        btnEditarCliente.addEventListener('click', async function(){
+          await fillFormFromProfile();
+          formCliente.classList.remove('tpl-hidden');
+          viewCliente.classList.add('tpl-hidden');
+          emptyCliente.classList.add('tpl-hidden');
+          formCliente.querySelector('input,select,textarea')?.focus();
+        });
+      }
+      if (btnCancelCliente) {
+        btnCancelCliente.addEventListener('click', function(){ renderCliente(); });
+      }
+
+      // ===== Mascotas
+      async function getPets(){
+        if (hasFirebase && user) {
+          const snap = await db.collection('users').doc(user.uid).collection('pets').get();
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        return lsReadPets();
+      }
+      async function addPet(m){
+        if (hasFirebase && user) {
+          await db.collection('users').doc(user.uid).collection('pets').add(m);
+        } else {
+          const arr = lsReadPets(); arr.push(m); lsWritePets(arr);
+        }
+      }
+      async function updatePet(idOrIndex, m){
+        if (hasFirebase && user) {
+          await db.collection('users').doc(user.uid).collection('pets').doc(idOrIndex).set(m, { merge: true });
+        } else {
+          const arr = lsReadPets();
+          arr[idOrIndex] = { ...arr[idOrIndex], ...m };
+          lsWritePets(arr);
+        }
+      }
+      async function deletePet(idOrIndex){
+        if (hasFirebase && user) {
+          await db.collection('users').doc(user.uid).collection('pets').doc(idOrIndex).delete();
+        } else {
+          const arr = lsReadPets();
+          arr.splice(idOrIndex,1); lsWritePets(arr);
+        }
+      }
+
+      async function renderMascotas(){
+        const list = await getPets();
+        mascotasList.innerHTML = '';
+        if (!list || list.length === 0) {
+          mascotasEmpty.classList.remove('tpl-hidden');
+          mascotasView.classList.add('tpl-hidden');
+        } else {
+          mascotasEmpty.classList.add('tpl-hidden');
+          mascotasView.classList.remove('tpl-hidden');
+          list.forEach(function(m, idx){
+            const li = document.createElement('li');
+            li.textContent = (m.nombre || '—') + ' · ' + (m.especie || '—') + (m.notas ? (' · ' + m.notas) : '');
+            const actions = document.createElement('span');
+            actions.className = 'tpl-pet-actions';
+
+            const edit = document.createElement('button');
+            edit.textContent = 'Editar';
+            edit.className = 'cta-button';
+            edit.addEventListener('click', async function(){
+              // Prefill y guardado como edición
+              formMascota.classList.remove('tpl-hidden');
+              formMascota.nombre.value = m.nombre || '';
+              formMascota.especie.value = m.especie || '';
+              formMascota.notas.value = m.notas || '';
+              formMascota.dataset.editing = '1';
+              formMascota.dataset.target = hasFirebase ? (m.id) : String(idx);
+              formMascota.querySelector('input,select,textarea')?.focus();
+            });
+
+            const del = document.createElement('button');
+            del.textContent = 'Eliminar';
+            del.className = 'cta-button link';
+            del.addEventListener('click', async function(){
+              await deletePet(hasFirebase ? m.id : idx);
+              await renderMascotas();
+            });
+
+            actions.appendChild(edit);
+            actions.appendChild(del);
+            li.appendChild(actions);
+            mascotasList.appendChild(li);
+          });
+        }
+      }
+
+      if (btnAddMascota) {
+        btnAddMascota.addEventListener('click', function(){
+          formMascota.reset();
+          delete formMascota.dataset.editing;
+          delete formMascota.dataset.target;
+          formMascota.classList.remove('tpl-hidden');
+          formMascota.querySelector('input,select,textarea')?.focus();
+        });
+      }
+      if (btnCancelMascota) {
+        btnCancelMascota.addEventListener('click', function(){
+          formMascota.classList.add('tpl-hidden');
+        });
+      }
+      formMascota.addEventListener('submit', async function(e){
+        e.preventDefault();
+        if (!formMascota.checkValidity()) { formMascota.reportValidity(); return; }
+        const m = {
+          nombre: formMascota.nombre.value.trim(),
+          especie: formMascota.especie.value,
+          notas: formMascota.notas.value.trim()
+        };
+        if (formMascota.dataset.editing === '1') {
+          await updatePet(formMascota.dataset.target, m);
+        } else {
+          await addPet(m);
+        }
+        formMascota.classList.add('tpl-hidden');
+        await renderMascotas();
+      });
+
+      // ===== Cerrar sesión real
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function(){
+          try {
+            if (hasFirebase && auth) { await auth.signOut(); }
+          } catch (e) { console.warn(e); }
+          // Limpieza local (si usabas fallback)
+          localStorage.removeItem(LS_PROFILE_KEY);
+          localStorage.removeItem(LS_PETS_KEY);
+          alert('Has cerrado sesión.');
+          location.href = 'index.html';
+        });
+      }
+
+      // ===== Ciclo de vida
+      async function bootWithUser(u){
+        user = u || null;
+        await renderCliente();
+        await renderMascotas();
+      }
+
+      if (hasFirebase) {
+        auth.onAuthStateChanged(async function(u){
+          await bootWithUser(u);
+        });
+      } else {
+        // Sin Firebase: trabajamos con localStorage
+        await bootWithUser(null);
+      }
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
