@@ -44,6 +44,10 @@
     /* Grid tipo Servicios SIN huecos */
     .services-section .services-grid{
       display:grid; gap:20px; grid-template-columns: 1fr; align-items:stretch;
+      /* TPL: INICIO BLOQUE NUEVO [Fix altura uniforme y evitar cortes] */
+      grid-auto-flow: row dense;        /* rellena sin dejar huecos raros */
+      overflow: visible;                /* evita que se "corten" tarjetas altas */
+      grid-auto-rows: minmax(0, auto);  /* deja crecer las filas lo que haga falta */
     }
     /* Fila de 4 tarjetas “en una línea” en desktop */
     @media (min-width: 1100px){
@@ -54,6 +58,10 @@
     .services-section .service-card{
       display:flex; flex-direction:column;
       padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;
+      /* TPL: INICIO BLOQUE NUEVO [Tarjeta cuadrada y sin recortes] */
+      box-sizing: border-box;
+      height: 100%;          /* se estira a la altura de su grid-row */
+      overflow: visible;     /* nunca recorta contenido interno */
     }
     .services-section .service-card h3 { margin:0 0 6px; }
     .services-section .service-card p { margin:0; color:#555; }
@@ -71,7 +79,6 @@
     .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
 
     /* TPL: INICIO BLOQUE NUEVO [Beneficios en horizontal: una fila de 6 en desktop] */
-    /* Antes: auto-fit que podía dejar huecos; ahora columnas fijas por breakpoint */
     .tpl-beneficios{
       display:grid; gap:10px; margin-top:8px;
       grid-template-columns: 1fr 1fr;                 /* móvil: 2 por fila */
