@@ -22,7 +22,6 @@
 
   <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales: hero + grid + tarjeta full-width] -->
   <style>
-    /* Hero con mismo tamaño que Servicios (con foto) */
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
       background-position: center top;
@@ -34,11 +33,9 @@
       .hero-section.hero-trabaja{ height: 42vh; min-height: 300px; background-position: center 15%; }
     }
 
-    /* Compactar espacios bajo el hero */
     .services-section .container > h2 { margin-top: 20px; margin-bottom: 8px; }
     .services-section .subtitle { margin-top: 0; margin-bottom: 18px; }
 
-    /* Grid tipo Servicios */
     .services-section .services-grid{
       display:grid; gap:20px; grid-template-columns: 1fr; align-items:stretch;
       grid-auto-flow: row dense; grid-auto-rows: minmax(0, auto); overflow: visible;
@@ -47,44 +44,43 @@
       .services-section .services-grid{ grid-template-columns: repeat(4, 1fr); }
     }
 
-    /* Tarjetas */
     .services-section .service-card{
       display:flex; flex-direction:column;
       padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;
       box-sizing: border-box; height: 100%; overflow: visible;
     }
     .services-section .service-card h3 { margin:0 0 6px; }
-    .services-section .service-card p { margin:0; color:#555; }
+    .services-section .service-card p { margin:0; color:#555; line-height:1.5; }
     .services-section .service-icon { margin-bottom:6px; }
     .services-section .service-icon i { color:#58425a; }
 
-    /* Ocupación especial de columnas */
     .tpl-span2{ grid-column: span 1; }
     @media (min-width: 1100px){ .tpl-span2{ grid-column: span 2; } }
 
-    /* TPL: INICIO BLOQUE NUEVO [Tarjeta full-width en desktop] */
+    /* TPL: INICIO BLOQUE NUEVO [Tarjeta FULL WIDTH] */
     .tpl-span-full{ grid-column: 1 / -1; }
     /* TPL: FIN BLOQUE NUEVO */
 
-    /* Beneficios (cards) */
+    /* TPL: INICIO BLOQUE NUEVO [Estilo beneficios más “bonito” sin cambiar el layout] */
     .tpl-beneficio{
-      border:1px solid #eee; border-radius:10px; padding:10px; background:#fafafa;
-      display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start;
+      border:1px solid #eee; border-radius:12px; padding:14px; background:#fafafa;
+      display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start;
+      transition: transform .12s ease, box-shadow .12s ease;
     }
-    .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
+    .tpl-beneficio:hover{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.06); }
+    .tpl-beneficio i{ color: var(--color-principal); font-size: 1.25rem; line-height:1; }
 
-    /* Beneficios en horizontal: 6 en una fila en desktop */
-    .tpl-beneficios{ display:grid; gap:10px; margin-top:8px; grid-template-columns: 1fr 1fr; }
+    .tpl-beneficios{ display:grid; gap:12px; margin-top:10px; grid-template-columns: 1fr 1fr; }
     @media (min-width: 700px){ .tpl-beneficios{ grid-template-columns: repeat(3, 1fr); } }
     @media (min-width: 1100px){ .tpl-beneficios{ grid-template-columns: repeat(6, 1fr); } }
 
-    /* Candidatura centrada */
     .auth-wall{ padding:10px; border:1px dashed #bbb; border-radius:10px; background:#fafafa; }
     .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
     .auth-actions .cta-button{ padding:10px 16px; }
 
     .tpl-center-card{ grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 860px; }
     .services-section .services-grid > .service-card:last-child{ margin-bottom: 0; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -206,35 +202,59 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios y políticas (FULL WIDTH) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Ancho completo] -->
+        <!-- 5. Beneficios (FULL WIDTH, sin políticas) -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Beneficios detallados sin políticas] -->
         <article class="service-card tpl-span-full">
-          <div class="service-icon"><i class="fa-solid fa-shield-heart"></i></div>
-          <h3>Beneficios y políticas</h3>
+          <div class="service-icon"><i class="fa-solid fa-gift"></i></div>
+          <h3>Beneficios</h3>
           <div class="tpl-beneficios">
             <div class="tpl-beneficio">
               <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-              <div><strong>Pago seguro el mismo día</strong><br>Abonamos el servicio el día que comienza.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-shield-dog" aria-hidden="true"></i>
-              <div><strong>Seguro RC mascota obligatorio</strong><br>Protege al cuidador y evita incidencias.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-              <div><strong>Cancelación</strong><br>Si se cancela el día anterior, devolución proporcional.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
-              <div><strong>Urgencias cubiertas</strong><br>Sin pago por adelantado en urgencias.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-headset" aria-hidden="true"></i>
-              <div><strong>Consulta 24h</strong><br>Primera orientación telemática con veterinarios.</div>
+              <div><strong>Pago el mismo día del inicio</strong><br>Cobras cuando el servicio comienza, sin esperas.</div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-route" aria-hidden="true"></i>
-              <div><strong>Desplazamiento pagado</strong><br>El desplazamiento se <strong>paga siempre</strong> según distancia.</div>
+              <div><strong>Desplazamiento pagado siempre</strong><br>Recibes tu kilometraje o desplazamiento según la distancia.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+              <div><strong>Servicios cerca de tu zona</strong><br>Priorizamos asignaciones por cercanía para optimizar tu tiempo.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-clock" aria-hidden="true"></i>
+              <div><strong>Horarios flexibles</strong><br>Elige turnos compatibles con tu agenda y disponibilidad.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-headset" aria-hidden="true"></i>
+              <div><strong>Soporte 24&nbsp;h</strong><br>Acompañamiento ante dudas o incidencias durante el servicio.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+              <div><strong>Protocolos claros</strong><br>Checklists y pautas para visitas, paseos, estancias y postoperatorios.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-user-nurse" aria-hidden="true"></i>
+              <div><strong>Primera visita acompañada</strong><br>En servicios nuevos o complejos te apoyamos en la toma de contacto.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>
+              <div><strong>Clientes recurrentes</strong><br>Oportunidad de hacer “tus familias” y crear confianza a largo plazo.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
+              <div><strong>Matching por experiencia</strong><br>Asignaciones según tu perfil (cachorros, gatos, postquirúrgicos, exóticos...).</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-martini-glass" aria-hidden="true"></i>
+              <div><strong>Servicios exclusivos</strong><br>Acceso a bodas y eventos, con tarifas y organización definidas.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+              <div><strong>Crecimiento profesional</strong><br>Feedback real, buenas prácticas y materiales para mejorar cada servicio.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-gem" aria-hidden="true"></i>
+              <div><strong>Propinas 100% para ti</strong><br>Si una familia quiere agradecerte, lo recibes íntegramente.</div>
             </div>
           </div>
         </article>
@@ -267,37 +287,7 @@
   <!-- Footer inyectado (fallback intacto) -->
   <div id="tpl-footer">
     <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
+      <footer class="site-footer">…</footer>
     </noscript>
   </div>
 
@@ -324,10 +314,8 @@
       }
       updateCTA();
 
-      // Año en footer
       document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
 
-      // Botón Únete -> cuestionario
       var btnUnete = document.getElementById('btnUnete');
       if(btnUnete){
         btnUnete.addEventListener('click', function(){
