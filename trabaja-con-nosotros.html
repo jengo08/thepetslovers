@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales Beneficios (compacto + toggle)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales Beneficios (compacto + toggle + hover CTA) sin cambiar diseño global] -->
   <style>
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
@@ -55,6 +55,9 @@
       padding:6px 10px; border-radius:8px;
     }
 
+    /* Contenedor del bloque completo para hover del CTA */
+    .tpl-bene-card{ position: relative; }
+
     .tpl-bene-list{
       display:grid; gap:10px; margin-top:10px;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -63,9 +66,30 @@
     .tpl-bene-item{
       border:1px solid #eee; border-radius:12px; background:#fafafa;
       padding:14px; display:flex; align-items:flex-start; gap:10px; text-align:left;
+      min-height: 100%; /* alturas coherentes */
     }
     .tpl-bene-item i{ color:var(--color-principal); font-size:1.2rem; margin-top:2px; }
     .tpl-bene-item strong{ display:block; margin-bottom:2px; }
+
+    /* Filler invisible para cuadrar rejilla sin huecos visuales */
+    .tpl-bene-filler{
+      visibility:hidden; /* ocupa espacio sin verse */
+      border:1px solid transparent; border-radius:12px; background:transparent;
+      padding:14px;
+    }
+    .tpl-bene-filler *{ display:none !important; }
+
+    /* CTA "Saber más" que aparece al pasar el ratón por el bloque de beneficios (cuando está abierto) */
+    #beneMore{
+      display:none;
+      text-align:center;
+      margin-top:10px;
+      transition: opacity .2s ease, max-height .2s ease;
+      opacity:0; max-height:0; overflow:hidden;
+    }
+    .tpl-bene-card.bene-open:hover #beneMore{
+      opacity:1; max-height:80px;
+    }
 
     /* Candidatura centrada (se mantiene) */
     .tpl-center-card{ grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 860px; }
@@ -91,9 +115,7 @@
           <li><a href="index.html#contactanos">Contáctanos</a></li>
           <li><a href="trabaja-con-nosotros.html" aria-current="page">Conviértete en cuidador</a></li>
         </ul>
-        <!-- TPL: INICIO BLOQUE NUEVO [Login directo] -->
         <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>
-        <!-- TPL: FIN BLOQUE NUEVO -->
       </nav>
     </noscript>
   </div>
@@ -141,33 +163,49 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios (compacto con toggle) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Beneficios compactos con toggle + “Saber más”] -->
-        <article class="service-card tpl-span-full">
+        <!-- 5. Beneficios (compacto + toggle + “Saber más” en hover) -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Beneficios compactos con toggle + relleno sin huecos + CTA en hover] -->
+        <article class="service-card tpl-span-full tpl-bene-card" id="tplBeneCard">
           <div class="service-icon"><i class="fa-solid fa-gift"></i></div>
           <h3>Beneficios</h3>
           <p class="tpl-bene-lead">Ventajas exclusivas para nuestros cuidadores.</p>
 
+          <!-- Chips visibles (solo beneficios, sin políticas) -->
           <div class="tpl-bene-chips">
             <span class="tpl-chip"><i class="fa-solid fa-wallet"></i> Pago el mismo día</span>
             <span class="tpl-chip"><i class="fa-solid fa-route"></i> Desplazamiento pagado</span>
             <span class="tpl-chip"><i class="fa-solid fa-headset"></i> Soporte 24h</span>
           </div>
 
+          <!-- Botón para mostrar más -->
           <div class="tpl-bene-toggle">
             <button id="btnToggleBene" class="tpl-btn-link">Ver más beneficios</button>
           </div>
 
+          <!-- Lista oculta con más beneficios (solo beneficios) -->
           <div id="beneList" class="tpl-bene-list" style="display:none;">
-            <div class="tpl-bene-item"><i class="fa-solid fa-rotate-left"></i><div><strong>Cancelaciones claras</strong><br>Devolución proporcional si el cliente cancela con antelación.</div></div>
-            <div class="tpl-bene-item"><i class="fa-solid fa-kit-medical"></i><div><strong>Urgencias cubiertas</strong><br>Acceso rápido a ayuda sin pagos adelantados.</div></div>
-            <div class="tpl-bene-item"><i class="fa-solid fa-clipboard-check"></i><div><strong>Protocolos definidos</strong><br>Checklists y pautas para estancias, visitas y postoperatorios.</div></div>
-            <div class="tpl-bene-item"><i class="fa-solid fa-user-nurse"></i><div><strong>Acompañamiento inicial</strong><br>Apoyo en tu primera visita o servicio complejo.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-location-dot"></i><div><strong>Servicios cerca</strong><br>Priorizamos asignaciones por cercanía para optimizar tu tiempo.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-clock"></i><div><strong>Horarios flexibles</strong><br>Elige turnos compatibles con tu agenda y disponibilidad.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-clipboard-check"></i><div><strong>Protocolos claros</strong><br>Checklists y pautas para visitas, paseos, estancias y postoperatorios.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-user-nurse"></i><div><strong>Acompañamiento inicial</strong><br>Apoyo en primera visita o servicio complejo.</div></div>
             <div class="tpl-bene-item"><i class="fa-solid fa-hand-holding-heart"></i><div><strong>Clientes recurrentes</strong><br>Construye relaciones estables a largo plazo.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-people-arrows"></i><div><strong>Matching por experiencia</strong><br>Asignaciones según tu perfil (cachorros, gatos, postquirúrgicos, exóticos…).</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-martini-glass"></i><div><strong>Servicios exclusivos</strong><br>Acceso a bodas y eventos con organización definida.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-seedling"></i><div><strong>Crecimiento profesional</strong><br>Feedback y buenas prácticas para mejorar en cada servicio.</div></div>
             <div class="tpl-bene-item"><i class="fa-solid fa-gem"></i><div><strong>Propinas 100%</strong><br>Las propinas son íntegramente para ti.</div></div>
+
+            <!-- TPL: INICIO BLOQUE NUEVO [2 beneficios extra para cuadrar la rejilla] -->
+            <div class="tpl-bene-item"><i class="fa-solid fa-file-circle-check"></i><div><strong>Material de bienvenida</strong><br>Plantillas y guías para organizar tus servicios desde el día 1.</div></div>
+            <div class="tpl-bene-item"><i class="fa-solid fa-people-group"></i><div><strong>Comunidad de cuidadores</strong><br>Aprende y comparte experiencias con otros profesionales.</div></div>
+            <!-- TPL: FIN BLOQUE NUEVO -->
+
+            <!-- TPL: INICIO BLOQUE NUEVO [Filler invisible para que no queden huecos] -->
+            <div class="tpl-bene-filler" aria-hidden="true"></div>
+            <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
 
-          <div id="beneMore" style="display:none; text-align:center; margin-top:10px;">
+          <!-- CTA hacia condiciones (aparece al pasar el ratón cuando está abierto; en móvil aparece al abrir) -->
+          <div id="beneMore">
             <a href="condiciones.html" class="cta-button">Saber más</a>
           </div>
         </article>
@@ -204,8 +242,8 @@
     </noscript>
   </div>
 
-  <!-- Lógica sesión + CTA dinámico -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de sesión + toggle beneficios + forzar href login] -->
+  <!-- Lógica sesión + Toggle beneficios + login href + CTA hover -->
+  <!-- TPL: INICIO BLOQUE NUEVO [JS local: sesión + toggle + login href + CTA en hover] -->
   <script>
     (function(){
       function isLogged(){
@@ -239,17 +277,39 @@
         if (loginBtn) loginBtn.setAttribute('href', 'iniciar-sesion.html');
       }
 
-      // Toggle “Ver más beneficios”
       function initBenefitsToggle(){
         var btn = document.getElementById('btnToggleBene');
+        var card = document.getElementById('tplBeneCard');
         var list = document.getElementById('beneList');
         var more = document.getElementById('beneMore');
-        if(btn && list){
+
+        if(btn && list && card){
           btn.addEventListener('click', function(){
             var isOpen = list.style.display === 'grid';
             list.style.display = isOpen ? 'none' : 'grid';
-            if (more) more.style.display = isOpen ? 'none' : 'block';
-            btn.textContent = isOpen ? 'Ver más beneficios' : 'Ocultar beneficios';
+
+            // marcar estado abierto para habilitar el hover del CTA
+            if (!isOpen) {
+              card.classList.add('bene-open');
+              // En dispositivos táctiles mostramos el CTA directamente
+              var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+              if (isTouch && more){
+                more.style.display = 'block';
+                more.style.opacity = '1';
+                more.style.maxHeight = '80px';
+              } else if (more) {
+                more.style.display = 'block'; // visible pero con opacity 0 hasta hover
+              }
+              btn.textContent = 'Ocultar beneficios';
+            } else {
+              card.classList.remove('bene-open');
+              if (more){
+                more.style.display = 'none';
+                more.style.opacity = '0';
+                more.style.maxHeight = '0';
+              }
+              btn.textContent = 'Ver más beneficios';
+            }
           });
         }
       }
