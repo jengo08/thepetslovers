@@ -20,9 +20,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales: igualar hero + grid sin huecos] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales: igualar hero + grid sin huecos + centrado de candidatura] -->
   <style>
-    /* Hero con mismo tamaño que Servicios */
+    /* Hero con mismo tamaño que Servicios (con foto) */
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
       background-position: center top;
@@ -37,19 +37,21 @@
       }
     }
 
-    /* Compactar espacios bajo el hero (como Servicios) */
+    /* Compactar espacios bajo el hero (coherente con Servicios) */
     .services-section .container > h2 { margin-top: 20px; margin-bottom: 8px; }
     .services-section .subtitle { margin-top: 0; margin-bottom: 18px; }
 
-    /* Grid tipo Servicios sin huecos */
+    /* Grid tipo Servicios SIN huecos */
     .services-section .services-grid{
       display:grid; gap:20px; grid-template-columns: 1fr; align-items:stretch;
     }
-    @media (min-width: 900px){
-      .services-section .services-grid{ grid-template-columns: repeat(3, 1fr); }
+    /* TPL: INICIO BLOQUE NUEVO [Fila de 4 tarjetas “en una línea” en desktop] */
+    @media (min-width: 1100px){
+      .services-section .services-grid{ grid-template-columns: repeat(4, 1fr); }
     }
+    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Tarjetas compactas y elásticas */
+    /* Tarjetas compactas */
     .services-section .service-card{
       display:flex; flex-direction:column;
       padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;
@@ -59,12 +61,12 @@
     .services-section .service-icon { margin-bottom:6px; }
     .services-section .service-icon i { color:#58425a; }
 
-    /* TPL: INICIO BLOQUE NUEVO [doble ancho para llenar filas] */
-    .service-card--span2{ grid-column: span 1; }
-    @media (min-width: 900px){ .service-card--span2{ grid-column: span 2; } }
+    /* TPL: INICIO BLOQUE NUEVO [Doble ancho flexible para secciones más largas] */
+    .tpl-span2{ grid-column: span 1; }
+    @media (min-width: 1100px){ .tpl-span2{ grid-column: span 2; } }
     /* TPL: FIN BLOQUE NUEVO */
 
-    /* Beneficios: rejilla fluida sin huecos (auto-fit) */
+    /* Beneficios: rejilla fluida sin huecos (6 elementos) */
     .tpl-beneficios{
       display:grid; gap:10px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       margin-top:8px;
@@ -75,21 +77,28 @@
     }
     .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
 
-    /* CTA candidatura: más compacto visualmente */
+    /* Candidatura centrada y compacta */
     .auth-wall{
       padding:10px; border:1px dashed #bbb; border-radius:10px; background:#fafafa;
     }
     .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
     .auth-actions .cta-button{ padding:10px 16px; }
-    .tpl-cta-center{ text-align:center; }
-    .tpl-cta-center .cta-button{ padding:12px 18px; }
 
-    /* Quitar “aire” extra en la última tarjeta del grid en mobile */
+    /* TPL: INICIO BLOQUE NUEVO [Candidatura centrada en el grid] */
+    .tpl-center-card{
+      grid-column: 1 / -1;           /* ocupa toda la fila del grid */
+      justify-self: center;          /* centrado horizontal */
+      width: 100%;
+      max-width: 860px;              /* ancho máximo para que no “flote” a un lado */
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* Última tarjeta sin extra-espacio abajo en mobile */
     .services-section .services-grid > .service-card:last-child{ margin-bottom: 0; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- JSON-LD (JobPosting + FAQ + Breadcrumb) permanece idéntico a la versión previa -->
+  <!-- JSON-LD (JobPosting + FAQ + Breadcrumb) tal cual versión previa -->
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -207,9 +216,8 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios y políticas (DOBLE ANCHO para eliminar huecos) -->
-        <!-- TPL: INICIO BLOQUE NUEVO -->
-        <article class="service-card service-card--span2">
+        <!-- 5. Beneficios y políticas (DOBLE ANCHO, ahora 6 items, sin huecos) -->
+        <article class="service-card tpl-span2">
           <div class="service-icon"><i class="fa-solid fa-shield-heart"></i></div>
           <h3>Beneficios y políticas</h3>
           <div class="tpl-beneficios">
@@ -233,13 +241,17 @@
               <i class="fa-solid fa-headset" aria-hidden="true"></i>
               <div><strong>Consulta 24h</strong><br>Primera orientación telemática con veterinarios.</div>
             </div>
+            <!-- TPL: INICIO BLOQUE NUEVO [Nuevo beneficio #6: desplazamiento] -->
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-route" aria-hidden="true"></i>
+              <div><strong>Desplazamiento pagado</strong><br>El desplazamiento se <strong>paga siempre</strong> según distancia.</div>
+            </div>
+            <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
         </article>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <!-- 6. Candidatura (CTA dinámico, DOBLE ANCHO y compacto) -->
-        <!-- TPL: INICIO BLOQUE NUEVO -->
-        <article class="service-card help-card service-card--span2">
+        <!-- 6. Candidatura (centrada, no a un lado) -->
+        <article class="service-card help-card tpl-center-card">
           <div class="service-icon"><i class="fa-solid fa-pen-to-square"></i></div>
           <h3>Envía tu candidatura</h3>
 
@@ -257,7 +269,6 @@
             <a id="btnUnete" class="cta-button" href="cuestionario-candidatos.html" data-target="cuestionario-candidatos.html" aria-label="Únete ahora">Únete ahora</a>
           </div>
         </article>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
       </div>
     </div>
@@ -300,7 +311,7 @@
     </noscript>
   </div>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica sesión + CTA dinámico] -->
+  <!-- Lógica sesión + CTA dinámico -->
   <script>
     (function(){
       function isLogged(){
@@ -336,7 +347,6 @@
       }
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Inyectores -->
   <script src="tpl-navbar.js" defer></script>
