@@ -18,7 +18,10 @@
   </style>
 </head>
 <body>
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar plantilla o tu navbar estático] -->
   <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="tpl-login" aria-labelledby="t">
     <h1 id="t">Iniciar sesión</h1>
@@ -35,6 +38,7 @@
     <div class="tpl-actions">
       <button id="btnLogin" class="cta-button" type="button">Entrar</button>
       <button id="btnSignup" class="cta-button link" type="button">Crear cuenta</button>
+      <a class="cta-button link" href="registro.html">Registro rápido (datos del dueño)</a>
       <button id="btnLogout" class="cta-button link" type="button" style="display:none">Cerrar sesión</button>
     </div>
 
@@ -42,14 +46,13 @@
   </main>
 
   <div id="tpl-footer"></div>
-  <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase: misma que reserva.html] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase] -->
   <script>
     (function(){
       if (typeof firebase === 'undefined') return;
@@ -80,10 +83,8 @@
 
       function setStatus(t){ msg.textContent = t || ''; }
       function getNext(){
-        try{
-          // Si llega ?next=... volvemos ahí. Si no, a perfil una vez logueado/registrado.
-          return new URLSearchParams(location.search).get('next') || 'perfil.html';
-        }catch(_){ return 'perfil.html'; }
+        try{ return new URLSearchParams(location.search).get('next') || 'perfil.html'; }
+        catch(_){ return 'perfil.html'; }
       }
 
       auth.onAuthStateChanged(function(user){
@@ -101,8 +102,8 @@
       btnLogin.addEventListener('click', async function(){
         try{
           await auth.signInWithEmailAndPassword(email.value, pass.value);
-          setStatus('¡Bienvenido/a!');
-          setTimeout(function(){ location.href = getNext(); }, 300);
+          setStatus('¡Bienvenida!');
+          setTimeout(function(){ location.href = getNext(); }, 250);
         }catch(e){
           setStatus('No se pudo iniciar sesión. Revisa email/contraseña.');
         }
@@ -112,7 +113,7 @@
         try{
           await auth.createUserWithEmailAndPassword(email.value, pass.value);
           setStatus('Cuenta creada. Has iniciado sesión.');
-          setTimeout(function(){ location.href = getNext(); }, 300);
+          setTimeout(function(){ location.href = 'registro.html?next=' + encodeURIComponent(getNext()); }, 250);
         }catch(e){
           setStatus('No se pudo crear la cuenta. ¿Ya existe ese email?');
         }
