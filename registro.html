@@ -7,101 +7,170 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    .tpl-form{ max-width:680px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
+    /* TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos] */
+    .tpl-form{ max-width:720px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .tpl-form h1{ margin:0 0 6px; }
+    .tpl-sub{ color:#666; margin:0 0 16px; }
     .grid{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media(min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } .wide{ grid-column:1/-1; } }
     .field{ display:flex; flex-direction:column; gap:6px; }
     .field label{ font-weight:700; color:#58425a; }
-    .field input,.field select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
-    @media(min-width:720px){ .grid{ grid-template-columns:1fr 1fr; } .wide{ grid-column:1 / -1; } }
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .field input,.field select,.field textarea{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
+    .field small{ color:#777; }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
-    .link{ background:#fff; color:#339496; border:2px solid #339496; }
+    .link{ background:#fff; color:#339496; border:2px solid #339496; text-decoration:none; display:inline-flex; align-items:center; }
+    .legal{ font-size:.9rem; color:#666; margin-top:6px; }
+    .msg{ margin-top:8px; min-height:1.2em; color:#555; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectada] -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="tpl-form" aria-labelledby="t">
     <h1 id="t">Datos del dueño</h1>
-    <p>Solo tardas 2 minutos. Después podrás añadir tus mascotas.</p>
+    <p class="tpl-sub">Solo 2 minutos. Después podrás añadir las mascotas.</p>
 
     <!-- TPL: INICIO BLOQUE NUEVO [Formulario dueño] -->
-    <form id="ownerForm">
+    <form id="ownerForm" novalidate>
       <div class="grid">
         <div class="field">
           <label for="nombre">Nombre y apellidos</label>
-          <input id="nombre" required>
+          <input id="nombre" name="nombre" required autocomplete="name" />
         </div>
+
         <div class="field">
           <label for="telefono">Teléfono</label>
-          <input id="telefono" type="tel" required>
+          <input id="telefono" name="telefono" type="tel" required autocomplete="tel" placeholder="+34 6.." />
         </div>
+
         <div class="field wide">
           <label for="direccion">Dirección</label>
-          <input id="direccion" placeholder="Calle y número" required>
+          <input id="direccion" name="direccion" required placeholder="Calle y nº" autocomplete="address-line1" />
         </div>
+
         <div class="field">
           <label for="cp">Código postal</label>
-          <input id="cp" required>
+          <input id="cp" name="cp" required inputmode="numeric" pattern="\\d{4,5}" />
+          <small>4–5 dígitos</small>
         </div>
+
         <div class="field">
           <label for="ciudad">Ciudad</label>
-          <input id="ciudad" required>
+          <input id="ciudad" name="ciudad" required autocomplete="address-level2" />
         </div>
+
+        <div class="field">
+          <label for="zona">Zona de servicio</label>
+          <input id="zona" name="zona" required placeholder="Barrio/municipio" />
+        </div>
+
         <div class="field">
           <label for="contacto">Preferencia de contacto</label>
-          <select id="contacto" required>
+          <select id="contacto" name="contacto" required>
             <option value="">Elige…</option>
             <option>WhatsApp</option>
             <option>Teléfono</option>
             <option>Email</option>
           </select>
         </div>
-        <div class="field">
-          <label for="zona">Zona de servicio</label>
-          <input id="zona" placeholder="Barrio/municipio" required>
-        </div>
+
         <div class="field wide">
           <label for="referencia">¿Cómo nos conociste? (opcional)</label>
-          <input id="referencia" placeholder="Instagram, amigos, Google…">
+          <input id="referencia" name="referencia" placeholder="Instagram, amigos, Google…" />
+        </div>
+
+        <div class="field wide">
+          <label for="notas">Notas (opcional)</label>
+          <textarea id="notas" name="notas" rows="3" placeholder="Alergias, horarios, ascensor, portero…"></textarea>
+        </div>
+
+        <div class="field wide">
+          <label class="legal">
+            <input type="checkbox" id="consent" required>
+            He leído y acepto las <a href="condiciones.html" target="_blank" rel="noopener">Condiciones</a> y la
+            <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.
+          </label>
         </div>
       </div>
+
       <div class="actions">
         <button class="cta-button" type="submit">Guardar y continuar</button>
-        <a class="cta-button link" href="perfil.html">Omitir (lo completo después)</a>
+        <a class="link" href="perfil.html" id="skipLink">Más tarde</a>
       </div>
+      <p class="msg" id="msg" aria-live="polite"></p>
     </form>
     <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectado] -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Guardar mínimo y marcar perfil completo] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: guardar + marcar perfil completo + redirigir] -->
   <script>
     (function(){
       var form = document.getElementById('ownerForm');
+      var msg  = document.getElementById('msg');
+      var skip = document.getElementById('skipLink');
+
+      function setStatus(t){ msg.textContent = t || ''; }
       function getNext(){
         try{ return new URLSearchParams(location.search).get('next') || 'perfil.html'; }
         catch(_){ return 'perfil.html'; }
       }
+      // Si llega desde login con next=..., respetamos ese destino también en "Más tarde"
+      skip.setAttribute('href', getNext());
+
+      // Prefill si ya guardó antes
+      try{
+        var saved = JSON.parse(localStorage.getItem('tpl-owner')||'null');
+        if (saved){
+          ['nombre','telefono','direccion','cp','ciudad','zona','contacto','referencia','notas'].forEach(function(k){
+            if (saved[k] != null && document.getElementById(k)) document.getElementById(k).value = saved[k];
+          });
+          // si había datos, marcamos consent como no forzado; el user debe confirmarlo de nuevo si quiere
+        }
+      }catch(_){}
+
       form.addEventListener('submit', function(e){
         e.preventDefault();
-        // Guardamos “mínimos” en localStorage (placeholder hasta Firestore)
+
+        // Validación mínima
+        if (!form.checkValidity()){
+          setStatus('Revisa los campos resaltados.');
+          // Dispara validación nativa
+          form.reportValidity && form.reportValidity();
+          return;
+        }
+
         var data = {
           nombre: document.getElementById('nombre').value.trim(),
           telefono: document.getElementById('telefono').value.trim(),
           direccion: document.getElementById('direccion').value.trim(),
           cp: document.getElementById('cp').value.trim(),
           ciudad: document.getElementById('ciudad').value.trim(),
-          contacto: document.getElementById('contacto').value,
           zona: document.getElementById('zona').value.trim(),
-          referencia: document.getElementById('referencia').value.trim()
+          contacto: document.getElementById('contacto').value,
+          referencia: document.getElementById('referencia').value.trim(),
+          notas: document.getElementById('notas').value.trim(),
+          ts: Date.now()
         };
-        localStorage.setItem('tpl-owner', JSON.stringify(data));
-        localStorage.setItem('tpl-profile','1'); // <- bandera perfil completo
-        location.href = getNext();
+
+        try{
+          localStorage.setItem('tpl-owner', JSON.stringify(data));
+          localStorage.setItem('tpl-profile','1'); // <- bandera de perfil completo para reservas
+          setStatus('Datos guardados.');
+          location.href = getNext();
+        }catch(err){
+          setStatus('No se pudieron guardar tus datos. Libera espacio e inténtalo de nuevo.');
+        }
       });
     })();
   </script>
