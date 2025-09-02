@@ -568,7 +568,7 @@
       els.petsListHidden.value = names.join(', ');
     }
 
-    // Desplazamiento (sin cambio de lógica; solo movido en el HTML)
+    // Desplazamiento
     function travelSync(){
       if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
       if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
@@ -764,11 +764,10 @@
     function renderAddrSuggestions(list){
       if(!els.addrSuggest) return;
       if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; return; }
-      els.addrSuggest.innerHTML = list.map((it)=>(
-        `<div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
+      els.addrSuggest.innerHTML = list.map((it)=>(`
+        <div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
           ${it.display_name}
-        </div>`
-      )).join('');
+        </div>`)).join('');
       els.addrSuggest.style.display = 'block';
       els.addrSuggest.querySelectorAll('.tpl-addr-item').forEach(node=>{
         node.addEventListener('click', ()=> chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))));
@@ -971,5 +970,52 @@
       if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
     }
   </script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Guardar reserva en Firestore y luego enviar a Formspree] -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var form = document.getElementById('bookingForm');
+      if (!form) return;
+
+      form.addEventListener('submit', async function (e) {
+        // Si otro listener la canceló por validación, respetamos.
+        if (e.defaultPrevented) return;
+
+        // Guardamos primero en Firestore y después enviamos a Formspree
+        e.preventDefault();
+        try {
+          if (typeof firebase !== 'undefined' && firebase.firestore) {
+            var db   = firebase.firestore();
+            var auth = firebase.auth ? firebase.auth() : null;
+            var u    = auth && auth.currentUser ? auth.currentUser : null;
+
+            // Construimos el payload con TODOS los campos del form (incluye ocultos: Desglose, Mascotas_lista)
+            var fd = new FormData(form);
+            var payload = {};
+            fd.forEach(function (v, k) { payload[k] = v; });
+
+            // Metadatos
+            payload._page = location.href;
+            payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            if (u) {
+              payload._uid = u.uid;
+              payload._email = u.email || null;
+            }
+
+            await db.collection('reservas').add(payload);
+            console.log('TPL: reserva guardada en Firestore');
+          }
+        } catch (err) {
+          console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
+          // No interrumpimos el envío por email
+        } finally {
+          // Enviamos a Formspree (action ya apunta a tu endpoint)
+          form.submit(); // NO dispara de nuevo 'submit' (bypassa eventos)
+        }
+      });
+    });
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
