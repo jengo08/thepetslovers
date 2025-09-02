@@ -13,7 +13,7 @@
     .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; }
     .tpl-card h2{ font-size:18px; margin:0 0 8px; color:#58425a; }
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
+    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
   </style>
 </head>
@@ -49,6 +49,16 @@
           <a class="cta-button link" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Cerrar sesión] -->
+      <article class="tpl-card">
+        <h2>Sesión</h2>
+        <p>Cierra tu sesión de forma segura.</p>
+        <div class="tpl-actions">
+          <a class="cta-button link" href="index.html" onclick="alert('Has cerrado sesión.');">Cerrar sesión</a>
+        </div>
+      </article>
+      <!-- TPL: FIN BLOQUE NUEVO -->
     </section>
   </main>
 
