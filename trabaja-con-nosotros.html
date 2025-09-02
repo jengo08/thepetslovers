@@ -1,363 +1,239 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Empleo: Auxiliar de Veterinaria y Veterinario/a · Trabaja con nosotros | The Pets Lovers</title>
-  <meta name="description" content="¿Buscas trabajo de auxiliar de veterinaria o veterinario/a? Únete a The Pets Lovers: profesionales del sector veterinario, horarios flexibles, pago seguro y servicios cerca de tu zona.">
-  <link rel="canonical" href="https://www.thepetslovers.es/trabaja-con-nosotros.html">
-  <meta name="robots" content="index,follow">
-  <meta property="og:title" content="Empleo: Auxiliar de Veterinaria y Veterinario/a · Trabaja con nosotros">
-  <meta property="og:description" content="Ofertas para auxiliares de veterinaria y veterinarios/as. Únete a The Pets Lovers: equipo profesional, pago el mismo día y servicios en tu zona.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.thepetslovers.es/trabaja-con-nosotros.html">
-  <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
-  <meta name="twitter:card" content="summary_large_image">
-
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuestionario de Candidaturas · The Pets Lovers</title>
+  <meta name="description" content="Envía tu candidatura para cuidador/a en The Pets Lovers. Sube tu CV y tu título y cuéntanos tu disponibilidad y zona.">
   <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales: igualar hero + grid sin huecos + centrado de candidatura] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del formulario] -->
   <style>
-    /* Hero con mismo tamaño que Servicios (con foto) */
-    .hero-section.hero-trabaja{
-      background-image: url('images/hero.jpg.png');
-      background-position: center top;
-      background-repeat: no-repeat;
-      background-size: cover;
-      height: 45vh;
-      min-height: 340px;
+    .tpl-page{ padding-top:120px; }
+    .tpl-form{ max-width: 860px; margin: 0 auto 80px; padding: 18px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .tpl-form h1{ margin: 0 0 8px; }
+    .tpl-lead{ color:#555; margin:0 0 18px; }
+    .tpl-grid{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media (min-width: 900px){ .tpl-grid{ grid-template-columns:1fr 1fr; } }
+    .tpl-field{ display:flex; flex-direction:column; gap:6px; }
+    .tpl-field label{ font-weight:600; color:#58425a; }
+    .tpl-field input[type="text"],
+    .tpl-field input[type="email"],
+    .tpl-field input[type="tel"],
+    .tpl-field textarea,
+    .tpl-field select{
+      border:1px solid #ddd; border-radius:10px; padding:10px;
+      font:inherit; outline:none;
     }
-    @media (max-width: 768px){
-      .hero-section.hero-trabaja{
-        height: 42vh; min-height: 300px; background-position: center 15%;
-      }
-    }
-
-    /* Compactar espacios bajo el hero (coherente con Servicios) */
-    .services-section .container > h2 { margin-top: 20px; margin-bottom: 8px; }
-    .services-section .subtitle { margin-top: 0; margin-bottom: 18px; }
-
-    /* Grid tipo Servicios SIN huecos */
-    .services-section .services-grid{
-      display:grid; gap:20px; grid-template-columns: 1fr; align-items:stretch;
-      /* TPL: INICIO BLOQUE NUEVO [Fix altura uniforme y evitar cortes] */
-      grid-auto-flow: row dense;        /* rellena sin dejar huecos raros */
-      overflow: visible;                /* evita que se "corten" tarjetas altas */
-      grid-auto-rows: minmax(0, auto);  /* deja crecer las filas lo que haga falta */
-    }
-    /* Fila de 4 tarjetas “en una línea” en desktop */
-    @media (min-width: 1100px){
-      .services-section .services-grid{ grid-template-columns: repeat(4, 1fr); }
-    }
-
-    /* Tarjetas compactas */
-    .services-section .service-card{
-      display:flex; flex-direction:column;
-      padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;
-      /* TPL: INICIO BLOQUE NUEVO [Tarjeta cuadrada y sin recortes] */
-      box-sizing: border-box;
-      height: 100%;          /* se estira a la altura de su grid-row */
-      overflow: visible;     /* nunca recorta contenido interno */
-    }
-    .services-section .service-card h3 { margin:0 0 6px; }
-    .services-section .service-card p { margin:0; color:#555; }
-    .services-section .service-icon { margin-bottom:6px; }
-    .services-section .service-icon i { color:#58425a; }
-
-    .tpl-span2{ grid-column: span 1; }
-    @media (min-width: 1100px){ .tpl-span2{ grid-column: span 2; } }
-
-    /* Beneficios (cards) */
-    .tpl-beneficio{
-      border:1px solid #eee; border-radius:10px; padding:10px; background:#fafafa;
-      display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start;
-    }
-    .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
-
-    /* TPL: INICIO BLOQUE NUEVO [Beneficios en horizontal: una fila de 6 en desktop] */
-    .tpl-beneficios{
-      display:grid; gap:10px; margin-top:8px;
-      grid-template-columns: 1fr 1fr;                 /* móvil: 2 por fila */
-    }
-    @media (min-width: 700px){
-      .tpl-beneficios{ grid-template-columns: repeat(3, 1fr); } /* tablet: 3 por fila */
-    }
-    @media (min-width: 1100px){
-      .tpl-beneficios{ grid-template-columns: repeat(6, 1fr); } /* desktop: 6 en una sola línea */
-    }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    /* Candidatura centrada y compacta */
-    .auth-wall{
-      padding:10px; border:1px dashed #bbb; border-radius:10px; background:#fafafa;
-    }
-    .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
-    .auth-actions .cta-button{ padding:10px 16px; }
-
-    .tpl-center-card{
-      grid-column: 1 / -1;
-      justify-self: center;
-      width: 100%;
-      max-width: 860px;
-    }
-
-    .services-section .services-grid > .service-card:last-child{ margin-bottom: 0; }
+    .tpl-field input[type="file"]{ border:1px dashed #bbb; border-radius:10px; padding:12px; background:#fafafa; }
+    .tpl-full{ grid-column:1 / -1; }
+    .tpl-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+    .tpl-note{ font-size:.92rem; color:#555; }
+    .tpl-ok{ color:#2e7d32; }
+    .tpl-error{ color:#b00020; }
+    .tpl-divider{ height:1px; background:#eee; margin:10px 0; }
+    .tpl-badge{ display:inline-flex; gap:6px; align-items:center; background:#f5fbfb; color:#339496; padding:8px 10px; border:1px solid #d7efef; border-radius:999px; font-weight:600; }
+    .cta-button{ display:inline-block; background:var(--color-principal,#339496); color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
+    .cta-button:focus{ outline:3px solid #58425a44; outline-offset:2px; }
+    .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- JSON-LD (JobPosting + FAQ + Breadcrumb) tal cual versión previa -->
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@graph":[
-      {
-        "@type":"JobPosting",
-        "title":"Auxiliar de Veterinaria (colaborador/a)",
-        "description":"¿Buscas trabajo de auxiliar de veterinaria? Únete a The Pets Lovers: agenda flexible, pago el mismo día del inicio y servicios cerca de tu zona. Requisitos: título de Auxiliar, disponibilidad y vocación.",
-        "employmentType":"CONTRACTOR",
-        "hiringOrganization":{"@type":"Organization","name":"The Pets Lovers","logo":"https://www.thepetslovers.es/images/logo.png.png","sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/"},
-        "applicantLocationRequirements":{"@type":"Country","name":"España"},
-        "datePosted":"2025-09-02",
-        "validThrough":"2026-09-02",
-        "industry":"Cuidado de mascotas",
-        "qualifications":"Título formativo de Auxiliar de Veterinaria.",
-        "skills":"Bienestar animal, comunicación con clientes, responsabilidad, proactividad.",
-        "jobLocationType":"TELECOMMUTE",
-        "directApply":false
-      },
-      {
-        "@type":"JobPosting",
-        "title":"Veterinario/a (colaborador/a)",
-        "description":"Ofertas para veterinarios/as con vocación. Colabora con The Pets Lovers en servicios especializados y coordinación con clínicas. Pago el mismo día del inicio y soporte 24 h.",
-        "employmentType":"CONTRACTOR",
-        "hiringOrganization":{"@type":"Organization","name":"The Pets Lovers","logo":"https://www.thepetslovers.es/images/logo.png.png","sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/"},
-        "applicantLocationRequirements":{"@type":"Country","name":"España"},
-        "datePosted":"2025-09-02",
-        "validThrough":"2026-09-02",
-        "industry":"Cuidado de mascotas",
-        "qualifications":"Grado/Licenciatura en Veterinaria (colegiación valorable).",
-        "skills":"Criterio clínico, trato con familias, responsabilidad, proactividad.",
-        "jobLocationType":"TELECOMMUTE",
-        "directApply":false
-      },
-      {
-        "@type":"FAQPage",
-        "mainEntity":[
-          {"@type":"Question","name":"¿Cómo aplicar a trabajo de auxiliar de veterinaria?","acceptedAnswer":{"@type":"Answer","text":"Inicia sesión en la web y pulsa “Únete ahora”. Completarás el cuestionario (titulación, disponibilidad y zona) y podrás subir tu CV."}},
-          {"@type":"Question","name":"¿Ofrecéis empleo para veterinarios/as?","acceptedAnswer":{"@type":"Answer","text":"Sí, colaboramos con veterinarios/as para servicios especializados y coordinación clínica. Pago el mismo día del inicio del servicio."}},
-          {"@type":"Question","name":"¿Qué ventajas tengo como cuidador/a?","acceptedAnswer":{"@type":"Answer","text":"Pago seguro el día de inicio, urgencias cubiertas, consulta telemática 24 h y matching por cercanía, servicio y experiencia."}}
-        ]
-      },
-      {
-        "@type":"BreadcrumbList",
-        "itemListElement":[
-          {"@type":"ListItem","position":1,"item":{"@id":"https://www.thepetslovers.es/","name":"Inicio"}},
-          {"@type":"ListItem","position":2,"item":{"@id":"https://www.thepetslovers.es/trabaja-con-nosotros.html","name":"Trabaja con nosotros"}}
-        ]
-      }
-    ]
-  }
-  </script>
 </head>
 <body>
 
-  <!-- Navbar inyectado (fallback intacto) -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="trabaja-con-nosotros.html" aria-current="page">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
+  <!-- Navbar inyectado -->
+  <div id="tpl-navbar"></div>
 
-  <!-- HERO (misma altura que Servicios) -->
-  <header class="hero-section hero-trabaja">
-    <div class="hero-content">
-      <h1>Trabaja con nosotros</h1>
-      <p>Únete a una red de <strong>Auxiliares de Veterinaria y Veterinarios/as</strong> con agenda flexible y soporte profesional.</p>
-    </div>
-  </header>
+  <main class="tpl-page">
+    <section class="tpl-form" aria-labelledby="t">
+      <p class="tpl-badge"><i class="fa-solid fa-shield-cat"></i> Profesionales del sector veterinario</p>
+      <h1 id="t">Cuestionario de candidaturas</h1>
+      <p class="tpl-lead">Cuéntanos tu perfil y adjunta tu <strong>CV</strong> y <strong>título</strong>. Procesamos los datos según nuestra <a href="privacidad.html">Política de privacidad</a>.</p>
 
-  <!-- CONTENIDO (mismo patrón que Servicios: título + subtítulo + grid) -->
-  <section class="services-section">
-    <div class="container">
-      <h2>Conviértete en cuidador/a profesional</h2>
-      <p class="subtitle">Asignamos servicios por <strong>cercanía</strong>, <strong>tipo de servicio</strong> y <strong>experiencia</strong> para que cuides con tranquilidad y respaldo 24h.</p>
-
-      <div class="services-grid">
-        <!-- 1. Propuesta -->
-        <article class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-users"></i></div>
-          <h3>Únete a The Pets Lovers</h3>
-          <p>Equipo del sector veterinario, protocolos claros y acompañamiento en cada paso.</p>
-        </article>
-
-        <!-- 2. Qué harás -->
-        <article class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-paw"></i></div>
-          <h3>Qué harás</h3>
-          <p>Visitas a domicilio, paseos, guardería/estancias, traslados y apoyo en bodas o postquirúrgicos.</p>
-        </article>
-
-        <!-- 3. Requisitos -->
-        <article class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-list-check"></i></div>
-          <h3>Requisitos mínimos</h3>
-          <p><strong>Titulación</strong> (Auxiliar o Veterinaria/o), <strong>disponibilidad</strong> real y <strong>vocación</strong> con trato excelente.</p>
-        </article>
-
-        <!-- 4. Perfiles -->
-        <article class="service-card">
-          <div class="service-icon"><i class="fa-solid fa-stethoscope"></i></div>
-          <h3>Perfiles</h3>
-          <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
-        </article>
-
-        <!-- 5. Beneficios y políticas (DOBLE ANCHO, 6 items, ahora en UNA LÍNEA en desktop) -->
-        <article class="service-card tpl-span2">
-          <div class="service-icon"><i class="fa-solid fa-shield-heart"></i></div>
-          <h3>Beneficios y políticas</h3>
-          <div class="tpl-beneficios">
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-              <div><strong>Pago seguro el mismo día</strong><br>Abonamos el servicio el día que comienza.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-shield-dog" aria-hidden="true"></i>
-              <div><strong>Seguro RC mascota obligatorio</strong><br>Protege al cuidador y evita incidencias.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-              <div><strong>Cancelación</strong><br>Si se cancela el día anterior, devolución proporcional.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
-              <div><strong>Urgencias cubiertas</strong><br>Sin pago por adelantado en urgencias.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-headset" aria-hidden="true"></i>
-              <div><strong>Consulta 24h</strong><br>Primera orientación telemática con veterinarios.</div>
-            </div>
-            <div class="tpl-beneficio">
-              <i class="fa-solid fa-route" aria-hidden="true"></i>
-              <div><strong>Desplazamiento pagado</strong><br>El desplazamiento se <strong>paga siempre</strong> según distancia.</div>
-            </div>
+      <!--
+        Formspree: cambia ACTION por el tuyo (ej. https://formspree.io/f/xxxxabcd)
+        Importante: dejamos enctype multipart/form-data para adjuntar archivos.
+      -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Firebase] -->
+      <form id="tpl-candidatura-form" action="https://formspree.io/f/xxxxabcd" method="POST" enctype="multipart/form-data">
+        <div class="tpl-grid">
+          <div class="tpl-field">
+            <label for="nombre">Nombre y apellidos</label>
+            <input id="nombre" name="nombre" type="text" required autocomplete="name" />
           </div>
-        </article>
-
-        <!-- 6. Candidatura (centrada) -->
-        <article class="service-card help-card tpl-center-card">
-          <div class="service-icon"><i class="fa-solid fa-pen-to-square"></i></div>
-          <h3>Envía tu candidatura</h3>
-
-          <!-- Si NO hay sesión -->
-          <div id="authWall" class="auth-wall">
-            <p style="margin:0 0 6px;"><strong>Primero inicia sesión o regístrate.</strong></p>
-            <div class="auth-actions">
-              <a href="index.html#iniciar-sesion" class="cta-button">Iniciar sesión</a>
-              <a href="index.html#iniciar-sesion" class="cta-button" style="background:#fff; color:var(--color-principal); border:2px solid var(--color-principal);">Registrarme</a>
-            </div>
+          <div class="tpl-field">
+            <label for="email">Email</label>
+            <input id="email" name="_replyto" type="email" required autocomplete="email" />
+          </div>
+          <div class="tpl-field">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" />
+          </div>
+          <div class="tpl-field">
+            <label for="provincia">Provincia / zona</label>
+            <input id="provincia" name="provincia" type="text" required />
+          </div>
+          <div class="tpl-field">
+            <label for="rol">Rol</label>
+            <select id="rol" name="rol" required>
+              <option value="">Selecciona</option>
+              <option value="Auxiliar de Veterinaria">Auxiliar de Veterinaria</option>
+              <option value="Veterinario/a">Veterinario/a</option>
+            </select>
+          </div>
+          <div class="tpl-field">
+            <label for="disponibilidad">Disponibilidad</label>
+            <select id="disponibilidad" name="disponibilidad" required>
+              <option value="">Selecciona</option>
+              <option>Mañanas</option>
+              <option>Tardes</option>
+              <option>Noches</option>
+              <option>Fines de semana</option>
+              <option>Completa</option>
+            </select>
+          </div>
+          <div class="tpl-field tpl-full">
+            <label for="experiencia">Experiencia (breve)</label>
+            <textarea id="experiencia" name="experiencia" rows="3" placeholder="Años de experiencia, tipos de mascotas, clínicas, etc."></textarea>
           </div>
 
-          <!-- Si SÍ hay sesión -->
-          <div id="uneteRow" class="tpl-cta-center" style="display:none; margin-top:6px;">
-            <a id="btnUnete" class="cta-button" href="cuestionario-candidatos.html" data-target="cuestionario-candidatos.html" aria-label="Únete ahora">Únete ahora</a>
+          <div class="tpl-field">
+            <label for="cv">CV (PDF)</label>
+            <input id="cv" name="cv" type="file" accept=".pdf" required />
           </div>
-        </article>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer inyectado (fallback intacto) -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          <div class="tpl-field">
+            <label for="titulo">Título (PDF o imagen)</label>
+            <input id="titulo" name="titulo" type="file" accept=".pdf,.png,.jpg,.jpeg" required />
           </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+
+          <div class="tpl-field tpl-full">
+            <label for="links">Enlaces (Instagram/LinkedIn/portfolio)</label>
+            <input id="links" name="links" type="text" placeholder="https://..." />
+          </div>
+
+          <div class="tpl-field tpl-full">
+            <label class="tpl-note">
+              <input type="checkbox" id="acepto" required />
+              He leído y acepto la <a href="privacidad.html">Política de privacidad</a>.
+            </label>
           </div>
         </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
+
+        <!-- Campos ocultos para guardar URLs de Firebase en el envío a Formspree -->
+        <input type="hidden" id="cvUrl" name="cvUrl">
+        <input type="hidden" id="tituloUrl" name="tituloUrl">
+
+        <div class="tpl-divider"></div>
+        <div class="tpl-actions">
+          <button id="tpl-submit" class="cta-button" type="submit">Enviar candidatura</button>
         </div>
-      </footer>
-    </noscript>
-  </div>
 
-  <!-- Lógica sesión + CTA dinámico -->
-  <script>
-    (function(){
-      function isLogged(){
-        try{
-          if (window.__TPL_AUTH === true) return true;
-          return localStorage.getItem('tpl-auth') === '1';
-        }catch(e){ return false; }
-      }
-      function updateCTA(){
-        var logged = isLogged();
-        var authWall = document.getElementById('authWall');
-        var uneteRow = document.getElementById('uneteRow');
-        if (logged){
-          if (authWall) authWall.style.display = 'none';
-          if (uneteRow) uneteRow.style.display = 'block';
-        } else {
-          if (authWall) authWall.style.display = 'block';
-          if (uneteRow) uneteRow.style.display = 'none';
-        }
-      }
-      updateCTA();
+        <p id="tpl-status" aria-live="polite" class="tpl-note" style="margin-top:8px;"></p>
+      </form>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    </section>
+  </main>
 
-      // Año en footer
-      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+  <!-- Footer inyectado -->
+  <div id="tpl-footer"></div>
 
-      // Botón Únete (cuando tengamos Google Form pre-rellenado, aquí generamos la URL)
-      var btnUnete = document.getElementById('btnUnete');
-      if(btnUnete){
-        btnUnete.addEventListener('click', function(){
-          var target = btnUnete.getAttribute('data-target') || btnUnete.getAttribute('href') || 'cuestionario-candidatos.html';
-          btnUnete.setAttribute('href', target);
-        });
-      }
-    })();
-  </script>
   <!-- Inyectores -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
+
+  <!-- Firebase SDKs (cargar sólo si vas a usar Firebase) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica subida y guardado] -->
+  <script type="module">
+    // ======== CONFIGURA AQUÍ TU FIREBASE =========
+    // 1) Crea proyecto en https://console.firebase.google.com
+    // 2) Agrega app Web y copia tu config a continuación:
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID",
+    };
+    // =============================================
+
+    // Import dinámico de SDK modular
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('tpl-candidatura-form');
+    const btn = document.getElementById('tpl-submit');
+    const status = document.getElementById('tpl-status');
+
+    async function uploadToStorage(file, pathPrefix){
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const stamp = Date.now();
+      const path = `${pathPrefix}/${stamp}_${safeName}`;
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      return await getDownloadURL(storageRef);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      // Dejamos el submit tradicional a Formspree, pero antes subimos a Firebase y guardamos en Firestore.
+      e.preventDefault();
+      status.textContent = "Subiendo archivos…";
+      btn.disabled = true;
+
+      try{
+        const nombre = form.nombre.value.trim();
+        const email = form._replyto.value.trim();
+        const telefono = form.telefono.value.trim();
+        const provincia = form.provincia.value.trim();
+        const rol = form.rol.value;
+        const disponibilidad = form.disponibilidad.value;
+        const experiencia = form.experiencia.value.trim();
+        const links = form.links.value.trim();
+
+        const fileCV = form.cv.files[0];
+        const fileTitulo = form.titulo.files[0];
+
+        // Subir a Firebase Storage
+        const [cvUrl, tituloUrl] = await Promise.all([
+          uploadToStorage(fileCV, `candidaturas/${rol}/cv`),
+          uploadToStorage(fileTitulo, `candidaturas/${rol}/titulos`)
+        ]);
+
+        // Guardar ficha en Firestore
+        await addDoc(collection(db, "candidaturas"), {
+          nombre, email, telefono, provincia, rol, disponibilidad, experiencia, links,
+          cvUrl, tituloUrl,
+          createdAt: serverTimestamp()
+        });
+
+        // Inyectar URLs en el envío a Formspree
+        document.getElementById('cvUrl').value = cvUrl;
+        document.getElementById('tituloUrl').value = tituloUrl;
+
+        status.innerHTML = "<span class='tpl-ok'>¡Listo! Archivos subidos. Enviando formulario…</span>";
+
+        // Enviar a Formspree (con archivos adjuntos y URLs)
+        form.submit();
+
+      }catch(err){
+        console.error(err);
+        status.innerHTML = "<span class='tpl-error'>No se pudo subir a Firebase. Enviaremos igualmente tu candidatura a Formspree.</span>";
+        // Aunque falle Firebase, enviamos a Formspree (los adjuntos seguirán incluidos)
+        form.submit();
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
