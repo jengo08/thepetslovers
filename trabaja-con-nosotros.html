@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- SEO orientado a empleo auxiliar/veterinaria -->
   <title>Empleo: Auxiliar de Veterinaria y Veterinario/a · Trabaja con nosotros | The Pets Lovers</title>
   <meta name="description" content="¿Buscas trabajo de auxiliar de veterinaria o veterinario/a? Únete a The Pets Lovers: profesionales del sector veterinario, horarios flexibles, pago seguro y servicios cerca de tu zona.">
   <link rel="canonical" href="https://www.thepetslovers.es/trabaja-con-nosotros.html">
@@ -22,147 +20,58 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales: hero con overlay, wave, highlights y layout fresco] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales para igualar hero y compactar espacios] -->
   <style>
-    /* HERO con foto + overlay degradado para legibilidad */
+    /* Hero con mismo tamaño que Servicios */
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
       background-position: center top;
       background-repeat: no-repeat;
       background-size: cover;
-      min-height: 360px;
-      position: relative;
+      height: 45vh;
+      min-height: 340px;
     }
-    .hero-section.hero-trabaja::before{
-      content:"";
-      position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.35) 35%, rgba(0,0,0,.2) 100%);
-    }
-    .hero-section.hero-trabaja .hero-content{
-      position:relative; z-index:1; text-align:center; padding: 56px 16px 46px;
-    }
-    .hero-section.hero-trabaja h1{ color:#fff; margin:0 0 8px; }
-    .hero-section.hero-trabaja p{ color:#f3f7f7; margin:0 auto; max-width: 760px; line-height:1.6; }
-
-    /* Separador wave para romper la monotonía */
-    .tpl-wave{ display:block; line-height:0; }
-    .tpl-wave svg{ display:block; width:100%; height:auto; }
-
-    /* Banda de highlights (beneficios rápidos) */
-    .tpl-band{
-      background:#eaf6f6; border-top: 1px solid #d9efef; border-bottom:1px solid #d9efef;
-      padding: 14px 0;
-    }
-    .tpl-band .tpl-chips{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-    .tpl-chip{
-      display:inline-flex; align-items:center; gap:8px; padding:10px 12px;
-      background:#fff; border:1px solid #ececec; border-radius:999px;
-      box-shadow:0 1px 6px rgba(0,0,0,.04); color:var(--color-texto); font-weight:600;
-    }
-    .tpl-chip i{ color:var(--color-principal); }
-
-    /* Contenido principal con grid viva y tarjetas compactas */
-    .tpl-grid{ display:grid; gap:18px; grid-template-columns:1fr; margin-top:22px; }
-    @media (min-width: 980px){ .tpl-grid{ grid-template-columns: 1.2fr .8fr; align-items:start; } }
-
-    .tpl-card{
-      background:#fff; border:1px solid #eee; border-radius:14px; padding:18px;
-      box-shadow:0 2px 10px rgba(0,0,0,.04);
-    }
-    .tpl-card h3{ margin:0 0 8px; font-size:1.25rem; color:var(--color-texto); }
-    .tpl-muted{ color:#666; }
-
-    .tpl-services{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
-    .tpl-pill{
-      display:inline-flex; align-items:center; gap:8px;
-      background:#fafafa; border:1px solid #eee; border-radius:999px; padding:8px 12px;
-    }
-    .tpl-pill i{ color:var(--color-principal); }
-
-    /* Requisitos y políticas */
-    .tpl-chips-wrap{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-
-    /* Beneficios en mosaico 3 columnas */
-    .tpl-beneficios{
-      display:grid; gap:12px; grid-template-columns:1fr;
-    }
-    @media (min-width:900px){ .tpl-beneficios{ grid-template-columns: repeat(3,1fr); } }
-    .tpl-beneficio{
-      border:1px solid #eee; border-radius:12px; padding:14px; background:#fff;
-      display:grid; grid-template-columns:auto 1fr; align-items:start; gap:10px;
-      box-shadow:0 2px 8px rgba(0,0,0,.04);
-    }
-    .tpl-beneficio i{ font-size:1.2rem; color:var(--color-principal); }
-    .tpl-beneficio h4{ margin:0 0 4px; font-size:1.02rem; color:var(--color-texto); }
-    .tpl-beneficio p{ margin:0; color:#666; line-height:1.5; }
-
-    /* Candidatura */
-    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin: 6px 0 14px; }
-    .auth-actions{ display:flex; gap:10px; justify-content:center; margin-top:8px; }
-    .auth-actions .cta-button{ padding:10px 16px; }
-    .tpl-cta-unete{ text-align:center; }
-    .tpl-cta-unete .cta-button{ padding:12px 18px; }
-  </style>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD: JobPosting (2) + FAQ + Breadcrumb] -->
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@graph":[
-      {
-        "@type":"JobPosting",
-        "title":"Auxiliar de Veterinaria (colaborador/a)",
-        "description":"¿Buscas trabajo de auxiliar de veterinaria? Únete a The Pets Lovers: agenda flexible, pago el mismo día del inicio y servicios cerca de tu zona. Requisitos: título de Auxiliar, disponibilidad y vocación.",
-        "employmentType":"CONTRACTOR",
-        "hiringOrganization":{"@type":"Organization","name":"The Pets Lovers","logo":"https://www.thepetslovers.es/images/logo.png.png","sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/"},
-        "applicantLocationRequirements":{"@type":"Country","name":"España"},
-        "datePosted":"2025-09-02",
-        "validThrough":"2026-09-02",
-        "industry":"Cuidado de mascotas",
-        "qualifications":"Título formativo de Auxiliar de Veterinaria.",
-        "skills":"Bienestar animal, comunicación con clientes, responsabilidad, proactividad.",
-        "jobLocationType":"TELECOMMUTE",
-        "directApply":false
-      },
-      {
-        "@type":"JobPosting",
-        "title":"Veterinario/a (colaborador/a)",
-        "description":"Ofertas para veterinarios/as con vocación. Colabora con The Pets Lovers en servicios especializados y coordinación con clínicas. Pago el mismo día del inicio y soporte 24 h.",
-        "employmentType":"CONTRACTOR",
-        "hiringOrganization":{"@type":"Organization","name":"The Pets Lovers","logo":"https://www.thepetslovers.es/images/logo.png.png","sameAs":"https://www.instagram.com/guarderiamascotasthepetslovers/"},
-        "applicantLocationRequirements":{"@type":"Country","name":"España"},
-        "datePosted":"2025-09-02",
-        "validThrough":"2026-09-02",
-        "industry":"Cuidado de mascotas",
-        "qualifications":"Grado/Licenciatura en Veterinaria (colegiación valorable).",
-        "skills":"Criterio clínico, trato con familias, responsabilidad, proactividad.",
-        "jobLocationType":"TELECOMMUTE",
-        "directApply":false
-      },
-      {
-        "@type":"FAQPage",
-        "mainEntity":[
-          {"@type":"Question","name":"¿Cómo aplicar a trabajo de auxiliar de veterinaria?","acceptedAnswer":{"@type":"Answer","text":"Inicia sesión en la web y pulsa “Únete ahora”. Completarás el cuestionario (titulación, disponibilidad y zona) y podrás subir tu CV."}},
-          {"@type":"Question","name":"¿Ofrecéis empleo para veterinarios/as?","acceptedAnswer":{"@type":"Answer","text":"Sí, colaboramos con veterinarios/as para servicios especializados y coordinación clínica. Pago el mismo día del inicio del servicio."}},
-          {"@type":"Question","name":"¿Qué ventajas tengo como cuidador/a?","acceptedAnswer":{"@type":"Answer","text":"Pago seguro el día de inicio, urgencias cubiertas, consulta telemática 24 h y matching por cercanía, servicio y experiencia."}}
-        ]
-      },
-      {
-        "@type":"BreadcrumbList",
-        "itemListElement":[
-          {"@type":"ListItem","position":1,"item":{"@id":"https://www.thepetslovers.es/","name":"Inicio"}},
-          {"@type":"ListItem","position":2,"item":{"@id":"https://www.thepetslovers.es/trabaja-con-nosotros.html","name":"Trabaja con nosotros"}}
-        ]
+    @media (max-width: 768px){
+      .hero-section.hero-trabaja{
+        height: 42vh; min-height: 300px; background-position: center 15%;
       }
-    ]
-  }
-  </script>
+    }
+
+    /* Compactar espacios bajo el hero y entre bloques (sin tocar tu CSS global) */
+    .services-section .container > h2 { margin-top: 20px; margin-bottom: 8px; }
+    .services-section .subtitle { margin-top: 0; margin-bottom: 18px; }
+
+    /* Tarjetas “tipo servicios” compactas */
+    .services-section .service-card { display:block; padding:16px; border:1px solid #eee; border-radius:12px; background:#fff; }
+    .services-section .service-card h3 { margin:0 0 6px; }
+    .services-section .service-card p { margin:0; color:#555; }
+    .services-section .service-icon { margin-bottom:6px; }
+    .services-section .service-icon i { color:#58425a; }
+
+    /* Bloque de beneficios en formato mosaico dentro de una tarjeta */
+    .tpl-beneficios{
+      display:grid; gap:10px; grid-template-columns:1fr;
+      margin-top:8px;
+    }
+    @media (min-width:900px){
+      .tpl-beneficios{ grid-template-columns: repeat(2,1fr); }
+    }
+    .tpl-beneficio{
+      border:1px solid #eee; border-radius:10px; padding:10px; background:#fafafa;
+      display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:start;
+    }
+    .tpl-beneficio i{ color: var(--color-principal); font-size: 1.1rem; line-height:1; }
+
+    /* CTA candidatura */
+    .tpl-cta-center{ text-align:center; }
+    .tpl-cta-center .cta-button{ padding:12px 18px; }
+    .auth-wall{ padding:12px; border:1px dashed #bbb; border-radius:10px; background:#fafafa; }
+  </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- Navbar inyectado (fallback intacto) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectado con fallback] -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -180,157 +89,106 @@
       </nav>
     </noscript>
   </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- HERO con imagen + overlay -->
+  <!-- HERO (misma altura que Servicios) -->
   <header class="hero-section hero-trabaja">
     <div class="hero-content">
       <h1>Trabaja con nosotros</h1>
-      <!-- TPL: INICIO BLOQUE NUEVO [Descripción hero mejorada] -->
-      <p>
-        Únete a una red de <strong>Auxiliares de Veterinaria y Veterinarios/as</strong> con <strong>agenda flexible</strong>,
-        <strong>pago seguro el día de inicio</strong> y <strong>soporte veterinario 24&nbsp;h</strong>. Asignamos servicios
-        por <strong>cercanía</strong>, <strong>tipo de servicio</strong> y <strong>experiencia</strong> para que cuides
-        con tranquilidad y respaldo.
-      </p>
-      <!-- TPL: FIN BLOQUE NUEVO -->
+      <p>Únete a una red de <strong>Auxiliares de Veterinaria y Veterinarios/as</strong> con agenda flexible y soporte profesional.</p>
     </div>
   </header>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Separador wave] -->
-  <div class="tpl-wave" aria-hidden="true">
-    <svg viewBox="0 0 1440 80" preserveAspectRatio="none">
-      <path fill="#eaf6f6" d="M0,64L80,69.3C160,75,320,85,480,74.7C640,64,800,32,960,26.7C1120,21,1280,43,1360,53.3L1440,64L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path>
-    </svg>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- Banda de highlights -->
-  <section class="tpl-band" aria-label="Beneficios rápidos">
+  <!-- CONTENIDO (mismo patrón que Servicios: título + subtítulo + grid de tarjetas) -->
+  <section class="services-section">
     <div class="container">
-      <div class="tpl-chips">
-        <span class="tpl-chip"><i class="fa-solid fa-wallet"></i> Pago el mismo día</span>
-        <span class="tpl-chip"><i class="fa-solid fa-location-dot"></i> Servicios cerca de ti</span>
-        <span class="tpl-chip"><i class="fa-solid fa-shield-dog"></i> Seguro RC de la mascota</span>
-        <span class="tpl-chip"><i class="fa-solid fa-headset"></i> Consulta 24 h</span>
+      <!-- TPL: INICIO BLOQUE NUEVO [Título y subtítulo bajo el hero] -->
+      <h2>Conviértete en cuidador/a profesional</h2>
+      <p class="subtitle">Asignamos servicios por <strong>cercanía</strong>, <strong>tipo de servicio</strong> y <strong>experiencia</strong> para que cuides con tranquilidad y respaldo 24h.</p>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <div class="services-grid">
+        <!-- 1. Propuesta -->
+        <article class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-users"></i></div>
+          <h3>Únete a The Pets Lovers</h3>
+          <p>Equipo del sector veterinario, protocolos claros y acompañamiento en cada paso.</p>
+        </article>
+
+        <!-- 2. Qué harás -->
+        <article class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-paw"></i></div>
+          <h3>Qué harás</h3>
+          <p>Visitas a domicilio, paseos, guardería/estancias, traslados y apoyo en bodas o postquirúrgicos.</p>
+        </article>
+
+        <!-- 3. Requisitos -->
+        <article class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-list-check"></i></div>
+          <h3>Requisitos mínimos</h3>
+          <p><strong>Titulación</strong> (Auxiliar o Veterinaria/o), <strong>disponibilidad</strong> real y <strong>vocación</strong> con trato excelente.</p>
+        </article>
+
+        <!-- 4. Perfiles -->
+        <article class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-stethoscope"></i></div>
+          <h3>Perfiles</h3>
+          <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
+        </article>
+
+        <!-- 5. Beneficios y políticas (mosaico compacto) -->
+        <article class="service-card">
+          <div class="service-icon"><i class="fa-solid fa-shield-heart"></i></div>
+          <h3>Beneficios y políticas</h3>
+          <div class="tpl-beneficios">
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-wallet" aria-hidden="true"></i>
+              <div><strong>Pago seguro el mismo día</strong><br>Abonamos el servicio el día que comienza.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-shield-dog" aria-hidden="true"></i>
+              <div><strong>Seguro RC mascota obligatorio</strong><br>Protege al cuidador y evita incidencias.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+              <div><strong>Cancelación</strong><br>Si se cancela el día anterior, devolución proporcional.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
+              <div><strong>Urgencias cubiertas</strong><br>Sin pago por adelantado en urgencias.</div>
+            </div>
+            <div class="tpl-beneficio">
+              <i class="fa-solid fa-headset" aria-hidden="true"></i>
+              <div><strong>Consulta 24h</strong><br>Primera orientación telemática con veterinarios.</div>
+            </div>
+          </div>
+        </article>
+
+        <!-- 6. Candidatura (CTA dinámico) -->
+        <article class="service-card help-card">
+          <div class="service-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+          <h3>Envía tu candidatura</h3>
+
+          <!-- Si NO hay sesión -->
+          <div id="authWall" class="auth-wall">
+            <p><strong>Primero inicia sesión o regístrate.</strong></p>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px;">
+              <a href="index.html#iniciar-sesion" class="cta-button">Iniciar sesión</a>
+              <a href="index.html#iniciar-sesion" class="cta-button" style="background:#fff; color:var(--color-principal); border:2px solid var(--color-principal);">Registrarme</a>
+            </div>
+          </div>
+
+          <!-- Si SÍ hay sesión -->
+          <div id="uneteRow" class="tpl-cta-center" style="display:none; margin-top:6px;">
+            <a id="btnUnete" class="cta-button" href="cuestionario-candidatos.html" data-target="cuestionario-candidatos.html" aria-label="Únete ahora">Únete ahora</a>
+          </div>
+        </article>
       </div>
+
     </div>
   </section>
 
-  <!-- CONTENIDO -->
-  <main class="services-section">
-    <div class="container">
-
-      <!-- Grid principal viva -->
-      <section class="tpl-grid" aria-label="Propuesta y funciones">
-        <article class="tpl-card">
-          <h3>Únete a The Pets Lovers</h3>
-          <p class="tpl-muted">
-            Formación, protocolo y acompañamiento continuo. Creamos el mejor “match” entre familias y cuidadores
-            priorizando <strong>cercanía</strong> y <strong>experiencia</strong>.
-          </p>
-          <div class="tpl-services" aria-label="Ventajas clave">
-            <span class="tpl-pill"><i class="fa-solid fa-user-nurse"></i> Equipo profesional</span>
-            <span class="tpl-pill"><i class="fa-solid fa-clock"></i> Horario flexible</span>
-            <span class="tpl-pill"><i class="fa-solid fa-shield-heart"></i> Bienestar animal</span>
-          </div>
-        </article>
-
-        <article class="tpl-card">
-          <h3>Qué harás</h3>
-          <p class="tpl-muted">
-            Cuidados en casa del tutor y del cuidador: visitas, paseos, estancias, traslados y apoyo en bodas o postquirúrgicos.
-          </p>
-          <div class="tpl-services" aria-label="Tipos de servicios">
-            <span class="tpl-pill"><i class="fa-solid fa-cat"></i> Visitas a domicilio</span>
-            <span class="tpl-pill"><i class="fa-solid fa-person-walking"></i> Paseos</span>
-            <span class="tpl-pill"><i class="fa-solid fa-house-circle-check"></i> Estancias/guardería</span>
-            <span class="tpl-pill"><i class="fa-solid fa-car-side"></i> Traslados</span>
-            <span class="tpl-pill"><i class="fa-solid fa-champagne-glasses"></i> Bodas</span>
-          </div>
-        </article>
-      </section>
-
-      <!-- Requisitos -->
-      <section class="tpl-card" aria-labelledby="req-title" style="margin-top:18px">
-        <h3 id="req-title">Requisitos mínimos</h3>
-        <div class="tpl-chips-wrap">
-          <span class="tpl-chip"><i class="fa-solid fa-certificate"></i> Titulación: Auxiliar de Veterinaria o Veterinario/a</span>
-          <span class="tpl-chip"><i class="fa-solid fa-calendar-check"></i> Disponibilidad real</span>
-          <span class="tpl-chip"><i class="fa-solid fa-heart"></i> Vocación, proactividad y trato excelente</span>
-        </div>
-      </section>
-
-      <!-- Beneficios y políticas -->
-      <section class="tpl-card" aria-labelledby="beneficios-title" style="margin-top:18px">
-        <h3 id="beneficios-title">Beneficios y políticas</h3>
-        <div class="tpl-beneficios">
-          <article class="tpl-beneficio">
-            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-            <div>
-              <h4>Pago seguro el mismo día</h4>
-              <p>Abonamos el servicio de forma segura el <strong>mismo día</strong> en que comienza.</p>
-            </div>
-          </article>
-          <article class="tpl-beneficio">
-            <i class="fa-solid fa-shield-dog" aria-hidden="true"></i>
-            <div>
-              <h4>Seguro de responsabilidad civil</h4>
-              <p>Todos los animales deben contar con <strong>seguro de responsabilidad civil</strong>. Así protegemos al cuidador y evitamos incidencias.</p>
-            </div>
-          </article>
-          <article class="tpl-beneficio">
-            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
-            <div>
-              <h4>Cancelaciones</h4>
-              <p>Si se cancela el <strong>día anterior</strong>, se devuelve una <strong>parte proporcional</strong> del servicio.</p>
-            </div>
-          </article>
-          <article class="tpl-beneficio">
-            <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
-            <div>
-              <h4>Urgencias veterinarias cubiertas</h4>
-              <p>En caso de urgencia, la atención está <strong>cubierta</strong> y <strong>sin pago por adelantado</strong>.</p>
-            </div>
-          </article>
-          <article class="tpl-beneficio">
-            <i class="fa-solid fa-headset" aria-hidden="true"></i>
-            <div>
-              <h4>Consulta 24 h (primera orientación)</h4>
-              <p>Ante signos de patología, ofrecemos <strong>consulta telemática 24&nbsp;h</strong> con veterinarios para orientarte y recomendar los <strong>siguientes pasos</strong>.</p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- Candidatura: CTA dinámico según sesión -->
-      <section id="candidatura" class="tpl-card" aria-labelledby="cand-title" style="margin-top:18px">
-        <h3 id="cand-title">Envía tu candidatura</h3>
-
-        <!-- Si NO hay sesión: muro de login/registro -->
-        <div id="authWall" class="auth-wall" role="region" aria-label="Acceso requerido">
-          <p><strong>Para continuar debes registrarte o iniciar sesión.</strong></p>
-          <div class="auth-actions">
-            <a href="index.html#iniciar-sesion" class="cta-button" id="btnLogin">Iniciar sesión</a>
-            <a href="index.html#iniciar-sesion" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
-          </div>
-          <p class="tpl-muted" style="margin-top:6px">Después verás el botón <strong>“Únete ahora”</strong> para completar el proceso.</p>
-        </div>
-
-        <!-- Si SÍ hay sesión: solo el botón ÚNETE -->
-        <div id="uneteRow" class="tpl-cta-unete" style="display:none">
-          <a id="btnUnete" class="cta-button" href="cuestionario-candidatos.html" data-target="cuestionario-candidatos.html" aria-label="Únete ahora">Únete ahora</a>
-        </div>
-      </section>
-
-      <!-- Vista previa del área interna -->
-      <section id="area-cuidadoras" class="tpl-card" style="margin-top:18px; border:1px dashed #c7e6e6; background:#eaf6f6;">
-        <h3><i class="fa-regular fa-calendar-check"></i> Área de cuidadoras (próximamente)</h3>
-        <p class="tpl-muted">Panel privado con <strong>perfil</strong> (nombre y zona), <strong>calendario de disponibilidad</strong> y <strong>servicios que puedes prestar</strong>. Servirá para automatizar el matching por <strong>cercanía</strong>, <strong>tipo de servicio</strong> y <strong>experiencia</strong> cuando un cliente reserve.</p>
-      </section>
-    </div>
-  </main>
-
-  <!-- Footer inyectado (fallback intacto) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectado con fallback] -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
@@ -366,17 +224,18 @@
       </footer>
     </noscript>
   </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de sesión + “Únete” dinámico] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de sesión + CTA dinámico] -->
   <script>
     (function(){
       function isLogged(){
         try{
-          if (window.__TPL_AUTH === true) return true;
-          return localStorage.getItem('tpl-auth') === '1';
+          if (window.__TPL_AUTH === true) return true;               // login real (si lo activamos)
+          return localStorage.getItem('tpl-auth') === '1';           // fallback actual
         }catch(e){ return false; }
       }
-      function updateCandidaturaUI(){
+      function updateCTA(){
         var logged = isLogged();
         var authWall = document.getElementById('authWall');
         var uneteRow = document.getElementById('uneteRow');
@@ -388,9 +247,12 @@
           if (uneteRow) uneteRow.style.display = 'none';
         }
       }
-      updateCandidaturaUI();
+      updateCTA();
 
-      // Botón Únete (más adelante generaremos URL pre-rellenada de Google Forms)
+      // Año en footer
+      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
+
+      // Botón Únete (cuando tengamos el Google Form pre-rellenado, aquí generamos la URL)
       var btnUnete = document.getElementById('btnUnete');
       if(btnUnete){
         btnUnete.addEventListener('click', function(){
@@ -398,14 +260,11 @@
           btnUnete.setAttribute('href', target);
         });
       }
-
-      // Año en footer
-      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Inyectores unificados -->
+  <!-- Inyectores -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 </body>
