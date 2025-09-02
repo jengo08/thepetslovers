@@ -18,7 +18,8 @@
   </style>
 </head>
 <body>
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar plantilla o tu navbar estático] -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectada] -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -38,21 +39,22 @@
     <div class="tpl-actions">
       <button id="btnLogin" class="cta-button" type="button">Entrar</button>
       <button id="btnSignup" class="cta-button link" type="button">Crear cuenta</button>
-      <a class="cta-button link" href="registro.html">Registro rápido (datos del dueño)</a>
       <button id="btnLogout" class="cta-button link" type="button" style="display:none">Cerrar sesión</button>
     </div>
 
     <p id="msg" class="msg" aria-live="polite"></p>
   </main>
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectado] -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase: misma que usas en reserva.html] -->
   <script>
     (function(){
       if (typeof firebase === 'undefined') return;
@@ -72,7 +74,7 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Auth + redirección con ?next=] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Auth + ?next= soporte] -->
   <script>
     (function(){
       if (typeof firebase === 'undefined') return;
@@ -89,7 +91,7 @@
 
       auth.onAuthStateChanged(function(user){
         if (user){
-          localStorage.setItem('tpl-auth','1');
+          localStorage.setItem('tpl-auth','1'); // tu flag de sesión
           btnLogout.style.display = 'inline-block';
           setStatus('Sesión iniciada');
         } else {
@@ -102,8 +104,8 @@
       btnLogin.addEventListener('click', async function(){
         try{
           await auth.signInWithEmailAndPassword(email.value, pass.value);
-          setStatus('¡Bienvenida!');
-          setTimeout(function(){ location.href = getNext(); }, 250);
+          setStatus('¡Bienvenido/a!');
+          setTimeout(function(){ location.href = getNext(); }, 300);
         }catch(e){
           setStatus('No se pudo iniciar sesión. Revisa email/contraseña.');
         }
@@ -113,7 +115,7 @@
         try{
           await auth.createUserWithEmailAndPassword(email.value, pass.value);
           setStatus('Cuenta creada. Has iniciado sesión.');
-          setTimeout(function(){ location.href = 'registro.html?next=' + encodeURIComponent(getNext()); }, 250);
+          setTimeout(function(){ location.href = getNext(); }, 300);
         }catch(e){
           setStatus('No se pudo crear la cuenta. ¿Ya existe ese email?');
         }
