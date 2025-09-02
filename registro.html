@@ -1,175 +1,200 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registro (datos del dueño) · The Pets Lovers</title>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rellenar perfil · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <!-- TPL: INICIO BLOQUE NUEVO [Iconos] -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: FIN BLOQUE NUEVO -->
   <style>
-    /* TPL: INICIO BLOQUE NUEVO [Estilos locales mínimos] */
-    .tpl-form{ max-width:720px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-    .tpl-form h1{ margin:0 0 6px; }
-    .tpl-sub{ color:#666; margin:0 0 16px; }
-    .grid{ display:grid; gap:12px; grid-template-columns:1fr; }
-    @media(min-width:760px){ .grid{ grid-template-columns:1fr 1fr; } .wide{ grid-column:1/-1; } }
-    .field{ display:flex; flex-direction:column; gap:6px; }
-    .field label{ font-weight:700; color:#58425a; }
-    .field input,.field select,.field textarea{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
-    .field small{ color:#777; }
-    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
-    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
-    .link{ background:#fff; color:#339496; border:2px solid #339496; text-decoration:none; display:inline-flex; align-items:center; }
-    .legal{ font-size:.9rem; color:#666; margin-top:6px; }
-    .msg{ margin-top:8px; min-height:1.2em; color:#555; }
-    /* TPL: FIN BLOQUE NUEVO */
+    .page{padding-top:120px}
+    .lead{color:#666;margin:0 0 18px}
+    .tpl-form{max-width:820px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:18px}
+    .tpl-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+    .tpl-field label{font-weight:700;color:var(--color-texto)}
+    .tpl-field input,.tpl-field textarea{padding:12px;border:1px solid #ddd;border-radius:10px}
+    .tpl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .cta-button{ background:#339496;color:#fff;padding:10px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center}
+    .link{ background:#fff;color:#339496;border:2px solid #339496}
+    .tpl-note{color:#666;font-size:.95rem}
+    .tpl-msg{margin:10px 0 0;color:#2a7e80;display:none}
+    .tpl-error{color:#b00020}
   </style>
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectada] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <main class="tpl-form" aria-labelledby="t">
-    <h1 id="t">Datos del dueño</h1>
-    <p class="tpl-sub">Solo 2 minutos. Después podrás añadir las mascotas.</p>
+  <main class="container page" aria-labelledby="t">
+    <h1 id="t">Rellenar / Editar perfil</h1>
+    <p class="lead">Completa tus datos. Los usamos para contactar y adaptar el servicio.</p>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Formulario dueño] -->
-    <form id="ownerForm" novalidate>
-      <div class="grid">
-        <div class="field">
-          <label for="nombre">Nombre y apellidos</label>
-          <input id="nombre" name="nombre" required autocomplete="name" />
-        </div>
-
-        <div class="field">
-          <label for="telefono">Teléfono</label>
-          <input id="telefono" name="telefono" type="tel" required autocomplete="tel" placeholder="+34 6.." />
-        </div>
-
-        <div class="field wide">
-          <label for="direccion">Dirección</label>
-          <input id="direccion" name="direccion" required placeholder="Calle y nº" autocomplete="address-line1" />
-        </div>
-
-        <div class="field">
-          <label for="cp">Código postal</label>
-          <input id="cp" name="cp" required inputmode="numeric" pattern="\\d{4,5}" />
-          <small>4–5 dígitos</small>
-        </div>
-
-        <div class="field">
-          <label for="ciudad">Ciudad</label>
-          <input id="ciudad" name="ciudad" required autocomplete="address-level2" />
-        </div>
-
-        <div class="field">
-          <label for="zona">Zona de servicio</label>
-          <input id="zona" name="zona" required placeholder="Barrio/municipio" />
-        </div>
-
-        <div class="field">
-          <label for="contacto">Preferencia de contacto</label>
-          <select id="contacto" name="contacto" required>
-            <option value="">Elige…</option>
-            <option>WhatsApp</option>
-            <option>Teléfono</option>
-            <option>Email</option>
-          </select>
-        </div>
-
-        <div class="field wide">
-          <label for="referencia">¿Cómo nos conociste? (opcional)</label>
-          <input id="referencia" name="referencia" placeholder="Instagram, amigos, Google…" />
-        </div>
-
-        <div class="field wide">
-          <label for="notas">Notas (opcional)</label>
-          <textarea id="notas" name="notas" rows="3" placeholder="Alergias, horarios, ascensor, portero…"></textarea>
-        </div>
-
-        <div class="field wide">
-          <label class="legal">
-            <input type="checkbox" id="consent" required>
-            He leído y acepto las <a href="condiciones.html" target="_blank" rel="noopener">Condiciones</a> y la
-            <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.
-          </label>
-        </div>
+    <!-- TPL: INICIO BLOQUE NUEVO [Formulario Perfil Propietario] -->
+    <form id="tpl-form-cliente" class="tpl-form" novalidate>
+      <div class="tpl-field">
+        <label for="nombre">Nombre y apellidos</label>
+        <input id="nombre" name="nombre" type="text" autocomplete="name" required>
       </div>
 
-      <div class="actions">
-        <button class="cta-button" type="submit">Guardar y continuar</button>
-        <a class="link" href="perfil.html" id="skipLink">Más tarde</a>
+      <div class="tpl-field">
+        <label for="telefono">Teléfono</label>
+        <input id="telefono" name="telefono" type="tel" inputmode="numeric" pattern="\\d{9}" placeholder="Ej. 612345678" autocomplete="tel" required>
+        <small class="tpl-note">Introduce 9 dígitos (ejemplo 612345678).</small>
       </div>
-      <p class="msg" id="msg" aria-live="polite"></p>
+
+      <div class="tpl-field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+
+      <div class="tpl-field">
+        <label for="direccion">Dirección</label>
+        <input id="direccion" name="direccion" type="text" autocomplete="address-line1">
+      </div>
+
+      <div class="tpl-field">
+        <label for="cp">Código postal</label>
+        <input id="cp" name="cp" type="text" inputmode="numeric" pattern="\\d{5}" placeholder="Ej. 28013" required>
+        <small class="tpl-note">Introduce 5 dígitos (ejemplo 28013).</small>
+      </div>
+
+      <div class="tpl-field">
+        <label for="preferencias">Preferencias</label>
+        <textarea id="preferencias" name="preferencias" rows="3" placeholder="Rutinas, alergias, instrucciones…"></textarea>
+      </div>
+
+      <div class="tpl-actions">
+        <button type="submit" class="cta-button">Guardar</button>
+        <a href="perfil.html" class="cta-button link">Cancelar</a>
+      </div>
+
+      <p id="tpl-msg" class="tpl-msg"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</p>
+      <p id="tpl-err" class="tpl-msg tpl-error"></p>
     </form>
     <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectado] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: guardar + marcar perfil completo + redirigir] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script>
+    // Tu proyecto Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+
     (function(){
-      var form = document.getElementById('ownerForm');
-      var msg  = document.getElementById('msg');
-      var skip = document.getElementById('skipLink');
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db   = firebase.firestore();
 
-      function setStatus(t){ msg.textContent = t || ''; }
-      function getNext(){
-        try{ return new URLSearchParams(location.search).get('next') || 'perfil.html'; }
-        catch(_){ return 'perfil.html'; }
-      }
-      // Si llega desde login con next=..., respetamos ese destino también en "Más tarde"
-      skip.setAttribute('href', getNext());
+      const LS_PROFILE_KEY = 'tpl-profile';
 
-      // Prefill si ya guardó antes
-      try{
-        var saved = JSON.parse(localStorage.getItem('tpl-owner')||'null');
-        if (saved){
-          ['nombre','telefono','direccion','cp','ciudad','zona','contacto','referencia','notas'].forEach(function(k){
-            if (saved[k] != null && document.getElementById(k)) document.getElementById(k).value = saved[k];
+      const form = document.getElementById('tpl-form-cliente');
+      const msg  = document.getElementById('tpl-msg');
+      const err  = document.getElementById('tpl-err');
+
+      // Util
+      function qsp(name, fallback){ const u=new URL(location.href); return u.searchParams.get(name) || fallback; }
+      function show(el, ok=true){ el.style.display = ok ? 'block':'none'; }
+      function hide(el){ el.style.display = 'none'; }
+
+      // Validaciones claras
+      function attachValidation(){
+        const cp = form.cp, tel = form.telefono;
+        if (cp){
+          cp.addEventListener('invalid', () => {
+            cp.setCustomValidity('');
+            if (!cp.validity.valid) {
+              if (cp.validity.patternMismatch) cp.setCustomValidity('Introduce un código postal de 5 dígitos (ej. 28013).');
+              else if (cp.validity.valueMissing) cp.setCustomValidity('El código postal es obligatorio.');
+            }
           });
-          // si había datos, marcamos consent como no forzado; el user debe confirmarlo de nuevo si quiere
+          cp.addEventListener('input', ()=>cp.setCustomValidity(''));
         }
-      }catch(_){}
+        if (tel){
+          tel.addEventListener('invalid', () => {
+            tel.setCustomValidity('');
+            if (!tel.validity.valid) {
+              if (tel.validity.patternMismatch) tel.setCustomValidity('Introduce un móvil español de 9 dígitos (ej. 612345678).');
+              else if (tel.validity.valueMissing) tel.setCustomValidity('El teléfono es obligatorio.');
+            }
+          });
+          tel.addEventListener('input', ()=>tel.setCustomValidity(''));
+        }
+      }
 
-      form.addEventListener('submit', function(e){
+      async function getProfile(uid){
+        if (uid) {
+          const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+          return doc.exists ? doc.data() : null;
+        }
+        try { return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); } catch(e){ return null; }
+      }
+      async function setProfile(uid, data){
+        if (uid) {
+          await db.collection('users').doc(uid).collection('private').doc('profile').set(data, { merge:true });
+        } else {
+          localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(data));
+        }
+      }
+
+      function fill(p){
+        form.nombre.value = p?.nombre || '';
+        form.telefono.value = p?.telefono || '';
+        form.email.value = p?.email || '';
+        form.direccion.value = p?.direccion || '';
+        form.cp.value = p?.cp || '';
+        form.preferencias.value = p?.preferencias || '';
+      }
+
+      attachValidation();
+
+      let NEXT = qsp('next', 'perfil.html');
+
+      auth.onAuthStateChanged(async (u)=>{
+        const profile = await getProfile(u?.uid || null);
+        fill(profile);
+      });
+
+      form.addEventListener('submit', async (e)=>{
         e.preventDefault();
-
-        // Validación mínima
-        if (!form.checkValidity()){
-          setStatus('Revisa los campos resaltados.');
-          // Dispara validación nativa
-          form.reportValidity && form.reportValidity();
-          return;
-        }
-
-        var data = {
-          nombre: document.getElementById('nombre').value.trim(),
-          telefono: document.getElementById('telefono').value.trim(),
-          direccion: document.getElementById('direccion').value.trim(),
-          cp: document.getElementById('cp').value.trim(),
-          ciudad: document.getElementById('ciudad').value.trim(),
-          zona: document.getElementById('zona').value.trim(),
-          contacto: document.getElementById('contacto').value,
-          referencia: document.getElementById('referencia').value.trim(),
-          notas: document.getElementById('notas').value.trim(),
-          ts: Date.now()
+        hide(err); hide(msg);
+        if (!form.checkValidity()){ form.reportValidity(); return; }
+        const data = {
+          nombre: form.nombre.value.trim(),
+          telefono: form.telefono.value.trim(),
+          email: form.email.value.trim(),
+          direccion: form.direccion.value.trim(),
+          cp: form.cp.value.trim(),
+          preferencias: form.preferencias.value.trim()
         };
-
         try{
-          localStorage.setItem('tpl-owner', JSON.stringify(data));
-          localStorage.setItem('tpl-profile','1'); // <- bandera de perfil completo para reservas
-          setStatus('Datos guardados.');
-          location.href = getNext();
-        }catch(err){
-          setStatus('No se pudieron guardar tus datos. Libera espacio e inténtalo de nuevo.');
+          const u = auth.currentUser;
+          await setProfile(u?.uid || null, data);
+          show(msg,true);
+          // pequeña pausa visual y volvemos
+          setTimeout(()=>{ location.href = NEXT; }, 400);
+        }catch(e){
+          err.textContent = 'No se pudo guardar: ' + (e?.message || e);
+          show(err,true);
         }
       });
     })();
