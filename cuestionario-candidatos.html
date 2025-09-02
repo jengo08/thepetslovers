@@ -1,1 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cuestionario de Candidaturas · The Pets Lovers</title>
+  <meta name="description" content="Envía tu candidatura para cuidador/a en The Pets Lovers. Sube tu CV y tu título y cuéntanos tu disponibilidad y zona.">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del formulario] -->
+  <style>
+    .tpl-page{ padding-top:120px; }
+    .tpl-form{ max-width: 860px; margin: 0 auto 80px; padding: 18px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .tpl-form h1{ margin: 0 0 8px; }
+    .tpl-lead{ color:#555; margin:0 0 18px; }
+    .tpl-grid{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media (min-width: 900px){ .tpl-grid{ grid-template-columns:1fr 1fr; } }
+    .tpl-field{ display:flex; flex-direction:column; gap:6px; }
+    .tpl-field label{ font-weight:600; color:#58425a; }
+    .tpl-field input[type="text"],
+    .tpl-field input[type="email"],
+    .tpl-field input[type="tel"],
+    .tpl-field textarea,
+    .tpl-field select{
+      border:1px solid #ddd; border-radius:10px; padding:10px;
+      font:inherit; outline:none;
+    }
+    .tpl-field input[type="file"]{ border:1px dashed #bbb; border-radius:10px; padding:12px; background:#fafafa; }
+    .tpl-full{ grid-column:1 / -1; }
+    .tpl-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+    .tpl-note{ font-size:.92rem; color:#555; }
+    .tpl-ok{ color:#2e7d32; }
+    .tpl-error{ color:#b00020; }
+    .tpl-divider{ height:1px; background:#eee; margin:10px 0; }
+    .tpl-badge{ display:inline-flex; gap:6px; align-items:center; background:#f5fbfb; color:#339496; padding:8px 10px; border:1px solid #d7efef; border-radius:999px; font-weight:600; }
+    .cta-button{ display:inline-block; background:var(--color-principal,#339496); color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
+    .cta-button:focus{ outline:3px solid #58425a44; outline-offset:2px; }
+    .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</head>
+<body>
+
+  <!-- Navbar inyectado -->
+  <div id="tpl-navbar"></div>
+
+  <main class="tpl-page">
+    <section class="tpl-form" aria-labelledby="t">
+      <p class="tpl-badge"><i class="fa-solid fa-shield-cat"></i> Profesionales del sector veterinario</p>
+      <h1 id="t">Cuestionario de candidaturas</h1>
+      <p class="tpl-lead">Cuéntanos tu perfil y adjunta tu <strong>CV</strong> y <strong>título</strong>. Procesamos los datos según nuestra <a href="privacidad.html">Política de privacidad</a>.</p>
+
+      <!--
+        Formspree: cambia ACTION por el tuyo (ej. https://formspree.io/f/xxxxabcd)
+        Importante: dejamos enctype multipart/form-data para adjuntar archivos.
+      -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Firebase] -->
+      <form id="tpl-candidatura-form" action="https://formspree.io/f/xxxxabcd" method="POST" enctype="multipart/form-data">
+        <div class="tpl-grid">
+          <div class="tpl-field">
+            <label for="nombre">Nombre y apellidos</label>
+            <input id="nombre" name="nombre" type="text" required autocomplete="name" />
+          </div>
+          <div class="tpl-field">
+            <label for="email">Email</label>
+            <input id="email" name="_replyto" type="email" required autocomplete="email" />
+          </div>
+          <div class="tpl-field">
+            <label for="telefono">Teléfono</label>
+            <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" />
+          </div>
+          <div class="tpl-field">
+            <label for="provincia">Provincia / zona</label>
+            <input id="provincia" name="provincia" type="text" required />
+          </div>
+          <div class="tpl-field">
+            <label for="rol">Rol</label>
+            <select id="rol" name="rol" required>
+              <option value="">Selecciona</option>
+              <option value="Auxiliar de Veterinaria">Auxiliar de Veterinaria</option>
+              <option value="Veterinario/a">Veterinario/a</option>
+            </select>
+          </div>
+          <div class="tpl-field">
+            <label for="disponibilidad">Disponibilidad</label>
+            <select id="disponibilidad" name="disponibilidad" required>
+              <option value="">Selecciona</option>
+              <option>Mañanas</option>
+              <option>Tardes</option>
+              <option>Noches</option>
+              <option>Fines de semana</option>
+              <option>Completa</option>
+            </select>
+          </div>
+          <div class="tpl-field tpl-full">
+            <label for="experiencia">Experiencia (breve)</label>
+            <textarea id="experiencia" name="experiencia" rows="3" placeholder="Años de experiencia, tipos de mascotas, clínicas, etc."></textarea>
+          </div>
+
+          <div class="tpl-field">
+            <label for="cv">CV (PDF)</label>
+            <input id="cv" name="cv" type="file" accept=".pdf" required />
+          </div>
+          <div class="tpl-field">
+            <label for="titulo">Título (PDF o imagen)</label>
+            <input id="titulo" name="titulo" type="file" accept=".pdf,.png,.jpg,.jpeg" required />
+          </div>
+
+          <div class="tpl-field tpl-full">
+            <label for="links">Enlaces (Instagram/LinkedIn/portfolio)</label>
+            <input id="links" name="links" type="text" placeholder="https://..." />
+          </div>
+
+          <div class="tpl-field tpl-full">
+            <label class="tpl-note">
+              <input type="checkbox" id="acepto" required />
+              He leído y acepto la <a href="privacidad.html">Política de privacidad</a>.
+            </label>
+          </div>
+        </div>
+
+        <!-- Campos ocultos para guardar URLs de Firebase en el envío a Formspree -->
+        <input type="hidden" id="cvUrl" name="cvUrl">
+        <input type="hidden" id="tituloUrl" name="tituloUrl">
+
+        <div class="tpl-divider"></div>
+        <div class="tpl-actions">
+          <button id="tpl-submit" class="cta-button" type="submit">Enviar candidatura</button>
+        </div>
+
+        <p id="tpl-status" aria-live="polite" class="tpl-note" style="margin-top:8px;"></p>
+      </form>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    </section>
+  </main>
+
+  <!-- Footer inyectado -->
+  <div id="tpl-footer"></div>
+
+  <!-- Inyectores -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- Firebase SDKs (cargar sólo si vas a usar Firebase) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica subida y guardado] -->
+  <script type="module">
+    // ======== CONFIGURA AQUÍ TU FIREBASE =========
+    // 1) Crea proyecto en https://console.firebase.google.com
+    // 2) Agrega app Web y copia tu config a continuación:
+    const firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_AUTH_DOMAIN",
+      projectId: "TU_PROJECT_ID",
+      storageBucket: "TU_STORAGE_BUCKET",
+      messagingSenderId: "TU_SENDER_ID",
+      appId: "TU_APP_ID",
+    };
+    // =============================================
+
+    // Import dinámico de SDK modular
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('tpl-candidatura-form');
+    const btn = document.getElementById('tpl-submit');
+    const status = document.getElementById('tpl-status');
+
+    async function uploadToStorage(file, pathPrefix){
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const stamp = Date.now();
+      const path = `${pathPrefix}/${stamp}_${safeName}`;
+      const storageRef = ref(storage, path);
+      await uploadBytes(storageRef, file);
+      return await getDownloadURL(storageRef);
+    }
+
+    form.addEventListener('submit', async (e) => {
+      // Dejamos el submit tradicional a Formspree, pero antes subimos a Firebase y guardamos en Firestore.
+      e.preventDefault();
+      status.textContent = "Subiendo archivos…";
+      btn.disabled = true;
+
+      try{
+        const nombre = form.nombre.value.trim();
+        const email = form._replyto.value.trim();
+        const telefono = form.telefono.value.trim();
+        const provincia = form.provincia.value.trim();
+        const rol = form.rol.value;
+        const disponibilidad = form.disponibilidad.value;
+        const experiencia = form.experiencia.value.trim();
+        const links = form.links.value.trim();
+
+        const fileCV = form.cv.files[0];
+        const fileTitulo = form.titulo.files[0];
+
+        // Subir a Firebase Storage
+        const [cvUrl, tituloUrl] = await Promise.all([
+          uploadToStorage(fileCV, `candidaturas/${rol}/cv`),
+          uploadToStorage(fileTitulo, `candidaturas/${rol}/titulos`)
+        ]);
+
+        // Guardar ficha en Firestore
+        await addDoc(collection(db, "candidaturas"), {
+          nombre, email, telefono, provincia, rol, disponibilidad, experiencia, links,
+          cvUrl, tituloUrl,
+          createdAt: serverTimestamp()
+        });
+
+        // Inyectar URLs en el envío a Formspree
+        document.getElementById('cvUrl').value = cvUrl;
+        document.getElementById('tituloUrl').value = tituloUrl;
+
+        status.innerHTML = "<span class='tpl-ok'>¡Listo! Archivos subidos. Enviando formulario…</span>";
+
+        // Enviar a Formspree (con archivos adjuntos y URLs)
+        form.submit();
+
+      }catch(err){
+        console.error(err);
+        status.innerHTML = "<span class='tpl-error'>No se pudo subir a Firebase. Enviaremos igualmente tu candidatura a Formspree.</span>";
+        // Aunque falle Firebase, enviamos a Formspree (los adjuntos seguirán incluidos)
+        form.submit();
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
