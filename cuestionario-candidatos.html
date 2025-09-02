@@ -54,12 +54,8 @@
       <h1 id="t">Cuestionario de candidaturas</h1>
       <p class="tpl-lead">Cuéntanos tu perfil y adjunta tu <strong>CV</strong> y <strong>título</strong>. Procesamos los datos según nuestra <a href="privacidad.html">Política de privacidad</a>.</p>
 
-      <!--
-        Formspree: cambia ACTION por el tuyo (ej. https://formspree.io/f/xxxxabcd)
-        Importante: dejamos enctype multipart/form-data para adjuntar archivos.
-      -->
       <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Firebase] -->
-      <form id="tpl-candidatura-form" action="https://formspree.io/f/xxxxabcd" method="POST" enctype="multipart/form-data">
+      <form id="tpl-candidatura-form" action="https://formspree.io/f/mpwjjoyq" method="POST" enctype="multipart/form-data">
         <div class="tpl-grid">
           <div class="tpl-field">
             <label for="nombre">Nombre y apellidos</label>
@@ -96,6 +92,7 @@
               <option>Completa</option>
             </select>
           </div>
+
           <div class="tpl-field tpl-full">
             <label for="experiencia">Experiencia (breve)</label>
             <textarea id="experiencia" name="experiencia" rows="3" placeholder="Años de experiencia, tipos de mascotas, clínicas, etc."></textarea>
@@ -145,28 +142,32 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase SDKs (cargar sólo si vas a usar Firebase) -->
+  <!-- Firebase SDKs (modular) -->
   <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica subida y guardado] -->
   <script type="module">
-    // ======== CONFIGURA AQUÍ TU FIREBASE =========
-    // 1) Crea proyecto en https://console.firebase.google.com
-    // 2) Agrega app Web y copia tu config a continuación:
-    const firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_AUTH_DOMAIN",
-      projectId: "TU_PROJECT_ID",
-      storageBucket: "TU_STORAGE_BUCKET",
-      messagingSenderId: "TU_SENDER_ID",
-      appId: "TU_APP_ID",
-    };
-    // =============================================
-
-    // Import dinámico de SDK modular
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-storage.js";
     import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
+    // REUSO DEL MISMO PROYECTO QUE RESERVAS:
+    // Si ya has inicializado Firebase en otro script (ej. script.js de reservas),
+    // reutilizamos esa app. Si no existe, inicializamos con tu config.
+    let app;
+    if (getApps().length) {
+      app = getApp();
+    } else {
+      const firebaseConfig = window.__TPL_FIREBASE_CONFIG || {
+        // TODO: pega aquí tu config si esta página se carga de forma independiente
+        apiKey: "TU_API_KEY",
+        authDomain: "TU_AUTH_DOMAIN",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "TU_STORAGE_BUCKET",
+        messagingSenderId: "TU_SENDER_ID",
+        appId: "TU_APP_ID",
+      };
+      app = initializeApp(firebaseConfig);
+    }
+
     const storage = getStorage(app);
     const db = getFirestore(app);
 
@@ -184,7 +185,6 @@
     }
 
     form.addEventListener('submit', async (e) => {
-      // Dejamos el submit tradicional a Formspree, pero antes subimos a Firebase y guardamos en Firestore.
       e.preventDefault();
       status.textContent = "Subiendo archivos…";
       btn.disabled = true;
@@ -221,13 +221,12 @@
 
         status.innerHTML = "<span class='tpl-ok'>¡Listo! Archivos subidos. Enviando formulario…</span>";
 
-        // Enviar a Formspree (con archivos adjuntos y URLs)
+        // Enviar a Formspree con adjuntos originales + URLs
         form.submit();
 
       }catch(err){
         console.error(err);
         status.innerHTML = "<span class='tpl-error'>No se pudo subir a Firebase. Enviaremos igualmente tu candidatura a Formspree.</span>";
-        // Aunque falle Firebase, enviamos a Formspree (los adjuntos seguirán incluidos)
         form.submit();
       }finally{
         btn.disabled = false;
