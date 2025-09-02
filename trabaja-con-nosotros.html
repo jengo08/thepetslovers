@@ -4,20 +4,17 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [SEO orientado a empleo auxiliar/veterinaria] -->
+  <!-- SEO orientado a empleo auxiliar/veterinaria -->
   <title>Empleo: Auxiliar de Veterinaria y Veterinario/a · Trabaja con nosotros | The Pets Lovers</title>
   <meta name="description" content="¿Buscas trabajo de auxiliar de veterinaria o veterinario/a? Únete a The Pets Lovers: profesionales del sector veterinario, horarios flexibles y servicios cerca de tu zona.">
   <link rel="canonical" href="https://www.thepetslovers.es/trabaja-con-nosotros.html">
   <meta name="robots" content="index,follow">
-
-  <!-- Open Graph / Twitter -->
   <meta property="og:title" content="Empleo: Auxiliar de Veterinaria y Veterinario/a · Trabaja con nosotros">
   <meta property="og:description" content="Ofertas para auxiliares de veterinaria y veterinarios/as. Únete a The Pets Lovers: equipo profesional, horario flexible y servicios en tu zona.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://www.thepetslovers.es/trabaja-con-nosotros.html">
   <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
   <meta name="twitter:card" content="summary_large_image">
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,23 +22,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales ligeros, sin romper look&feel] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales y ajustes de layout/hero] -->
   <style>
+    /* Hero sin imagen, compacto */
     .hero-section.hero-trabaja{
-      background-image: url('images/hero.jpg.png');
-      background-position: center top;
-      background-repeat: no-repeat;
-      background-size: cover;
-      height: 42vh; min-height: 320px;
+      background: none !important;   /* sin foto de portada */
+      height: auto; min-height: 0; padding: 28px 0 10px;
     }
-    @media (max-width: 768px){ .hero-section.hero-trabaja{ height: 40vh; min-height: 280px; background-position: center 15%; } }
+    .hero-section.hero-trabaja .hero-content{ text-align:center; }
 
+    /* Grid y estética (se mantiene el diseño que te gustó) */
     .tpl-careers-hero{ text-align:center; margin:0 0 16px; }
     .tpl-careers-hero h1{ margin:0 0 6px; }
     .tpl-careers-hero p{ margin:0; color:#666;}
 
     .tpl-careers-grid{ display:grid; gap:18px; grid-template-columns:1fr; margin-top:18px; }
-    @media (min-width:980px){ .tpl-careers-grid{ grid-template-columns:1.2fr .8fr; align-items:start; } }
+    @media (min-width:980px){
+      .tpl-careers-grid{ grid-template-columns:1.2fr .8fr; align-items:stretch; }
+      .tpl-careers-grid > .tpl-block{ height:100%; display:flex; flex-direction:column; }
+    }
 
     .tpl-block{
       background:#fff; border:1px solid #eee; border-radius:14px; padding:18px;
@@ -66,26 +65,30 @@
     .tpl-role h4{ margin:0; font-size:1.05rem; }
     .tpl-role p{ margin:2px 0 0; color:#666; }
 
+    .tpl-gap-tight{ margin-top:6px !important; }
+
+    /* Beneficios / políticas */
+    .tpl-beneficios{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media (min-width:900px){ .tpl-beneficios{ grid-template-columns: repeat(3,1fr); } }
+    .tpl-beneficio{
+      border:1px solid #eee; border-radius:12px; padding:14px; background:#fff;
+      display:grid; grid-template-columns:auto 1fr; align-items:start; gap:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,.04);
+    }
+    .tpl-beneficio i{ font-size:1.2rem; color:var(--color-principal); }
+    .tpl-beneficio h4{ margin:0 0 4px; font-size:1.02rem; color:var(--color-texto); }
+    .tpl-beneficio p{ margin:0; color:#666; line-height:1.5; }
+
+    /* Candidatura: muro/cta */
     .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin: 6px 0 14px; }
     .auth-actions{ display:flex; gap:10px; justify-content:center; margin-top:8px; }
     .auth-actions .cta-button{ padding:10px 16px; }
-
-    .tpl-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    .tpl-form-grid .full{ grid-column: 1 / -1; }
-    .tpl-form-field{ display:flex; flex-direction:column; gap:6px; }
-    .tpl-form-field input{ padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:var(--fuente-texto); }
-    @media (max-width: 720px){ .tpl-form-grid{ grid-template-columns:1fr; } }
-
-    .tpl-cta-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .tpl-cta-row .cta-button{ padding:12px 18px; }
-    .tpl-cta-row .ghost{ background:#fff; color:var(--color-principal); border:2px solid var(--color-principal); }
-
-    .tpl-coming{ border:1px dashed #c7e6e6; background:#eaf6f6; color:var(--color-texto); }
-    .tpl-coming i{ color: var(--color-principal); }
+    .tpl-cta-unete{ text-align:center; }
+    .tpl-cta-unete .cta-button{ padding:12px 18px; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD: JobPosting (2), FAQPage y Breadcrumb] -->
+  <!-- JSON-LD (JobPosting, FAQ, Breadcrumb) se mantiene -->
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
@@ -138,11 +141,10 @@
     ]
   }
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectado con fallback] -->
+  <!-- Navbar inyectado (fallback intacto) -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -160,13 +162,12 @@
       </nav>
     </noscript>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- HERO -->
+  <!-- HERO (sin imagen, compacto) -->
   <header class="hero-section hero-trabaja">
     <div class="hero-content">
       <h1>Trabaja con nosotros</h1>
-      <p>Ofertas para <strong>auxiliar de veterinaria</strong> y <strong>veterinario/a</strong> con actitud, disponibilidad y amor por los animales.</p>
+      <p>Ofertas para <strong>auxiliar de veterinaria</strong> y <strong>veterinario/a</strong>.</p>
     </div>
   </header>
 
@@ -178,6 +179,7 @@
         <p>Servicios profesionales, horarios flexibles y respaldo de un equipo del sector veterinario.</p>
       </div>
 
+      <!-- Grid principal -->
       <section class="tpl-careers-grid" aria-label="Propuesta y funciones">
         <article class="tpl-block">
           <h3>Únete a The Pets Lovers</h3>
@@ -203,57 +205,88 @@
         </article>
       </section>
 
-      <section class="tpl-block" aria-labelledby="req-title" style="margin-top:12px">
+      <!-- Requisitos -->
+      <section class="tpl-block tpl-gap-tight" aria-labelledby="req-title">
         <h3 id="req-title">Requisitos mínimos</h3>
         <div class="tpl-chips">
           <span class="tpl-chip"><i class="fa-solid fa-certificate"></i> Titulación: Auxiliar de Veterinaria o Veterinario/a</span>
           <span class="tpl-chip"><i class="fa-solid fa-calendar-check"></i> Disponibilidad real</span>
-          <span class="tpl-chip"><i class="fa-solid fa-heart"></i> Vocación y trato excelente</span>
+          <span class="tpl-chip"><i class="fa-solid fa-heart"></i> Vocación, proactividad y trato excelente</span>
         </div>
       </section>
 
-      <section class="tpl-block" aria-labelledby="roles-title" style="margin-top:12px">
-        <h3 id="roles-title">Perfiles</h3>
-        <div class="tpl-roles">
-          <div class="tpl-role">
-            <i class="fa-solid fa-stethoscope" aria-hidden="true"></i>
+      <!-- Beneficios y políticas -->
+      <section class="tpl-block" aria-labelledby="beneficios-title" style="margin-top:12px">
+        <h3 id="beneficios-title">Beneficios y políticas</h3>
+        <div class="tpl-beneficios">
+          <article class="tpl-beneficio">
+            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
             <div>
-              <h4>Auxiliar de Veterinaria</h4>
-              <p>Cuidados, administración de medicación pautada y seguimiento básico.</p>
+              <h4>Pago seguro el mismo día</h4>
+              <p>Abonamos el servicio de forma segura el <strong>mismo día</strong> en que comienza.</p>
             </div>
-          </div>
-          <div class="tpl-role">
-            <i class="fa-solid fa-user-doctor" aria-hidden="true"></i>
+          </article>
+          <article class="tpl-beneficio">
+            <i class="fa-solid fa-shield-dog" aria-hidden="true"></i>
             <div>
-              <h4>Veterinario/a</h4>
-              <p>Servicios especializados y coordinación clínica cuando sea necesario.</p>
+              <h4>Seguro de responsabilidad civil</h4>
+              <p>Todos los animales deben contar con <strong>seguro de responsabilidad civil</strong>. Así protegemos al cuidador y evitamos incidencias.</p>
             </div>
-          </div>
+          </article>
+          <article class="tpl-beneficio">
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+            <div>
+              <h4>Cancelaciones</h4>
+              <p>Si se cancela el <strong>día anterior</strong>, se devuelve una <strong>parte proporcional</strong> del servicio.</p>
+            </div>
+          </article>
+          <article class="tpl-beneficio">
+            <i class="fa-solid fa-kit-medical" aria-hidden="true"></i>
+            <div>
+              <h4>Urgencias veterinarias cubiertas</h4>
+              <p>En caso de urgencia, la atención está <strong>cubierta</strong> y <strong>sin pago por adelantado</strong>.</p>
+            </div>
+          </article>
+          <article class="tpl-beneficio">
+            <i class="fa-solid fa-headset" aria-hidden="true"></i>
+            <div>
+              <h4>Consulta 24 h (primera orientación)</h4>
+              <p>Ante signos de patología, ofrecemos <strong>consulta telemática 24 h</strong> con veterinarios para orientarte y recomendar los <strong>siguientes pasos</strong>.</p>
+            </div>
+          </article>
         </div>
       </section>
 
-      <!-- Candidatura -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Candidatura: CTA dinámico según sesión] -->
       <section id="candidatura" class="tpl-block" aria-labelledby="cand-title" style="margin-top:12px">
         <h3 id="cand-title">Envía tu candidatura</h3>
+
+        <!-- Si NO hay sesión: muro de login/registro -->
         <div id="authWall" class="auth-wall" role="region" aria-label="Acceso requerido">
           <p><strong>Para continuar debes registrarte o iniciar sesión.</strong></p>
           <div class="auth-actions">
             <a href="index.html#iniciar-sesion" class="cta-button" id="btnLogin">Iniciar sesión</a>
             <a href="index.html#iniciar-sesion" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
           </div>
-          <p class="tpl-note">Tras iniciar sesión, podrás subir <strong>CV</strong> y <strong>título</strong> y completar el cuestionario.</p>
+          <p class="tpl-note">Después verás el botón <strong>“Únete ahora”</strong> para completar el proceso.</p>
+        </div>
+
+        <!-- Si SÍ hay sesión: solo el botón ÚNETE -->
+        <div id="uneteRow" class="tpl-cta-unete" style="display:none">
+          <a id="btnUnete" class="cta-button" href="cuestionario-candidatos.html" data-target="cuestionario-candidatos.html" aria-label="Únete ahora">Únete ahora</a>
         </div>
       </section>
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <!-- Vista previa del área interna -->
-      <section id="area-cuidadoras" class="tpl-block tpl-coming" style="margin-top:12px">
+      <!-- Vista previa del área interna (se mantiene) -->
+      <section id="area-cuidadoras" class="tpl-block" style="margin-top:12px; border:1px dashed #c7e6e6; background:#eaf6f6;">
         <h3><i class="fa-regular fa-calendar-check"></i> Área de cuidadoras (próximamente)</h3>
         <p>Panel privado con <strong>perfil</strong> (nombre y zona), <strong>calendario de disponibilidad</strong> y <strong>servicios que puedes prestar</strong>. Servirá para automatizar el matching por <strong>cercanía</strong>, <strong>tipo de servicio</strong> y <strong>experiencia</strong> cuando un cliente reserve.</p>
       </section>
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectado con fallback] -->
+  <!-- Footer inyectado (fallback intacto) -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
@@ -289,14 +322,49 @@
       </footer>
     </noscript>
   </div>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de sesión + “Únete” dinámico] -->
+  <script>
+    (function(){
+      function isLogged(){
+        try{
+          if (window.__TPL_AUTH === true) return true;
+          return localStorage.getItem('tpl-auth') === '1';
+        }catch(e){ return false; }
+      }
+      function updateCandidaturaUI(){
+        var logged = isLogged();
+        var authWall = document.getElementById('authWall');
+        var uneteRow = document.getElementById('uneteRow');
+        if (logged){
+          if (authWall) authWall.style.display = 'none';
+          if (uneteRow) uneteRow.style.display = 'block';
+        } else {
+          if (authWall) authWall.style.display = 'block';
+          if (uneteRow) uneteRow.style.display = 'none';
+        }
+      }
+      updateCandidaturaUI();
+
+      // Comportamiento del botón Únete:
+      var btnUnete = document.getElementById('btnUnete');
+      if(btnUnete){
+        btnUnete.addEventListener('click', function(ev){
+          // Aquí, si quieres, podemos generar el enlace pre-rellenado del Google Form.
+          // De momento, respeta data-target o href.
+          var target = btnUnete.getAttribute('data-target') || btnUnete.getAttribute('href') || 'cuestionario-candidatos.html';
+          btnUnete.setAttribute('href', target); // por si abrimos en la misma pestaña
+        });
+      }
+    })();
+  </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Utilidades -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Inyectores unificados] -->
+  <!-- Inyectores unificados -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
