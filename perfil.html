@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi perfil · The Pets Lovers</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
+    .tpl-profile h1{ margin:0 0 8px; }
+    .tpl-sub{ color:#666; margin-bottom:18px; }
+    .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
+    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; }
+    .tpl-card h2{ font-size:18px; margin:0 0 8px; color:#58425a; }
+    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
+    .link{ background:#fff; color:#339496; border:2px solid #339496; }
+  </style>
+</head>
+<body>
+  <div id="tpl-navbar"></div>
+
+  <main class="tpl-profile" aria-labelledby="t">
+    <h1 id="t">Mi perfil</h1>
+    <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
+
+    <section class="tpl-cards">
+      <article class="tpl-card">
+        <h2>Datos de cliente</h2>
+        <p>Nombre, teléfono, dirección, preferencias de contacto.</p>
+        <div class="tpl-actions">
+          <a class="cta-button" href="perfil-datos.html">Editar datos</a>
+        </div>
+      </article>
+
+      <article class="tpl-card">
+        <h2>Mis mascotas</h2>
+        <p>Añade o edita tus mascotas (especie, edad, medicación, conducta).</p>
+        <div class="tpl-actions">
+          <a class="cta-button" href="perfil-mascotas.html">Gestionar mascotas</a>
+        </div>
+      </article>
+
+      <article class="tpl-card">
+        <h2>Cuestionario inicial</h2>
+        <p>Unos pocos pasos para personalizar tus servicios. Es rápido.</p>
+        <div class="tpl-actions">
+          <a class="cta-button link" href="registro.html">Comenzar</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="tpl-footer"></div>
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- Opcional: en el futuro conectaremos Firebase/Firestore aquí para leer/escribir el perfil -->
+</body>
+</html>
