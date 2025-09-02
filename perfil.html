@@ -17,26 +17,41 @@
     .tpl-profile-top{
       display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
     }
-    .tpl-profile-actions{
-      display:flex; align-items:center; gap:8px;
-    }
+    .tpl-profile-actions{ display:flex; align-items:center; gap:8px; }
     .tpl-btn-ghost{
       background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
     }
     /* TPL: FIN BLOQUE NUEVO */
 
     .tpl-sub{ color:#666; margin-bottom:18px; }
-    .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+
+    /* TPL: INICIO BLOQUE NUEVO [Grid 2 columnas + card amplia] */
+    .tpl-cards{
+      display:grid; gap:14px;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      align-items:start;
+    }
     .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; background:#fff; }
     .tpl-card h2{ font-size:18px; margin:0 0 10px; color:#58425a; }
+    .tpl-card-wide{ grid-column:1 / -1; } /* Reservas a todo el ancho */
+    /* TPL: FIN BLOQUE NUEVO */
+
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
 
-    /* TPL: INICIO BLOQUE NUEVO [vistas compactas + badges] */
+    /* TPL: INICIO BLOQUE NUEVO [vistas compactas + badges + anti overflow] */
     .tpl-view{ background:#fafafa; border:1px solid #eee; border-radius:10px; padding:12px; }
-    .tpl-view dl{ margin:0; display:grid; grid-template-columns: 140px 1fr; row-gap:6px; column-gap:10px; }
+    .tpl-view dl{
+      margin:0; display:grid; grid-template-columns: 170px 1fr; row-gap:6px; column-gap:10px;
+    }
     .tpl-view dt{ font-weight:700; color:#58425a; }
+    .tpl-view dd{
+      margin:0; overflow-wrap:anywhere; word-break:break-word; color:#333;
+    }
+    @media (max-width:480px){
+      .tpl-view dl{ grid-template-columns: 130px 1fr; }
+    }
     .tpl-empty{ color:#666; font-style:italic; }
     .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
     .tpl-status i{ font-size:1rem; }
@@ -55,14 +70,14 @@
 
     /* TPL: INICIO BLOQUE NUEVO [lista de mascotas con avatar y popover] */
     .tpl-pets{
-      display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;
     }
     .tpl-pet{
       position:relative; display:flex; align-items:center; gap:10px;
       padding:10px; border:1px solid #eee; border-radius:12px; background:#fff;
     }
     .tpl-avatar{
-      width:48px; height:48px; border-radius:50%; flex:0 0 48px; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a;
+      width:56px; height:56px; border-radius:50%; flex:0 0 56px; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a;
     }
     .tpl-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
     .tpl-pet-name{ font-weight:700; color:#58425a; line-height:1.2 }
@@ -84,7 +99,6 @@
     .tpl-popover dt{ font-weight:700; color:#58425a }
     .tpl-popover .tpl-notas{ margin-top:6px; font-size:.95rem; color:#444 }
     @media (hover:none){
-      /* En móviles sin hover, el popover será estático debajo (mejor UX) */
       .tpl-popover{ position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; margin-top:8px; }
     }
     /* TPL: FIN BLOQUE NUEVO */
@@ -108,7 +122,7 @@
 
     <section class="tpl-cards">
 
-      <!-- DATOS DE CLIENTE -->
+      <!-- DATOS DE CLIENTE (Card grande) -->
       <article class="tpl-card" id="tpl-card-cliente" aria-labelledby="h-cliente">
         <!-- TPL: INICIO BLOQUE NUEVO [Badge perfil completo] -->
         <div id="tpl-cliente-status" class="tpl-status tpl-hidden" aria-hidden="true">
@@ -133,7 +147,6 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions" id="tpl-actions-perfil">
-          <!-- Botón que te gustaba: página externa de edición -->
           <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
         </div>
 
@@ -144,7 +157,7 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
       </article>
 
-      <!-- MASCOTAS -->
+      <!-- MASCOTAS (Card grande) -->
       <article class="tpl-card" id="tpl-card-mascotas" aria-labelledby="h-mascotas">
         <h2 id="h-mascotas">Mis mascotas</h2>
         <!-- TPL: INICIO BLOQUE NUEVO [Chip conteo] -->
@@ -155,31 +168,27 @@
 
         <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Grid con tarjetas + hover] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Grid con tarjetas + hover + foto automática] -->
         <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
           <div id="tpl-mascotas-list" class="tpl-pets"></div>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
-          <!-- Botón global a la página de gestión completa -->
-          <a class="cta-button" id="tpl-btn-mascotas" href="perfil-mascotas.html">Gestionar mascotas</a>
-          <!-- TPL: INICIO BLOQUE NUEVO [Añadir otra mascota directo] -->
-          <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir otra mascota</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [Solo "Añadir mascota"] -->
+          <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
           <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
 
-      <!-- RESERVAS -->
-      <article class="tpl-card" aria-labelledby="h-reservas">
+      <!-- RESERVAS (al final, ancho completo) -->
+      <article class="tpl-card tpl-card-wide" aria-labelledby="h-reservas">
         <h2 id="h-reservas">Reservas</h2>
         <p>Cuando tu perfil esté completo podrás reservar.</p>
         <div class="tpl-actions">
-          <a class="cta-button link" href="reserva.html">Ir a reservar</a>
+          <a class="cta-button" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
-
-      <!-- (El bloque de SESIÓN como tarjeta ha sido retirado a favor del botón superior) -->
 
     </section>
   </main>
@@ -205,7 +214,7 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout robusto con fallback local + UI condiciones] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI condiciones] -->
   <script>
     (function(){
       const app = firebase.initializeApp(firebaseConfig);
@@ -220,7 +229,6 @@
       const viewCliente   = document.getElementById('tpl-cliente-view');
       const statusCliente = document.getElementById('tpl-cliente-status');
       const actionsPerfil = document.getElementById('tpl-actions-perfil');
-      const btnPerfil     = document.getElementById('tpl-btn-perfil');
       const linkEditar    = document.getElementById('tpl-link-editar');
 
       const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
@@ -236,7 +244,7 @@
         statusCliente.classList.toggle('tpl-hidden', !complete);
         statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
 
-        // Mostrar/ocultar CTA grande vs enlace pequeño
+        // CTA grande vs enlace pequeño
         if (complete) {
           if (actionsPerfil) actionsPerfil.classList.add('tpl-hidden');
           if (linkEditar) {
@@ -274,7 +282,7 @@
           : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
       }
 
-      // TPL: INICIO BLOQUE NUEVO [helpers UI mascotas]
+      // Helpers
       function getInitials(name){
         if(!name) return '—';
         const parts = String(name).trim().split(/\s+/).slice(0,2);
@@ -283,7 +291,6 @@
       function fmt(val, fallback='—'){
         return (val===0 || !!val) ? String(val) : fallback;
       }
-      // TPL: FIN BLOQUE NUEVO
 
       async function render(uid){
         const isFirebase = !!uid;
@@ -328,7 +335,7 @@
             const card   = document.createElement('div');
             card.className = 'tpl-pet';
 
-            // Avatar (fotoUrl si existe, si no iniciales)
+            // Avatar: fotoUrl si existe; si no, iniciales
             const avatar = document.createElement('div');
             avatar.className = 'tpl-avatar';
             if (p.fotoUrl){
@@ -354,7 +361,6 @@
 
             const actions = document.createElement('div');
             actions.className = 'tpl-pet-actions';
-
             const edit = document.createElement('a');
             edit.textContent = 'Editar';
             edit.className = 'tpl-btn-sm tpl-btn-outline';
