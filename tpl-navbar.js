@@ -1,4 +1,4 @@
-/* TPL: INICIO tpl-navbar.js (con login dinámico) */
+/* TPL: INICIO tpl-navbar.js (inyecta navbar + login dinámico) */
 (function () {
   function highlightActiveLink() {
     var path = location.pathname.split('/').pop() || 'index.html';
@@ -20,14 +20,14 @@
       .then(function (html) {
         mount.outerHTML = html;
         highlightActiveLink();
-        authifyLinks(); // 🔑 añadimos gestión de login al terminar de inyectar
+        authifyLinks(); // ajusta botón login/perfil
       })
       .catch(function (err) {
         console.error('TPL: Error al cargar la navbar:', err);
       });
   }
 
-  // === NUEVO: ajustar el botón de login/perfil ===
+  // === Ajustar el botón de login/perfil en toda la página ===
   function authifyLinks() {
     var hasFirebase = (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length && firebase.auth);
     var auth = hasFirebase ? firebase.auth() : null;
@@ -52,6 +52,7 @@
     }
 
     function applyState(user){
+      // detecta el botón principal (clase .login-button) y cualquier otro “Iniciar sesión”
       var nodes = Array.from(document.querySelectorAll('a.login-button, button.login-button'))
         .concat(Array.from(document.querySelectorAll('a,button')).filter(function(n){
           var t = (n.textContent||'').trim().toLowerCase();
@@ -60,7 +61,7 @@
       nodes.forEach(function(n){ user ? setLoggedIn(n) : setLoggedOut(n); });
     }
 
-    // Estado inicial (fallback localStorage si no hay Firebase)
+    // Estado inicial (fallback a localStorage si no hay Firebase)
     var logged = localStorage.getItem('tpl-auth') === '1';
     applyState(logged ? {} : null);
 
@@ -68,6 +69,7 @@
       auth.onAuthStateChanged(applyState);
     }
 
+    // Sincroniza cambios entre pestañas
     window.addEventListener('storage', function(e){
       if (e.key === 'tpl-auth') applyState(e.newValue === '1' ? {} : null);
     });
