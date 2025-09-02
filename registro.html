@@ -1,98 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crear cuenta - The Pets Lovers</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro (datos del dueño) · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-  <!-- Navbar/Footer existentes -->
-  <script defer src="tpl-navbar.js"></script>
-  <script defer src="tpl-footer.js"></script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs - compat] -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
-    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
   <style>
-    /* TPL: INICIO BLOQUE NUEVO [Ajuste mínimo de layout] */
-    .auth-page{max-width:680px;margin:120px auto 40px;padding:1rem}
-    .auth-form label{font-weight:700;color:var(--color-texto)}
-    .auth-form input{padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-family:var(--fuente-texto)}
-    .auth-form .row{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-    .auth-form .actions{margin-top:10px;display:flex;gap:10px;align-items:center}
-    .auth-error{color:#b00020;margin-top:8px}
-    /* TPL: FIN BLOQUE NUEVO */
+    .tpl-form{ max-width:680px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
+    .grid{ display:grid; gap:12px; grid-template-columns:1fr; }
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    .field label{ font-weight:700; color:#58425a; }
+    .field input,.field select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
+    @media(min-width:720px){ .grid{ grid-template-columns:1fr 1fr; } .wide{ grid-column:1 / -1; } }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; }
+    .link{ background:#fff; color:#339496; border:2px solid #339496; }
   </style>
 </head>
 <body>
-  <header id="tpl-navbar"></header>
+  <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
 
-  <main class="container auth-page">
-    <h1>Crea tu cuenta</h1>
-    <form id="tpl-reg-form" class="auth-form" autocomplete="on">
-      <div class="row">
-        <label for="tpl-reg-email">Email</label>
-        <input type="email" id="tpl-reg-email" required />
-      </div>
-      <div class="row">
-        <label for="tpl-reg-pass">Contraseña (mín. 6)</label>
-        <input type="password" id="tpl-reg-pass" required minlength="6" />
+  <main class="tpl-form" aria-labelledby="t">
+    <h1 id="t">Datos del dueño</h1>
+    <p>Solo tardas 2 minutos. Después podrás añadir tus mascotas.</p>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Formulario dueño] -->
+    <form id="ownerForm">
+      <div class="grid">
+        <div class="field">
+          <label for="nombre">Nombre y apellidos</label>
+          <input id="nombre" required>
+        </div>
+        <div class="field">
+          <label for="telefono">Teléfono</label>
+          <input id="telefono" type="tel" required>
+        </div>
+        <div class="field wide">
+          <label for="direccion">Dirección</label>
+          <input id="direccion" placeholder="Calle y número" required>
+        </div>
+        <div class="field">
+          <label for="cp">Código postal</label>
+          <input id="cp" required>
+        </div>
+        <div class="field">
+          <label for="ciudad">Ciudad</label>
+          <input id="ciudad" required>
+        </div>
+        <div class="field">
+          <label for="contacto">Preferencia de contacto</label>
+          <select id="contacto" required>
+            <option value="">Elige…</option>
+            <option>WhatsApp</option>
+            <option>Teléfono</option>
+            <option>Email</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="zona">Zona de servicio</label>
+          <input id="zona" placeholder="Barrio/municipio" required>
+        </div>
+        <div class="field wide">
+          <label for="referencia">¿Cómo nos conociste? (opcional)</label>
+          <input id="referencia" placeholder="Instagram, amigos, Google…">
+        </div>
       </div>
       <div class="actions">
-        <button type="submit" class="cta-button">Registrarme</button>
-        <a href="login.html" class="cta-button" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Ya tengo cuenta</a>
+        <button class="cta-button" type="submit">Guardar y continuar</button>
+        <a class="cta-button link" href="perfil.html">Omitir (lo completo después)</a>
       </div>
-      <p id="tpl-reg-error" class="auth-error"></p>
     </form>
+    <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
-  <footer id="tpl-footer"></footer>
+  <div id="tpl-footer"></div>
+  <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Registro + doc usuario] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Guardar mínimo y marcar perfil completo] -->
   <script>
-    document.getElementById('tpl-reg-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const out   = document.getElementById('tpl-reg-error');
-      out.textContent = '';
-
-      const email = document.getElementById('tpl-reg-email').value.trim();
-      const pass  = document.getElementById('tpl-reg-pass').value;
-
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pass);
-        await db.collection('users').doc(cred.user.uid).set({
-          email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        const params = new URLSearchParams(location.search);
-        const next = params.get('next') || 'reserva.html';
-        location.href = next;
-      } catch (err) {
-        out.textContent = err?.message || 'Error al registrar';
+    (function(){
+      var form = document.getElementById('ownerForm');
+      function getNext(){
+        try{ return new URLSearchParams(location.search).get('next') || 'perfil.html'; }
+        catch(_){ return 'perfil.html'; }
       }
-    });
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        // Guardamos “mínimos” en localStorage (placeholder hasta Firestore)
+        var data = {
+          nombre: document.getElementById('nombre').value.trim(),
+          telefono: document.getElementById('telefono').value.trim(),
+          direccion: document.getElementById('direccion').value.trim(),
+          cp: document.getElementById('cp').value.trim(),
+          ciudad: document.getElementById('ciudad').value.trim(),
+          contacto: document.getElementById('contacto').value,
+          zona: document.getElementById('zona').value.trim(),
+          referencia: document.getElementById('referencia').value.trim()
+        };
+        localStorage.setItem('tpl-owner', JSON.stringify(data));
+        localStorage.setItem('tpl-profile','1'); // <- bandera perfil completo
+        location.href = getNext();
+      });
+    })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
