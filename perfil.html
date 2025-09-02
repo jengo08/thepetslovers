@@ -12,11 +12,24 @@
 
   <style>
     .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
+
+    /* TPL: INICIO BLOQUE NUEVO [barra acciones superiores] */
+    .tpl-profile-top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    }
+    .tpl-profile-actions{
+      display:flex; align-items:center; gap:8px;
+    }
+    .tpl-btn-ghost{
+      background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
     .tpl-sub{ color:#666; margin-bottom:18px; }
-    .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; }
-    .tpl-card h2{ font-size:18px; margin:0 0 8px; color:#58425a; }
-    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .tpl-cards{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; background:#fff; }
+    .tpl-card h2{ font-size:18px; margin:0 0 10px; color:#58425a; }
+    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
 
@@ -25,14 +38,55 @@
     .tpl-view dl{ margin:0; display:grid; grid-template-columns: 140px 1fr; row-gap:6px; column-gap:10px; }
     .tpl-view dt{ font-weight:700; color:#58425a; }
     .tpl-empty{ color:#666; font-style:italic; }
-    .tpl-list{ margin:0; padding-left:18px; }
-    .tpl-list li{ margin:4px 0; }
     .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
     .tpl-status i{ font-size:1rem; }
     .tpl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
-    .tpl-pet-actions{ display:inline-flex; gap:6px; margin-left:8px; }
-    .tpl-pet-actions .cta-button{ padding:6px 10px; }
     .tpl-hidden{ display:none !important; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Editar perfil pequeño] */
+    .tpl-edit-small{
+      position:absolute; right:12px; bottom:12px;
+      font-size:.9rem; font-weight:700; color:#339496; text-decoration:none;
+    }
+    .tpl-edit-small i{ margin-right:6px; }
+    .tpl-edit-small:focus, .tpl-edit-small:hover{ text-decoration:underline; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [lista de mascotas con avatar y popover] */
+    .tpl-pets{
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;
+    }
+    .tpl-pet{
+      position:relative; display:flex; align-items:center; gap:10px;
+      padding:10px; border:1px solid #eee; border-radius:12px; background:#fff;
+    }
+    .tpl-avatar{
+      width:48px; height:48px; border-radius:50%; flex:0 0 48px; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a;
+    }
+    .tpl-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .tpl-pet-name{ font-weight:700; color:#58425a; line-height:1.2 }
+    .tpl-pet-secondary{ font-size:.9rem; color:#666 }
+
+    .tpl-pet-actions{ margin-left:auto; display:flex; gap:6px }
+    .tpl-btn-sm{ padding:6px 10px; border-radius:999px; font-weight:700; border:none; cursor:pointer; }
+    .tpl-btn-outline{ background:#fff; color:#339496; border:2px solid #339496; }
+
+    /* Popover al pasar el ratón */
+    .tpl-popover{
+      position:absolute; left:10px; right:10px; top:calc(100% + 8px);
+      background:#fff; border:1px solid #eee; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,.08);
+      opacity:0; pointer-events:none; transform:translateY(-4px); transition:opacity .15s ease, transform .15s ease;
+      z-index:3;
+    }
+    .tpl-pet:hover .tpl-popover, .tpl-pet:focus-within .tpl-popover{ opacity:1; pointer-events:auto; transform:translateY(0); }
+    .tpl-popover dl{ margin:0; display:grid; grid-template-columns:120px 1fr; row-gap:6px; column-gap:8px; }
+    .tpl-popover dt{ font-weight:700; color:#58425a }
+    .tpl-popover .tpl-notas{ margin-top:6px; font-size:.95rem; color:#444 }
+    @media (hover:none){
+      /* En móviles sin hover, el popover será estático debajo (mejor UX) */
+      .tpl-popover{ position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; margin-top:8px; }
+    }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
@@ -41,20 +95,28 @@
   <script src="tpl-navbar.js" defer></script>
 
   <main class="tpl-profile" aria-labelledby="t">
-    <h1 id="t">Mi perfil</h1>
+    <!-- TPL: INICIO BLOQUE NUEVO [barra superior con logout discreto] -->
+    <div class="tpl-profile-top">
+      <h1 id="t" style="margin:0">Mi perfil</h1>
+      <div class="tpl-profile-actions">
+        <button type="button" class="tpl-btn-ghost" id="tpl-logout-btn" aria-label="Cerrar sesión">Cerrar sesión</button>
+      </div>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
 
     <section class="tpl-cards">
 
       <!-- DATOS DE CLIENTE -->
-      <article class="tpl-card" id="tpl-card-cliente">
+      <article class="tpl-card" id="tpl-card-cliente" aria-labelledby="h-cliente">
         <!-- TPL: INICIO BLOQUE NUEVO [Badge perfil completo] -->
         <div id="tpl-cliente-status" class="tpl-status tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-circle-check"></i> Perfil completo
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <h2>Datos de cliente</h2>
+        <h2 id="h-cliente">Datos de cliente</h2>
         <p id="tpl-cliente-empty" class="tpl-empty">Aún no has creado tu perfil. Usa el botón para rellenarlo.</p>
 
         <!-- TPL: INICIO BLOQUE NUEVO [Vista solo lectura de datos] -->
@@ -70,15 +132,21 @@
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
-        <div class="tpl-actions">
+        <div class="tpl-actions" id="tpl-actions-perfil">
           <!-- Botón que te gustaba: página externa de edición -->
           <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
         </div>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [enlace pequeño editar cuando perfil completo] -->
+        <a id="tpl-link-editar" href="registro.html?next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-pen-to-square"></i> Editar perfil
+        </a>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </article>
 
       <!-- MASCOTAS -->
-      <article class="tpl-card" id="tpl-card-mascotas">
-        <h2>Mis mascotas</h2>
+      <article class="tpl-card" id="tpl-card-mascotas" aria-labelledby="h-mascotas">
+        <h2 id="h-mascotas">Mis mascotas</h2>
         <!-- TPL: INICIO BLOQUE NUEVO [Chip conteo] -->
         <div id="tpl-chip-mascotas" class="tpl-chip tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-paw"></i> <span id="tpl-count-mascotas">0</span>
@@ -87,9 +155,9 @@
 
         <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Lista compacta con Editar] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Grid con tarjetas + hover] -->
         <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
-          <ul id="tpl-mascotas-list" class="tpl-list"></ul>
+          <div id="tpl-mascotas-list" class="tpl-pets"></div>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -103,25 +171,15 @@
       </article>
 
       <!-- RESERVAS -->
-      <article class="tpl-card">
-        <h2>Reservas</h2>
+      <article class="tpl-card" aria-labelledby="h-reservas">
+        <h2 id="h-reservas">Reservas</h2>
         <p>Cuando tu perfil esté completo podrás reservar.</p>
         <div class="tpl-actions">
           <a class="cta-button link" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
 
-      <!-- SESIÓN -->
-      <article class="tpl-card">
-        <h2>Sesión</h2>
-        <p>Cierra tu sesión de forma segura.</p>
-        <div class="tpl-actions">
-          <!-- TPL: INICIO BLOQUE NUEVO [Cerrar sesión real] -->
-          <button type="button" class="cta-button link" id="tpl-logout-btn">Cerrar sesión</button>
-          <noscript><a class="cta-button link" href="index.html">Cerrar sesión (sin JS)</a></noscript>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-        </div>
-      </article>
+      <!-- (El bloque de SESIÓN como tarjeta ha sido retirado a favor del botón superior) -->
 
     </section>
   </main>
@@ -147,7 +205,7 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout robusto con fallback local] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout robusto con fallback local + UI condiciones] -->
   <script>
     (function(){
       const app = firebase.initializeApp(firebaseConfig);
@@ -158,22 +216,40 @@
       const LS_PETS_KEY = 'tpl-pets';
 
       // Refs UI
-      const emptyCliente = document.getElementById('tpl-cliente-empty');
-      const viewCliente  = document.getElementById('tpl-cliente-view');
-      const statusCliente= document.getElementById('tpl-cliente-status');
+      const emptyCliente  = document.getElementById('tpl-cliente-empty');
+      const viewCliente   = document.getElementById('tpl-cliente-view');
+      const statusCliente = document.getElementById('tpl-cliente-status');
+      const actionsPerfil = document.getElementById('tpl-actions-perfil');
+      const btnPerfil     = document.getElementById('tpl-btn-perfil');
+      const linkEditar    = document.getElementById('tpl-link-editar');
 
-      const mascotasEmpty= document.getElementById('tpl-mascotas-empty');
-      const mascotasView = document.getElementById('tpl-mascotas-view');
-      const mascotasList = document.getElementById('tpl-mascotas-list');
-      const chipMascotas = document.getElementById('tpl-chip-mascotas');
-      const cntMascotas  = document.getElementById('tpl-count-mascotas');
+      const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
+      const mascotasView  = document.getElementById('tpl-mascotas-view');
+      const mascotasList  = document.getElementById('tpl-mascotas-list');
+      const chipMascotas  = document.getElementById('tpl-chip-mascotas');
+      const cntMascotas   = document.getElementById('tpl-count-mascotas');
 
-      const logoutBtn    = document.getElementById('tpl-logout-btn');
+      const logoutBtn     = document.getElementById('tpl-logout-btn');
 
       function updateBadge(profile){
-        const complete = profile && profile.nombre && profile.telefono && profile.email && profile.cp;
+        const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
         statusCliente.classList.toggle('tpl-hidden', !complete);
         statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
+
+        // Mostrar/ocultar CTA grande vs enlace pequeño
+        if (complete) {
+          if (actionsPerfil) actionsPerfil.classList.add('tpl-hidden');
+          if (linkEditar) {
+            linkEditar.classList.remove('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','false');
+          }
+        } else {
+          if (actionsPerfil) actionsPerfil.classList.remove('tpl-hidden');
+          if (linkEditar) {
+            linkEditar.classList.add('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','true');
+          }
+        }
       }
 
       async function getProfile(uid){
@@ -193,11 +269,21 @@
       }
 
       function petEditHref(pet, idx, isFirebase){
-        // Si tenemos id (Firestore), lo pasamos como ?id=abc; si no, usamos ?idx=0
-        return isFirebase && pet.id
+        return (isFirebase && pet.id)
           ? ('perfil-mascotas.html?id=' + encodeURIComponent(pet.id))
           : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
       }
+
+      // TPL: INICIO BLOQUE NUEVO [helpers UI mascotas]
+      function getInitials(name){
+        if(!name) return '—';
+        const parts = String(name).trim().split(/\s+/).slice(0,2);
+        return parts.map(p=>p[0]?.toUpperCase()||'').join('') || '—';
+      }
+      function fmt(val, fallback='—'){
+        return (val===0 || !!val) ? String(val) : fallback;
+      }
+      // TPL: FIN BLOQUE NUEVO
 
       async function render(uid){
         const isFirebase = !!uid;
@@ -206,12 +292,12 @@
         const profile = await getProfile(uid);
         updateBadge(profile);
         if (profile && profile.nombre) {
-          document.getElementById('tpl-view-nombre').textContent = profile.nombre || '—';
-          document.getElementById('tpl-view-telefono').textContent = profile.telefono || '—';
-          document.getElementById('tpl-view-email').textContent = profile.email || '—';
+          document.getElementById('tpl-view-nombre').textContent    = profile.nombre || '—';
+          document.getElementById('tpl-view-telefono').textContent  = profile.telefono || '—';
+          document.getElementById('tpl-view-email').textContent     = profile.email || '—';
           document.getElementById('tpl-view-direccion').textContent = profile.direccion || '—';
-          document.getElementById('tpl-view-cp').textContent = profile.cp || '—';
-          document.getElementById('tpl-view-pref').textContent = profile.preferencias || '—';
+          document.getElementById('tpl-view-cp').textContent        = profile.cp || '—';
+          document.getElementById('tpl-view-pref').textContent      = profile.preferencias || '—';
           emptyCliente.classList.add('tpl-hidden');
           viewCliente.classList.remove('tpl-hidden');
         } else {
@@ -232,21 +318,71 @@
           cntMascotas.textContent = String(count);
 
           pets.forEach((p, idx) => {
-            const li = document.createElement('li');
-            li.textContent = (p.nombre || '—') + ' · ' + (p.especie || '—') + (p.notas ? (' · ' + p.notas) : '');
+            const especie = p.especie || '—';
+            const edad    = (p.edad || p.edadAnios || p.anios) ?? '—';
+            const peso    = p.peso ?? '—';
+            const sexo    = p.sexo || p.genero || '—';
+            const ester   = (p.esterilizado===true || p.esterilizada===true) ? 'Sí' : (p.esterilizado===false || p.esterilizada===false) ? 'No' : '—';
+            const notas   = p.notas || p.comentarios || '';
 
-            // Acciones: Editar (abre perfil-mascotas.html con id/idx)
-            const actions = document.createElement('span');
+            const card   = document.createElement('div');
+            card.className = 'tpl-pet';
+
+            // Avatar (fotoUrl si existe, si no iniciales)
+            const avatar = document.createElement('div');
+            avatar.className = 'tpl-avatar';
+            if (p.fotoUrl){
+              const img = document.createElement('img');
+              img.src = p.fotoUrl;
+              img.alt = `Foto de ${p.nombre || 'la mascota'}`;
+              avatar.appendChild(img);
+            } else {
+              avatar.textContent = getInitials(p.nombre);
+            }
+
+            const textBox = document.createElement('div');
+            const nameEl  = document.createElement('div');
+            nameEl.className = 'tpl-pet-name';
+            nameEl.textContent = p.nombre || '—';
+
+            const secEl   = document.createElement('div');
+            secEl.className = 'tpl-pet-secondary';
+            secEl.textContent = especie;
+
+            textBox.appendChild(nameEl);
+            textBox.appendChild(secEl);
+
+            const actions = document.createElement('div');
             actions.className = 'tpl-pet-actions';
 
             const edit = document.createElement('a');
             edit.textContent = 'Editar';
-            edit.className = 'cta-button';
+            edit.className = 'tpl-btn-sm tpl-btn-outline';
             edit.setAttribute('href', petEditHref(p, idx, isFirebase));
-
             actions.appendChild(edit);
-            li.appendChild(actions);
-            mascotasList.appendChild(li);
+
+            // Popover con detalles
+            const pop = document.createElement('div');
+            pop.className = 'tpl-popover';
+            pop.setAttribute('role','dialog');
+            pop.setAttribute('aria-label', `Detalles de ${p.nombre || 'mascota'}`);
+            pop.innerHTML = `
+              <dl>
+                <dt>Especie</dt><dd>${fmt(especie)}</dd>
+                <dt>Edad</dt><dd>${fmt(edad)}</dd>
+                <dt>Peso</dt><dd>${fmt(peso)}</dd>
+                <dt>Sexo</dt><dd>${fmt(sexo)}</dd>
+                <dt>Esterilizado</dt><dd>${fmt(ester)}</dd>
+              </dl>
+              ${notas ? `<div class="tpl-notas"><strong>Notas:</strong> ${fmt(notas,'')}</div>` : ''}
+            `;
+
+            card.appendChild(avatar);
+            card.appendChild(textBox);
+            card.appendChild(actions);
+            card.appendChild(pop);
+
+            mascotasList.appendChild(card);
           });
         } else {
           mascotasView.classList.add('tpl-hidden');
