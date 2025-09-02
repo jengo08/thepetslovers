@@ -6,7 +6,6 @@
   <title>Mi perfil · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-
   <!-- TPL: INICIO BLOQUE NUEVO [Iconos footer visibles en esta página] -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -20,14 +19,19 @@
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
-    /* TPL: INICIO BLOQUE NUEVO [vistitas compactas + badge de estado] */
+
+    /* TPL: INICIO BLOQUE NUEVO [vistas compactas + badges] */
     .tpl-view{ background:#fafafa; border:1px solid #eee; border-radius:10px; padding:12px; }
     .tpl-view dl{ margin:0; display:grid; grid-template-columns: 140px 1fr; row-gap:6px; column-gap:10px; }
     .tpl-view dt{ font-weight:700; color:#58425a; }
     .tpl-empty{ color:#666; font-style:italic; }
     .tpl-list{ margin:0; padding-left:18px; }
+    .tpl-list li{ margin:4px 0; }
     .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
     .tpl-status i{ font-size:1rem; }
+    .tpl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
+    .tpl-pet-actions{ display:inline-flex; gap:6px; margin-left:8px; }
+    .tpl-pet-actions .cta-button{ padding:6px 10px; }
     .tpl-hidden{ display:none !important; }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
@@ -53,7 +57,7 @@
         <h2>Datos de cliente</h2>
         <p id="tpl-cliente-empty" class="tpl-empty">Aún no has creado tu perfil. Usa el botón para rellenarlo.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Vista compacta de datos (solo lectura)] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista solo lectura de datos] -->
         <div id="tpl-cliente-view" class="tpl-view tpl-hidden" aria-live="polite">
           <dl>
             <dt>Nombre</dt><dd id="tpl-view-nombre">—</dd>
@@ -67,26 +71,33 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
-          <!-- TPL: INICIO BLOQUE NUEVO [CTA hacia página de edición externa] -->
+          <!-- Botón que te gustaba: página externa de edición -->
           <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
 
       <!-- MASCOTAS -->
       <article class="tpl-card" id="tpl-card-mascotas">
         <h2>Mis mascotas</h2>
+        <!-- TPL: INICIO BLOQUE NUEVO [Chip conteo] -->
+        <div id="tpl-chip-mascotas" class="tpl-chip tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-paw"></i> <span id="tpl-count-mascotas">0</span>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
         <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Lista compacta de mascotas] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Lista compacta con Editar] -->
         <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
           <ul id="tpl-mascotas-list" class="tpl-list"></ul>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
-          <!-- TPL: INICIO BLOQUE NUEVO [CTA hacia página externa de gestión de mascotas] -->
-          <a class="cta-button" id="tpl-btn-mascotas" href="perfil-mascotas.html">Crear / Gestionar mascotas</a>
+          <!-- Botón global a la página de gestión completa -->
+          <a class="cta-button" id="tpl-btn-mascotas" href="perfil-mascotas.html">Gestionar mascotas</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [Añadir otra mascota directo] -->
+          <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir otra mascota</a>
           <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
@@ -123,7 +134,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script>
-    // Tu proyecto: thepetslovers-c1111
+    // Tu proyecto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -136,14 +147,13 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: leer Firestore/localStorage + logout robusto] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout robusto con fallback local] -->
   <script>
     (function(){
       const app = firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
 
-      // Claves de fallback local (si el usuario llega sin login)
       const LS_PROFILE_KEY = 'tpl-profile';
       const LS_PETS_KEY = 'tpl-pets';
 
@@ -151,9 +161,13 @@
       const emptyCliente = document.getElementById('tpl-cliente-empty');
       const viewCliente  = document.getElementById('tpl-cliente-view');
       const statusCliente= document.getElementById('tpl-cliente-status');
+
       const mascotasEmpty= document.getElementById('tpl-mascotas-empty');
       const mascotasView = document.getElementById('tpl-mascotas-view');
       const mascotasList = document.getElementById('tpl-mascotas-list');
+      const chipMascotas = document.getElementById('tpl-chip-mascotas');
+      const cntMascotas  = document.getElementById('tpl-count-mascotas');
+
       const logoutBtn    = document.getElementById('tpl-logout-btn');
 
       function updateBadge(profile){
@@ -178,7 +192,17 @@
         try { return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); } catch(e){ return []; }
       }
 
+      function petEditHref(pet, idx, isFirebase){
+        // Si tenemos id (Firestore), lo pasamos como ?id=abc; si no, usamos ?idx=0
+        return isFirebase && pet.id
+          ? ('perfil-mascotas.html?id=' + encodeURIComponent(pet.id))
+          : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
+      }
+
       async function render(uid){
+        const isFirebase = !!uid;
+
+        // ----- Perfil
         const profile = await getProfile(uid);
         updateBadge(profile);
         if (profile && profile.nombre) {
@@ -195,23 +219,45 @@
           emptyCliente.classList.remove('tpl-hidden');
         }
 
+        // ----- Mascotas
         const pets = await getPets(uid);
         mascotasList.innerHTML = '';
-        if (pets && pets.length) {
+        const count = pets ? pets.length : 0;
+
+        if (count > 0) {
           mascotasEmpty.classList.add('tpl-hidden');
           mascotasView.classList.remove('tpl-hidden');
-          pets.forEach(p => {
+          chipMascotas.classList.remove('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','false');
+          cntMascotas.textContent = String(count);
+
+          pets.forEach((p, idx) => {
             const li = document.createElement('li');
             li.textContent = (p.nombre || '—') + ' · ' + (p.especie || '—') + (p.notas ? (' · ' + p.notas) : '');
+
+            // Acciones: Editar (abre perfil-mascotas.html con id/idx)
+            const actions = document.createElement('span');
+            actions.className = 'tpl-pet-actions';
+
+            const edit = document.createElement('a');
+            edit.textContent = 'Editar';
+            edit.className = 'cta-button';
+            edit.setAttribute('href', petEditHref(p, idx, isFirebase));
+
+            actions.appendChild(edit);
+            li.appendChild(actions);
             mascotasList.appendChild(li);
           });
         } else {
           mascotasView.classList.add('tpl-hidden');
           mascotasEmpty.classList.remove('tpl-hidden');
+          chipMascotas.classList.add('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','true');
+          cntMascotas.textContent = '0';
         }
       }
 
-      // Logout robusto: intenta Firebase; limpia fallback siempre
+      // Logout robusto
       async function doLogout(){
         try { await auth.signOut(); } catch(e) { console.warn('signOut:', e); }
         localStorage.removeItem(LS_PROFILE_KEY);
@@ -219,10 +265,9 @@
         alert('Has cerrado sesión.');
         location.href = 'index.html';
       }
-
       if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
 
-      // Escucha de sesión
+      // Sesión
       auth.onAuthStateChanged(async (u) => {
         await render(u ? u.uid : null);
       });
