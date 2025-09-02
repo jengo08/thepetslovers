@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales: hero + grid + tarjeta full-width] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Ajustes locales sin romper tu diseño] -->
   <style>
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
@@ -47,40 +47,52 @@
     .services-section .service-card{
       display:flex; flex-direction:column;
       padding:16px; border:1px solid #eee; border-radius:12px; background:#fff;
-      box-sizing: border-box; height: 100%; overflow: visible;
+      box-sizing: border-box; height: 100%; overflow: hidden; /* asegura que nada sobresalga */
     }
     .services-section .service-card h3 { margin:0 0 6px; }
     .services-section .service-card p { margin:0; color:#555; line-height:1.5; }
     .services-section .service-icon { margin-bottom:6px; }
     .services-section .service-icon i { color:#58425a; }
 
-    .tpl-span2{ grid-column: span 1; }
-    @media (min-width: 1100px){ .tpl-span2{ grid-column: span 2; } }
-
-    /* TPL: INICIO BLOQUE NUEVO [Tarjeta FULL WIDTH] */
     .tpl-span-full{ grid-column: 1 / -1; }
+
+    /* ============ Beneficios centrados y profesionales ============ */
+
+    /* Contenedor de la rejilla de beneficios: centrado y con ancho máximo */
+    .tpl-beneficios{
+      /* TPL: INICIO BLOQUE NUEVO [Grid centrado y responsivo pro] */
+      display:grid;
+      gap:14px;
+      margin-top:12px;
+      max-width: 1100px;           /* centra visualmente y evita líneas larguísimas */
+      margin-left:auto; margin-right:auto;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      justify-items: center;        /* cada tarjeta centrada en su celda */
+      align-items: stretch;
+      /* TPL: FIN BLOQUE NUEVO */
+    }
+
+    /* Tarjeta individual de beneficio: centrada, sin hover que levante (evita “sobresalir”) */
+    .tpl-beneficio{
+      /* TPL: INICIO BLOQUE NUEVO [Tarjeta de beneficio profesional] */
+      width:100%;
+      border:1px solid #eee; border-radius:12px; padding:16px; background:#fafafa;
+      text-align:center;
+      display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.03); /* sutil y profesional */
+      /* sin transform ni hover brusco para que no “salte” fuera */
+    }
+    .tpl-beneficio i{
+      color: var(--color-principal); font-size: 1.35rem; line-height:1;
+    }
+    .tpl-beneficio strong{ display:block; margin-bottom:2px; }
     /* TPL: FIN BLOQUE NUEVO */
 
-    /* TPL: INICIO BLOQUE NUEVO [Estilo beneficios más “bonito” sin cambiar el layout] */
-    .tpl-beneficio{
-      border:1px solid #eee; border-radius:12px; padding:14px; background:#fafafa;
-      display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start;
-      transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .tpl-beneficio:hover{ transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.06); }
-    .tpl-beneficio i{ color: var(--color-principal); font-size: 1.25rem; line-height:1; }
-
-    .tpl-beneficios{ display:grid; gap:12px; margin-top:10px; grid-template-columns: 1fr 1fr; }
-    @media (min-width: 700px){ .tpl-beneficios{ grid-template-columns: repeat(3, 1fr); } }
-    @media (min-width: 1100px){ .tpl-beneficios{ grid-template-columns: repeat(6, 1fr); } }
-
+    /* Mantengo el centrado de la tarjeta de candidatura tal cual pediste */
+    .tpl-center-card{ grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 860px; }
     .auth-wall{ padding:10px; border:1px dashed #bbb; border-radius:10px; background:#fafafa; }
     .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
     .auth-actions .cta-button{ padding:10px 16px; }
-
-    .tpl-center-card{ grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 860px; }
-    .services-section .services-grid > .service-card:last-child{ margin-bottom: 0; }
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -202,63 +214,97 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios (FULL WIDTH, sin políticas) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Beneficios detallados sin políticas] -->
+        <!-- 5. Beneficios (FULL WIDTH, centrado) -->
         <article class="service-card tpl-span-full">
           <div class="service-icon"><i class="fa-solid fa-gift"></i></div>
           <h3>Beneficios</h3>
           <div class="tpl-beneficios">
             <div class="tpl-beneficio">
               <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-              <div><strong>Pago el mismo día del inicio</strong><br>Cobras cuando el servicio comienza, sin esperas.</div>
+              <div>
+                <strong>Pago el mismo día del inicio</strong>
+                Cobras cuando el servicio comienza, sin esperas.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-route" aria-hidden="true"></i>
-              <div><strong>Desplazamiento pagado siempre</strong><br>Recibes tu kilometraje o desplazamiento según la distancia.</div>
+              <div>
+                <strong>Desplazamiento pagado siempre</strong>
+                Recibes tu kilometraje o desplazamiento según la distancia.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
-              <div><strong>Servicios cerca de tu zona</strong><br>Priorizamos asignaciones por cercanía para optimizar tu tiempo.</div>
+              <div>
+                <strong>Servicios cerca de tu zona</strong>
+                Priorizamos asignaciones por cercanía para optimizar tu tiempo.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-clock" aria-hidden="true"></i>
-              <div><strong>Horarios flexibles</strong><br>Elige turnos compatibles con tu agenda y disponibilidad.</div>
+              <div>
+                <strong>Horarios flexibles</strong>
+                Elige turnos compatibles con tu agenda y disponibilidad.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-headset" aria-hidden="true"></i>
-              <div><strong>Soporte 24&nbsp;h</strong><br>Acompañamiento ante dudas o incidencias durante el servicio.</div>
+              <div>
+                <strong>Soporte 24&nbsp;h</strong>
+                Acompañamiento ante dudas o incidencias durante el servicio.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
-              <div><strong>Protocolos claros</strong><br>Checklists y pautas para visitas, paseos, estancias y postoperatorios.</div>
+              <div>
+                <strong>Protocolos claros</strong>
+                Checklists y pautas para visitas, paseos, estancias y postoperatorios.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-user-nurse" aria-hidden="true"></i>
-              <div><strong>Primera visita acompañada</strong><br>En servicios nuevos o complejos te apoyamos en la toma de contacto.</div>
+              <div>
+                <strong>Primera visita acompañada</strong>
+                En servicios nuevos o complejos te apoyamos en la toma de contacto.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-hand-holding-heart" aria-hidden="true"></i>
-              <div><strong>Clientes recurrentes</strong><br>Oportunidad de hacer “tus familias” y crear confianza a largo plazo.</div>
+              <div>
+                <strong>Clientes recurrentes</strong>
+                Oportunidad de crear confianza a largo plazo con familias fijas.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-people-arrows" aria-hidden="true"></i>
-              <div><strong>Matching por experiencia</strong><br>Asignaciones según tu perfil (cachorros, gatos, postquirúrgicos, exóticos...).</div>
+              <div>
+                <strong>Matching por experiencia</strong>
+                Asignaciones según tu perfil (cachorros, gatos, postquirúrgicos, exóticos…).
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-martini-glass" aria-hidden="true"></i>
-              <div><strong>Servicios exclusivos</strong><br>Acceso a bodas y eventos, con tarifas y organización definidas.</div>
+              <div>
+                <strong>Servicios exclusivos</strong>
+                Acceso a bodas y eventos, con tarifas y organización definidas.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-seedling" aria-hidden="true"></i>
-              <div><strong>Crecimiento profesional</strong><br>Feedback real, buenas prácticas y materiales para mejorar cada servicio.</div>
+              <div>
+                <strong>Crecimiento profesional</strong>
+                Feedback y buenas prácticas para mejorar en cada servicio.
+              </div>
             </div>
             <div class="tpl-beneficio">
               <i class="fa-solid fa-gem" aria-hidden="true"></i>
-              <div><strong>Propinas 100% para ti</strong><br>Si una familia quiere agradecerte, lo recibes íntegramente.</div>
+              <div>
+                <strong>Propinas 100% para ti</strong>
+                Si una familia quiere agradecerte, lo recibes íntegramente.
+              </div>
             </div>
           </div>
         </article>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <!-- 6. Candidatura (centrada) -->
         <article class="service-card help-card tpl-center-card">
