@@ -8,83 +8,179 @@
   <!-- TPL: INICIO BLOQUE NUEVO [Iconos] -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos específicos de este formulario] -->
   <style>
-    .page{padding-top:120px}
-    .lead{color:#666;margin:0 0 18px}
-    .tpl-form{max-width:820px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:18px}
-    .tpl-field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
-    .tpl-field label{font-weight:700;color:var(--color-texto)}
-    .tpl-field input,.tpl-field textarea{padding:12px;border:1px solid #ddd;border-radius:10px}
-    .tpl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-    .cta-button{ background:#339496;color:#fff;padding:10px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center}
-    .link{ background:#fff;color:#339496;border:2px solid #339496}
-    .tpl-note{color:#666;font-size:.95rem}
-    .tpl-msg{margin:10px 0 0;color:#2a7e80;display:none}
-    .tpl-error{color:#b00020}
+    :root{
+      --tpl-primary:#339496; --tpl-ink:#58425a;
+    }
+    .page{ padding-top:120px }
+    .lead{ color:#666; margin:0 0 24px }
+    .tpl-card{
+      max-width: 980px; margin: 0 auto 60px;
+      background:#fff; border:1px solid #eee; border-radius:16px;
+      box-shadow:0 6px 24px rgba(0,0,0,.06);
+      overflow:hidden;
+    }
+    .tpl-card-head{
+      background: linear-gradient(135deg, rgba(51,148,150,.12), rgba(88,66,90,.08));
+      padding:18px 18px 14px;
+      border-bottom:1px solid #ececec;
+    }
+    .tpl-card-head h1{
+      margin:0; font-size:28px; color:var(--tpl-ink);
+    }
+    .tpl-card-head p{ margin:6px 0 0; color:#555 }
+    .tpl-form{
+      padding:18px;
+      display:grid; gap:14px;
+      grid-template-columns: 1fr;
+    }
+    @media(min-width:860px){
+      .tpl-form{ grid-template-columns: 1fr 1fr; }
+      .col-span-2{ grid-column: span 2; }
+    }
+    .tpl-field{ display:flex; flex-direction:column; gap:8px; }
+    .tpl-field label{
+      font-weight:700; color:var(--tpl-ink); display:flex; align-items:center; gap:8px;
+    }
+    .tpl-field small{ color:#666 }
+    .tpl-field input, .tpl-field textarea, .tpl-field select, .tpl-field datalist{
+      padding:12px 12px; border:1px solid #ddd; border-radius:10px;
+      font-family:inherit; font-size:16px; outline:none;
+    }
+    .tpl-field input:focus, .tpl-field textarea:focus, .tpl-field select:focus{
+      border-color: var(--tpl-primary); box-shadow:0 0 0 3px rgba(51,148,150,.18);
+    }
+    .tpl-actions{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;
+    }
+    .cta-button{ background:#339496;color:#fff;padding:12px 16px;border-radius:999px;border:none;cursor:pointer;font-weight:700;text-align:center }
+    .link{ background:#fff;color:#339496;border:2px solid #339496 }
+    .muted{ color:#666; font-size:.95rem }
+    .checkbox-row{ display:flex; align-items:center; gap:10px; }
+    .checkbox-row input{ width:18px; height:18px }
+    .helper{ font-size:.92rem; color:#555; }
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid #ececec; background:#fff; border-radius:999px; color:#58425a; font-weight:700;
+    }
+    .note{ background:#f8fbfb; border:1px dashed #cfe6e6; padding:10px 12px; border-radius:10px; color:#2a7e80 }
+    .msg{ display:none; margin-top:8px; }
+    .msg.ok{ color:#2a7e80 }
+    .msg.err{ color:#b00020 }
   </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
+  <!-- Navbar/hero intactos -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="container page" aria-labelledby="t">
-    <h1 id="t">Rellenar / Editar perfil</h1>
-    <p class="lead">Completa tus datos. Los usamos para contactar y adaptar el servicio.</p>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Formulario Perfil Propietario] -->
-    <form id="tpl-form-cliente" class="tpl-form" novalidate>
-      <div class="tpl-field">
-        <label for="nombre">Nombre y apellidos</label>
-        <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+    <div class="tpl-card" role="region" aria-labelledby="t">
+      <div class="tpl-card-head">
+        <h1 id="t"><i class="fa-solid fa-user-pen"></i> Rellenar / Editar perfil</h1>
+        <p class="muted">Estos datos nos ayudan a personalizar el servicio. <span class="pill"><i class="fa-solid fa-user-nurse"></i> Auxiliares veterinarios titulados</span></p>
       </div>
 
-      <div class="tpl-field">
-        <label for="telefono">Teléfono</label>
-        <input id="telefono" name="telefono" type="tel" inputmode="numeric" pattern="\\d{9}" placeholder="Ej. 612345678" autocomplete="tel" required>
-        <small class="tpl-note">Introduce 9 dígitos (ejemplo 612345678).</small>
-      </div>
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario Perfil Propietario] -->
+      <form id="tpl-form-cliente" class="tpl-form" novalidate>
+        <!-- Identidad -->
+        <div class="tpl-field col-span-2">
+          <label for="nombre"><i class="fa-solid fa-id-card"></i> Nombre y apellidos</label>
+          <input id="nombre" name="nombre" type="text" autocomplete="name" required>
+        </div>
 
-      <div class="tpl-field">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" required>
-      </div>
+        <div class="tpl-field">
+          <label for="telefono"><i class="fa-solid fa-phone"></i> Teléfono</label>
+          <!-- OJO: patrón correcto en HTML: [0-9]{9} -->
+          <input id="telefono" name="telefono" type="tel" inputmode="numeric" pattern="[0-9]{9}" placeholder="Ej. 612345678" autocomplete="tel" required>
+          <small class="helper">9 dígitos. Ejemplo: 612345678</small>
+        </div>
 
-      <div class="tpl-field">
-        <label for="direccion">Dirección</label>
-        <input id="direccion" name="direccion" type="text" autocomplete="address-line1">
-      </div>
+        <div class="tpl-field">
+          <label for="email"><i class="fa-solid fa-envelope"></i> Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" required>
+        </div>
 
-      <div class="tpl-field">
-        <label for="cp">Código postal</label>
-        <input id="cp" name="cp" type="text" inputmode="numeric" pattern="\\d{5}" placeholder="Ej. 28013" required>
-        <small class="tpl-note">Introduce 5 dígitos (ejemplo 28013).</small>
-      </div>
+        <!-- Dirección -->
+        <div class="tpl-field col-span-2">
+          <label for="direccion"><i class="fa-solid fa-location-dot"></i> Dirección (calle y número)</label>
+          <input id="direccion" name="direccion" type="text" autocomplete="address-line1" placeholder="C/ Ejemplo 12, 3ºB">
+        </div>
 
-      <div class="tpl-field">
-        <label for="preferencias">Preferencias</label>
-        <textarea id="preferencias" name="preferencias" rows="3" placeholder="Rutinas, alergias, instrucciones…"></textarea>
-      </div>
+        <div class="tpl-field">
+          <label for="cp"><i class="fa-solid fa-mailbox"></i> Código postal</label>
+          <!-- OJO: patrón correcto en HTML: [0-9]{5} -->
+          <input id="cp" name="cp" type="text" inputmode="numeric" pattern="[0-9]{5}" placeholder="Ej. 28013" required>
+          <small class="helper">5 dígitos. Ejemplo: 28013</small>
+        </div>
 
-      <div class="tpl-actions">
-        <button type="submit" class="cta-button">Guardar</button>
-        <a href="perfil.html" class="cta-button link">Cancelar</a>
-      </div>
+        <div class="tpl-field">
+          <label for="localidad"><i class="fa-solid fa-city"></i> Localidad</label>
+          <input id="localidad" name="localidad" type="text" autocomplete="address-level2" placeholder="Madrid">
+        </div>
 
-      <p id="tpl-msg" class="tpl-msg"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</p>
-      <p id="tpl-err" class="tpl-msg tpl-error"></p>
-    </form>
-    <!-- TPL: FIN BLOQUE NUEVO -->
+        <div class="tpl-field">
+          <label for="provincia"><i class="fa-regular fa-map"></i> Provincia</label>
+          <input list="provincias-es" id="provincia" name="provincia" autocomplete="address-level1" placeholder="Selecciona o escribe">
+          <datalist id="provincias-es">
+            <option value="A Coruña"><option value="Álava/Araba"><option value="Albacete"><option value="Alicante/Alacant">
+            <option value="Almería"><option value="Asturias"><option value="Ávila"><option value="Badajoz"><option value="Barcelona">
+            <option value="Bizkaia"><option value="Burgos"><option value="Cáceres"><option value="Cádiz"><option value="Cantabria">
+            <option value="Castellón/Castelló"><option value="Ceuta"><option value="Ciudad Real"><option value="Córdoba">
+            <option value="Cuenca"><option value="Girona"><option value="Granada"><option value="Guadalajara"><option value="Gipuzkoa">
+            <option value="Huelva"><option value="Huesca"><option value="Illes Balears"><option value="Jaén"><option value="La Rioja">
+            <option value="Las Palmas"><option value="León"><option value="Lleida"><option value="Lugo"><option value="Madrid">
+            <option value="Málaga"><option value="Melilla"><option value="Murcia"><option value="Navarra"><option value="Ourense">
+            <option value="Palencia"><option value="Pontevedra"><option value="Salamanca"><option value="Santa Cruz de Tenerife">
+            <option value="Segovia"><option value="Sevilla"><option value="Soria"><option value="Tarragona"><option value="Teruel">
+            <option value="Toledo"><option value="Valencia/València"><option value="Valladolid"><option value="Zamora"><option value="Zaragoza">
+          </datalist>
+        </div>
+
+        <div class="tpl-field">
+          <label for="canal"><i class="fa-solid fa-bell"></i> Canal de contacto preferido</label>
+          <select id="canal" name="canal">
+            <option value="">Elige…</option>
+            <option>WhatsApp</option>
+            <option>Email</option>
+            <option>Llamada telefónica</option>
+          </select>
+        </div>
+
+        <!-- Preferencias -->
+        <div class="tpl-field col-span-2">
+          <label for="preferencias"><i class="fa-regular fa-note-sticky"></i> Preferencias / Notas</label>
+          <textarea id="preferencias" name="preferencias" rows="3" placeholder="Rutinas, alergias, indicaciones…"></textarea>
+        </div>
+
+        <!-- Privacidad -->
+        <div class="tpl-field col-span-2">
+          <div class="checkbox-row">
+            <input type="checkbox" id="consent" required>
+            <label for="consent" style="margin:0">He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</label>
+          </div>
+          <div class="note" style="margin-top:6px"><i class="fa-regular fa-circle-question"></i> Usamos tus datos solo para gestionar reservas y comunicación sobre el servicio.</div>
+        </div>
+
+        <div class="tpl-actions col-span-2">
+          <button type="submit" class="cta-button">Guardar</button>
+          <a href="perfil.html" class="cta-button link">Cancelar</a>
+          <span class="msg ok" id="tpl-msg-ok"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</span>
+          <span class="msg err" id="tpl-msg-err"></span>
+        </div>
+      </form>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado] -->
+  <!-- Footer intacto -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica guardado/lectura] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -108,36 +204,46 @@
       const LS_PROFILE_KEY = 'tpl-profile';
 
       const form = document.getElementById('tpl-form-cliente');
-      const msg  = document.getElementById('tpl-msg');
-      const err  = document.getElementById('tpl-err');
+      const ok   = document.getElementById('tpl-msg-ok');
+      const err  = document.getElementById('tpl-msg-err');
 
-      // Util
-      function qsp(name, fallback){ const u=new URL(location.href); return u.searchParams.get(name) || fallback; }
-      function show(el, ok=true){ el.style.display = ok ? 'block':'none'; }
+      // Utilidades
+      function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name) || fb; }
+      function show(el, yes=true){ el.style.display = yes ? 'inline-flex' : 'none'; }
       function hide(el){ el.style.display = 'none'; }
+      function nextUrl(){ return qsp('next', 'perfil.html'); }
 
-      // Validaciones claras
+      // Validaciones en español (evita el mensaje genérico del navegador)
       function attachValidation(){
-        const cp = form.cp, tel = form.telefono;
+        const tel = form.telefono, cp = form.cp, consent = document.getElementById('consent');
+
+        if (tel){
+          tel.addEventListener('invalid', ()=>{
+            tel.setCustomValidity('');
+            if (!tel.validity.valid){
+              if (tel.validity.patternMismatch) tel.setCustomValidity('Introduce un móvil español de 9 dígitos (ej. 612345678).');
+              else if (tel.validity.valueMissing) tel.setCustomValidity('El teléfono es obligatorio.');
+            }
+          });
+          tel.addEventListener('input', ()=>tel.setCustomValidity(''));
+        }
+
         if (cp){
-          cp.addEventListener('invalid', () => {
+          cp.addEventListener('invalid', ()=>{
             cp.setCustomValidity('');
-            if (!cp.validity.valid) {
+            if (!cp.validity.valid){
               if (cp.validity.patternMismatch) cp.setCustomValidity('Introduce un código postal de 5 dígitos (ej. 28013).');
               else if (cp.validity.valueMissing) cp.setCustomValidity('El código postal es obligatorio.');
             }
           });
           cp.addEventListener('input', ()=>cp.setCustomValidity(''));
         }
-        if (tel){
-          tel.addEventListener('invalid', () => {
-            tel.setCustomValidity('');
-            if (!tel.validity.valid) {
-              if (tel.validity.patternMismatch) tel.setCustomValidity('Introduce un móvil español de 9 dígitos (ej. 612345678).');
-              else if (tel.validity.valueMissing) tel.setCustomValidity('El teléfono es obligatorio.');
-            }
+
+        if (consent){
+          consent.addEventListener('invalid', ()=>{
+            consent.setCustomValidity('Debes aceptar la Política de Privacidad para continuar.');
           });
-          tel.addEventListener('input', ()=>tel.setCustomValidity(''));
+          consent.addEventListener('input', ()=>consent.setCustomValidity(''));
         }
       }
 
@@ -157,41 +263,49 @@
       }
 
       function fill(p){
-        form.nombre.value = p?.nombre || '';
-        form.telefono.value = p?.telefono || '';
-        form.email.value = p?.email || '';
-        form.direccion.value = p?.direccion || '';
-        form.cp.value = p?.cp || '';
-        form.preferencias.value = p?.preferencias || '';
+        form.nombre.value        = p?.nombre        || '';
+        form.telefono.value      = p?.telefono      || '';
+        form.email.value         = p?.email         || '';
+        form.direccion.value     = p?.direccion     || '';
+        form.cp.value            = p?.cp            || '';
+        form.localidad.value     = p?.localidad     || '';
+        form.provincia.value     = p?.provincia     || '';
+        form.canal.value         = p?.canal         || '';
+        form.preferencias.value  = p?.preferencias  || '';
+        // el consentimiento no se “premarca” por defecto
       }
 
       attachValidation();
 
-      let NEXT = qsp('next', 'perfil.html');
-
+      // Precarga con sesión (o fallback) y focus UX
       auth.onAuthStateChanged(async (u)=>{
         const profile = await getProfile(u?.uid || null);
         fill(profile);
+        (form.querySelector('input,select,textarea')||{}).focus?.();
       });
 
       form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        hide(err); hide(msg);
+        e.preventDefault(); hide(ok); hide(err);
         if (!form.checkValidity()){ form.reportValidity(); return; }
+
         const data = {
-          nombre: form.nombre.value.trim(),
-          telefono: form.telefono.value.trim(),
-          email: form.email.value.trim(),
-          direccion: form.direccion.value.trim(),
-          cp: form.cp.value.trim(),
-          preferencias: form.preferencias.value.trim()
+          nombre       : form.nombre.value.trim(),
+          telefono     : form.telefono.value.trim(),
+          email        : form.email.value.trim(),
+          direccion    : form.direccion.value.trim(),
+          cp           : form.cp.value.trim(),
+          localidad    : form.localidad.value.trim(),
+          provincia    : form.provincia.value.trim(),
+          canal        : form.canal.value,
+          preferencias : form.preferencias.value.trim(),
+          updatedAt    : new Date().toISOString()
         };
+
         try{
           const u = auth.currentUser;
           await setProfile(u?.uid || null, data);
-          show(msg,true);
-          // pequeña pausa visual y volvemos
-          setTimeout(()=>{ location.href = NEXT; }, 400);
+          show(ok,true);
+          setTimeout(()=>{ location.href = nextUrl(); }, 450);
         }catch(e){
           err.textContent = 'No se pudo guardar: ' + (e?.message || e);
           show(err,true);
