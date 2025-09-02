@@ -1019,3 +1019,43 @@
 
 </body>
 </html>
+<!-- TPL: INICIO BLOQUE NUEVO [Muro: login + perfil completo forzados] -->
+<script>
+  (function(){
+    var form = document.getElementById('bookingForm');
+    var wall = document.getElementById('authWall'); // si tienes un panel aviso; si no, puedes omitir esta línea
+
+    function isLogged(){ return localStorage.getItem('tpl-auth') === '1'; }
+    function hasProfile(){ return localStorage.getItem('tpl-profile') === '1'; } // cuando guardes datos en registro.html, marca esta flag
+
+    function ensureAccess(){
+      var ok = isLogged() && hasProfile();
+      if (form) form.classList.toggle('disabled', !ok);
+      if (wall) wall.style.display = ok ? 'none' : 'block';
+
+      // fija destinos por si falta algo
+      var loginUrl = 'inicio-sesion.html?next=' + encodeURIComponent('reserva.html');
+      var regUrl   = 'registro.html?next=' + encodeURIComponent('reserva.html');
+
+      document.querySelectorAll('[data-login-link]').forEach(a=>a.setAttribute('href', loginUrl));
+      document.querySelectorAll('[data-register-link]').forEach(a=>a.setAttribute('href', regUrl));
+    }
+
+    ensureAccess();
+
+    if (form) form.addEventListener('submit', function(e){
+      if (!(isLogged() && hasProfile())){
+        e.preventDefault();
+        alert(!isLogged() ? 'Debes iniciar sesión o crear tu cuenta.' : 'Completa primero tus datos de dueño.');
+        location.href = !isLogged() ? 'inicio-sesion.html?next=' + encodeURIComponent('reserva.html')
+                                    : 'registro.html?next=' + encodeURIComponent('reserva.html');
+      }
+    });
+
+    window.addEventListener('storage', function(e){
+      if (e.key === 'tpl-auth' || e.key === 'tpl-profile') ensureAccess();
+    });
+  })();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
