@@ -97,12 +97,14 @@
             <img id="preview" class="tpl-photo" alt="Previsualización de la mascota" src="" />
             <div>
               <div class="tpl-photo-actions">
-                <input id="foto" name="foto" type="file" accept="image/*" aria-describedby="fotoHelp">
-                <!-- TPL: INICIO BLOQUE NUEVO [Solo Cambiar] -->
-                <button id="btnCambiarFoto" type="button" class="cta-button link is-hidden">Cambiar foto</button>
+                <!-- TPL: INICIO BLOQUE NUEVO [Input sin texto de ayuda ni aria-describedby] -->
+                <input id="foto" name="foto" type="file" accept="image/*">
                 <!-- TPL: FIN BLOQUE NUEVO -->
+                <button id="btnCambiarFoto" type="button" class="cta-button link is-hidden">Cambiar foto</button>
               </div>
-              <p id="fotoHelp" class="tpl-note">Opcional. Si hay sesión, se sube a Firebase Storage; si no, se guarda localmente. Tras subirla verás solo “Cambiar foto”.</p>
+              <!-- TPL: INICIO BLOQUE NUEVO [Eliminado texto de ayuda de foto] -->
+              <!-- (texto eliminado a petición de Jenny) -->
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </div>
         </div>
@@ -113,14 +115,14 @@
           <input id="nombre" name="nombre" type="text" required>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Microchip con “No tiene”] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Microchip sin texto de ayuda “15 dígitos”] -->
         <div class="tpl-field">
           <label for="microchip"><i class="fa-solid fa-barcode"></i> Nº de microchip <span id="microchipReq">*</span></label>
           <div class="tpl-inline">
-            <input id="microchip" name="microchip" type="text" placeholder="15 dígitos" pattern="^[0-9]{15}$" aria-describedby="microHelp">
+            <!-- Quitamos aria-describedby y el <small> con la ayuda -->
+            <input id="microchip" name="microchip" type="text" placeholder="15 dígitos" pattern="^[0-9]{15}$">
             <label class="tpl-inline" style="gap:6px"><input type="checkbox" id="noChip"> No tiene</label>
           </div>
-          <small id="microHelp" class="helper">Si no marcas “No tiene”, debe tener <strong>15 dígitos</strong>.</small>
         </div>
         <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -135,9 +137,11 @@
           </select>
         </div>
 
-        <!-- Raza / especie según selección -->
+        <!-- Raza / especie (se convierte en Tipo de exótico si especie = Exótico) -->
         <div class="tpl-field">
-          <label for="raza"><i class="fa-solid fa-dna"></i> Raza / especie *</label>
+          <!-- TPL: INICIO BLOQUE NUEVO [Etiqueta con id para cambiar texto dinámicamente] -->
+          <label id="label-raza" for="raza"><i class="fa-solid fa-dna"></i> Raza / especie *</label>
+          <!-- TPL: FIN BLOQUE NUEVO -->
           <input id="raza" name="raza" type="text" list="datalist-perro" required placeholder="Escribe o elige de la lista">
           <!-- TPL: INICIO BLOQUE NUEVO [Datalists razas] -->
           <datalist id="datalist-perro">
@@ -153,26 +157,15 @@
             <option value="Noruego de Bosque"><option value="Mestizo">
           </datalist>
           <!-- TPL: FIN BLOQUE NUEVO -->
-          <small class="helper">Autocompletar disponible; también puedes escribir manualmente.</small>
+
+          <!-- TPL: INICIO BLOQUE NUEVO [Eliminado texto de ayuda “Autocompletar…”] -->
+          <!-- (texto eliminado a petición de Jenny) -->
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Tipo exótico] -->
-        <div id="wrap-exotico" class="tpl-field is-hidden">
-          <label for="tipoExotico"><i class="fa-solid fa-otter"></i> Tipo de exótico *</label>
-          <select id="tipoExotico" name="tipoExotico">
-            <option value="">Elige…</option>
-            <option value="Conejo">Conejo</option>
-            <option value="Hámster">Hámster</option>
-            <option value="Cobaya">Cobaya</option>
-            <option value="Ave">Ave</option>
-            <option value="Reptil">Reptil</option>
-            <option value="Erizo">Erizo</option>
-            <option value="Hurón">Hurón</option>
-            <option value="Pequeño mamífero">Pequeño mamífero</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
+        <!-- TPL: INICIO BLOQUE ELIMINADO [Tipo exótico como bloque aparte] -->
+        <!-- (El bloque #wrap-exotico se elimina para no crear un desplegable abajo) -->
+        <!-- TPL: FIN BLOQUE ELIMINADO -->
 
         <div class="tpl-field">
           <label for="edad"><i class="fa-regular fa-calendar"></i> Edad aproximada (años) *</label>
@@ -360,8 +353,7 @@
 
       const especie     = document.getElementById('especie');
       const raza        = document.getElementById('raza');
-      const wrapExotico = document.getElementById('wrap-exotico');
-      const tipoExotico = document.getElementById('tipoExotico');
+      const labelRaza   = document.getElementById('label-raza');
 
       function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name) || fb; }
       function showEl(el){ el.classList.remove('is-hidden'); }
@@ -404,7 +396,6 @@
       }
 
       function setPhotoUI(hasPhoto){
-        // Si hay foto (preview o URL), ocultamos input y mostramos "Cambiar foto"
         if (hasPhoto){
           fotoInput.classList.add('is-hidden');
           showEl(btnCambiar);
@@ -428,7 +419,7 @@
           microchip.required = false;
           microchip.value = '';
           microchip.disabled = true;
-          microReqLbl.textContent = ''; // quita *
+          microReqLbl.textContent = '';
         } else {
           microchip.required = true;
           microchip.disabled = false;
@@ -448,35 +439,31 @@
         }
       }
 
-      // Seguro vet: si Sí -> aseguradora y póliza obligatorias
-      function toggleSeguroVet(){
-        if (seguroVet.value === 'Sí'){
-          showEl(wrapSeguro);
-          aseguradora.required = true;
-          poliza.required = true;
-        } else {
-          hideEl(wrapSeguro);
-          aseguradora.required = false; aseguradora.value = '';
-          poliza.required = false;      poliza.value = '';
-        }
-      }
-
-      // Especie -> datalist raza + exótico
+      // TPL: INICIO BLOQUE NUEVO [Especie -> cambia label, placeholder y datalist]
       function toggleEspecie(){
         if (especie.value === 'Perro'){
           raza.setAttribute('list', 'datalist-perro');
-          hideEl(wrapExotico); tipoExotico.required = false; tipoExotico.value='';
+          raza.required = true;
+          raza.placeholder = 'Escribe o elige de la lista';
+          if (labelRaza) labelRaza.innerHTML = '<i class="fa-solid fa-dna"></i> Raza / especie *';
         } else if (especie.value === 'Gato'){
           raza.setAttribute('list', 'datalist-gato');
-          hideEl(wrapExotico); tipoExotico.required = false; tipoExotico.value='';
+          raza.required = true;
+          raza.placeholder = 'Escribe o elige de la lista';
+          if (labelRaza) labelRaza.innerHTML = '<i class="fa-solid fa-dna"></i> Raza / especie *';
         } else if (especie.value === 'Exótico'){
           raza.removeAttribute('list'); // libre
-          showEl(wrapExotico); tipoExotico.required = true;
+          raza.required = true;
+          raza.placeholder = 'Ej.: Ave, Reptil, Pequeño mamífero…';
+          if (labelRaza) labelRaza.innerHTML = '<i class="fa-solid fa-otter"></i> Tipo de exótico *';
         } else {
           raza.removeAttribute('list');
-          hideEl(wrapExotico); tipoExotico.required = false; tipoExotico.value='';
+          raza.required = false;
+          raza.placeholder = 'Escribe aquí…';
+          if (labelRaza) labelRaza.innerHTML = '<i class="fa-solid fa-dna"></i> Raza / especie';
         }
       }
+      // TPL: FIN BLOQUE NUEVO
 
       // Banner inteligente
       function updateBanner(){
@@ -583,14 +570,19 @@
 
         form.nombre.value          = p.nombre || '';
         microchip.value            = p.microchip || '';
-        noChip.checked             = !p.microchip; // si no hay microchip, marcamos
+        noChip.checked             = !p.microchip;
         toggleMicrochipRequired();
 
         especie.value              = p.especie || '';
         toggleEspecie();
 
-        raza.value                 = p.raza || '';
-        if (p.tipoExotico){ tipoExotico.value = p.tipoExotico; }
+        // TPL: INICIO BLOQUE NUEVO [Relleno de raza/tipoExotico en un solo campo]
+        if ((p.especie||'') === 'Exótico') {
+          raza.value = p.tipoExotico || '';
+        } else {
+          raza.value = p.raza || '';
+        }
+        // TPL: FIN BLOQUE NUEVO
 
         form.edad.value            = p.edad ?? '';
         form.peso.value            = p.peso ?? '';
@@ -653,19 +645,21 @@
 
       form.addEventListener('submit', async (e)=>{
         e.preventDefault(); ok.style.display='none'; err.style.display='none';
-        // Validación manual para microchip (si no marcado "No tiene")
         if (!noChip.checked && !microchip.checkValidity()){
           microchip.reportValidity(); return;
         }
-        // Validación faltan vacunas
         if (vacunas.value === 'No' && !faltan.value.trim()){
           faltan.reportValidity(); return;
         }
-        // Validación seguro vet si Sí
         if (seguroVet.value === 'Sí' && (!aseguradora.value.trim() || !poliza.value.trim())){
           aseguradora.reportValidity(); poliza.reportValidity(); return;
         }
         if (!form.checkValidity()){ form.reportValidity(); return; }
+
+        // TPL: INICIO BLOQUE NUEVO [Construir raza/tipoExotico en base a especie]
+        const isExotico = (especie.value === 'Exótico');
+        const valorRazaOExotico = raza.value.trim();
+        // TPL: FIN BLOQUE NUEVO
 
         const data = {
           fotoDataUrl   : photoDataUrl || '',
@@ -674,8 +668,11 @@
           nombre        : form.nombre.value.trim(),
           microchip     : noChip.checked ? '' : microchip.value.trim(),
           especie       : especie.value,
-          raza          : raza.value.trim(),
-          tipoExotico   : (especie.value==='Exótico') ? (tipoExotico.value||'') : '',
+
+          // TPL: INICIO BLOQUE NUEVO [Asignación correcta]
+          raza          : isExotico ? '' : valorRazaOExotico,
+          tipoExotico   : isExotico ? valorRazaOExotico : '',
+          // TPL: FIN BLOQUE NUEVO
 
           edad          : Number(form.edad.value || 0),
           peso          : Number(form.peso.value || 0),
