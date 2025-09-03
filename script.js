@@ -441,5 +441,206 @@
   } catch(_) {}
 } )();
 /* TPL: FIN BLOQUE NUEVO */
+/* ===========================================================
+   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google]
+   =========================================================== */
+(function(){
+  // Tu configuración (la dejamos global por si otros módulos la necesitan)
+  window.__TPL_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+    authDomain: "thepetslovers-c1111.firebaseapp.com",
+    projectId: "thepetslovers-c1111",
+    storageBucket: "thepetslovers-c1111.firebasestorage.app",
+    messagingSenderId: "415914577533",
+    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+    measurementId: "G-FXPD69KXBG"
+  };
+
+  // Inyectamos un módulo para el SDK modular (sin build)
+  const mod = document.createElement('script');
+  mod.type = 'module';
+  mod.textContent = `
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import {
+      getAuth, onAuthStateChanged,
+      signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
+      GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    const cfg  = window.__TPL_FIREBASE_CONFIG;
+    const app  = getApps().length ? getApp() : initializeApp(cfg);
+    const auth = getAuth(app);
+
+    // Proveedor Google
+    const providerGoogle = new GoogleAuthProvider();
+
+    // iOS Safari -> redirect es más fiable que popup
+    const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    const useRedirect = (isIOS && isSafari);
+
+    async function googleSignIn(){
+      return useRedirect ? signInWithRedirect(auth, providerGoogle)
+                         : signInWithPopup(auth, providerGoogle);
+    }
+
+    // API pública
+    const subs = [];
+    onAuthStateChanged(auth, (user)=>{ subs.forEach(fn=>fn(user||null)); syncAuthNodes(user); });
+
+    window.tplAuth = {
+      onChange(cb){ if(typeof cb==='function') subs.push(cb); },
+      getUser(){ return auth.currentUser || null; },
+
+      // Email/Password
+      emailSignIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
+      emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
+      emailReset(email){ return sendPasswordResetEmail(auth, email); },
+
+      // Google
+      google(){ return googleSignIn(); },
+
+      // Salir
+      signOut(){ return signOut(auth); },
+
+      // Render compacto reutilizable (inline)
+      renderInlineLogin(host, { title='Accede a tu cuenta' } = {}){
+        if(!host) return;
+        host.innerHTML = \`
+          <div class="tpl-login-card">
+            <h3 class="tpl-login-title">\${title}</h3>
+            <div class="tpl-socials">
+              <button type="button" class="tpl-btn-social" data-provider="google" aria-label="Iniciar sesión con Google">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+              </button>
+            </div>
+            <div class="tpl-sep"><span>o</span></div>
+            <form class="tpl-login-form" novalidate>
+              <label>Email</label>
+              <input type="email" name="email" required autocomplete="email" />
+              <label>Contraseña</label>
+              <input type="password" name="password" required autocomplete="current-password" />
+              <button type="submit" class="tpl-btn">Iniciar sesión</button>
+              <button type="button" class="tpl-btn-outline" data-action="signup">Crear cuenta</button>
+              <button type="button" class="tpl-link" data-action="reset">¿Has olvidado la contraseña?</button>
+              <p class="tpl-login-msg" aria-live="polite"></p>
+            </form>
+          </div>\`;
+
+        const form = host.querySelector('.tpl-login-form');
+        const msg  = host.querySelector('.tpl-login-msg');
+
+        form.addEventListener('submit', async (e)=>{
+          e.preventDefault();
+          const email = form.email.value.trim();
+          const pass  = form.password.value;
+          msg.textContent = 'Accediendo…';
+          try{
+            await window.tplAuth.emailSignIn(email, pass);
+            msg.textContent = '¡Listo!';
+            const back = new URLSearchParams(location.search).get('redirect');
+            if (back) location.href = back; else location.reload();
+          }catch(err){ msg.textContent = normalizaError(err); }
+        });
+
+        form.querySelector('[data-action="signup"]').onclick = async ()=>{
+          const email = form.email.value.trim();
+          const pass  = form.password.value;
+          msg.textContent = 'Creando cuenta…';
+          try{
+            await window.tplAuth.emailSignUp(email, pass);
+            msg.textContent = 'Cuenta creada.';
+            const back = new URLSearchParams(location.search).get('redirect');
+            if (back) location.href = back; else location.reload();
+          }catch(err){ msg.textContent = normalizaError(err); }
+        };
+
+        form.querySelector('[data-action="reset"]').onclick = async ()=>{
+          const email = form.email.value.trim();
+          if(!email){ msg.textContent = 'Escribe tu email para enviarte el enlace.'; return; }
+          msg.textContent = 'Enviando enlace…';
+          try{
+            await window.tplAuth.emailReset(email);
+            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
+          }catch(err){ msg.textContent = normalizaError(err); }
+        };
+
+        host.querySelector('.tpl-btn-social[data-provider="google"]').onclick = async ()=>{
+          msg.textContent = 'Conectando con Google…';
+          try{
+            await window.tplAuth.google();
+            const back = new URLSearchParams(location.search).get('redirect');
+            if (back) location.href = back; else location.reload();
+          }catch(err){ msg.textContent = normalizaError(err); }
+        };
+
+        function normalizaError(err){
+          const m = (err && err.code) ? String(err.code) : String(err||'');
+          if (m.includes('auth/invalid-email')) return 'Email no válido.';
+          if (m.includes('auth/user-not-found')) return 'No existe ninguna cuenta con ese email.';
+          if (m.includes('auth/wrong-password')) return 'Contraseña incorrecta.';
+          if (m.includes('auth/email-already-in-use')) return 'Ese email ya está registrado.';
+          if (m.includes('auth/weak-password')) return 'La contraseña es demasiado débil.';
+          if (m.includes('auth/popup-closed-by-user')) return 'Se cerró la ventana antes de completar el acceso.';
+          return 'Ha ocurrido un error. Inténtalo de nuevo.';
+        }
+      }
+    };
+
+    // Sincroniza elementos con data-auth-visible="in|out" y .login-button existente
+    function syncAuthNodes(user){
+      document.querySelectorAll('[data-auth-visible]').forEach(el=>{
+        const mode = el.getAttribute('data-auth-visible');
+        el.style.display = (mode==='in' && user) || (mode==='out' && !user) ? '' : 'none';
+      });
+      const btn = document.querySelector('.login-button');
+      if (btn){
+        if (user){
+          btn.textContent = 'Cerrar sesión';
+          btn.onclick = (e)=>{ e.preventDefault(); signOut(auth); };
+        } else {
+          btn.textContent = 'Iniciar sesión';
+          btn.onclick = (e)=>{ e.preventDefault(); location.href = 'login.html'; };
+        }
+      }
+    }
+    // Llamada inicial
+    syncAuthNodes(auth.currentUser);
+  `;
+  document.head.appendChild(mod);
+})();
+/* ===========================================================
+   TPL: FIN BLOQUE NUEVO
+   =========================================================== */
+
+/* ===========================================================
+   TPL: INICIO BLOQUE NUEVO [Estilos mínimos del login inline]
+   =========================================================== */
+(function(){
+  const CSS_ID='tpl-login-styles';
+  if(document.getElementById(CSS_ID)) return;
+  const s=document.createElement('style'); s.id=CSS_ID; s.textContent=`
+  .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:20px;background:#fff;max-width:460px;margin:20px auto;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+  .tpl-login-title{margin:0 0 10px;color:#58425a;font-weight:700;font-size:1.15rem;text-align:center}
+  .tpl-socials{display:grid;gap:10px;margin-bottom:10px}
+  .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600}
+  .tpl-btn-social i{font-size:1rem}
+  .tpl-sep{position:relative;text-align:center;margin:8px 0 10px;color:#999;font-size:.9rem}
+  .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
+  .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
+  .tpl-login-form{display:grid;gap:10px}
+  .tpl-login-form label{font-size:.9rem;color:#58425a}
+  .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
+  .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+  .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+  .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
+  .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:6px}
+  `;
+  document.head.appendChild(s);
+})();
+/* ===========================================================
+   TPL: FIN BLOQUE NUEVO
+   =========================================================== */
+
 
 
