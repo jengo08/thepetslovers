@@ -25,13 +25,28 @@
   th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top }
   th{ color:#58425a; font-weight:700 }
   .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem }
-  .tabbar{ display:flex; gap:8px; margin:12px 0 }
+  .tabbar{ display:flex; gap:8px; margin:12px 0; flex-wrap:wrap }
   .tabbar button{ background:#f5fbfb; color:#339496; border:1px solid #d7efef; border-radius:999px; padding:6px 12px; cursor:pointer }
   .tabbar button.active{ background:#339496; color:#fff; border-color:#339496 }
   .section{ display:none }
   .section.active{ display:block }
   .status{ margin:6px 0 12px; color:#666 }
   .nowrap{ white-space:nowrap }
+
+  /* TPL: INICIO BLOQUE NUEVO [Cards del dashboard] */
+  .tpl-grid{ display:grid; grid-template-columns:repeat(12,1fr); gap:12px; }
+  .tpl-col-3{ grid-column:span 3; }
+  .tpl-col-4{ grid-column:span 4; }
+  .tpl-col-6{ grid-column:span 6; }
+  .tpl-col-12{ grid-column:span 12; }
+  @media (max-width: 900px){
+    .tpl-col-3,.tpl-col-4,.tpl-col-6,.tpl-col-12{ grid-column:span 12; }
+  }
+  .tpl-kpi{ border:1px solid #eee; border-radius:12px; padding:14px; }
+  .tpl-kpi h3{ margin:0 0 8px; font-size:1rem; color:#58425a }
+  .tpl-kpi .big{ font-size:1.8rem; font-weight:700; color:#339496 }
+  .tpl-table-wrap{ overflow:auto }
+  /* TPL: FIN BLOQUE NUEVO */
 </style>
 </head>
 <body>
@@ -47,12 +62,82 @@
     <!-- TPL: INICIO BLOQUE NUEVO [Tabs] -->
     <div id="tpl-app" style="display:none">
       <div class="tabbar" role="tablist" aria-label="Secciones">
-        <button class="active" data-tab="cands" role="tab">Candidaturas</button>
+        <!-- NUEVA pestaña: Panel -->
+        <button class="active" data-tab="panel" role="tab">Panel</button>
+        <button data-tab="cands" role="tab">Candidaturas</button>
         <button data-tab="reservas" role="tab">Reservas</button>
+        <!-- NUEVA pestaña: Usuarios -->
+        <button data-tab="usuarios" role="tab">Usuarios</button>
       </div>
 
-      <!-- Candidaturas -->
-      <div id="section-cands" class="section active">
+      <!-- =================== PANEL (Dashboard) =================== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Sección Panel] -->
+      <div id="section-panel" class="section active" aria-labelledby="tab-panel">
+        <p class="status" id="tpl-status-panel">Cargando métricas…</p>
+        <div class="tpl-grid">
+          <div class="tpl-col-3">
+            <div class="tpl-kpi">
+              <h3>Registros hoy</h3>
+              <div class="big" id="kpi-users-today">–</div>
+              <div class="muted" id="kpi-users-month">Mes: – · Año: –</div>
+            </div>
+          </div>
+          <div class="tpl-col-3">
+            <div class="tpl-kpi">
+              <h3>Candidaturas hoy</h3>
+              <div class="big" id="kpi-cands-today">–</div>
+              <div class="muted" id="kpi-cands-month">Mes: – · Año: –</div>
+            </div>
+          </div>
+          <div class="tpl-col-3">
+            <div class="tpl-kpi">
+              <h3>Reservas hoy</h3>
+              <div class="big" id="kpi-resv-today">–</div>
+              <div class="muted" id="kpi-resv-month">Mes: – · Año: –</div>
+            </div>
+          </div>
+          <div class="tpl-col-3">
+            <div class="tpl-kpi">
+              <h3>Visitas hoy</h3>
+              <div class="big" id="kpi-visits-today">–</div>
+              <div class="muted" id="kpi-visits-month">Mes: – · Año: –</div>
+            </div>
+          </div>
+
+          <div class="tpl-col-6">
+            <div class="tpl-kpi">
+              <h3>Ingresos (estim.)</h3>
+              <div class="muted">* Suma de campos en reservas si existen: <code>importeReserva</code> y <code>importeAuxiliar</code>.</div>
+              <div class="big" id="kpi-eur-total">– €</div>
+              <div class="muted" id="kpi-eur-split">Reserva: – € · Auxiliar: – €</div>
+            </div>
+          </div>
+
+          <div class="tpl-col-6">
+            <div class="tpl-kpi">
+              <h3>Distribución perfiles</h3>
+              <div class="big" id="kpi-roles-total">–</div>
+              <div class="muted" id="kpi-roles-split">Propietarios: – · Cuidadores: –</div>
+            </div>
+          </div>
+
+          <div class="tpl-col-12">
+            <div class="tpl-kpi">
+              <h3>Últimas 20 acciones</h3>
+              <div class="tpl-table-wrap">
+                <table>
+                  <thead><tr><th>Fecha</th><th>Tipo</th><th>Detalle</th></tr></thead>
+                  <tbody id="tpl-activity-rows"><tr><td colspan="3">Cargando…</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- =================== CANDIDATURAS =================== -->
+      <div id="section-cands" class="section" aria-labelledby="tab-cands">
         <p id="tpl-status-c" class="status">Cargando candidaturas…</p>
         <div class="filters">
           <input id="tpl-q" type="search" placeholder="Buscar nombre, email, ciudad, zonas…">
@@ -91,8 +176,8 @@
         </div>
       </div>
 
-      <!-- Reservas -->
-      <div id="section-reservas" class="section">
+      <!-- =================== RESERVAS =================== -->
+      <div id="section-reservas" class="section" aria-labelledby="tab-reservas">
         <p id="tpl-status-r" class="status">Cargando reservas…</p>
         <div class="filters">
           <input id="tpl-r-q" type="search" placeholder="Buscar por cliente, ciudad, CP">
@@ -143,6 +228,41 @@
           </div>
         </div>
       </div>
+
+      <!-- =================== USUARIOS (Perfiles) =================== -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Sección Usuarios] -->
+      <div id="section-usuarios" class="section" aria-labelledby="tab-usuarios">
+        <p id="tpl-status-u" class="status">Cargando usuarios…</p>
+        <div class="filters">
+          <input id="tpl-u-q" type="search" placeholder="Buscar por nombre/email/ciudad">
+          <select id="tpl-u-rol">
+            <option value="">Rol (todos)</option>
+            <option value="propietario">Propietario</option>
+            <option value="cuidador">Cuidador</option>
+          </select>
+          <select id="tpl-u-limit">
+            <option>25</option><option selected>50</option><option>100</option>
+          </select>
+        </div>
+        <div class="toolbar">
+          <button class="btn sec" id="tpl-u-export">Exportar CSV</button>
+        </div>
+        <div class="tpl-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="nowrap">Fecha</th>
+                <th>Nombre / Email</th>
+                <th>Rol</th>
+                <th>Ciudad / CP</th>
+                <th>Acción</th>
+              </tr>
+            </thead>
+            <tbody id="tpl-u-rows"><tr><td colspan="5">Cargando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
   </section>
@@ -176,7 +296,7 @@
   const auth = firebase.auth();
 
   <!-- TPL: INICIO BLOQUE NUEVO [Admins + helper en minúsculas] -->
-  // SOLO este email (en minúsculas)
+  // SOLO estos emails (en minúsculas)
   const ADMIN_EMAILS = new Set(["4b.jenny.gomez@gmail.com"]);
   function isAdminEmail(email){
     return !!email && ADMIN_EMAILS.has(String(email).toLowerCase());
@@ -192,8 +312,10 @@
   // Tabs
   const tabs = document.querySelectorAll('[data-tab]');
   const sections = {
+    panel: document.getElementById('section-panel'),
     cands: document.getElementById('section-cands'),
-    reservas: document.getElementById('section-reservas')
+    reservas: document.getElementById('section-reservas'),
+    usuarios: document.getElementById('section-usuarios')
   };
   tabs.forEach(b=>b.addEventListener('click', ()=>{
     tabs.forEach(x=>x.classList.remove('active'));
@@ -207,7 +329,6 @@
     const provider = new firebase.auth.GoogleAuthProvider();
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     await auth.signInWithPopup(provider);
-    // No redirigimos; el onAuthStateChanged mostrará el panel
   });
   <!-- TPL: FIN BLOQUE NUEVO -->
   logoutBtn.addEventListener('click', ()=> auth.signOut());
@@ -225,13 +346,17 @@
   });
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  // ======== CANDIDATURAS ========
+  // ======== Helpers comunes ========
   const PROV = {"01":"Álava","02":"Albacete","03":"Alicante","04":"Almería","05":"Ávila","06":"Badajoz","07":"Islas Baleares","08":"Barcelona","09":"Burgos","10":"Cáceres","11":"Cádiz","12":"Castellón","13":"Ciudad Real","14":"Córdoba","15":"A Coruña","16":"Cuenca","17":"Girona","18":"Granada","19":"Guadalajara","20":"Gipuzkoa","21":"Huelva","22":"Huesca","23":"Jaén","24":"León","25":"Lleida","26":"La Rioja","27":"Lugo","28":"Madrid","29":"Málaga","30":"Murcia","31":"Navarra","32":"Ourense","33":"Asturias","34":"Palencia","35":"Las Palmas","36":"Pontevedra","37":"Salamanca","38":"Santa Cruz de Tenerife","39":"Cantabria","40":"Segovia","41":"Sevilla","42":"Soria","43":"Tarragona","44":"Teruel","45":"Toledo","46":"Valencia","47":"Valladolid","48":"Bizkaia","49":"Zamora","50":"Zaragoza","51":"Ceuta","52":"Melilla"};
   function zonaSugerida(cp){ const s=(cp||'').toString().padStart(5,'0').slice(0,2); return PROV[s]||''; }
   function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
   function fmt(ts){ if(!ts) return '-'; const d=ts.toDate(); return d.toLocaleDateString('es-ES',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
   function textMatch(item, needle){ if(!needle) return true; const hay=[item.nombre,item.email,item.telefono,item.ciudad,item.cp,item.zonasCobertura,item.links].join(' ').toLowerCase(); return hay.includes(needle.toLowerCase()); }
+  function toYmd(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
+  function isSameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
+  function isSameYear(d,ref){ return d.getFullYear()===ref.getFullYear(); }
 
+  // ======== CANDIDATURAS ========
   const elC = {
     status: document.getElementById('tpl-status-c'),
     q: document.getElementById('tpl-q'),
@@ -279,7 +404,8 @@
     const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cvUrl','tituloUrl','cuidId'];
     const lines = [head.join(',')];
     allC.forEach(it=>{
-      const row = [ fmt(it.createdAt)||'', it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', it.cvUrl||'', it.tituloUrl||'', it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+      const fecha = it.createdAt?.toDate ? fmt(it.createdAt) : '';
+      const row = [ fecha, it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', it.cvUrl||'', it.tituloUrl||'', it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
       lines.push(row.join(','));
     });
     const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
@@ -358,7 +484,7 @@
   async function loadR(){
     elR.status.textContent = 'Cargando reservas…';
     // Esperado en /reservas:
-    // { clienteNombre, clienteEmail, ciudad, cp, especie, servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt }
+    // { clienteNombre, clienteEmail, ciudad, cp, especie, servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt, (opcional) importeReserva, importeAuxiliar }
     const snap = await db.collection('reservas').orderBy('createdAt','desc').limit(200).get();
     allR = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
     elR.status.textContent = `Cargadas ${allR.length}.`;
@@ -454,10 +580,157 @@
     const n=document.getElementById(id); n && n.addEventListener('input', renderR);
   });
 
-  async function boot(){ await loadC(); await loadR(); }
+  // ======== USUARIOS (Propietarios y Cuidadores) ========
+  // Convención recomendada:
+  // - Colección "users": { displayName, email, ciudad, cp, role: 'propietario' | 'cuidador', createdAt }
+  // - Colección "cuidadores": perfiles de cuidadores aprobados (ya existente)
+  const elU = {
+    status: document.getElementById('tpl-status-u'),
+    q: document.getElementById('tpl-u-q'),
+    rol: document.getElementById('tpl-u-rol'),
+    limit: document.getElementById('tpl-u-limit'),
+    rows: document.getElementById('tpl-u-rows'),
+    exportBtn: document.getElementById('tpl-u-export')
+  };
+  let allU = [];
+
+  function renderU(){
+    const limit = parseInt(elU.limit.value||'50',10);
+    const q = (elU.q.value||'').toLowerCase().trim();
+    const rol = elU.rol.value;
+    const filtered = allU.filter(u=>{
+      const hay = [u.displayName,u.email,u.ciudad,u.cp].join(' ').toLowerCase();
+      const okText = !q || hay.includes(q);
+      const okRol = !rol || (u.role===rol);
+      return okText && okRol;
+    }).slice(0,limit);
+    elU.rows.innerHTML = filtered.length ? filtered.map(u=>`
+      <tr>
+        <td class="nowrap">${fmt(u.createdAt)}</td>
+        <td><strong>${esc(u.displayName||'-')}</strong><div class="muted">${esc(u.email||'')}</div></td>
+        <td>${u.role ? `<span class="pill">${esc(u.role)}</span>`:'-'}</td>
+        <td>${esc(u.ciudad||'-')}<br><span class="muted">${esc(u.cp||'')}</span></td>
+        <td>${
+          u.role==='cuidador' && u.cuidId
+           ? `<a class="btn sec" href="tpl-perfil-cuidador.html?id=${encodeURIComponent(u.cuidId)}" target="_blank">Ver perfil</a>`
+           : '-'
+        }</td>
+      </tr>
+    `).join('') : '<tr><td colspan="5">Sin usuarios.</td></tr>';
+  }
+
+  async function loadU(){
+    elU.status.textContent = 'Cargando usuarios…';
+    const snap = await db.collection('users').orderBy('createdAt','desc').limit(500).get();
+    allU = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
+    elU.status.textContent = `Cargados ${allU.length}.`;
+    renderU();
+  }
+
+  [elU.q, elU.rol, elU.limit].forEach(n=> n.addEventListener('input', renderU));
+  elU.exportBtn.addEventListener('click', ()=>{
+    const head = ['fecha','displayName','email','role','ciudad','cp','cuidId'];
+    const lines = [head.join(',')];
+    allU.forEach(u=>{
+      const fecha = u.createdAt?.toDate ? fmt(u.createdAt) : '';
+      const row = [fecha,u.displayName||'',u.email||'',u.role||'',u.ciudad||'',u.cp||'',u.cuidId||''].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+      lines.push(row.join(','));
+    });
+    const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='usuarios.csv'; a.click();
+  });
+
+  // ======== PANEL (Dashboard): KPIs y actividad ========
+  async function loadKPIs(){
+    const status = document.getElementById('tpl-status-panel');
+    const now = new Date();
+    const todayYmd = toYmd(now);
+
+    // Helpers para contar por periodo a partir de createdAt
+    async function countDocs(collection, limit=1000){
+      const snap = await db.collection(collection).orderBy('createdAt','desc').limit(limit).get();
+      const docs = snap.docs.map(d=>d.data()).filter(d=>d.createdAt && d.createdAt.toDate);
+      let d=0,m=0,y=0;
+      const ref = now;
+      docs.forEach(x=>{
+        const dt = x.createdAt.toDate();
+        if (toYmd(dt)===todayYmd) d++;
+        if (isSameMonth(dt,ref)) m++;
+        if (isSameYear(dt,ref)) y++;
+      });
+      return {d,m,y, raw:docs};
+    }
+
+    // Registros (users)
+    const users = await countDocs('users', 1000);
+    document.getElementById('kpi-users-today').textContent = users.d;
+    document.getElementById('kpi-users-month').textContent = `Mes: ${users.m} · Año: ${users.y}`;
+
+    // Candidaturas
+    const cands = await countDocs('candidaturas', 1000);
+    document.getElementById('kpi-cands-today').textContent = cands.d;
+    document.getElementById('kpi-cands-month').textContent = `Mes: ${cands.m} · Año: ${cands.y}`;
+
+    // Reservas
+    const resv = await countDocs('reservas', 1000);
+    document.getElementById('kpi-resv-today').textContent = resv.d;
+    document.getElementById('kpi-resv-month').textContent = `Mes: ${resv.m} · Año: ${resv.y}`;
+
+    // Visitas (convención sugerida: colección "visitas" con docs por día { date:'YYYY-MM-DD', count:number, createdAt })
+    let visToday=0, visMonth=0, visYear=0;
+    try{
+      const vs = await db.collection('visitas').orderBy('date','desc').limit(400).get();
+      const refYear = String(now.getFullYear());
+      const refMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      vs.docs.forEach(doc=>{
+        const v = doc.data();
+        if (v?.date === todayYmd) visToday += (v.count||0);
+        if (String(v?.date||'').startsWith(refMonth)) visMonth += (v.count||0);
+        if (String(v?.date||'').startsWith(refYear)) visYear += (v.count||0);
+      });
+    }catch(e){ /* si no existe, dejamos en 0 */ }
+    document.getElementById('kpi-visits-today').textContent = visToday || 0;
+    document.getElementById('kpi-visits-month').textContent = `Mes: ${visMonth||0} · Año: ${visYear||0}`;
+
+    // Ingresos (estimación): sumar campos si existen
+    let eurReserva=0, eurAux=0;
+    resv.raw.forEach(r=>{
+      eurReserva += Number(r.importeReserva||0);
+      eurAux += Number(r.importeAuxiliar||0);
+    });
+    const total = eurReserva + eurAux;
+    document.getElementById('kpi-eur-total').textContent = `${total.toFixed(2)} €`;
+    document.getElementById('kpi-eur-split').textContent = `Reserva: ${eurReserva.toFixed(2)} € · Auxiliar: ${eurAux.toFixed(2)} €`;
+
+    // Distribución roles
+    let nProp=0, nCuid=0;
+    users.raw.forEach(u=>{
+      if (u.role==='propietario') nProp++;
+      if (u.role==='cuidador') nCuid++;
+    });
+    document.getElementById('kpi-roles-total').textContent = (nProp+nCuid);
+    document.getElementById('kpi-roles-split').textContent = `Propietarios: ${nProp} · Cuidadores: ${nCuid}`;
+
+    // Actividad reciente (tomamos últimos eventos de varias colecciones)
+    const actRows = document.getElementById('tpl-activity-rows');
+    const rows = [];
+    users.raw.slice(0,10).forEach(u=> rows.push({ts:u.createdAt, type:'Usuario', msg:`Alta de ${u.displayName||u.email||'—'}`}));
+    cands.raw.slice(0,10).forEach(c=> rows.push({ts:c.createdAt, type:'Candidatura', msg:`${c.nombre||c.email||'—'} · ${c.estado||'pendiente'}`}));
+    resv.raw.slice(0,10).forEach(r=> rows.push({ts:r.createdAt, type:'Reserva', msg:`${r.clienteNombre||r.clienteEmail||'—'} · ${r.servicio||''}`}));
+    rows.sort((a,b)=> b.ts?.toMillis?.() - a.ts?.toMillis?.());
+    const show = rows.slice(0,20);
+    actRows.innerHTML = show.length
+      ? show.map(x=>`<tr><td class="nowrap">${fmt(x.ts)}</td><td>${esc(x.type)}</td><td>${esc(x.msg)}</td></tr>`).join('')
+      : '<tr><td colspan="3">Sin actividad reciente.</td></tr>';
+
+    status.textContent = 'Métricas actualizadas.';
+  }
+
+  // ======== Boot general ========
+  async function boot(){
+    await Promise.all([loadC(), loadR(), loadU(), loadKPIs()]);
+  }
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
-
