@@ -10,12 +10,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- Ajustes SOLO para esta página (se mantienen) -->
+  <!-- Ajustes SOLO para esta página (los mantengo) -->
   <style>
     .hero-section.hero-como {
       height: 60vh;
       min-height: 420px;
-      background-image: url('images/servicios.jpg.png.png') !important;
+      background-image: url('images/como.jpg.png.png') !important;
       background-size: cover;
       background-repeat: no-repeat;
       background-position: center 8%;
@@ -56,12 +56,12 @@
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada] -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
         <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers Logo"></a>
         </div>
         <a href="index.html" class="home-button">Inicio</a>
         <ul class="nav-links">
@@ -70,10 +70,11 @@
           <li><a href="index.html#contactanos">Contáctanos</a></li>
           <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
         </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+        <a href="#iniciar-sesion" class="login-button">Iniciar sesión</a>
       </nav>
     </noscript>
   </div>
+  <script src="tpl-navbar.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <header class="hero-section hero-como">
@@ -111,7 +112,7 @@
         </div>
         <div class="step-card">
           <div class="step-icon"><i class="fa-solid fa-file-lines"></i></div>
-          <h3>Cuidados & seguimiento diario</h3>
+          <h3>Cuidados &amp; seguimiento diario</h3>
           <p>Atención profesional, fotos e informe diario durante la estancia.</p>
         </div>
       </div>
@@ -123,7 +124,7 @@
       </div>
 
       <div class="features-line">
-        <div class="feature-chip"><i class="fa-solid fa-user-nurse"></i> Profesionales veterinarios titulados</div>
+        <div class="feature-chip"><i class="fa-solid fa-user-nurse"></i> Auxiliares veterinarios titulados</div>
         <div class="feature-chip"><i class="fa-solid fa-shield-heart"></i> Seguridad y tranquilidad</div>
         <div class="feature-chip"><i class="fa-solid fa-user-check"></i> Selección a medida</div>
         <div class="feature-chip"><i class="fa-solid fa-file-pen"></i> Informe diario con fotos</div>
@@ -131,52 +132,40 @@
     </div>
   </section>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <nav class="footer-links-row">
+        <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+        <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+        <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+        <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+        <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+        <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+        <a href="digital-services-act.html">Digital Services Act</a>
+        <span class="footer-help-inline"> ¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></span>
+      </nav>
+
+      <div class="footer-right socials">
+        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+        <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+      </div>
+    </div>
+
+    <div class="footer-bottom footer-bottom--inline">
+      <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+      <nav class="footer-bottom-right legal-links">
+        <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+        <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+        <a href="cookies.html">Cookies</a><span class="sep">|</span>
+        <a href="canal-denuncias.html">Canal de denuncias</a>
+      </nav>
+    </div>
+  </footer>
 
   <script>
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
   </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
 </body>
 </html>
