@@ -1,4 +1,4 @@
-<!-- tpl-navbar.html -->
+<!-- TPL: INICIO BLOQUE NUEVO [tpl-navbar.html maestro] -->
 <nav class="navbar">
   <div class="logo">
     <a href="index.html">
@@ -6,7 +6,7 @@
     </a>
   </div>
 
-  <!-- Botón Inicio como en Index -->
+  <!-- Botón Inicio igual que Index -->
   <a href="index.html" class="home-button tpl-home-offset">Inicio</a>
 
   <ul class="nav-links">
@@ -16,8 +16,7 @@
     <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>
   </ul>
 
-  <!-- Sesión (el JS alterna visibilidad con data-auth-visible) -->
-  <a href="iniciar-sesion.html?next=perfil.html" class="login-button" data-auth-visible="signed-out">Iniciar sesión</a>
-  <a href="perfil.html" class="login-button" data-auth-visible="signed-in">Mi perfil</a>
-  <a href="#" id="tpl-logout" class="login-button" data-auth-visible="signed-in">Cerrar sesión</a>
+  <!-- Lado derecho: sin “Cerrar sesión” -->
+  <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>
 </nav>
+<!-- TPL: FIN BLOQUE NUEVO -->
