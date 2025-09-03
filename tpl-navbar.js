@@ -1,6 +1,6 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js centralizado + “Mi cuenta” → perfil] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js con persistencia global de sesión] */
 (function () {
-  // 👉 Cambia esto si tu perfil tiene otra ruta (p. ej. 'perfil.html')
+  // 👉 Cambia esta ruta si tu perfil tuviera otro nombre
   var PROFILE_URL = 'mi-cuenta.html';
 
   // Fallback 1:1 de la barra (por si falla el fetch de tpl-navbar.html)
@@ -21,7 +21,7 @@
   <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>\
 </nav>';
 
-  // Garantizar punto de montaje
+  // ---- helpers de montaje/inyección
   function getMount() {
     var el = document.getElementById('tpl-navbar');
     if (el) return el;
@@ -31,8 +31,6 @@
     else document.body.appendChild(div);
     return div;
   }
-
-  // Inyectar HTML y luego aplicar estado de sesión
   function injectHTML(html) {
     var mount = getMount();
     if (!mount) return;
@@ -40,15 +38,25 @@
     requestAnimationFrame(applySessionState);
   }
 
-  // Detección “suave” de sesión
-  function isLoggedIn() {
-    try { if (window.firebase?.auth) return !!window.firebase.auth().currentUser; } catch(e){}
-    if (window.tplIsLogged === true) return true;
-    if (localStorage.getItem('tplAuth') === '1') return true;
-    return false;
+  // ---- estado de sesión unificado
+  // Regla: si hay Firebase, nos “anclamos” a onAuthStateChanged y
+  // sincronizamos un flag localStorage para que el resto de páginas lo lean.
+  var AUTH_FLAG = 'tplAuth'; // '1' si hay sesión
+  function isLoggedFlag() {
+    return localStorage.getItem(AUTH_FLAG) === '1';
+  }
+  function setLoggedFlag(v) {
+    if (v) localStorage.setItem(AUTH_FLAG, '1');
+    else   localStorage.removeItem(AUTH_FLAG);
   }
 
-  // Ocultar cualquier “Cerrar sesión”
+  // Detección suave
+  function isLoggedInSoft() {
+    try { if (window.firebase?.auth) return !!window.firebase.auth().currentUser; } catch(e){}
+    return isLoggedFlag();
+  }
+
+  // Oculta cualquier “Cerrar sesión” (por si existiera en alguna página)
   function hideLogoutButtons() {
     var cand = [
       ...document.querySelectorAll('[data-action="logout"], .logout-button, a[href*="logout"], button[href*="logout"]'),
@@ -60,23 +68,14 @@
     cand.forEach(function (el) { el.style.display = 'none'; el.setAttribute('aria-hidden','true'); });
   }
 
-  // Aplicar estado a la UI del botón derecho
+  // Aplica el estado al botón derecho del navbar
   function setLoginButton(logged) {
     var btn = document.querySelector('.login-button');
     if (!btn) return;
-
     if (logged) {
       btn.textContent = 'Mi perfil';
       btn.setAttribute('href', PROFILE_URL);
       btn.setAttribute('aria-label', 'Ir a mi perfil');
-      // Refuerzo por si algún script externo cambiara el href después:
-      btn.addEventListener('click', function (e) {
-        // Si por lo que sea el href no coincide, garantizamos la redirección correcta
-        if (btn.getAttribute('href') !== PROFILE_URL) {
-          e.preventDefault();
-          window.location.href = PROFILE_URL;
-        }
-      }, { once: true });
     } else {
       btn.textContent = 'Iniciar sesión';
       btn.setAttribute('href', 'iniciar-sesion.html');
@@ -85,21 +84,30 @@
   }
 
   function applySessionState() {
-    hideLogoutButtons(); // nunca mostramos “Cerrar sesión” en la barra
-    setLoginButton(isLoggedIn());
+    hideLogoutButtons();               // Nunca mostrar “Cerrar sesión” en barra
+    setLoginButton(isLoggedInSoft());  // Pinta según flag o Firebase actual
 
-    // Reaccionar a cambios reales de auth (Firebase)
+    // Si hay Firebase, sincroniza flag y UI en tiempo real
     try {
       if (window.firebase?.auth) {
         window.firebase.auth().onAuthStateChanged(function (user) {
+          var logged = !!user;
+          setLoggedFlag(logged);     // <- clave: persistencia global entre páginas
           hideLogoutButtons();
-          setLoginButton(!!user);
+          setLoginButton(logged);
         });
       }
     } catch(e){}
+
+    // Si se cambia el flag desde otra pestaña/página, refrescamos el botón
+    window.addEventListener('storage', function (ev) {
+      if (ev.key === AUTH_FLAG) {
+        setLoginButton(isLoggedFlag());
+      }
+    });
   }
 
-  // Cargar partial maestro (si falla, usar fallback)
+  // Carga el partial maestro (si falla, usa fallback idéntico a Index)
   function injectNavbar() {
     fetch('tpl-navbar.html', { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
