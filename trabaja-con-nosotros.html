@@ -208,11 +208,10 @@
           <div id="authWall" class="auth-wall">
             <p style="margin:0 0 6px;"><strong>Primero inicia sesión o regístrate.</strong></p>
             <div class="auth-actions">
-              <a href="iniciar-sesion.html?next=cuestionario-candidatos.html" class="cta-button">Iniciar sesión</a>
-              <a href="registro.html?next=cuestionario-candidatos.html" class="cta-button" style="background:#fff; color:var(--color-principal); border:2px solid var(--color-principal);">Registrarme</a>
+              <!-- (Mantenemos sin botones duplicados) -->
             </div>
 
-            <!-- TPL: INICIO BLOQUE NUEVO [Login inline dentro del muro] -->
+            <!-- TPL: INICIO BLOQUE NUEVO [Login inline dentro del muro con CTA “Regístrate” + next] -->
             <div id="tpl-inline-login"></div>
             <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
@@ -255,7 +254,6 @@
       if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
       }
-      // Exponer una banderita para otros scripts si hace falta
       window.__TPL_AUTH_INIT = true;
     })();
   </script>
@@ -313,7 +311,7 @@
           btnUnete.setAttribute('href','cuestionario-candidatos.html');
         }
 
-        // Forzar que el botón de login del navbar siga apuntando a iniciar-sesion.html
+        // Botón navbar
         var loginBtn = document.querySelector('.login-button');
         if (loginBtn) {
           loginBtn.setAttribute('href', 'iniciar-sesion.html');
@@ -341,7 +339,9 @@
               <label>Contraseña</label>
               <input type="password" name="password" required autocomplete="current-password" />
               <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <a class="tpl-btn-outline" href="registro.html?next=cuestionario-candidatos.html">Crear cuenta</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA Regístrate con next al cuestionario] -->
+              <a class="tpl-btn-outline" href="registro.html?next=cuestionario-candidatos.html">Regístrate</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
               <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
               <p class="tpl-login-msg" aria-live="polite"></p>
             </form>
@@ -380,7 +380,6 @@
             var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
             else { await auth.signInWithPopup(provider); }
-            // onAuthStateChanged se encargará del UI
           }catch(err){
             msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
           }
