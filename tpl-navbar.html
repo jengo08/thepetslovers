@@ -6,6 +6,7 @@
     </a>
   </div>
 
+  <!-- Botón Inicio (igual que antes) -->
   <a href="index.html" class="home-button tpl-home-offset">Inicio</a>
 
   <ul class="nav-links">
@@ -15,8 +16,15 @@
     <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>
   </ul>
 
-  <!-- Bloque dinámico de login -->
-  <a href="inicio-sesion.html" class="login-button" data-auth-visible="signed-out">Iniciar sesión</a>
+  <!-- TPL: INICIO BLOQUE NUEVO [Buscador en navbar, ligero y sin romper nada] -->
+  <form class="tpl-nav-search" action="buscar.html" method="get" role="search" aria-label="Buscar en The Pets Lovers">
+    <input type="search" name="q" placeholder="Buscar..." aria-label="Buscar" />
+    <button type="submit" class="tpl-btn-sm">Buscar</button>
+  </form>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Botones de sesión (el script los alterna) -->
+  <a href="inicio-sesion.html?next=perfil.html" class="login-button" data-auth-visible="signed-out">Iniciar sesión</a>
   <a href="perfil.html" class="login-button" data-auth-visible="signed-in">Mi perfil</a>
   <a href="#" id="tpl-logout" class="login-button" data-auth-visible="signed-in">Cerrar sesión</a>
 </nav>
