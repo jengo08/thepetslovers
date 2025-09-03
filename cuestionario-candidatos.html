@@ -3,36 +3,68 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cuestionario de Candidaturas · The Pets Lovers</title>
-  <meta name="description" content="Envía tu candidatura para cuidador/a en The Pets Lovers. Sube tu CV y tu título y cuéntanos tu experiencia y disponibilidad.">
+  <title>Cuestionario de Auxiliares · The Pets Lovers</title>
+  <meta name="description" content="Formulario para auxiliares veterinarios/as y veterinarios/as: envía tu candidatura a The Pets Lovers. Sube tu CV y tu título, y cuéntanos tu experiencia y disponibilidad.">
 
   <!-- TPL: INICIO BLOQUE NUEVO [SEO canónico + OG/Twitter] -->
-  <link rel="canonical" href="https://www.thepetslovers.es/candidaturas.html">
+  <link rel="canonical" href="https://www.thepetslovers.es/cuestionario-candidatos.html">
   <meta name="robots" content="index,follow">
-  <meta property="og:title" content="Cuestionario de Candidaturas · The Pets Lovers">
-  <meta property="og:description" content="Formulario para auxiliares de veterinaria y veterinarios/as: sube tu CV y tu título. Colabora en visitas, paseos y estancias con un equipo profesional.">
+  <meta property="og:title" content="Cuestionario de Auxiliares · The Pets Lovers">
+  <meta property="og:description" content="Únete al equipo: auxiliares veterinarios/as y veterinarios/as. Envío de CV y título, experiencia y disponibilidad.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.thepetslovers.es/candidaturas.html">
+  <meta property="og:url" content="https://www.thepetslovers.es/cuestionario-candidatos.html">
   <meta property="og:image" content="https://www.thepetslovers.es/images/og-petslovers.jpg">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Cuestionario de Candidaturas · The Pets Lovers">
-  <meta name="twitter:description" content="Formulario para auxiliares y veterinarios/as. Súmate a un equipo profesional del sector veterinario.">
+  <meta name="twitter:title" content="Cuestionario de Auxiliares · The Pets Lovers">
+  <meta name="twitter:description" content="Únete al equipo profesional de The Pets Lovers.">
   <meta name="twitter:image" content="https://www.thepetslovers.es/images/og-petslovers.jpg">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD: Organization + JobPosting] -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Organization",
+    "name":"The Pets Lovers",
+    "url":"https://www.thepetslovers.es",
+    "logo":"https://www.thepetslovers.es/images/logo.png.png",
+    "sameAs":["https://www.instagram.com/guarderiamascotasthepetslovers"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"JobPosting",
+    "title":"Auxiliar Técnico Veterinario/a (colaborador/a)",
+    "description":"Colabora con The Pets Lovers en visitas a domicilio, paseos y estancias. Equipo profesional de auxiliares veterinarios titulados. Trato responsable y seguimiento diario.",
+    "employmentType":"CONTRACTOR",
+    "hiringOrganization":{"@type":"Organization","name":"The Pets Lovers","sameAs":"https://www.thepetslovers.es"},
+    "applicantLocationRequirements":{"@type":"Country","name":"ES"},
+    "jobLocationType":"TELECOMMUTE",
+    "datePosted":"2025-09-03",
+    "validThrough":"2026-09-03",
+    "directApply": true
+  }
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Estilos globales existentes -->
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos scoped del formulario] -->
   <style>
+    :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
     .tpl-page{ padding-top:120px; }
-    .tpl-form{ max-width: 860px; margin: 0 auto 80px; padding: 18px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-    .tpl-form h1{ margin: 0 0 8px; }
+    .tpl-form{ max-width: 920px; margin: 0 auto 80px; padding: 18px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .tpl-form h1,.tpl-form h2{ margin:0 0 8px; }
     .tpl-lead{ color:#555; margin:0 0 18px; }
+    .tpl-badge{ display:inline-flex; gap:6px; align-items:center; background:#f5fbfb; color:var(--tpl-primary); padding:8px 10px; border:1px solid #d7efef; border-radius:999px; font-weight:700; }
     .tpl-grid{ display:grid; gap:12px; grid-template-columns:1fr; }
     @media (min-width: 900px){ .tpl-grid{ grid-template-columns:1fr 1fr; } }
     .tpl-field{ display:flex; flex-direction:column; gap:6px; }
-    .tpl-field label{ font-weight:700; color:#58425a; }
+    .tpl-field label{ font-weight:700; color:var(--tpl-ink); }
     .tpl-field input[type="text"],
     .tpl-field input[type="email"],
     .tpl-field input[type="tel"],
@@ -44,169 +76,349 @@
     .tpl-full{ grid-column:1 / -1; }
     .tpl-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
     .tpl-note{ font-size:.92rem; color:#555; }
+    .tpl-help{ font-size:.9rem; color:#666; margin-top:-4px; }
     .tpl-ok{ color:#2e7d32; }
     .tpl-error{ color:#b00020; }
-    .tpl-badge{ display:inline-flex; gap:6px; align-items:center; background:#f5fbfb; color:#339496; padding:8px 10px; border:1px solid #d7efef; border-radius:999px; font-weight:700; }
-    .cta-button{ display:inline-block; background:var(--color-principal,#339496); color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
-    .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
-
-    /* TPL: INICIO BLOQUE NUEVO [Accesibilidad mínima visual] */
-    .sr-only{ position:absolute!important; width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
-    fieldset{ border:1px dashed #e6e6e6; border-radius:12px; padding:12px; }
-    legend{ font-weight:700; color:#58425a; padding:0 6px; }
-    .tpl-help{ font-size:.9rem; color:#666; margin-top:-4px; }
     .tpl-required:after{ content:" *"; color:#b00020; }
-    /* TPL: FIN BLOQUE NUEVO */
+    fieldset.tpl-fieldset{ border:1px dashed #e6e6e6; border-radius:12px; padding:12px; }
+    fieldset.tpl-fieldset > legend{ font-weight:700; color:var(--tpl-ink); padding:0 6px; }
+    .sr-only{ position:absolute!important; width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+    .cta-button{ display:inline-block; background:#339496; color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
+    .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
   </style>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD Schema.org] -->
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"Organization",
-    "name":"The Pets Lovers",
-    "url":"https://www.thepetslovers.es",
-    "logo":"https://www.thepetslovers.es/images/logo.png.png",
-    "sameAs":[
-      "https://www.instagram.com/guarderiamascotasthepetslovers"
-    ]
-  }
-  </script>
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"JobPosting",
-    "title":"Auxiliar Técnico Veterinario/a (colaborador/a)",
-    "description":"Colaboración con The Pets Lovers en visitas a domicilio, paseos y estancias en casa del cuidador. Equipo de auxiliares veterinarios titulados. Enfoque profesional y trato responsable.",
-    "employmentType":"CONTRACTOR",
-    "hiringOrganization":{
-      "@type":"Organization",
-      "name":"The Pets Lovers",
-      "sameAs":"https://www.thepetslovers.es"
-    },
-    "applicantLocationRequirements": {
-      "@type": "Country",
-      "name": "ES"
-    },
-    "jobLocationType":"TELECOMMUTE",
-    "datePosted":"2025-09-03",
-    "validThrough":"2026-09-03",
-    "directApply": true
-  }
-  </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- Firebase v8 (auth bootstrap) -->
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script defer>
-    window.tplFirebaseInit = function(){
-      if (!window.firebase) return console.error('Firebase SDK no cargado');
-      var firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "TU_PROYECTO.firebaseapp.com",
-        projectId: "TU_PROYECTO",
-        appId: "1:TUNUM:web:TUTOKEN"
-      };
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    };
-  </script>
-  <script defer>
-    (function waitForFirebase(){
-      if (window.firebase && typeof window.tplFirebaseInit === 'function'){
-        document.documentElement.classList.add('tpl-auth-boot');
-        window.tplFirebaseInit();
-      } else { setTimeout(waitForFirebase, 30); }
-    })();
-  </script>
-  <script defer>
-  (function(){
-    function applyAuthVisibility(user){
-      var signedIn = !!user;
-      document.querySelectorAll('[data-auth-visible]').forEach(function(el){
-        var want = el.getAttribute('data-auth-visible');
-        var show = (want === 'signed-in') ? signedIn : !signedIn;
-        el.style.display = show ? '' : 'none';
-      });
-      document.documentElement.classList.remove('tpl-auth-boot');
-    }
-    function wireLogout(){
-      var btn = document.getElementById('tpl-logout');
-      if (!btn) return;
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if (!window.firebase || !firebase.auth) return;
-        firebase.auth().signOut().then(function(){
-          if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))); }
-          location.reload();
-        }).catch(console.error);
-      });
-    }
-    function wireGoogleLogin(){
-      var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
-      if (!btns.length) return;
-      btns.forEach(function(btn){
-        btn.addEventListener('click', function(e){
-          e.preventDefault();
-          if (!window.firebase || !firebase.auth) return;
-          var provider = new firebase.auth.GoogleAuthProvider();
-          firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-          .then(function(){ return firebase.auth().signInWithPopup(provider); })
-          .then(function(){
-            var to = new URLSearchParams(location.search).get('next') || btn.getAttribute('data-success-redirect');
-            if (to) location.href = to;
-          })
-          .catch(console.error);
-        });
-      });
-    }
-    function init(){
-      wireLogout(); wireGoogleLogin();
-      if (!window.firebase || !firebase.auth){
-        console.error('Firebase Auth no encontrado.');
-        document.documentElement.classList.remove('tpl-auth-boot');
-        return;
-      }
-      firebase.auth().onAuthStateChanged(applyAuthVisibility);
-    }
-    document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', init) : init();
-  })();
-  </script>
 </head>
 <body>
-  <div id="tpl-navbar"></div>
 
-  <main class="tpl-page">
-    <section class="tpl-form" aria-labelledby="t" aria-describedby="intro">
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar unificada con fallback] -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="trabaja-con-nosotros.html">Trabaja con nosotros</a></li>
+          <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <main class="container tpl-page">
+    <section class="tpl-form" aria-labelledby="tpl-t">
       <p class="tpl-badge"><i class="fa-solid fa-shield-cat"></i> Profesionales del sector veterinario</p>
-      <h1 id="t">Cuestionario de candidaturas</h1>
-      <p class="tpl-lead" id="intro">
-        Cuéntanos tu perfil y adjunta tu <strong>CV</strong> y <strong>título</strong>. Tratamos los datos según la
-        <a href="privacidad.html">Política de privacidad</a>.
+      <h1 id="tpl-t">🐾 FORMULARIO PARA AUXILIARES VETERINARIOS – PETSLOVERS</h1>
+      <p class="tpl-lead" id="tpl-intro">
+        👉 ¿Quieres formar parte de un equipo que cuida animales con responsabilidad y cariño?
+        Buscamos auxiliares veterinarios/as comprometidos con el bienestar animal para colaborar en guarderías, paseos y visitas a domicilio.
       </p>
 
-      <!-- (Tu formulario completo tal como lo dejamos) -->
-      <!-- … Mismo HTML del formulario que ya tienes … -->
-      <!-- Para no duplicar: pega aquí el mismo bloque de <form> que ya utilizas,
-           o conserva el tuyo si esta página ya estaba funcionando. -->
-      <!-- Si prefieres, dime y te lo re-inserto aquí íntegro de nuevo. -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Honeypot] -->
+      <form id="tpl-form-auxiliares" action="https://formspree.io/f/mpwjjoyq" method="POST" enctype="multipart/form-data" novalidate>
+        <input type="hidden" name="_subject" value="Nueva candidatura: Auxiliar Veterinario/a · The Pets Lovers">
+        <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="sr-only" aria-hidden="true" />
+
+        <!-- 🧾 DATOS PERSONALES -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-personales">
+          <legend>🧾 DATOS PERSONALES</legend>
+          <p id="ds-personales" class="tpl-help">Compatibilidad con lectores de pantalla habilitada.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field">
+              <label for="tpl-nombre" class="tpl-required">Nombre completo</label>
+              <input id="tpl-nombre" name="nombre" type="text" required autocomplete="name"/>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-ciudad" class="tpl-required">Ciudad</label>
+              <input id="tpl-ciudad" name="ciudad" type="text" required autocomplete="address-level2"/>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-cp" class="tpl-required">Código Postal</label>
+              <input id="tpl-cp" name="cp" type="text" inputmode="numeric" pattern="\\d{5}" maxlength="5" required aria-describedby="tpl-cp-h"/>
+              <small id="tpl-cp-h" class="tpl-help">Introduce 5 dígitos (España).</small>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-telefono" class="tpl-required">Teléfono de contacto</label>
+              <input id="tpl-telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" required aria-describedby="tpl-tel-h"/>
+              <small id="tpl-tel-h" class="tpl-help">Ej.: 600123456</small>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-email" class="tpl-required">Correo electrónico</label>
+              <input id="tpl-email" name="_replyto" type="email" required autocomplete="email"/>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-carnet" class="tpl-required">¿Tienes carnet de conducir?</label>
+              <select id="tpl-carnet" name="carnet" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-vehiculo" class="tpl-required">¿Tienes vehículo propio?</label>
+              <select id="tpl-vehiculo" name="vehiculo" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-desc-personal">Descripción (opcional)</label>
+              <textarea id="tpl-desc-personal" name="descripcionPersonal" rows="3" placeholder="Cuéntanos algo sobre ti (opcional)"></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 🎓 FORMACIÓN Y PERFIL PROFESIONAL -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-formacion">
+          <legend>🎓 FORMACIÓN Y PERFIL PROFESIONAL</legend>
+          <p id="ds-formacion" class="tpl-help">Incluye titulaciones y experiencia relevante.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field">
+              <label for="tpl-atv" class="tpl-required">¿Eres Auxiliar Técnico Veterinario/a titulado/a?</label>
+              <select id="tpl-atv" name="atvTitulado" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-otras-form" class="tpl-required">¿Tienes otras formaciones relacionadas (adiestramiento, peluquería, etología, etc.)?</label>
+              <textarea id="tpl-otras-form" name="otrasFormaciones" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-exp-laboral" class="tpl-required">¿Has trabajado en clínicas, tiendas o protectoras? ¿Dónde y cuánto tiempo?</label>
+              <textarea id="tpl-exp-laboral" name="experienciaLaboral" rows="3" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-funciones" class="tpl-required">¿Qué funciones realizabas habitualmente?</label>
+              <textarea id="tpl-funciones" name="funcionesHabituales" rows="2" required></textarea>
+            </div>
+
+            <div class="tpl-field">
+              <label for="tpl-cv" class="tpl-required">CV (PDF)</label>
+              <input id="tpl-cv" name="cv" type="file" accept=".pdf" required />
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-titulo" class="tpl-required">Título (PDF o imagen)</label>
+              <input id="tpl-titulo" name="titulo" type="file" accept=".pdf,.png,.jpg,.jpeg" required />
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-links">Enlaces (Instagram/LinkedIn/portfolio)</label>
+              <input id="tpl-links" name="links" type="text" placeholder="https://..." />
+            </div>
+          </div>
+
+          <div class="tpl-field tpl-full">
+            <label for="tpl-desc-formacion">Descripción (opcional)</label>
+            <textarea id="tpl-desc-formacion" name="descFormacion" rows="2" placeholder="Aclaraciones extra sobre tu formación (opcional)"></textarea>
+          </div>
+        </fieldset>
+
+        <!-- 🐶 EXPERIENCIA CUIDANDO ANIMALES -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-exp">
+          <legend>🐶 EXPERIENCIA CUIDANDO ANIMALES</legend>
+          <p id="ds-exp" class="tpl-help">Cuéntanos ejemplos reales.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field tpl-full">
+              <label for="tpl-has-cuidado" class="tpl-required">¿Has cuidado animales de otras personas? ¿Cómo fue la experiencia?</label>
+              <textarea id="tpl-has-cuidado" name="hasCuidado" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-tipos" class="tpl-required">¿Qué tipo de animales has cuidado (perros, gatos, exóticos…)?</label>
+              <textarea id="tpl-tipos" name="tiposAnimales" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-comunicacion" class="tpl-required">¿Cómo era la comunicación con los propietarios durante el servicio?</label>
+              <textarea id="tpl-comunicacion" name="comunicacionPropietarios" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-roturas" class="tpl-required">¿Alguna vez un animal te ha roto algo en casa? ¿Cómo lo solucionaste?</label>
+              <textarea id="tpl-roturas" name="roturasGestion" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-necesidades" class="tpl-required">¿Te ves capacitado/a para cuidar animales con patologías o necesidades especiales?</label>
+              <textarea id="tpl-necesidades" name="necesidadesEspeciales" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-medicacion" class="tpl-required">¿Has aplicado medicación oral, tópica o inyectables?</label>
+              <textarea id="tpl-medicacion" name="medicacion" rows="2" required></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 🏠 TU ENTORNO Y CONDICIONES -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-entorno">
+          <legend>🏠 TU ENTORNO Y CONDICIONES</legend>
+          <p id="ds-entorno" class="tpl-help">Dónde y cómo podrías cuidar.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field tpl-full">
+              <label for="tpl-vivienda" class="tpl-required">¿Vives en piso o casa? ¿Tienes espacio exterior?</label>
+              <textarea id="tpl-vivienda" name="vivienda" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-seguridad" class="tpl-required">¿Tu casa está adaptada y segura para animales?</label>
+              <textarea id="tpl-seguridad" name="seguridadCasa" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-otras-masc" class="tpl-required">¿Tienes otros animales? ¿Cómo se comportan con otros?</label>
+              <textarea id="tpl-otras-masc" name="otrosAnimales" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-otras-personas" class="tpl-required">¿Hay más personas en tu casa que interactuarían con las mascotas?</label>
+              <textarea id="tpl-otras-personas" name="otrasPersonasCasa" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-camaras">¿Tienes cámaras de videovigilancia o sistemas de supervisión? (no es obligatorio)</label>
+              <select id="tpl-camaras" name="videovigilancia">
+                <option value="">Prefiero no decir</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-cuidar-domicilio" class="tpl-required">¿Puedes cuidar animales en tu domicilio?</label>
+              <select id="tpl-cuidar-domicilio" name="cuidarEnDomicilio" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-casa-prop" class="tpl-required">¿Podrías cuidar en casa del propietario?</label>
+              <select id="tpl-casa-prop" name="cuidarCasaPropietario" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-paseos" class="tpl-required">¿Podrías ofrecer paseos?</label>
+              <select id="tpl-paseos" name="ofrecerPaseos" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-cachorros-senior" class="tpl-required">¿Te sentirías cómodo/a cuidando de cachorros o animales senior?</label>
+              <select id="tpl-cachorros-senior" name="cachorrosSenior" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ⏱️ DISPONIBILIDAD -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-disp">
+          <legend>⏱️ DISPONIBILIDAD</legend>
+          <p id="ds-disp" class="tpl-help">Horarios y zonas.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field">
+              <label for="tpl-disp" class="tpl-required">Disponibilidad</label>
+              <select id="tpl-disp" name="disponibilidad" required>
+                <option value="">Selecciona</option>
+                <option>Mañanas</option><option>Tardes</option><option>Noches</option>
+                <option>Fines de semana</option><option>Completa</option>
+              </select>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-tiempo" class="tpl-required">¿Cuánto tiempo libre tienes al día para dedicar a los animales?</label>
+              <textarea id="tpl-tiempo" name="tiempoLibre" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field">
+              <label for="tpl-fines" class="tpl-required">¿Tienes disponibilidad en fines de semana o festivos?</label>
+              <select id="tpl-fines" name="finesFestivos" required>
+                <option value="">Selecciona</option><option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-zonas" class="tpl-required">¿Qué zonas puedes cubrir para paseos o cuidados?</label>
+              <textarea id="tpl-zonas" name="zonasCobertura" rows="2" required></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 💬 MOTIVACIÓN Y EXPECTATIVAS -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-mot">
+          <legend>💬 MOTIVACIÓN Y EXPECTATIVAS</legend>
+          <p id="ds-mot" class="tpl-help">Lo que te mueve a colaborar con nosotros.</p>
+          <div class="tpl-grid">
+            <div class="tpl-field tpl-full">
+              <label for="tpl-porque" class="tpl-required">¿Por qué quieres colaborar como cuidador/a con formación veterinaria?</label>
+              <textarea id="tpl-porque" name="porqueColaborar" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-mueve" class="tpl-required">¿Qué te mueve a trabajar con animales?</label>
+              <textarea id="tpl-mueve" name="motivaciones" rows="2" required></textarea>
+            </div>
+            <div class="tpl-field tpl-full">
+              <label for="tpl-preferencias" class="tpl-required">¿Qué tipo de animales prefieres cuidar y por qué?</label>
+              <textarea id="tpl-preferencias" name="preferenciasAnimales" rows="2" required></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Consentimiento -->
+        <div class="tpl-field tpl-full">
+          <label class="tpl-note">
+            <input type="checkbox" id="tpl-acepto" required>
+            He leído y acepto la <a href="privacidad.html">Política de privacidad</a>.
+          </label>
+        </div>
+
+        <!-- Campos ocultos para URLs subidas a Firebase -->
+        <input type="hidden" id="tpl-cvUrl" name="cvUrl">
+        <input type="hidden" id="tpl-tituloUrl" name="tituloUrl">
+
+        <div class="tpl-actions">
+          <button type="submit" id="tpl-submit" class="cta-button" aria-describedby="tpl-ayuda-envio">Enviar</button>
+        </div>
+        <p id="tpl-ayuda-envio" class="tpl-help">Subiremos tus archivos de forma segura y recibiremos tu cuestionario por email.</p>
+        <p id="tpl-estado" class="tpl-note" aria-live="polite"></p>
+      </form>
+      <!-- TPL: FIN BLOQUE NUEVO -->
     </section>
   </main>
 
-  <div id="tpl-footer"></div>
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer unificado con fallback] -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+            </nav>
+            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          </div>
+          <div class="footer-right socials">
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Utilidades -->
+  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase compat (10.x) para Firestore/Storage que ya usas en el envío -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat 10.x] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-
-  <!-- Tu config real (igual que reserva.html) -->
   <script>
     (function(){
-      if (typeof firebase === 'undefined') return;
       if (!firebase.apps.length) {
         const firebaseConfig = {
           apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
@@ -221,7 +433,113 @@
       }
     })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- (Si aquí ya tenías el script de subida a Storage + guardado en Firestore + Formspree, mantenlo idéntico) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Subida a Storage + guardado en Firestore + envío a Formspree] -->
+  <script>
+    (function(){
+      const form = document.getElementById('tpl-form-auxiliares');
+      const btn  = document.getElementById('tpl-submit');
+      const stEl = document.getElementById('tpl-estado');
+
+      function setStatus(html){ stEl.innerHTML = html || ''; }
+
+      async function uploadToStorage(file, path){
+        const storage = firebase.storage();
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+        const ref = storage.ref().child(`${path}/${Date.now()}_${safe}`);
+        await ref.put(file);
+        return await ref.getDownloadURL();
+      }
+
+      form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        btn.disabled = true; setStatus('Subiendo archivos…');
+
+        try{
+          const fd = new FormData(form);
+          const cvFile = document.getElementById('tpl-cv').files[0];
+          const tiFile = document.getElementById('tpl-titulo').files[0];
+
+          // Subir a Firebase Storage
+          const [cvUrl, tituloUrl] = await Promise.all([
+            uploadToStorage(cvFile,   `candidaturas/cv`),
+            uploadToStorage(tiFile,   `candidaturas/titulos`)
+          ]);
+
+          // Guardar en Firestore
+          const db = firebase.firestore();
+          await db.collection('candidaturas').add({
+            // Datos personales
+            nombre: fd.get('nombre') || '',
+            ciudad: fd.get('ciudad') || '',
+            cp: fd.get('cp') || '',
+            telefono: fd.get('telefono') || '',
+            email: fd.get('_replyto') || '',
+            carnet: fd.get('carnet') || '',
+            vehiculo: fd.get('vehiculo') || '',
+            descripcionPersonal: fd.get('descripcionPersonal') || '',
+
+            // Formación y perfil
+            atvTitulado: fd.get('atvTitulado') || '',
+            otrasFormaciones: fd.get('otrasFormaciones') || '',
+            experienciaLaboral: fd.get('experienciaLaboral') || '',
+            funcionesHabituales: fd.get('funcionesHabituales') || '',
+            links: fd.get('links') || '',
+            descFormacion: fd.get('descFormacion') || '',
+
+            // Experiencia cuidando
+            hasCuidado: fd.get('hasCuidado') || '',
+            tiposAnimales: fd.get('tiposAnimales') || '',
+            comunicacionPropietarios: fd.get('comunicacionPropietarios') || '',
+            roturasGestion: fd.get('roturasGestion') || '',
+            necesidadesEspeciales: fd.get('necesidadesEspeciales') || '',
+            medicacion: fd.get('medicacion') || '',
+
+            // Entorno
+            vivienda: fd.get('vivienda') || '',
+            seguridadCasa: fd.get('seguridadCasa') || '',
+            otrosAnimales: fd.get('otrosAnimales') || '',
+            otrasPersonasCasa: fd.get('otrasPersonasCasa') || '',
+            videovigilancia: fd.get('videovigilancia') || '',
+            cuidarEnDomicilio: fd.get('cuidarEnDomicilio') || '',
+            cuidarCasaPropietario: fd.get('cuidarCasaPropietario') || '',
+            ofrecerPaseos: fd.get('ofrecerPaseos') || '',
+            cachorrosSenior: fd.get('cachorrosSenior') || '',
+
+            // Disponibilidad
+            disponibilidad: fd.get('disponibilidad') || '',
+            tiempoLibre: fd.get('tiempoLibre') || '',
+            finesFestivos: fd.get('finesFestivos') || '',
+            zonasCobertura: fd.get('zonasCobertura') || '',
+
+            // Motivación
+            porqueColaborar: fd.get('porqueColaborar') || '',
+            motivaciones: fd.get('motivaciones') || '',
+            preferenciasAnimales: fd.get('preferenciasAnimales') || '',
+
+            // Archivos
+            cvUrl, tituloUrl,
+
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          // Incluir URLs en el envío a Formspree
+          document.getElementById('tpl-cvUrl').value = cvUrl;
+          document.getElementById('tpl-tituloUrl').value = tituloUrl;
+
+          setStatus('<span class="tpl-ok">¡Listo! Archivos subidos. Enviando formulario…</span>');
+          form.submit();
+        }catch(err){
+          console.error(err);
+          setStatus('<span class="tpl-error">No se pudo subir a Firebase. Enviaremos igualmente tu cuestionario por email.</span>');
+          form.submit();
+        }finally{
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
