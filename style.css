@@ -299,9 +299,10 @@ a { color: var(--color-principal); text-decoration: none; }
 /* TPL: INICIO BLOQUE NUEVO [anti-flicker auth] */
 html.tpl-auth-boot [data-auth-visible="signed-in"],
 html.tpl-auth-boot [data-auth-visible="signed-out"]{
-  visibility: hidden; /* Evita parpadeo hasta que Auth reporte estado */
+  visibility: hidden;
 }
 /* TPL: FIN BLOQUE NUEVO */
+
 
 
 
