@@ -38,100 +38,26 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs + Init + Control sesión] -->
-<!-- 1) SDKs de Firebase (v8 clásica) -->
-<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase global — SOLO UNA VEZ] -->
+    <script>
+      window.TPL_FIREBASE_CONFIG = {
+        apiKey: "TU_API_KEY_DE_FIREBASE",                  // <- copia de Firebase Console
+        authDomain: "TU_PROYECTO.firebaseapp.com",         // p.ej. thepetslovers-xxxx.firebaseapp.com
+        projectId: "TU_PROYECTO",                          // p.ej. thepetslovers-xxxx
+        storageBucket: "TU_PROYECTO.appspot.com",
+        messagingSenderId: "415914577533",                 // <- ya me lo pasaste
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14" // <- ya me lo pasaste
+      };
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-<!-- 2) Tu inicialización (RELLENA TU CONFIG) -->
-<script defer>
-  window.tplFirebaseInit = function(){
-    if (!window.firebase) return console.error('Firebase SDK no cargado');
-    var firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_PROYECTO.firebaseapp.com",
-      projectId: "TU_PROYECTO",
-      appId: "1:TUNUM:web:TUTOKEN"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  };
-</script>
-
-<!-- 3) Llamar al init (después de que carguen los SDKs) -->
-<script defer>
-  (function waitForFirebase(){
-    if (window.firebase && typeof window.tplFirebaseInit === 'function'){
-      document.documentElement.classList.add('tpl-auth-boot'); // evita ver botones equivocados
-      window.tplFirebaseInit();
-    } else {
-      return setTimeout(waitForFirebase, 30);
-    }
-  })();
-</script>
-
-<!-- 4) Control unificado de sesión (NO toques nada) -->
-<script defer>
-// ===== The Pets Lovers · Control unificado de sesión =====
-(function(){
-  function applyAuthVisibility(user){
-    var signedIn = !!user;
-    document.querySelectorAll('[data-auth-visible]').forEach(function(el){
-      var want = el.getAttribute('data-auth-visible'); // 'signed-in' | 'signed-out'
-      var show = (want === 'signed-in') ? signedIn : !signedIn;
-      el.style.display = show ? '' : 'none';
-    });
-    document.documentElement.classList.remove('tpl-auth-boot');
-  }
-
-  function wireLogout(){
-    var btn = document.getElementById('tpl-logout');
-    if (!btn) return;
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      if (!window.firebase || !firebase.auth) return;
-      firebase.auth().signOut()
-      .then(function(){
-        if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))); }
-        location.reload();
-      })
-      .catch(console.error);
-    });
-  }
-
-  function wireGoogleLogin(){
-    var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
-    if (!btns.length) return;
-    btns.forEach(function(btn){
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if (!window.firebase || !firebase.auth) return;
-        var provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(function(){ return firebase.auth().signInWithPopup(provider); })
-        .then(function(){
-          var to = new URLSearchParams(location.search).get('next') || btn.getAttribute('data-success-redirect');
-          if (to) location.href = to;
-        })
-        .catch(console.error);
-      });
-    });
-  }
-
-  function init(){
-    wireLogout();
-    wireGoogleLogin();
-    if (!window.firebase || !firebase.auth){
-      console.error('Firebase Auth no encontrado. ¿Pegaste los SDKs y la init?');
-      document.documentElement.classList.remove('tpl-auth-boot');
-      return;
-    }
-    firebase.auth().onAuthStateChanged(applyAuthVisibility);
-  }
-  (document.readyState === 'loading') ? document.addEventListener('DOMContentLoaded', init) : init();
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
+    <!--
+      Nota: No cargamos aquí los SDKs ni el control de sesión.
+      `tpl-navbar.js` se ocupa de:
+        - cargar Firebase SDK si falta,
+        - inicializar con window.TPL_FIREBASE_CONFIG,
+        - cargar tpl-auth.js (control de login/logout/visibilidad).
+    -->
 </head>
 <body>
 
@@ -142,14 +68,16 @@
           <div class="logo">
             <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
           </div>
-          <a href="index.html" class="home-button">Inicio</a> <!-- 👈 Inicio a la izquierda -->
+          <a href="index.html" class="home-button">Inicio</a>
           <ul class="nav-links">
             <li><a href="como-funciona.html">Cómo funciona</a></li>
             <li><a href="servicios.html">Servicios</a></li>
             <li><a href="index.html#contactanos">Contáctanos</a></li>
             <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
           </ul>
-          <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [Fix enlace login en fallback sin JS] -->
+          <a class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </nav>
       </noscript>
     </div>
@@ -158,7 +86,6 @@
     <header class="hero-section">
         <div class="hero-content">
             <h1>The Pets Lovers</h1>
-            <!-- Texto original se mantiene tal cual -->
             <p>Cuidamos de tu mascota con profesionales del sector veterinario.</p>
             <a href="#servicios" class="cta-button">Reserva un servicio</a>
         </div>
@@ -270,7 +197,7 @@
         </div>
     </section>
 
-    <!-- Modal de cookies: solo aparece la primera vez -->
+    <!-- Modal de cookies -->
     <div id="cookie-modal-overlay" class="cookie-modal-overlay">
         <div class="cookie-modal-content">
             <p>Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. 
@@ -283,7 +210,6 @@
         </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
     <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
 <div id="tpl-footer">
   <noscript>
@@ -299,7 +225,6 @@
             <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
             <a href="digital-services-act.html">Digital Services Act</a>
           </nav>
-          <!-- 👇 Ahora el “¿Necesitas ayuda?” va debajo, separado -->
           <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
         </div>
         <div class="footer-right socials">
@@ -355,5 +280,3 @@
     <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
-
-
