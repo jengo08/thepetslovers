@@ -20,7 +20,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales Beneficios (botón + menos compacto) sin cambiar diseño global] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales Beneficios + login inline] -->
   <style>
     .hero-section.hero-trabaja{
       background-image: url('images/hero.jpg.png');
@@ -48,7 +48,6 @@
     }
     .tpl-chip i{ color: var(--color-principal); font-size:1rem; }
 
-    /* Botón (no enlace) para desplegar */
     .tpl-bene-toggle{ display:flex; justify-content:center; margin:8px 0 2px; }
     .cta-button--ghost{
       background:#fff; color:var(--color-principal);
@@ -56,10 +55,7 @@
       padding:10px 16px; border-radius:8px; font-weight:700; cursor:pointer;
     }
 
-    /* Contenedor para hover del CTA Saber más */
     .tpl-bene-card{ position: relative; }
-
-    /* Lista desplegable: menos compacta */
     .tpl-bene-list{
       display:grid; gap:14px; margin-top:12px;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -72,7 +68,6 @@
     .tpl-bene-item i{ color:var(--color-principal); font-size:1.25rem; margin-top:2px; }
     .tpl-bene-item strong{ display:block; margin-bottom:2px; }
 
-    /* CTA "Saber más" al pasar el ratón (en móvil aparece al abrir) */
     #beneMore{
       display:none;
       text-align:center;
@@ -84,11 +79,27 @@
       opacity:1; max-height:80px;
     }
 
-    /* Candidatura centrada (se mantiene) */
     .tpl-center-card{ grid-column: 1 / -1; justify-self: center; width: 100%; max-width: 860px; }
     .auth-wall{ padding:10px; border:1px dashed #bbb; border-radius:10px; background:#fafafa; }
     .auth-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:6px; }
     .auth-actions .cta-button{ padding:10px 16px; }
+
+    /* Login inline */
+    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+    .tpl-login-title{margin:0 0 8px;color:#58425a;font-weight:700;font-size:1.05rem;text-align:center}
+    .tpl-socials{display:grid;gap:10px;margin-bottom:8px}
+    .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600;color:var(--color-principal)}
+    .tpl-btn-social i{font-size:1rem}
+    .tpl-sep{position:relative;text-align:center;margin:6px 0 8px;color:#999;font-size:.9rem}
+    .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
+    .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
+    .tpl-login-form{display:grid;gap:8px}
+    .tpl-login-form label{font-size:.9rem;color:#58425a}
+    .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
+    .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
+    .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -156,26 +167,22 @@
           <p><strong>Auxiliar de Veterinaria</strong> y <strong>Veterinario/a</strong>. Seleccionamos servicios que encajan con tu experiencia.</p>
         </article>
 
-        <!-- 5. Beneficios (botón + menos compacto; quitados 3 items) -->
-        <!-- TPL: INICIO BLOQUE NUEVO [Beneficios compactos con botón + CTA hover] -->
+        <!-- 5. Beneficios -->
         <article class="service-card tpl-span-full tpl-bene-card" id="tplBeneCard">
           <div class="service-icon"><i class="fa-solid fa-gift"></i></div>
           <h3>Beneficios</h3>
           <p class="tpl-bene-lead">Ventajas exclusivas para nuestros cuidadores.</p>
 
-          <!-- Chips visibles -->
           <div class="tpl-bene-chips">
             <span class="tpl-chip"><i class="fa-solid fa-wallet"></i> Pago el mismo día</span>
             <span class="tpl-chip"><i class="fa-solid fa-route"></i> Desplazamiento pagado</span>
             <span class="tpl-chip"><i class="fa-solid fa-headset"></i> Soporte 24h</span>
           </div>
 
-          <!-- Botón para mostrar más (botón real) -->
           <div class="tpl-bene-toggle">
             <button id="btnToggleBene" class="cta-button cta-button--ghost" type="button">Ver más beneficios</button>
           </div>
 
-          <!-- Lista oculta con más beneficios (quitados “Acompañamiento”, “Servicios exclusivos”, “Material de bienvenida”) -->
           <div id="beneList" class="tpl-bene-list" style="display:none;">
             <div class="tpl-bene-item"><i class="fa-solid fa-location-dot"></i><div><strong>Servicios cerca</strong><br>Priorizamos asignaciones por cercanía para optimizar tu tiempo.</div></div>
             <div class="tpl-bene-item"><i class="fa-solid fa-clock"></i><div><strong>Horarios flexibles</strong><br>Elige turnos compatibles con tu agenda y disponibilidad.</div></div>
@@ -187,12 +194,10 @@
             <div class="tpl-bene-item"><i class="fa-solid fa-people-group"></i><div><strong>Comunidad de cuidadores</strong><br>Aprende y comparte con otros profesionales.</div></div>
           </div>
 
-          <!-- CTA hacia condiciones (hover en desktop; visible al abrir en móvil) -->
           <div id="beneMore">
             <a href="condiciones.html" class="cta-button">Saber más</a>
           </div>
         </article>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <!-- 6. Candidatura (con lógica de sesión) -->
         <article class="service-card help-card tpl-center-card">
@@ -203,9 +208,13 @@
           <div id="authWall" class="auth-wall">
             <p style="margin:0 0 6px;"><strong>Primero inicia sesión o regístrate.</strong></p>
             <div class="auth-actions">
-              <a href="iniciar-sesion.html" class="cta-button">Iniciar sesión</a>
-              <a href="iniciar-sesion.html" class="cta-button" style="background:#fff; color:var(--color-principal); border:2px solid var(--color-principal);">Registrarme</a>
+              <a href="iniciar-sesion.html?next=cuestionario-candidatos.html" class="cta-button">Iniciar sesión</a>
+              <a href="registro.html?next=cuestionario-candidatos.html" class="cta-button" style="background:#fff; color:var(--color-principal); border:2px solid var(--color-principal);">Registrarme</a>
             </div>
+
+            <!-- TPL: INICIO BLOQUE NUEVO [Login inline dentro del muro] -->
+            <div id="tpl-inline-login"></div>
+            <!-- TPL: FIN BLOQUE NUEVO -->
           </div>
 
           <!-- Si SÍ hay sesión -->
@@ -225,41 +234,37 @@
     </noscript>
   </div>
 
-  <!-- Lógica sesión + Toggle beneficios + login href + CTA hover -->
-  <!-- TPL: INICIO BLOQUE NUEVO [JS local: sesión + toggle + login href + CTA en hover] -->
+  <!-- Inyectores -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat SDKs + init] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script>
     (function(){
-      function isLogged(){
-        try{
-          if (window.__TPL_AUTH === true) return true;
-          return localStorage.getItem('tpl-auth') === '1';
-        }catch(e){ return false; }
+      const firebaseConfig = {
+        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain: "thepetslovers-c1111.firebaseapp.com",
+        projectId: "thepetslovers-c1111",
+        storageBucket: "thepetslovers-c1111.appspot.com",
+        messagingSenderId: "415914577533",
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId: "G-FXPD69KXBG"
+      };
+      if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
       }
+      // Exponer una banderita para otros scripts si hace falta
+      window.__TPL_AUTH_INIT = true;
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-      function updateCTA(){
-        var logged = isLogged();
-        var authWall = document.getElementById('authWall');
-        var uneteRow = document.getElementById('uneteRow');
-        var btnUnete = document.getElementById('btnUnete');
-
-        if (logged){
-          if (authWall) authWall.style.display = 'none';
-          if (uneteRow) uneteRow.style.display = 'block';
-          if (btnUnete){
-            btnUnete.textContent = 'Apúntate ahora';
-            btnUnete.setAttribute('href','cuestionario-candidatos.html');
-            btnUnete.setAttribute('aria-label','Apúntate ahora');
-          }
-        } else {
-          if (authWall) authWall.style.display = 'block';
-          if (uneteRow) uneteRow.style.display = 'none';
-        }
-
-        // Asegurar que el botón de login (navbar) apunte a iniciar-sesion.html incluso si se inyecta desde tpl-navbar.html
-        var loginBtn = document.querySelector('.login-button');
-        if (loginBtn) loginBtn.setAttribute('href', 'iniciar-sesion.html');
-      }
-
+  <!-- TPL: INICIO BLOQUE NUEVO [JS: toggle beneficios + login inline + control de sesión] -->
+  <script>
+    (function(){
+      // --- Beneficios: toggle
       function initBenefitsToggle(){
         var btn = document.getElementById('btnToggleBene');
         var card = document.getElementById('tplBeneCard');
@@ -270,18 +275,15 @@
           btn.addEventListener('click', function(){
             var isOpen = list.style.display === 'grid';
             list.style.display = isOpen ? 'none' : 'grid';
-
-            // marcar estado abierto para habilitar el hover del CTA
             if (!isOpen) {
               card.classList.add('bene-open');
-              // En táctiles mostramos el CTA directamente
               var isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
               if (isTouch && more){
                 more.style.display = 'block';
                 more.style.opacity = '1';
                 more.style.maxHeight = '80px';
               } else if (more) {
-                more.style.display = 'block'; // visible pero con opacity 0 hasta hover
+                more.style.display = 'block';
               }
               btn.textContent = 'Ocultar beneficios';
             } else {
@@ -297,18 +299,124 @@
         }
       }
 
-      // Inicializar
-      updateCTA();
+      // --- Sesión / UI
+      function updateCTA(user){
+        var logged = !!user;
+        var authWall = document.getElementById('authWall');
+        var uneteRow = document.getElementById('uneteRow');
+        var btnUnete = document.getElementById('btnUnete');
+
+        if (authWall) authWall.style.display = logged ? 'none' : 'block';
+        if (uneteRow) uneteRow.style.display = logged ? 'block' : 'none';
+        if (logged && btnUnete){
+          btnUnete.textContent = 'Apúntate ahora';
+          btnUnete.setAttribute('href','cuestionario-candidatos.html');
+        }
+
+        // Forzar que el botón de login del navbar siga apuntando a iniciar-sesion.html
+        var loginBtn = document.querySelector('.login-button');
+        if (loginBtn) {
+          loginBtn.setAttribute('href', 'iniciar-sesion.html');
+          loginBtn.textContent = logged ? 'Mi cuenta' : 'Iniciar sesión';
+          if (logged) loginBtn.setAttribute('href', 'mi-cuenta.html');
+        }
+      }
+
+      // --- Render login inline (Email + Google) si NO hay sesión
+      function renderInlineLogin(){
+        var host = document.getElementById('tpl-inline-login');
+        if(!host) return;
+        host.innerHTML = `
+          <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
+            <h3 class="tpl-login-title">Accede aquí mismo</h3>
+            <div class="tpl-socials">
+              <button type="button" class="tpl-btn-social" id="tpl-google-btn">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+              </button>
+            </div>
+            <div class="tpl-sep"><span>o</span></div>
+            <form class="tpl-login-form" id="tpl-inline-form" novalidate>
+              <label>Email</label>
+              <input type="email" name="email" required autocomplete="email" />
+              <label>Contraseña</label>
+              <input type="password" name="password" required autocomplete="current-password" />
+              <button type="submit" class="tpl-btn">Iniciar sesión</button>
+              <a class="tpl-btn-outline" href="registro.html?next=cuestionario-candidatos.html">Crear cuenta</a>
+              <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
+              <p class="tpl-login-msg" aria-live="polite"></p>
+            </form>
+          </div>
+        `;
+
+        var form = document.getElementById('tpl-inline-form');
+        var msg  = host.querySelector('.tpl-login-msg');
+        var btnG = document.getElementById('tpl-google-btn');
+        var btnReset = document.getElementById('tpl-reset');
+
+        form.addEventListener('submit', async function(e){
+          e.preventDefault();
+          if (typeof firebase === 'undefined') return;
+          var auth = firebase.auth();
+          msg.textContent = 'Accediendo…';
+          var email = form.email.value.trim();
+          var pass  = form.password.value;
+          try{
+            await auth.signInWithEmailAndPassword(email, pass);
+            msg.textContent = '¡Listo!';
+            location.reload();
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
+          }
+        });
+
+        btnG.addEventListener('click', async function(e){
+          e.preventDefault();
+          if (typeof firebase === 'undefined') return;
+          var auth = firebase.auth();
+          var provider = new firebase.auth.GoogleAuthProvider();
+          msg.textContent = 'Conectando con Google…';
+          try{
+            var isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+            var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
+            else { await auth.signInWithPopup(provider); }
+            // onAuthStateChanged se encargará del UI
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
+          }
+        });
+
+        btnReset.addEventListener('click', async function(e){
+          e.preventDefault();
+          if (typeof firebase === 'undefined') return;
+          var auth = firebase.auth();
+          var email = form.email.value.trim();
+          if(!email){ msg.textContent='Escribe tu email arriba para enviarte el enlace.'; return; }
+          try{
+            await auth.sendPasswordResetEmail(email);
+            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo enviar el email.';
+          }
+        });
+      }
+
+      // Init
       initBenefitsToggle();
 
-      // Si navbar/footer se inyectan asíncronamente, re-forzamos el href del login al cargar
-      window.addEventListener('load', updateCTA);
+      // Escuchar estado de auth (Firebase)
+      if (typeof firebase !== 'undefined') {
+        var auth = firebase.auth();
+        auth.onAuthStateChanged(function(user){
+          updateCTA(user);
+          if(!user){ renderInlineLogin(); }
+        });
+      } else {
+        // Sin Firebase (fallback): mostrar muro
+        updateCTA(null);
+      }
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- Inyectores -->
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
 </body>
 </html>
