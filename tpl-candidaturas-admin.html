@@ -3,70 +3,81 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin candidaturas · The Pets Lovers</title>
+  <title>Admin · Candidaturas | The Pets Lovers</title>
   <meta name="robots" content="noindex,nofollow">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos panel admin] -->
   <style>
     :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
-    .page{ padding-top:120px; }
+    .page{ padding-top:120px }
     .tpl-card{ max-width:1100px; margin:0 auto 60px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); padding:16px; }
-    .filters{ display:grid; gap:10px; grid-template-columns:1fr; }
-    @media (min-width:900px){ .filters{ grid-template-columns: 1fr 200px 200px 160px; } }
-    .filters input,.filters select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
-    table{ width:100%; border-collapse:collapse; margin-top:12px; }
-    th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
-    th{ color:var(--tpl-ink); font-weight:700; }
-    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem; }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
-    .btn{ background:#339496; color:#fff; border-radius:999px; padding:8px 12px; text-decoration:none; border:2px solid transparent; display:inline-block; }
-    .btn.outline{ background:#fff; color:#339496; border-color:#339496; }
-    .status{ margin-top:8px; color:#666; font-size:.9rem; }
+    h1{ margin:0 0 8px }
+    .status{ margin:6px 0 12px; color:#666 }
+    .filters{ display:grid; gap:10px; grid-template-columns:1fr 210px 140px 140px; align-items:center }
+    @media (max-width: 900px){ .filters{ grid-template-columns:1fr 1fr; } }
+    .filters input,.filters select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit }
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 }
+    .btn{ background:#339496; color:#fff; border-radius:999px; padding:8px 12px; text-decoration:none; border:2px solid transparent; display:inline-block; font-weight:700; }
+    .btn.sec{ background:#fff; color:#339496; border-color:#339496 }
+    .btn:disabled{ opacity:.6; cursor:not-allowed }
+    table{ width:100%; border-collapse:collapse; margin-top:8px }
+    th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top }
+    th{ color:var(--tpl-ink); font-weight:700 }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem }
+    .muted{ color:#777; font-size:.92rem }
+    .nowrap{ white-space:nowrap }
   </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-  <div id="tpl-navbar"></div>
-
+  <!-- No tocamos tu navbar; si usas inyectores, los cargamos abajo -->
   <main class="page">
     <section class="tpl-card">
       <h1>👩‍⚕️ Admin · Candidaturas</h1>
-      <p class="status" id="status">Cargando…</p>
+      <p id="tpl-status" class="status">Cargando…</p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Filtros] -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Filtros + acciones] -->
       <div class="filters" role="region" aria-label="Filtros">
-        <input id="q" type="search" placeholder="Buscar por nombre, email, ciudad, zonas…" aria-label="Buscar texto">
-        <select id="f-rol" aria-label="Filtrar por rol">
-          <option value="">Rol (todos)</option>
-          <option>Auxiliar de Veterinaria</option>
-          <option>Veterinario/a</option>
-        </select>
-        <select id="f-disp" aria-label="Filtrar por disponibilidad">
+        <input id="tpl-q" type="search" placeholder="Buscar nombre, email, ciudad, zonas..." aria-label="Buscar texto">
+        <select id="tpl-f-disp" aria-label="Disponibilidad">
           <option value="">Disponibilidad (todas)</option>
           <option>Mañanas</option><option>Tardes</option><option>Noches</option>
           <option>Fines de semana</option><option>Completa</option>
         </select>
-        <select id="f-limit" aria-label="Límite">
+        <select id="tpl-f-estado" aria-label="Estado">
+          <option value="">Estado (todos)</option>
+          <option value="aceptada">Aceptada</option>
+          <option value="pendiente">Pendiente</option>
+        </select>
+        <select id="tpl-f-limit" aria-label="Límite">
           <option>25</option><option selected>50</option><option>100</option>
         </select>
       </div>
+
+      <div class="toolbar">
+        <button class="btn sec" id="tpl-export">Exportar CSV</button>
+      </div>
       <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Tabla] -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Tabla resultados] -->
       <div style="overflow:auto">
-        <table aria-describedby="status">
+        <table aria-describedby="tpl-status">
           <thead>
             <tr>
-              <th>Fecha</th>
+              <th class="nowrap">Fecha</th>
               <th>Nombre / Contacto</th>
-              <th>Rol / Zona</th>
+              <th>Ciudad / CP</th>
+              <th>Zona sugerida</th>
               <th>Disponibilidad</th>
-              <th>Experiencia / Enlaces</th>
               <th>Archivos</th>
+              <th>Acciones</th>
             </tr>
           </thead>
-          <tbody id="rows">
-            <tr><td colspan="6">Sin datos.</td></tr>
+          <tbody id="tpl-rows">
+            <tr><td colspan="7">Cargando…</td></tr>
           </tbody>
         </table>
       </div>
@@ -74,127 +85,229 @@
     </section>
   </main>
 
-  <div id="tpl-footer"></div>
+  <!-- Footer (no modificamos el tuyo) -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase — igual que el resto del sitio] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Init + lógica] -->
   <script>
     (function(){
-      if (!firebase.apps.length) {
+      // --- Firebase init (misma config que ya usas) ---
+      if (!firebase.apps.length){
         const firebaseConfig = {
           apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
           authDomain: "thepetslovers-c1111.firebaseapp.com",
-          projectId: "thepetslovers-c1111"
+          projectId: "thepetslovers-c1111",
+          storageBucket: "thepetslovers-c1111.appspot.com",
+          messagingSenderId: "415914577533",
+          appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+          measurementId: "G-FXPD69KXBG"
         };
         firebase.initializeApp(firebaseConfig);
       }
-    })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Carga + filtros] -->
-  <script>
-    (function(){
       const db = firebase.firestore();
-      const rows = document.getElementById('rows');
-      const status = document.getElementById('status');
-      const q = document.getElementById('q');
-      const fRol = document.getElementById('f-rol');
-      const fDisp = document.getElementById('f-disp');
-      const fLimit = document.getElementById('f-limit');
+
+      const el = {
+        status: document.getElementById('tpl-status'),
+        q: document.getElementById('tpl-q'),
+        fDisp: document.getElementById('tpl-f-disp'),
+        fEstado: document.getElementById('tpl-f-estado'),
+        fLimit: document.getElementById('tpl-f-limit'),
+        rows: document.getElementById('tpl-rows'),
+        exportBtn: document.getElementById('tpl-export')
+      };
 
       let all = [];
+
+      // --- Provincias por prefijo de CP ---
+      const PROV = {
+        "01":"Álava","02":"Albacete","03":"Alicante","04":"Almería","05":"Ávila","06":"Badajoz","07":"Islas Baleares",
+        "08":"Barcelona","09":"Burgos","10":"Cáceres","11":"Cádiz","12":"Castellón","13":"Ciudad Real","14":"Córdoba",
+        "15":"A Coruña","16":"Cuenca","17":"Girona","18":"Granada","19":"Guadalajara","20":"Gipuzkoa","21":"Huelva",
+        "22":"Huesca","23":"Jaén","24":"León","25":"Lleida","26":"La Rioja","27":"Lugo","28":"Madrid","29":"Málaga",
+        "30":"Murcia","31":"Navarra","32":"Ourense","33":"Asturias","34":"Palencia","35":"Las Palmas","36":"Pontevedra",
+        "37":"Salamanca","38":"Santa Cruz de Tenerife","39":"Cantabria","40":"Segovia","41":"Sevilla","42":"Soria",
+        "43":"Tarragona","44":"Teruel","45":"Toledo","46":"Valencia","47":"Valladolid","48":"Bizkaia",
+        "49":"Zamora","50":"Zaragoza","51":"Ceuta","52":"Melilla"
+      };
+      function zonaSugerida(cp){
+        const s = (cp||'').toString().padStart(5,'0').slice(0,2);
+        return PROV[s] || '';
+        // (Más adelante podemos añadir barrios/áreas por ciudad si quieres)
+      }
 
       function fmt(ts){
         if (!ts) return '-';
         const d = ts.toDate();
-        return d.toLocaleDateString('es-ES', {year:'numeric', month:'2-digit', day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        return d.toLocaleDateString('es-ES',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
       }
 
-      function escapeHtml(s){
-        return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-      }
-
-      function matchText(item, needle){
+      function textMatch(item, needle){
         if (!needle) return true;
         const hay = [
-          item.nombre, item.email, item.telefono, item.ciudad, item.cp, item.zonasCobertura,
-          item.rol, item.disponibilidad, item.links
+          item.nombre,item.email,item.telefono,item.ciudad,item.cp,item.zonasCobertura,item.links
         ].join(' ').toLowerCase();
         return hay.includes(needle.toLowerCase());
       }
 
+      function toCSV(rows){
+        const head = ['fecha','nombre','email','telefono','ciudad','cp','zonaSugerida','disponibilidad','finesFestivos','links','estado','cvUrl','tituloUrl','cuidId'];
+        const lines = [head.join(',')];
+        rows.forEach(it=>{
+          const row = [
+            it.createdAt ? fmt(it.createdAt) : '',
+            it.nombre||'', it.email||'', it.telefono||'',
+            it.ciudad||'', it.cp||'',
+            zonaSugerida(it.cp)||'',
+            it.disponibilidad||'', it.finesFestivos||'',
+            it.links||'', it.estado||'',
+            it.cvUrl||'', it.tituloUrl||'',
+            it.cuidId||''
+          ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+          lines.push(row.join(','));
+        });
+        return lines.join('\n');
+      }
+
       function render(){
-        const limit = parseInt(fLimit.value||'50',10);
-        const needle = q.value.trim();
-        const rol = fRol.value.trim();
-        const disp = fDisp.value.trim();
+        const limit = parseInt(el.fLimit.value||'50',10);
+        const needle = el.q.value.trim();
+        const disp = el.fDisp.value.trim();
+        const estado = el.fEstado.value.trim();
 
         const filtered = all.filter(it =>
-          matchText(it, needle) &&
-          (!rol || (it.rol||'')===rol) &&
-          (!disp || (it.disponibilidad||'')===disp)
+          textMatch(it, needle) &&
+          (!disp || (it.disponibilidad||'')===disp) &&
+          (!estado || (it.estado||'pendiente')===estado)
         ).slice(0, limit);
 
         if (!filtered.length){
-          rows.innerHTML = '<tr><td colspan="6">Sin resultados con los filtros actuales.</td></tr>';
+          el.rows.innerHTML = '<tr><td colspan="7">Sin resultados con los filtros actuales.</td></tr>';
           return;
         }
 
-        rows.innerHTML = filtered.map(it=>{
-          const archivos = `
-            ${it.cvUrl ? `<a class="btn outline" href="${it.cvUrl}" target="_blank" rel="noopener">CV</a>`:''}
-            ${it.tituloUrl ? `<a class="btn outline" href="${it.tituloUrl}" target="_blank" rel="noopener">Título</a>`:''}
-          `;
-          const enlaces = it.links ? `<div><a href="${escapeHtml(it.links)}" target="_blank" rel="noopener">${escapeHtml(it.links)}</a></div>` : '';
+        el.rows.innerHTML = filtered.map(it=>{
+          const archivos =
+            (it.cvUrl?`<a class="btn sec" href="${it.cvUrl}" target="_blank" rel="noopener">CV</a>`:'')+' '+
+            (it.tituloUrl?`<a class="btn sec" href="${it.tituloUrl}" target="_blank" rel="noopener">Título</a>`:'');
+          const zona = zonaSugerida(it.cp);
+          const canAccept = !it.cuidId;
+          const perfilHref = it.cuidId ? `tpl-perfil-cuidador.html?id=${encodeURIComponent(it.cuidId)}` : '#';
           return `
             <tr>
-              <td>${fmt(it.createdAt)}</td>
+              <td class="nowrap">${fmt(it.createdAt)}</td>
               <td>
-                <div><strong>${escapeHtml(it.nombre)}</strong></div>
-                <div>${escapeHtml(it.email||'-')} · ${escapeHtml(it.telefono||'-')}</div>
+                <div><strong>${(it.nombre||'').replace(/</g,'&lt;')}</strong></div>
+                <div class="muted">${(it.email||'-')} · ${it.telefono||'-'}</div>
               </td>
+              <td>${(it.ciudad||'-')}<br><span class="muted">${it.cp||''}</span></td>
+              <td>${zona ? `<span class="pill">${zona}</span>` : '-'}</td>
+              <td>${it.disponibilidad||'-'}</td>
+              <td>${archivos || '-'}</td>
               <td>
-                <div><span class="pill">${escapeHtml(it.rol||'-')}</span></div>
-                <div>${escapeHtml(it.ciudad||'-')} ${it.cp?('('+escapeHtml(it.cp)+')'):''}</div>
-              </td>
-              <td>
-                <div>${escapeHtml(it.disponibilidad||'-')}</div>
-                <div>${escapeHtml(it.finesFestivos||'')}</div>
-              </td>
-              <td>
-                <div>${escapeHtml(it.experienciaPrev||it.experiencia||'-')}</div>
-                ${enlaces}
-              </td>
-              <td class="actions">
-                ${archivos || '-'}
+                ${canAccept
+                  ? `<button class="btn" data-accept="${it._id}">Aceptar</button>`
+                  : `<a class="btn" href="${perfilHref}">Ver perfil</a>`
+                }
               </td>
             </tr>
           `;
         }).join('');
       }
 
-      function load(){
-        status.textContent = 'Cargando…';
-        db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get()
-          .then(snap=>{
-            all = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-            status.textContent = `Cargadas ${all.length} candidaturas. Usa los filtros para refinar.`;
+      function wire(){
+        [el.q, el.fDisp, el.fEstado, el.fLimit].forEach(n=> n.addEventListener('input', render));
+        el.rows.addEventListener('click', async (ev)=>{
+          const id = ev.target && ev.target.getAttribute && ev.target.getAttribute('data-accept');
+          if (!id) return;
+          ev.preventDefault();
+          ev.target.disabled = true;
+          try{
+            // Buscar la candidatura
+            const cand = all.find(x=>x._id===id);
+            if (!cand) throw new Error('Candidatura no encontrada');
+
+            // Crear cuidador
+            const cuidRef = await db.collection('cuidadores').add({
+              nombre: cand.nombre || '',
+              email: cand.email || '',
+              telefono: cand.telefono || '',
+              ciudad: cand.ciudad || '',
+              cp: cand.cp || '',
+              zona: zonaSugerida(cand.cp) || '',
+              atvTitulado: cand.atvTitulado || '',
+              otrasFormaciones: cand.otrasFormaciones || '',
+              experienciaLaboral: cand.experienciaLaboral || cand.experienciaPrev || '',
+              funcionesHabituales: cand.funcionesHabituales || '',
+              links: cand.links || '',
+              descripcionPersonal: cand.descripcionPersonal || '',
+              disponibilidad: cand.disponibilidad || '',
+              finesFestivos: cand.finesFestivos || '',
+              zonasCobertura: cand.zonasCobertura || '',
+              estado: 'activo',
+              source: 'candidatura',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Marcar candidatura como aceptada
+            await db.collection('candidaturas').doc(id).update({
+              estado: 'aceptada',
+              cuidId: cuidRef.id
+            });
+
+            // Refrescar en memoria
+            const idx = all.findIndex(x=>x._id===id);
+            if (idx>=0){ all[idx].estado='aceptada'; all[idx].cuidId=cuidRef.id; }
             render();
-          })
-          .catch(err=>{
+            el.status.textContent = 'Candidatura aceptada. Perfil creado.';
+          }catch(err){
             console.error(err);
-            status.textContent = 'No se pudieron cargar las candidaturas (revisa permisos Firestore).';
-          });
+            el.status.textContent = 'Error al aceptar la candidatura (revisa permisos Firestore).';
+          }finally{
+            ev.target.disabled = false;
+          }
+        });
+
+        el.exportBtn.addEventListener('click', ()=>{
+          const limit = parseInt(el.fLimit.value||'50',10);
+          const needle = el.q.value.trim();
+          const disp = el.fDisp.value.trim();
+          const estado = el.fEstado.value.trim();
+          const filtered = all.filter(it =>
+            textMatch(it, needle) &&
+            (!disp || (it.disponibilidad||'')===disp) &&
+            (!estado || (it.estado||'pendiente')===estado)
+          ).slice(0, limit);
+
+          const csv = toCSV(filtered);
+          const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'candidaturas.csv';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        });
       }
 
-      [q,fRol,fDisp,fLimit].forEach(el=> el.addEventListener('input', render));
+      async function load(){
+        el.status.textContent = 'Cargando…';
+        try{
+          const snap = await db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get();
+          all = snap.docs.map(d=>({ _id: d.id, ...d.data() }));
+          // Estado por defecto: pendiente
+          all.forEach(it=>{ if(!it.estado) it.estado='pendiente'; });
+          el.status.textContent = `Cargadas ${all.length} candidaturas. Usa los filtros para refinar.`;
+          render();
+        }catch(err){
+          console.error(err);
+          el.status.textContent = 'No se pudieron cargar las candidaturas (reglas Firestore o conexión).';
+        }
+      }
+
+      wire();
       document.readyState==='loading' ? document.addEventListener('DOMContentLoaded', load) : load();
     })();
   </script>
