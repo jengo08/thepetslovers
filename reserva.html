@@ -85,100 +85,11 @@
     .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
     /* TPL: FIN BLOQUE NUEVO */
   </style>
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs + Init + Control sesión] -->
-<!-- 1) SDKs de Firebase (v8 clásica) -->
-<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 
-<!-- 2) Tu inicialización (RELLENA TU CONFIG) -->
-<script defer>
-  window.tplFirebaseInit = function(){
-    if (!window.firebase) return console.error('Firebase SDK no cargado');
-    var firebaseConfig = {
-      apiKey: "TU_API_KEY",
-      authDomain: "TU_PROYECTO.firebaseapp.com",
-      projectId: "TU_PROYECTO",
-      appId: "1:TUNUM:web:TUTOKEN"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  };
-</script>
-
-<!-- 3) Llamar al init (después de que carguen los SDKs) -->
-<script defer>
-  (function waitForFirebase(){
-    if (window.firebase && typeof window.tplFirebaseInit === 'function'){
-      document.documentElement.classList.add('tpl-auth-boot'); // evita ver botones equivocados
-      window.tplFirebaseInit();
-    } else {
-      return setTimeout(waitForFirebase, 30);
-    }
-  })();
-</script>
-
-<!-- 4) Control unificado de sesión (NO toques nada) -->
-<script defer>
-// ===== The Pets Lovers · Control unificado de sesión =====
-(function(){
-  function applyAuthVisibility(user){
-    var signedIn = !!user;
-    document.querySelectorAll('[data-auth-visible]').forEach(function(el){
-      var want = el.getAttribute('data-auth-visible'); // 'signed-in' | 'signed-out'
-      var show = (want === 'signed-in') ? signedIn : !signedIn;
-      el.style.display = show ? '' : 'none';
-    });
-    document.documentElement.classList.remove('tpl-auth-boot');
-  }
-
-  function wireLogout(){
-    var btn = document.getElementById('tpl-logout');
-    if (!btn) return;
-    btn.addEventListener('click', function(e){
-      e.preventDefault();
-      if (!window.firebase || !firebase.auth) return;
-      firebase.auth().signOut()
-      .then(function(){
-        if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))); }
-        location.reload();
-      })
-      .catch(console.error);
-    });
-  }
-
-  function wireGoogleLogin(){
-    var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
-    if (!btns.length) return;
-    btns.forEach(function(btn){
-      btn.addEventListener('click', function(e){
-        e.preventDefault();
-        if (!window.firebase || !firebase.auth) return;
-        var provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(function(){ return firebase.auth().signInWithPopup(provider); })
-        .then(function(){
-          var to = new URLSearchParams(location.search).get('next') || btn.getAttribute('data-success-redirect');
-          if (to) location.href = to;
-        })
-        .catch(console.error);
-      });
-    });
-  }
-
-  function init(){
-    wireLogout();
-    wireGoogleLogin();
-    if (!window.firebase || !firebase.auth){
-      console.error('Firebase Auth no encontrado. ¿Pegaste los SDKs y la init?');
-      document.documentElement.classList.remove('tpl-auth-boot');
-      return;
-    }
-    firebase.auth().onAuthStateChanged(applyAuthVisibility);
-  }
-  (document.readyState === 'loading') ? document.addEventListener('DOMContentLoaded', init) : init();
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-
+  <!-- TPL: INICIO BLOQUE NUEVO [ELIMINADO v8 + refs rotas] -->
+  <!-- Se ha retirado la carga duplicada de Firebase v8 y la init con claves vacías
+       que impedían detectar la sesión. Ahora solo usamos compat v10 (abajo). -->
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -210,20 +121,19 @@
     <!-- Muro de autenticación -->
     <div id="authWall" class="auth-wall">
       <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
-      <div class="booking-actions">
-        <a href="login.html?next=reserva.html" class="cta-button" id="btnLogin">Iniciar sesión</a>
-        <a href="registro.html?next=reserva.html" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
-      </div>
-      <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Login inline dentro del muro] -->
-      <div id="tpl-inline-login"></div>
+      <!-- TPL: INICIO BLOQUE NUEVO [Quitamos los 2 botones grandes de arriba] -->
+      <!-- (El acceso ahora es sólo con el login inline + Google, como en Candidatos) -->
       <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <p class="note">Cuando accedas, el formulario se activará automáticamente.</p>
+
+      <!-- Login inline (Email + Google) -->
+      <div id="tpl-inline-login"></div>
     </div>
 
-    <!-- Formulario de reserva (Formspree activo) -->
+    <!-- Formulario de reserva -->
     <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
-
       <!-- =================== DATOS DEL SERVICIO =================== -->
       <section class="tpl-section" aria-labelledby="sec-servicio">
         <h2 id="sec-servicio">Datos del servicio</h2>
@@ -301,8 +211,7 @@
             </select>
           </div>
 
-          <!-- TPL: BLOQUE MOVIDO (necesitas desplazamiento) 
-               * Antes estaba aquí; lo hemos bajado junto a “Notas” como pediste -->
+          <!-- TPL: BLOQUE MOVIDO (necesitas desplazamiento) -->
         </div>
       </section>
 
@@ -389,7 +298,7 @@
             <input type="time" id="contactTime" name="Hora_preferida_contacto">
           </div>
 
-          <!-- TPL: INICIO BLOQUE NUEVO [Desplazamiento reubicado aquí, antes de Notas] -->
+          <!-- Desplazamiento -->
           <div class="booking-field" style="grid-column: 1 / -1;">
             <label for="needTravel">¿Necesitas desplazamiento?</label>
             <select id="needTravel" name="Desplazamiento">
@@ -402,7 +311,6 @@
               <br>Este importe quedará <strong>pendiente</strong> en la factura final.
             </div>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <div class="booking-field" style="grid-column: 1 / -1;">
             <label for="notes">Notas (opcional)</label>
@@ -415,7 +323,6 @@
       <div class="summary-panel" id="summary">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
           <strong>Desglose preliminar</strong>
-          <!-- (sin badge de kilometraje, como pediste) -->
         </div>
         <div class="summary-grid">
           <div class="summary-row">
@@ -581,7 +488,7 @@
     }
     function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Preselección por referrer: añade 'servicio-estancias'] */
+    /* Preselección de servicio según referrer o query */
     function inferServiceFromReferrer(){
       try{
         const u = new URL(document.referrer || '');
@@ -597,42 +504,30 @@
       const raw = (qs('service') || qs('svc') || '').toLowerCase();
       const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
       const map = {
-        visitas:'visitas',
-        'visitas-gatos':'visitas',
+        visitas:'visitas','visitas-gatos':'visitas',
         paseos:'paseos',
-        guarderia:'guarderia',
-        'guarderia-dia':'guarderia',
-        alojamiento:'alojamiento',
-        estancias:'alojamiento', /* NUEVO: por si algún día se usa ?service=estancias */
+        guarderia:'guarderia','guarderia-dia':'guarderia',
+        alojamiento:'alojamiento', estancias:'alojamiento',
         bodas:'bodas'
       };
       let val = map[norm] || inferServiceFromReferrer();
       if(val && els.service){ els.service.value = val; els.service.disabled = true; }
     })();
-    /* TPL: FIN BLOQUE NUEVO */
 
-    // Mostrar/ocultar campos según servicio
     function toggleFields(){
       const svc = els.service?.value;
       const isVisitas = (svc === 'visitas');
-
       if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
-
-      // SOLO visibles/activos en Visitas
       if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
       if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
-      if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value = '60'; }
-      if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value = '1'; }
-
-      // "cachorro" (auto) solo guardería/alojamiento
+      if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60'; }
+      if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1'; }
       const species = els.species?.value || 'perro';
       const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
       if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
-
       if(isVisitas && els.species) els.species.value = 'gato';
     }
 
-    // Nº mascotas y nombres
     function getNumMascotas(){
       let n = els.numPets?.value || '1';
       if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
@@ -648,7 +543,6 @@
       }
     }
 
-    // Render dinámico de nombres de mascotas
     let PROFILE_PET_NAMES = [];
     function fillPetDatalist(){
       if(!els.petNamesList) return;
@@ -684,13 +578,11 @@
       els.petsListHidden.value = names.join(', ');
     }
 
-    // Desplazamiento
     function travelSync(){
       if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
       if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
     }
 
-    // Festivos (igual que antes)
     const _festivosCache = new Map();
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
@@ -870,7 +762,7 @@
     renderPetNameFields(1);
     recalcAll();
 
-    // Autocompletado dirección (OSM)
+    // Autocompletado dirección
     async function searchAddresses(q){
       const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
       const r = await fetch(url, { headers: { 'Accept':'application/json' }});
@@ -908,7 +800,7 @@
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Auto-cachorro
+    // Auto-cachorro desde perfil (si existe)
     async function autoPuppyFromProfile(){
       try{
         if(typeof firebase === 'undefined') return;
@@ -934,7 +826,7 @@
       }catch(_){}
     }
 
-    // Autorrelleno de contacto + mascotas desde Firebase (editable)
+    // Autorrelleno de contacto + mascotas desde Firebase
     async function autoContactFromProfile(u){
       try{
         if(!u || typeof firebase === 'undefined') return;
@@ -1066,7 +958,7 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase SDK compat -->
+  <!-- Firebase SDK compat (únicos y correctos) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -1087,7 +979,7 @@
     }
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Login inline (Email + Google) para muro] -->
+  <!-- Login inline (Email + Google) para muro -->
   <script>
     (function(){
       if (typeof firebase === 'undefined') return;
@@ -1113,7 +1005,9 @@
               <label>Contraseña</label>
               <input type="password" name="password" required autocomplete="current-password" />
               <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <a class="tpl-btn-outline" href="registro.html?next=reserva.html">Crear cuenta</a>
+              <!-- TPL: INICIO BLOQUE NUEVO [CTA Regístrate con next a reserva] -->
+              <a class="tpl-btn-outline" href="registro.html?next=reserva.html">Regístrate</a>
+              <!-- TPL: FIN BLOQUE NUEVO -->
               <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
               <p class="tpl-login-msg" aria-live="polite"></p>
             </form>
@@ -1146,7 +1040,7 @@
             const provider = new firebase.auth.GoogleAuthProvider();
             if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
             else { await auth.signInWithPopup(provider); }
-            // onAuthStateChanged redirige/oculta
+            // onAuthStateChanged ocultará el muro
           }catch(err){
             msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
           }
@@ -1165,25 +1059,19 @@
         });
       }
 
-      // Si no hay sesión al cargar → pinta inline login
-      auth.onAuthStateChanged(u=>{
-        if(!u) renderInlineLogin();
-      });
+      auth.onAuthStateChanged(u=>{ if(!u) renderInlineLogin(); });
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Guardar reserva en Firestore y luego enviar a Formspree] -->
+  <!-- Guardar reserva en Firestore y luego enviar a Formspree -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var form = document.getElementById('bookingForm');
       if (!form) return;
 
       form.addEventListener('submit', async function (e) {
-        // Si otro listener la canceló por validación, respetamos.
-        if (e.defaultPrevented) return;
+        if (e.defaultPrevented) return; // otra validación ya frenó
 
-        // Guardamos primero en Firestore y después enviamos a Formspree
         e.preventDefault();
         try {
           if (typeof firebase !== 'undefined' && firebase.firestore) {
@@ -1191,14 +1079,14 @@
             var auth = firebase.auth ? firebase.auth() : null;
             var u    = auth && auth.currentUser ? auth.currentUser : null;
 
-            // Construimos el payload con TODOS los campos del form (incluye ocultos: Desglose, Mascotas_lista)
             var fd = new FormData(form);
             var payload = {};
             fd.forEach(function (v, k) { payload[k] = v; });
 
-            // Metadatos
             payload._page = location.href;
-            payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            if (firebase.firestore.FieldValue) {
+              payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            }
             if (u) {
               payload._uid = u.uid;
               payload._email = u.email || null;
@@ -1209,54 +1097,17 @@
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
-          // No interrumpimos el envío por email
         } finally {
-          // Enviamos a Formspree (action ya apunta a tu endpoint)
-          form.submit(); // NO dispara de nuevo 'submit' (bypassa eventos)
+          form.submit(); // envía a Formspree
         }
       });
     });
   </script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [ELIMINADO muro antiguo que exigía localStorage tpl-profile] -->
+  <!-- Se ha eliminado el bloque que exigía flags de localStorage (tpl-auth / tpl-profile)
+       y provocaba que el formulario siguiera deshabilitado aunque hubiese sesión Firebase. -->
   <!-- TPL: FIN BLOQUE NUEVO -->
-<!-- TPL: INICIO BLOQUE NUEVO [Muro: login + perfil completo forzados] -->
-<script>
-  (function(){
-    var form = document.getElementById('bookingForm');
-    var wall = document.getElementById('authWall'); // si tienes un panel aviso; si no, puedes omitir esta línea
-
-    function isLogged(){ return localStorage.getItem('tpl-auth') === '1'; }
-    function hasProfile(){ return localStorage.getItem('tpl-profile') === '1'; } // cuando guardes datos en registro.html, marca esta flag
-
-    function ensureAccess(){
-      var ok = isLogged() && hasProfile();
-      if (form) form.classList.toggle('disabled', !ok);
-      if (wall) wall.style.display = ok ? 'none' : 'block';
-
-      // fija destinos por si falta algo
-      var loginUrl = 'inicio-sesion.html?next=' + encodeURIComponent('reserva.html');
-      var regUrl   = 'registro.html?next=' + encodeURIComponent('reserva.html');
-
-      document.querySelectorAll('[data-login-link]').forEach(a=>a.setAttribute('href', loginUrl));
-      document.querySelectorAll('[data-register-link]').forEach(a=>a.setAttribute('href', regUrl));
-    }
-
-    ensureAccess();
-
-    if (form) form.addEventListener('submit', function(e){
-      if (!(isLogged() && hasProfile())){
-        e.preventDefault();
-        alert(!isLogged() ? 'Debes iniciar sesión o crear tu cuenta.' : 'Completa primero tus datos de dueño.');
-        location.href = !isLogged() ? 'inicio-sesion.html?next=' + encodeURIComponent('reserva.html')
-                                    : 'registro.html?next=' + encodeURIComponent('reserva.html');
-      }
-    });
-
-    window.addEventListener('storage', function(e){
-      if (e.key === 'tpl-auth' || e.key === 'tpl-profile') ensureAccess();
-    });
-  })();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
