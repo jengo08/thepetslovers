@@ -1,146 +1,126 @@
-/* TPL: INICIO BLOQUE NUEVO [Navbar unificada — sin “Contáctanos”, con “¿Necesitas ayuda?”] */
-(function () {
-  // --- MENÚ (igual al partial)
-  var BRAND = {
-    logo: 'images/logo.png.png',
-    links: [
-      { href: 'como-funciona.html',      label: 'Cómo funciona' },
-      { href: 'servicios.html',          label: 'Servicios' },
-      { href: 'trabaja-con-nosotros.html', label: 'Conviértete en cuidador' },
-      { href: 'ayuda.html',              label: '¿Necesitas ayuda?' }
-    ]
-  };
+/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js — RESCATE SIMPLE y ESTABLE] */
+(function(){
+  // 👉 Ajusta esta ruta si tu perfil se llama distinto
+  var PROFILE_URL = 'mi-perfil.html';
 
-  // --- RENDER NAV
-  function renderNavbar(container) {
-    var navHTML = [
-      '<nav class="navbar">',
-        '<div class="logo"><a href="index.html"><img src="' + BRAND.logo + '" alt="The Pets Lovers"></a></div>',
-        '<a href="index.html" class="home-button">Inicio</a>',
-        '<ul class="nav-links">',
-          BRAND.links.map(function(l){ return '<li><a href="'+l.href+'">'+l.label+'</a></li>'; }).join(''),
-        '</ul>',
-        '<a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>',
-      '</nav>'
-    ].join('');
+  // --- HTML del navbar (igual que Index, con “¿Necesitas ayuda?”)
+  var NAV_HTML =
+    '<nav class="navbar">'
+    + '  <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>'
+    + '  <a href="index.html" class="home-button">Inicio</a>'
+    + '  <ul class="nav-links">'
+    + '    <li><a href="como-funciona.html">Cómo funciona</a></li>'
+    + '    <li><a href="servicios.html">Servicios</a></li>'
+    + '    <li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>'
+    + '    <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>'
+    + '  </ul>'
+    + '  <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>'
+    + '</nav>';
 
-    if (container) {
-      container.innerHTML = navHTML;
-    } else {
-      var existing = document.querySelector('.navbar');
-      if (existing && existing.parentNode) {
-        var wrapper = document.createElement('div');
-        wrapper.innerHTML = navHTML;
-        existing.parentNode.replaceChild(wrapper.firstChild, existing);
-      } else {
-        var fallback = document.createElement('div');
-        fallback.innerHTML = navHTML;
-        document.body.insertBefore(fallback.firstChild, document.body.firstChild);
+  // --- Montaje: crea #tpl-navbar si no existe y pinta la barra
+  function mountNavbar(){
+    try{
+      var host = document.getElementById('tpl-navbar');
+      if(!host){
+        host = document.createElement('div');
+        host.id = 'tpl-navbar';
+        document.body.insertBefore(host, document.body.firstChild || null);
       }
-    }
-
-    // aria-current en el enlace activo
-    try {
-      var here = location.pathname.replace(/\/+$/, '').split('/').pop() || 'index.html';
-      var anchors = document.querySelectorAll('.navbar a[href]');
-      anchors.forEach(function(a){
-        var href = a.getAttribute('href') || '';
-        var file = href.split('#')[0] || '';
-        var fileOnly = file.split('/').pop();
-        if (fileOnly === here) a.setAttribute('aria-current','page');
-      });
-    } catch(e){}
+      host.innerHTML = NAV_HTML;
+      markActiveLink();
+      applySessionUI(); // pinta “Mi perfil” si ya estabas logueada
+    }catch(e){ console.error('TPL navbar mount error:', e); }
   }
 
-  // --- RESOLVER URL DE PERFIL (mi-perfil.html / mi-cuenta.html / perfil.html)
-  var PROFILE_URL_LS_KEY = 'tpl_profile_url_cache';
-  async function resolveProfileUrl() {
-    try {
-      var cached = localStorage.getItem(PROFILE_URL_LS_KEY);
-      if (cached) return cached;
-    } catch(e){}
-    var candidates = ['mi-perfil.html', 'mi-cuenta.html', 'perfil.html'];
-    for (var i=0;i<candidates.length;i++){
-      var p = candidates[i];
-      try {
-        var res = await fetch(p, { method: 'HEAD', cache: 'no-store' });
-        if (!res || !res.ok) res = await fetch(p, { method: 'GET', cache: 'no-store' });
-        if (res && res.ok) { try { localStorage.setItem(PROFILE_URL_LS_KEY, p); } catch(e){} return p; }
-      } catch(e){}
-    }
-    return 'mi-perfil.html';
+  // --- Marca el enlace activo con aria-current
+  function markActiveLink(){
+    try{
+      var here = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      var nodes = document.querySelectorAll('.navbar a[href]');
+      for(var i=0;i<nodes.length;i++){
+        var a = nodes[i];
+        var f = (a.getAttribute('href')||'').split('#')[0].toLowerCase();
+        if(f && f === here){ a.setAttribute('aria-current','page'); }
+      }
+    }catch(e){}
   }
 
-  // --- APLICAR ESTADO DE SESIÓN AL BOTÓN DERECHO
-  async function setLoggedUI(isLogged) {
-    var btn = document.querySelector('.navbar .login-button');
-    if (!btn) return;
-    if (!isLogged) {
-      btn.textContent = 'Iniciar sesión';
-      btn.setAttribute('href', 'iniciar-sesion.html');
-      btn.removeAttribute('rel');
-      return;
-    }
-    btn.textContent = 'Mi perfil';
-    btn.setAttribute('href', await resolveProfileUrl());
-    btn.setAttribute('rel', 'nofollow');
-  }
-
-  // --- PINTAR NAV
-  renderNavbar(document.getElementById('tpl-navbar'));
-
-  // ===== DETECCIÓN DE SESIÓN
-  function heuristicIsLogged() {
-    try {
-      for (var i=0;i<localStorage.length;i++){
+  // --- Heurística de sesión (sin romper si no hay Firebase)
+  function isLoggedIn(){
+    try{
+      // 1) Firebase guarda el usuario en localStorage con claves “firebase:authUser:…”
+      for(var i=0;i<localStorage.length;i++){
         var k = localStorage.key(i);
-        if (k && k.indexOf('firebase:authUser:') === 0) {
+        if(k && k.indexOf('firebase:authUser:')===0){
           var v = localStorage.getItem(k);
-          if (v && v.indexOf('"uid":') !== -1) return true;
+          if(v && v.indexOf('"uid":') !== -1) return true;
         }
       }
-    } catch(e){}
+      // 2) Flag propio por si tu login lo usa
+      if(localStorage.getItem('tplAuth')==='1') return true;
+    }catch(e){}
     return false;
   }
-  setLoggedUI(heuristicIsLogged());
 
-  var firebaseConfig = {
-    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-    authDomain: "thepetslovers-c1111.firebaseapp.com",
-    projectId: "thepetslovers-c1111",
-    storageBucket: "thepetslovers-c1111.appspot.com",
-    messagingSenderId: "415914577533",
-    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-    measurementId: "G-FXPD69KXBG"
-  };
-
-  function loadScriptOnce(src) {
-    return new Promise(function (resolve, reject) {
-      if ([].some.call(document.scripts, s => s.src === src)) return resolve();
-      var s = document.createElement('script');
-      s.src = src; s.defer = true; s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
+  // --- Oculta cualquier “Cerrar sesión” que pueda haber
+  function hideLogoutEverywhere(){
+    try{
+      var elems = [].slice.call(document.querySelectorAll(
+        '[data-action="logout"], .logout-button, a[href*="logout"], button[href*="logout"]'
+      ));
+      // también por texto
+      [].slice.call(document.querySelectorAll('.navbar a, .navbar button')).forEach(function(el){
+        var t=(el.textContent||'').trim().toLowerCase();
+        if(t==='cerrar sesión'||t==='cerrar sesion'||t.indexOf('logout')>-1||t.indexOf('sign out')>-1){
+          elems.push(el);
+        }
+      });
+      elems.forEach(function(el){ el.style.display='none'; el.setAttribute('aria-hidden','true'); });
+    }catch(e){}
   }
 
-  async function ensureFirebase() {
-    if (window.firebase && firebase.apps && firebase.apps.length) return;
-    if (typeof window.firebase === 'undefined') {
-      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
-      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
-    }
-    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+  // --- Aplica el estado al botón derecho
+  function setLoginButton(logged){
+    try{
+      var btn = document.querySelector('.navbar .login-button');
+      if(!btn) return;
+      if(logged){
+        btn.textContent = 'Mi perfil';
+        btn.setAttribute('href', PROFILE_URL);
+        btn.setAttribute('aria-label','Ir a mi perfil');
+      }else{
+        btn.textContent = 'Iniciar sesión';
+        btn.setAttribute('href', 'iniciar-sesion.html');
+        btn.setAttribute('aria-label','Iniciar sesión');
+      }
+    }catch(e){}
   }
 
-  (async function initAuthListener(){
-    try {
-      await ensureFirebase();
-      var auth = firebase.auth();
-      try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){}
-      auth.onAuthStateChanged(function(user){ setLoggedUI(!!user); });
-    } catch(e) {
-      setLoggedUI(heuristicIsLogged());
-    }
-  })();
+  function applySessionUI(){
+    hideLogoutEverywhere();
+    setLoginButton(isLoggedIn());
+
+    // Si hay Firebase en la página, nos sincronizamos en tiempo real SIN romper nada
+    try{
+      if(window.firebase && firebase.auth){
+        var a = firebase.auth();
+        a.onAuthStateChanged(function(u){
+          setLoginButton(!!u);
+          hideLogoutEverywhere();
+          try{
+            if(u){ localStorage.setItem('tplAuth','1'); }
+            else { localStorage.removeItem('tplAuth'); }
+          }catch(e){}
+        });
+      }
+    }catch(e){}
+  }
+
+  // --- Arranque (defer hace que el DOM ya esté listo)
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', mountNavbar);
+  }else{
+    mountNavbar();
+  }
 })();
-/* TPL: FIN BLOQUE NUEVO */
+ /* TPL: FIN BLOQUE NUEVO */
