@@ -1,15 +1,11 @@
-<!-- TPL: INICIO BLOQUE NUEVO [tpl-firebase-init.js] -->
+<!-- TPL: INICIO BLOQUE NUEVO [Config Firebase global] -->
 <script>
-// Reemplaza con tu config real
-window.tplFirebaseInit = function(){
-  if (!window.firebase) { console.error('Firebase SDK no cargado'); return; }
-  var firebaseConfig = {
-    apiKey: "XXX",
-    authDomain: "XXX.firebaseapp.com",
-    projectId: "XXX",
-    appId: "1:XXX:web:XXX"
+  // Sustituye por tu configuración real:
+  window.TPL_FIREBASE_CONFIG = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_PROYECTO.firebaseapp.com",
+    projectId: "TU_PROYECTO",
+    appId: "1:TUNUM:web:TUTOKEN"
   };
-  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-};
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
