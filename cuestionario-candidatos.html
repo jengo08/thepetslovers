@@ -34,6 +34,100 @@
     .cta-button{ display:inline-block; background:var(--color-principal,#339496); color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
     .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
   </style>
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDKs + Init + Control sesión] -->
+<!-- 1) SDKs de Firebase (v8 clásica) -->
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+<!-- 2) Tu inicialización (RELLENA TU CONFIG) -->
+<script defer>
+  window.tplFirebaseInit = function(){
+    if (!window.firebase) return console.error('Firebase SDK no cargado');
+    var firebaseConfig = {
+      apiKey: "TU_API_KEY",
+      authDomain: "TU_PROYECTO.firebaseapp.com",
+      projectId: "TU_PROYECTO",
+      appId: "1:TUNUM:web:TUTOKEN"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  };
+</script>
+
+<!-- 3) Llamar al init (después de que carguen los SDKs) -->
+<script defer>
+  (function waitForFirebase(){
+    if (window.firebase && typeof window.tplFirebaseInit === 'function'){
+      document.documentElement.classList.add('tpl-auth-boot'); // evita ver botones equivocados
+      window.tplFirebaseInit();
+    } else {
+      return setTimeout(waitForFirebase, 30);
+    }
+  })();
+</script>
+
+<!-- 4) Control unificado de sesión (NO toques nada) -->
+<script defer>
+// ===== The Pets Lovers · Control unificado de sesión =====
+(function(){
+  function applyAuthVisibility(user){
+    var signedIn = !!user;
+    document.querySelectorAll('[data-auth-visible]').forEach(function(el){
+      var want = el.getAttribute('data-auth-visible'); // 'signed-in' | 'signed-out'
+      var show = (want === 'signed-in') ? signedIn : !signedIn;
+      el.style.display = show ? '' : 'none';
+    });
+    document.documentElement.classList.remove('tpl-auth-boot');
+  }
+
+  function wireLogout(){
+    var btn = document.getElementById('tpl-logout');
+    if (!btn) return;
+    btn.addEventListener('click', function(e){
+      e.preventDefault();
+      if (!window.firebase || !firebase.auth) return;
+      firebase.auth().signOut()
+      .then(function(){
+        if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))); }
+        location.reload();
+      })
+      .catch(console.error);
+    });
+  }
+
+  function wireGoogleLogin(){
+    var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
+    if (!btns.length) return;
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        if (!window.firebase || !firebase.auth) return;
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(function(){ return firebase.auth().signInWithPopup(provider); })
+        .then(function(){
+          var to = new URLSearchParams(location.search).get('next') || btn.getAttribute('data-success-redirect');
+          if (to) location.href = to;
+        })
+        .catch(console.error);
+      });
+    });
+  }
+
+  function init(){
+    wireLogout();
+    wireGoogleLogin();
+    if (!window.firebase || !firebase.auth){
+      console.error('Firebase Auth no encontrado. ¿Pegaste los SDKs y la init?');
+      document.documentElement.classList.remove('tpl-auth-boot');
+      return;
+    }
+    firebase.auth().onAuthStateChanged(applyAuthVisibility);
+  }
+  (document.readyState === 'loading') ? document.addEventListener('DOMContentLoaded', init) : init();
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 </head>
 <body>
   <div id="tpl-navbar"></div>
