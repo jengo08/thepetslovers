@@ -1,121 +1,186 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js con persistencia global de sesión] */
+/* TPL: Navbar unificada + login state (sin botón de cerrar sesión)
+   - Mostrar "Iniciar sesión" si no hay sesión
+   - Mostrar "Mi perfil" si hay sesión -> resuelve ruta existente (mi-perfil.html / mi-cuenta.html / perfil.html)
+   - Sin "Cerrar sesión" en la barra
+   - Misma estructura que Index
+*/
+
 (function () {
-  // 👉 Cambia esta ruta si tu perfil tuviera otro nombre
-  var PROFILE_URL = 'mi-cuenta.html';
+  // --- CONFIG BÁSICA
+  var BRAND = {
+    logo: 'images/logo.png.png',
+    links: [
+      { href: 'como-funciona.html', label: 'Cómo funciona' },
+      { href: 'servicios.html', label: 'Servicios' },
+      { href: 'index.html#contactanos', label: 'Contáctanos' },
+      { href: 'index.html#hazte-cuidador', label: 'Conviértete en cuidador' }
+    ]
+  };
 
-  // Fallback 1:1 de la barra (por si falla el fetch de tpl-navbar.html)
-  var FALLBACK_HTML = '\
-<nav class="navbar">\
-  <div class="logo">\
-    <a href="index.html">\
-      <img src="images/logo.png.png" alt="The Pets Lovers Logo">\
-    </a>\
-  </div>\
-  <a href="index.html" class="home-button tpl-home-offset">Inicio</a>\
-  <ul class="nav-links">\
-    <li><a href="como-funciona.html">Cómo funciona</a></li>\
-    <li><a href="servicios.html">Servicios</a></li>\
-    <li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>\
-    <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>\
-  </ul>\
-  <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>\
-</nav>';
+  // --- RENDER NAV
+  function renderNavbar(container) {
+    var navHTML = [
+      '<nav class="navbar">',
+        '<div class="logo"><a href="index.html"><img src="' + BRAND.logo + '" alt="The Pets Lovers"></a></div>',
+        '<a href="index.html" class="home-button">Inicio</a>',
+        '<ul class="nav-links">',
+          BRAND.links.map(function(l){ return '<li><a href="'+l.href+'">'+l.label+'</a></li>'; }).join(''),
+        '</ul>',
+        '<a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>',
+      '</nav>'
+    ].join('');
 
-  // ---- helpers de montaje/inyección
-  function getMount() {
-    var el = document.getElementById('tpl-navbar');
-    if (el) return el;
-    var div = document.createElement('div');
-    div.id = 'tpl-navbar';
-    if (document.body.firstChild) document.body.insertBefore(div, document.body.firstChild);
-    else document.body.appendChild(div);
-    return div;
-  }
-  function injectHTML(html) {
-    var mount = getMount();
-    if (!mount) return;
-    mount.outerHTML = html;
-    requestAnimationFrame(applySessionState);
-  }
-
-  // ---- estado de sesión unificado
-  // Regla: si hay Firebase, nos “anclamos” a onAuthStateChanged y
-  // sincronizamos un flag localStorage para que el resto de páginas lo lean.
-  var AUTH_FLAG = 'tplAuth'; // '1' si hay sesión
-  function isLoggedFlag() {
-    return localStorage.getItem(AUTH_FLAG) === '1';
-  }
-  function setLoggedFlag(v) {
-    if (v) localStorage.setItem(AUTH_FLAG, '1');
-    else   localStorage.removeItem(AUTH_FLAG);
-  }
-
-  // Detección suave
-  function isLoggedInSoft() {
-    try { if (window.firebase?.auth) return !!window.firebase.auth().currentUser; } catch(e){}
-    return isLoggedFlag();
-  }
-
-  // Oculta cualquier “Cerrar sesión” (por si existiera en alguna página)
-  function hideLogoutButtons() {
-    var cand = [
-      ...document.querySelectorAll('[data-action="logout"], .logout-button, a[href*="logout"], button[href*="logout"]'),
-      ...Array.from(document.querySelectorAll('a,button')).filter(function (el) {
-        var t = (el.textContent || el.innerText || '').trim().toLowerCase();
-        return t === 'cerrar sesión' || t === 'cerrar sesion' || t.includes('logout') || t.includes('sign out');
-      })
-    ];
-    cand.forEach(function (el) { el.style.display = 'none'; el.setAttribute('aria-hidden','true'); });
-  }
-
-  // Aplica el estado al botón derecho del navbar
-  function setLoginButton(logged) {
-    var btn = document.querySelector('.login-button');
-    if (!btn) return;
-    if (logged) {
-      btn.textContent = 'Mi perfil';
-      btn.setAttribute('href', PROFILE_URL);
-      btn.setAttribute('aria-label', 'Ir a mi perfil');
+    if (container) {
+      container.innerHTML = navHTML;
     } else {
-      btn.textContent = 'Iniciar sesión';
-      btn.setAttribute('href', 'iniciar-sesion.html');
-      btn.setAttribute('aria-label', 'Iniciar sesión');
+      // Si no hay #tpl-navbar, intenta reemplazar una .navbar existente
+      var existing = document.querySelector('.navbar');
+      if (existing && existing.parentNode) {
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = navHTML;
+        existing.parentNode.replaceChild(wrapper.firstChild, existing);
+      } else {
+        // Como último recurso, inyecta al comienzo del body
+        var fallback = document.createElement('div');
+        fallback.innerHTML = navHTML;
+        document.body.insertBefore(fallback.firstChild, document.body.firstChild);
+      }
     }
+
+    // Marcar aria-current en el enlace activo
+    try {
+      var here = location.pathname.replace(/\/+$/, '').split('/').pop() || 'index.html';
+      var anchors = document.querySelectorAll('.navbar a[href]');
+      anchors.forEach(function(a){
+        var href = a.getAttribute('href');
+        // Coincidimos por archivo o por hash en index
+        var file = (href || '').split('#')[0] || '';
+        if (!file || file === '#') return;
+        var fileOnly = file.split('/').pop();
+        if (fileOnly === here) a.setAttribute('aria-current','page');
+      });
+    } catch(e){}
   }
 
-  function applySessionState() {
-    hideLogoutButtons();               // Nunca mostrar “Cerrar sesión” en barra
-    setLoginButton(isLoggedInSoft());  // Pinta según flag o Firebase actual
-
-    // Si hay Firebase, sincroniza flag y UI en tiempo real
+  // --- RESOLVER URL DE PERFIL
+  var PROFILE_URL_LS_KEY = 'tpl_profile_url_cache';
+  async function resolveProfileUrl() {
+    // usa caché si existe
     try {
-      if (window.firebase?.auth) {
-        window.firebase.auth().onAuthStateChanged(function (user) {
-          var logged = !!user;
-          setLoggedFlag(logged);     // <- clave: persistencia global entre páginas
-          hideLogoutButtons();
-          setLoginButton(logged);
-        });
-      }
+      var cached = localStorage.getItem(PROFILE_URL_LS_KEY);
+      if (cached) return cached;
     } catch(e){}
 
-    // Si se cambia el flag desde otra pestaña/página, refrescamos el botón
-    window.addEventListener('storage', function (ev) {
-      if (ev.key === AUTH_FLAG) {
-        setLoginButton(isLoggedFlag());
+    var candidates = ['mi-perfil.html', 'mi-cuenta.html', 'perfil.html'];
+    for (var i=0;i<candidates.length;i++){
+      var p = candidates[i];
+      try {
+        // HEAD puede estar limitado en algunos hosts -> fallback a GET liviano
+        var res = await fetch(p, { method: 'HEAD', cache: 'no-store' });
+        if (!res.ok) {
+          // Fallback GET
+          res = await fetch(p, { method: 'GET', cache: 'no-store' });
+        }
+        if (res && res.ok) {
+          try { localStorage.setItem(PROFILE_URL_LS_KEY, p); } catch(e){}
+          return p;
+        }
+      } catch(e){}
+    }
+    // por defecto
+    return 'mi-perfil.html';
+  }
+
+  // --- ACTUALIZAR BOTÓN DERECHO SEGÚN SESIÓN
+  async function setLoggedUI(isLogged) {
+    var btn = document.querySelector('.navbar .login-button');
+    if (!btn) return;
+
+    if (!isLogged) {
+      btn.textContent = 'Iniciar sesión';
+      btn.setAttribute('href', 'iniciar-sesion.html');
+      btn.removeAttribute('rel');
+      return;
+    }
+    // Logueada -> Mi perfil
+    btn.textContent = 'Mi perfil';
+    btn.setAttribute('href', await resolveProfileUrl());
+    btn.setAttribute('rel', 'nofollow');
+  }
+
+  // --- INICIALIZAR
+  renderNavbar(document.getElementById('tpl-navbar'));
+
+  // ==========================
+  //  DETECCIÓN DE SESIÓN
+  // ==========================
+  // 1) Señal con Firebase (si está disponible o la cargamos)
+  // 2) Heurística ligera si aún no podemos leer Firebase (revisa authUser en localStorage)
+  var firebaseReady = false;
+
+  function heuristicIsLogged() {
+    // Busca claves de auth de Firebase en localStorage (persisten entre páginas)
+    try {
+      for (var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if (k && k.indexOf('firebase:authUser:') === 0) {
+          var v = localStorage.getItem(k);
+          if (v && v.indexOf('"uid":') !== -1) return true;
+        }
       }
+    } catch(e){}
+    return false;
+  }
+
+  // Aplica heurística inicial (por si Firebase tarda)
+  setLoggedUI(heuristicIsLogged());
+
+  // Intentamos cargar Firebase si no está
+  var firebaseConfig = {
+    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+    authDomain: "thepetslovers-c1111.firebaseapp.com",
+    projectId: "thepetslovers-c1111",
+    storageBucket: "thepetslovers-c1111.appspot.com",
+    messagingSenderId: "415914577533",
+    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+    measurementId: "G-FXPD69KXBG"
+  };
+
+  function loadScriptOnce(src) {
+    return new Promise(function (resolve, reject) {
+      if ([].some.call(document.scripts, s => s.src === src)) return resolve();
+      var s = document.createElement('script');
+      s.src = src; s.defer = true; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
     });
   }
 
-  // Carga el partial maestro (si falla, usa fallback idéntico a Index)
-  function injectNavbar() {
-    fetch('tpl-navbar.html', { cache: 'no-cache' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-      .then(function (html) { injectHTML(html); })
-      .catch(function () { injectHTML(FALLBACK_HTML); });
+  async function ensureFirebase() {
+    if (window.firebase && firebase.apps && firebase.apps.length) return;
+    // Cargamos compat si hace falta
+    if (typeof window.firebase === 'undefined') {
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+      await loadScriptOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    }
+    if (firebase.apps.length === 0) {
+      firebase.initializeApp(firebaseConfig);
+    }
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectNavbar);
-  else injectNavbar();
+  (async function initAuthListener(){
+    try {
+      await ensureFirebase();
+      firebaseReady = true;
+      var auth = firebase.auth();
+      // Aseguramos persistencia local (una sola vez)
+      try { await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(e){}
+
+      auth.onAuthStateChanged(function(user){
+        setLoggedUI(!!user);
+      });
+    } catch(e) {
+      // Si Firebase no carga, nos quedamos con la heurística
+      setLoggedUI(heuristicIsLogged());
+    }
+  })();
 })();
-/* TPL: FIN BLOQUE NUEVO */
