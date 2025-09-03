@@ -1,7 +1,7 @@
 /* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js — RESCATE SIMPLE y ESTABLE] */
 (function(){
   // 👉 Ajusta esta ruta si tu perfil se llama distinto
-  var PROFILE_URL = 'mi-perfil.html';
+  var PROFILE_URL = 'perfil.html'; // TPL: CAMBIO (antes: 'mi-perfil.html')
 
   // --- HTML del navbar (igual que Index, con “¿Necesitas ayuda?”)
   var NAV_HTML =
