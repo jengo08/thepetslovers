@@ -23,7 +23,7 @@
   .filters input,.filters select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit }
   table{ width:100%; border-collapse:collapse; margin-top:8px }
   th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top }
-  th{ color:var(--tpl-ink); font-weight:700 }
+  th{ color:#58425a; font-weight:700 }
   .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem }
   .tabbar{ display:flex; gap:8px; margin:12px 0 }
   .tabbar button{ background:#f5fbfb; color:#339496; border:1px solid #d7efef; border-radius:999px; padding:6px 12px; cursor:pointer }
@@ -86,7 +86,7 @@
                 <th>Acciones</th>
               </tr>
             </thead>
-            <tbody id="tpl-rows"></tbody>
+            <tbody id="tpl-rows"><tr><td colspan="7">Cargando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -118,7 +118,7 @@
                 <th>Acción</th>
               </tr>
             </thead>
-            <tbody id="tpl-r-rows"></tbody>
+            <tbody id="tpl-r-rows"><tr><td colspan="6">Cargando…</td></tr></tbody>
           </table>
         </div>
 
@@ -175,12 +175,11 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
 
-  // 2) Tu email permitido (ADMIN)
-  const ADMIN_EMAIL = "tuemail@dominio.com"; // <-- CAMBIA ESTO
+  // ===== CAMBIO CLAVE: dos correos admin =====
+  const ADMIN_EMAILS = new Set(["contacto@thepetslovers.es","4b.Jenny.Gomez@gmail.com"]);
 
-  // 3) UI refs
+  // UI
   const authStatus = document.getElementById('tpl-auth-status');
-  const authActions = document.getElementById('tpl-auth-actions');
   const loginBtn = document.getElementById('tpl-login');
   const logoutBtn = document.getElementById('tpl-logout');
   const app = document.getElementById('tpl-app');
@@ -205,7 +204,7 @@
   logoutBtn.addEventListener('click', ()=> auth.signOut());
 
   auth.onAuthStateChanged(user=>{
-    const ok = !!user && user.email === ADMIN_EMAIL;
+    const ok = !!user && ADMIN_EMAILS.has(user.email);
     authStatus.textContent = ok
       ? `Sesión iniciada como ${user.email}.`
       : (user ? 'No autorizado.' : 'Debes iniciar sesión para ver los datos.');
@@ -275,7 +274,7 @@
     const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
   });
 
-  // Aceptar -> crear perfil + marcar candidatura + (opcional) aviso por email
+  // Aceptar -> crear perfil + marcar candidatura
   elC.rows.addEventListener('click', async ev=>{
     const id = ev.target && ev.target.getAttribute('data-accept');
     if(!id) return;
@@ -286,7 +285,6 @@
       const cuidRef = await db.collection('cuidadores').add({
         nombre: cand.nombre||'', email: cand.email||'', telefono: cand.telefono||'',
         ciudad: cand.ciudad||'', cp: cand.cp||'', zona: zonaSugerida(cand.cp)||'',
-        // Especies (editable luego en el perfil):
         especiePerro: true, especieGato: true, especieExotico: false,
         disponibilidad: cand.disponibilidad||'', finesFestivos: cand.finesFestivos||'',
         zonasCobertura: cand.zonasCobertura||'',
@@ -297,22 +295,6 @@
         estado: 'activo', createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       await db.collection('candidaturas').doc(id).update({ estado:'aceptada', cuidId: cuidRef.id });
-
-      // (OPCIONAL) Aviso por email a la candidata: descomenta UNA opción
-
-      // Opción A: Formspree (crea un form extra y pega tu endpoint)
-      /*
-      fetch('https://formspree.io/f/TU_ENDPOINT_AVISOS', {
-        method:'POST',
-        headers:{ 'Accept':'application/json' },
-        body: new FormData(Object.assign(document.createElement('form'), {
-          innerHTML: `<input name="_subject" value="Tu perfil en The Pets Lovers está activo"><input name="_replyto" value="${cand.email}"><input name="mensaje" value="Hola ${cand.nombre||''}, tu perfil ya está activo. Puedes actualizar tu disponibilidad en: https://www.thepetslovers.es/tpl-perfil-cuidador.html?id=${cuidRef.id}">`
-        }))
-      });
-      */
-
-      // Opción B: EmailJS (requiere tu userID/service/template)
-      // emailjs.send('SERVICE_ID','TEMPLATE_ID',{ to_email: cand.email, to_name: cand.nombre||'', perfil_url: `https://www.thepetslovers.es/tpl-perfil-cuidador.html?id=${cuidRef.id}` });
 
       const idx = allC.findIndex(x=>x._id===id);
       if (idx>=0){ allC[idx].estado='aceptada'; allC[idx].cuidId=cuidRef.id; }
@@ -338,7 +320,7 @@
     sugDesc: document.getElementById('tpl-sug-desc')
   };
   let allR = [];
-  let cachedCuid = []; // cuidadores para sugerir
+  let cachedCuid = [];
 
   function renderR(){
     const limit = parseInt(elR.limit.value||'50',10);
@@ -364,8 +346,8 @@
 
   async function loadR(){
     elR.status.textContent = 'Cargando reservas…';
-    // Estructura esperada en /reservas:
-    // { clienteNombre, clienteEmail, ciudad, cp, especie: 'perro'|'gato'|'exotico', servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt }
+    // Esperado en /reservas:
+    // { clienteNombre, clienteEmail, ciudad, cp, especie, servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt }
     const snap = await db.collection('reservas').orderBy('createdAt','desc').limit(200).get();
     allR = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
     elR.status.textContent = `Cargadas ${allR.length}.`;
@@ -378,32 +360,26 @@
     cachedCuid = snap.docs.map(d=>({ id:d.id, ...d.data() }));
   }
 
-  function overlapDates(startA, endA, startB, endB){
-    return !(endA < startB || endB < startA);
-  }
-
   async function sugerirParaReserva(reserva){
     await ensureCuidadoresCache();
-    // 1) Filtrar por especie
+    // 1) Especie
     const esp = reserva.especie;
     const porEspecie = cachedCuid.filter(c=>{
-      if (esp==='perro') return c.especiePerro !== false; // por defecto true
+      if (esp==='perro') return c.especiePerro !== false;
       if (esp==='gato') return c.especieGato !== false;
-      if (esp==='exotico') return c.especieExotico === true; // exótico requiere opt-in
+      if (esp==='exotico') return c.especieExotico === true;
       return true;
     });
-
-    // 2) Proximidad por CP / ciudad
+    // 2) Zona (CP/ciudad)
     const prefCP = String(reserva.cp||'').slice(0,2);
     function scoreZona(c){
-      let s = 0;
-      if (c.cp && String(c.cp).slice(0,2)===prefCP) s += 3;
-      if ((c.ciudad||'').toLowerCase()===(reserva.ciudad||'').toLowerCase()) s += 2;
-      if ((c.zonasCobertura||'').toLowerCase().includes((reserva.ciudad||'').toLowerCase())) s += 1;
+      let s=0;
+      if (c.cp && String(c.cp).slice(0,2)===prefCP) s+=3;
+      if ((c.ciudad||'').toLowerCase()===(reserva.ciudad||'').toLowerCase()) s+=2;
+      if ((c.zonasCobertura||'').toLowerCase().includes((reserva.ciudad||'').toLowerCase())) s+=1;
       return s;
     }
-
-    // 3) Disponibilidad (no tenga BUSY en el rango). Si tiene algún FREE, suma.
+    // 3) Disponibilidad (agenda)
     const start = reserva.fechaInicio, end = reserva.fechaFin;
     async function disponibilidadScore(c){
       const q = await db.collection('cuidadores').doc(c.id).collection('agenda')
@@ -413,39 +389,35 @@
       const hayFree = evs.some(e=> e.type==='free');
       return hayBusy ? -5 : (hayFree ? 2 : 0);
     }
-
-    // 4) Calcular puntuación final
     const base = porEspecie.map(c=>({ c, zona: scoreZona(c) }));
-    // Cargar disponibilidad en paralelo:
     const availScores = await Promise.all(base.map(x=> disponibilidadScore(x.c)));
-    const ranked = base.map((x,i)=>({ c:x.c, score: x.zona + availScores[i], zonaScore:x.zona, dispScore: availScores[i] }))
-      .sort((a,b)=> b.score - a.score);
-
-    return ranked;
+    return base.map((x,i)=>({ c:x.c, score: x.zona + availScores[i], zonaScore:x.zona, dispScore: availScores[i] }))
+               .sort((a,b)=> b.score - a.score);
   }
 
-  // Abrir/cerrar modal
-  const openModal = ()=> elR.modal.style.display='flex';
-  const closeModal = ()=> elR.modal.style.display='none';
-  elR.close.addEventListener('click', closeModal);
-  elR.modal.addEventListener('click', e=>{ if(e.target===elR.modal) closeModal(); });
+  // Modal sugerencias
+  const openModal = ()=> document.getElementById('tpl-modal').style.display='flex';
+  const closeModal = ()=> document.getElementById('tpl-modal').style.display='none';
+  document.getElementById('tpl-close').addEventListener('click', closeModal);
+  document.getElementById('tpl-modal').addEventListener('click', e=>{ if(e.target.id==='tpl-modal') closeModal(); });
 
-  // Botón "Sugerir cuidadores"
-  elR.rows.addEventListener('click', async ev=>{
+  document.getElementById('tpl-r-rows').addEventListener('click', async ev=>{
     const id = ev.target && ev.target.getAttribute('data-sugerir');
     if(!id) return;
     const r = allR.find(x=>x._id===id);
     if(!r) return;
-    elR.sugRows.innerHTML = '<tr><td colspan="6">Calculando…</td></tr>';
-    elR.sugDesc.textContent = `Reserva: ${r.ciudad||'-'} ${r.cp||''} · ${r.especie||'-'} · ${r.fechaInicio||''} → ${r.fechaFin||''}`;
+    const sugRows = document.getElementById('tpl-sug-rows');
+    const sugDesc = document.getElementById('tpl-sug-desc');
+    sugRows.innerHTML = '<tr><td colspan="6">Calculando…</td></tr>';
+    sugDesc.textContent = `Reserva: ${r.ciudad||'-'} ${r.cp||''} · ${r.especie||'-'} · ${r.fechaInicio||''} → ${r.fechaFin||''}`;
     openModal();
     try{
       const lista = await sugerirParaReserva(r);
       if (!lista.length){
-        elR.sugRows.innerHTML = '<tr><td colspan="6">No hay coincidencias perfectas. Igualmente la reserva queda registrada para que la gestiones.</td></tr>';
+        sugRows.innerHTML = '<tr><td colspan="6">No hay coincidencias. La reserva queda registrada.</td></tr>';
         return;
       }
-      elR.sugRows.innerHTML = lista.slice(0,30).map(x=>{
+      sugRows.innerHTML = lista.slice(0,30).map(x=>{
         const esp = [
           x.c.especiePerro!==false ? '🐶' : '—',
           x.c.especieGato!==false ? '🐱' : '—',
@@ -463,16 +435,15 @@
       }).join('');
     }catch(e){
       console.error(e);
-      elR.sugRows.innerHTML = '<tr><td colspan="6">Error calculando sugerencias.</td></tr>';
+      sugRows.innerHTML = '<tr><td colspan="6">Error calculando sugerencias.</td></tr>';
     }
   });
 
-  [elR.q, elR.especie, elR.limit].forEach(n=> n.addEventListener('input', renderR));
+  ['tpl-r-q','tpl-r-especie','tpl-r-limit'].forEach(id=>{
+    const n=document.getElementById(id); n && n.addEventListener('input', renderR);
+  });
 
-  async function boot(){
-    await loadC();
-    await loadR();
-  }
+  async function boot(){ await loadC(); await loadR(); }
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
