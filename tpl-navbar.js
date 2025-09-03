@@ -62,6 +62,12 @@
   // --- Montaje: crea #tpl-navbar si no existe y pinta la barra
   function mountNavbar(){
     try{
+      // Evita duplicar si la página ya trae una .navbar en el HTML
+      if (document.querySelector('.navbar')) {
+        applySessionUI();
+        markActiveLink();
+        return;
+      }
       var host = document.getElementById('tpl-navbar');
       if(!host){
         host = document.createElement('div');
@@ -182,22 +188,24 @@
     mountNavbar();
   }
 })();
- /* TPL: FIN BLOQUE NUEVO */
-<!-- TPL: INICIO BLOQUE NUEVO [Tracking de visitas centralizado] -->
-<script>
-// Si este archivo ya está en todas las páginas, no necesitas tocar cada HTML.
-// Añade este bloque al FINAL de tpl-navbar.js (o tpl-footer.js si lo cargas en todas).
+/* TPL: FIN BLOQUE NUEVO */
+
+
+/* TPL: INICIO BLOQUE NUEVO [Tracking de visitas centralizado — JS puro, sin <script>] */
 (function(){
   // Permitir desactivar tracking en páginas concretas (ej. admin) añadiendo: <body data-tpl-no-track>
   if (document.body && document.body.hasAttribute('data-tpl-no-track')) return;
 
-  // Evitar doble ejecución
+  // Evitar doble ejecución si navbar y footer se cargan a la vez
   if (window.__tplTracked) return; window.__tplTracked = true;
 
   // 1) Cargar Firebase si no existe (ligero y solo una vez)
-  function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+  function loadScript(src){
+    return new Promise(function(res,rej){
+      var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
   async function ensureFirebase(){
-    if (window.firebase && firebase.apps && firebase.apps.length) return;
     if (!window.firebase){
       await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
       await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
@@ -205,7 +213,6 @@
       await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
     }
     if (!firebase.apps.length){
-      // Usa tu mismo config del proyecto
       firebase.initializeApp({
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
         authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -223,20 +230,19 @@
     try{
       await ensureFirebase();
       if (!window.firebase || !firebase.firestore) return;
-      const db = firebase.firestore();
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth()+1).padStart(2,'0');
-      const d = String(now.getDate()).padStart(2,'0');
-      const ymd = `${y}-${m}-${d}`;
+      var db = firebase.firestore();
+      var now = new Date();
+      var y = now.getFullYear();
+      var m = String(now.getMonth()+1).padStart(2,'0');
+      var d = String(now.getDate()).padStart(2,'0');
+      var ymd = y + '-' + m + '-' + d;
       await db.collection('visitas').doc(ymd).set({
         date: ymd,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         count: firebase.firestore.FieldValue.increment(1)
       }, { merge:true });
     }catch(e){
-      // Silencioso: no queremos romper nada si falla
-      // console.warn('Tracking visitas falló', e);
+      // silencioso
     }
   }
 
@@ -247,5 +253,4 @@
     trackVisit();
   }
 })();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+/* TPL: FIN BLOQUE NUEVO */
