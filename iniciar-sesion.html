@@ -13,48 +13,78 @@
   <!-- TPL: INICIO BLOQUE NUEVO [Estilos compactos y limpios del login] -->
   <style>
     :root { --tpl-primary:#339496; --tpl-ink:#58425a; }
+    * { box-sizing: border-box; } /* asegura que nada se salga de la tarjeta */
     body{ background:#f7f9f9; }
-    .auth-wrap{ max-width:460px; margin:96px auto 56px; padding:0 16px; }
-    .auth-card{
-      background:#fff; border:1px solid #eee; border-radius:14px;
-      box-shadow:0 2px 12px rgba(0,0,0,.06); padding:18px;
-    }
-    .auth-title{ margin:0 0 6px; color:var(--tpl-ink); font-size:1.35rem; line-height:1.15; }
-    .auth-sub{ margin:0 0 12px; color:#666; font-size:.95rem; }
 
-    .auth-form{ display:grid; gap:10px; margin-top:6px; }
-    .auth-form label{ font-size:.92rem; color:var(--tpl-ink); display:block; margin-bottom:6px; }
-    .auth-form input{
-      width:100%; border:1px solid #ddd; border-radius:12px; padding:11px 12px; font-size:1rem; background:#fff;
+    .auth-wrap{
+      max-width:420px;          /* tarjeta más pequeña */
+      margin:88px auto 48px;
+      padding:0 12px;
     }
-    .auth-form input:focus{ outline:none; border-color:#c7e6e6; box-shadow:0 0 0 3px rgba(51,148,150,.12); }
+    .auth-card{
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,.06);
+      padding:14px;             /* menos padding */
+      overflow:hidden;          /* evita desbordes visuales */
+    }
+
+    .auth-title{ margin:0 0 4px; color:var(--tpl-ink); font-size:1.25rem; line-height:1.15; }
+    .auth-sub{ margin:0 0 8px; color:#666; font-size:.92rem; }
+
+    .auth-form{ display:grid; gap:8px; margin-top:4px; }  /* menos gap */
+    .auth-form label{ font-size:.9rem; color:var(--tpl-ink); display:block; margin-bottom:6px; }
+    .input-wrap{ position:relative; }
+    .auth-form input{
+      width:100%;
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:10px 12px;       /* un poco más compacto */
+      font-size:1rem;
+      background:#fff;
+    }
+    .auth-form input:focus{
+      outline:none; border-color:#c7e6e6;
+      box-shadow:0 0 0 3px rgba(51,148,150,.12);
+    }
 
     .toggle-pass{
       position:absolute; right:8px; top:50%; transform:translateY(-50%);
-      border:none; background:transparent; color:#888; padding:6px; cursor:pointer; border-radius:8px;
+      border:none; background:transparent; color:#888; padding:4px; cursor:pointer; border-radius:8px;
+      line-height:0;           /* botón más discreto */
     }
+    .toggle-pass:focus{ outline:3px solid rgba(51,148,150,.25); }
 
-    .input-wrap{ position:relative; }
-
-    .btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100%; }
+    .btn{
+      background:#339496; color:#fff; border:none; border-radius:999px;
+      padding:10px 14px; cursor:pointer; font-weight:700; width:100%;
+    }
     .btn[disabled]{ opacity:.65; cursor:not-allowed; }
-    .btn-outline{ background:#fff; color:#339496; border:1.5px solid #339496; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100% }
+    .btn-outline{
+      background:#fff; color:#339496; border:1.5px solid #339496; border-radius:999px;
+      padding:10px 14px; cursor:pointer; font-weight:700; width:100%;
+    }
     .btn-google{
       display:flex; align-items:center; justify-content:center; gap:8px;
-      border:1px solid #e7e7e7; border-radius:999px; padding:11px 16px; background:#fff;
+      border:1px solid #e7e7e7; border-radius:999px; padding:10px 14px; background:#fff;
       cursor:pointer; font-weight:700; width:100%; color:#2b6e70;
     }
-    .btn:focus, .btn-outline:focus, .btn-google:focus, .toggle-pass:focus{ outline:3px solid rgba(51,148,150,.25); }
+    .btn:focus, .btn-outline:focus, .btn-google:focus{ outline:3px solid rgba(51,148,150,.25); }
 
-    .row-actions{ display:grid; gap:10px; margin-top:10px; }
-    .auth-msg{ min-height:1.2em; color:var(--tpl-ink); text-align:center; margin-top:6px }
+    .auth-msg{ min-height:1.1em; color:var(--tpl-ink); text-align:center; margin-top:4px }
 
-    .sep{ position:relative; text-align:center; margin:10px 0 4px; color:#999; font-size:.9rem }
+    .sep{
+      position:relative; text-align:center; margin:8px 0 6px; /* menos hueco */
+      color:#999; font-size:.88rem
+    }
     .sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee }
     .sep span{ background:#fff; padding:0 8px; position:relative; z-index:1 }
 
+    .row-actions{ display:grid; gap:8px; margin-top:6px; } /* menos hueco antes/después de Google */
+
     .below{
-      margin-top:12px; text-align:center; font-size:.92rem; color:#555;
+      margin-top:8px; text-align:center; font-size:.9rem; color:#555; /* más compacto */
     }
     .below a{ color:var(--tpl-primary); font-weight:700; text-decoration:underline; }
   </style>
@@ -273,7 +303,7 @@
       });
 
       // Reset password
-      btnForgot.addEventListener('click', async function(){
+      btnForgot && btnForgot.addEventListener('click', async function(){
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
         const em = (email.value||'').trim();
