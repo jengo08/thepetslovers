@@ -1,462 +1,276 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin · The Pets Lovers</title>
-<meta name="robots" content="noindex,nofollow">
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<style>
-  :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
-  .page{ padding-top:120px }
-  .tpl-card{ max-width:1200px; margin:0 auto 60px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); padding:16px; }
-  h1{ margin:0 0 8px }
-  .muted{ color:#666 }
-  .btn{ background:#339496; color:#fff; border-radius:999px; padding:8px 12px; text-decoration:none; border:2px solid transparent; display:inline-block; font-weight:700; cursor:pointer }
-  .btn.sec{ background:#fff; color:#339496; border-color:#339496 }
-  .btn:disabled{ opacity:.6; cursor:not-allowed }
-  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 }
-  .filters{ display:grid; gap:10px; grid-template-columns:1fr 180px 180px 120px }
-  @media (max-width: 900px){ .filters{ grid-template-columns:1fr 1fr } }
-  .filters input,.filters select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit }
-  table{ width:100%; border-collapse:collapse; margin-top:8px }
-  th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top }
-  th{ color:#58425a; font-weight:700 }
-  .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem }
-  .tabbar{ display:flex; gap:8px; margin:12px 0 }
-  .tabbar button{ background:#f5fbfb; color:#339496; border:1px solid #d7efef; border-radius:999px; padding:6px 12px; cursor:pointer }
-  .tabbar button.active{ background:#339496; color:#fff; border-color:#339496 }
-  .section{ display:none }
-  .section.active{ display:block }
-  .status{ margin:6px 0 12px; color:#666 }
-  .nowrap{ white-space:nowrap }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión · The Pets Lovers</title>
+  <meta name="description" content="Accede a tu cuenta o regístrate en The Pets Lovers.">
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos login conservando tu tarjeta] -->
+  <style>
+    :root { --tpl-primary:#339496; --tpl-ink:#58425a; }
+    body{ background:#f7f9f9; }
+    .auth-wrap{ max-width:460px; margin:120px auto 60px; padding:0 16px; } /* +espacio arriba */
+    .auth-card{ background:#fff; border:1px solid #eee; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.06); padding:18px; }
+    .auth-title{ margin:0 0 6px; color:var(--tpl-ink); font-size:1.35rem; text-align:center }
+    .auth-sub{ margin:0 0 14px; color:#666; text-align:center }
+    .auth-form{ display:grid; gap:10px; margin-top:6px; }
+    .auth-form label{ font-size:.92rem; color:var(--tpl-ink); display:block; margin-bottom:6px; }
+    .auth-form input{ border:1px solid #ddd; border-radius:10px; padding:11px 12px; font-size:1rem; width:100% }
+    .btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100% }
+    .btn-outline{ background:#fff; color:#339496; border:1px solid #339496; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100% }
+    .btn-google{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid #ddd; border-radius:999px; padding:11px 16px; background:#fff; cursor:pointer; font-weight:700; width:100%; color:var(--tpl-primary) }
+    .row-actions{ display:grid; gap:10px; margin-top:10px; }
+    .sep{ position:relative; text-align:center; margin:10px 0 8px; color:#999; font-size:.9rem }
+    .sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee }
+    .sep span{ background:#fff; padding:0 8px; position:relative; z-index:1 }
+    .auth-msg{ min-height:1.2em; color:var(--tpl-ink); text-align:center; margin-top:6px }
+    .below{ margin-top:10px; text-align:center; font-size:.9rem; }
+    .below a{ color:var(--tpl-primary); font-weight:700; text-decoration:underline; }
+    .auth-footer-link{ display:block; text-align:center; margin-top:16px; font-size:.85rem; color:#339496; text-decoration:none } /* link volver fuera de la tarjeta */
+
+    /* Aviso cuando ya hay sesión */
+    .already{ margin-top:10px; text-align:center; font-size:.92rem; color:#555; }
+    .btn-chip{ display:inline-block; margin:6px 6px 0 6px; padding:8px 12px; border-radius:999px; border:1px solid #d7efef; background:#f5fbfb; color:#339496; font-weight:700; text-decoration:none }
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-<main class="page">
-  <section class="tpl-card">
-    <h1>🔒 Admin · The Pets Lovers</h1>
-    <p id="tpl-auth-status" class="muted">Debes iniciar sesión para ver los datos.</p>
-    <div class="toolbar" id="tpl-auth-actions">
-      <button class="btn" id="tpl-login">Iniciar sesión con Google</button>
-      <button class="btn sec" id="tpl-logout" style="display:none">Cerrar sesión</button>
-    </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Tabs] -->
-    <div id="tpl-app" style="display:none">
-      <div class="tabbar" role="tablist" aria-label="Secciones">
-        <button class="active" data-tab="cands" role="tab">Candidaturas</button>
-        <button data-tab="reservas" role="tab">Reservas</button>
+  <!-- Navbar unificada -->
+  <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
+
+  <main class="auth-wrap container">
+    <section class="auth-card" aria-label="Acceso">
+      <h1 class="auth-title">Iniciar sesión</h1>
+      <p class="auth-sub">Introduce tu email y contraseña.</p>
+
+      <!-- Aviso si ya hay sesión (sin redirigir automáticamente) -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Aviso de sesión iniciada] -->
+      <div id="tpl-logged" class="already" style="display:none">
+        Ya has iniciado sesión.
+        <a href="tpl-candidaturas-admin.html" class="btn-chip" id="tpl-btn-panel" style="display:none">Ir a Panel</a>
+        <a href="perfil.html" class="btn-chip" id="tpl-btn-perfil">Ir a Mi perfil</a>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- Formulario -->
+      <form id="formAuth" class="auth-form" novalidate>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" />
+        </div>
+        <div>
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password" />
+        </div>
+        <button id="btnLogin" class="btn" type="submit">Iniciar sesión</button>
+        <button id="btnForgot" class="btn-outline" type="button">¿Has olvidado la contraseña?</button>
+        <p id="msg" class="auth-msg" aria-live="polite"></p>
+      </form>
+
+      <div class="sep"><span>o</span></div>
+      <div class="row-actions">
+        <button id="btnGoogle" class="btn-google" type="button"><i class="fa-brands fa-google"></i> Continuar con Google</button>
       </div>
 
-      <!-- Candidaturas -->
-      <div id="section-cands" class="section active">
-        <p id="tpl-status-c" class="status">Cargando candidaturas…</p>
-        <div class="filters">
-          <input id="tpl-q" type="search" placeholder="Buscar nombre, email, ciudad, zonas…">
-          <select id="tpl-f-disp">
-            <option value="">Disponibilidad (todas)</option>
-            <option>Mañanas</option><option>Tardes</option><option>Noches</option>
-            <option>Fines de semana</option><option>Completa</option>
-          </select>
-          <select id="tpl-f-estado">
-            <option value="">Estado (todos)</option>
-            <option value="aceptada">Aceptada</option>
-            <option value="pendiente">Pendiente</option>
-          </select>
-          <select id="tpl-f-limit">
-            <option>25</option><option selected>50</option><option>100</option>
-          </select>
-        </div>
-        <div class="toolbar">
-          <button class="btn sec" id="tpl-export">Exportar CSV</button>
-        </div>
-        <div style="overflow:auto">
-          <table aria-describedby="tpl-status-c">
-            <thead>
-              <tr>
-                <th class="nowrap">Fecha</th>
-                <th>Nombre / Contacto</th>
-                <th>Ciudad / CP</th>
-                <th>Zona</th>
-                <th>Disponibilidad</th>
-                <th>Archivos</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="tpl-rows"><tr><td colspan="7">Cargando…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
+      <p class="below">¿Aún no tienes cuenta? <a id="btnSignup" href="registro.html">Regístrate</a></p>
+    </section>
 
-      <!-- Reservas -->
-      <div id="section-reservas" class="section">
-        <p id="tpl-status-r" class="status">Cargando reservas…</p>
-        <div class="filters">
-          <input id="tpl-r-q" type="search" placeholder="Buscar por cliente, ciudad, CP">
-          <select id="tpl-r-especie">
-            <option value="">Especie (todas)</option>
-            <option value="perro">Perro</option>
-            <option value="gato">Gato</option>
-            <option value="exotico">Exótico</option>
-          </select>
-          <select id="tpl-r-limit">
-            <option>25</option><option selected>50</option><option>100</option>
-          </select>
-        </div>
-        <div style="overflow:auto; margin-top:10px">
-          <table>
-            <thead>
-              <tr>
-                <th class="nowrap">Fecha</th>
-                <th>Cliente</th>
-                <th>Ciudad / CP</th>
-                <th>Especie</th>
-                <th>Servicio / Fechas</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="tpl-r-rows"><tr><td colspan="6">Cargando…</td></tr></tbody>
-          </table>
-        </div>
+    <!-- Link “Volver a la web” fuera de la tarjeta -->
+    <a href="index.html" class="auth-footer-link">← Volver a la web</a>
+  </main>
 
-        <!-- Modal sugerencias -->
-        <div id="tpl-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:16px">
-          <div style="background:#fff; max-width:900px; width:100%; border-radius:12px; padding:16px">
-            <h3 style="margin-top:0">Sugerencias de cuidadores</h3>
-            <p class="muted" id="tpl-sug-desc">Resultados por cercanía, especie y disponibilidad.</p>
-            <div style="overflow:auto; max-height:70vh">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Cuidador</th><th>Zona</th><th>Especies</th><th>Disponibilidad</th><th>Puntuación</th><th>Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="tpl-sug-rows"><tr><td colspan="6">Calculando…</td></tr></tbody>
-              </table>
-            </div>
-            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px">
-              <button class="btn sec" id="tpl-close">Cerrar</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-  </section>
-</main>
+  <!-- Footer -->
+  <div id="tpl-footer"></div>
+  <script src="tpl-footer.js" defer></script>
 
-<script src="tpl-navbar.js" defer></script>
-<script src="tpl-footer.js" defer></script>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
-<!-- TPL: INICIO BLOQUE NUEVO [Init + Auth + Lógica] -->
-<script>
-(function(){
-  // 1) Init Firebase
-  if (!firebase.apps.length){
-    const firebaseConfig = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
-    firebase.initializeApp(firebaseConfig);
-  }
-  const db = firebase.firestore();
-  const auth = firebase.auth();
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Admins + helper en minúsculas] -->
-  // SOLO este email (en minúsculas)
-  const ADMIN_EMAILS = new Set(["4b.jenny.gomez@gmail.com"]);
-  function isAdminEmail(email){
-    return !!email && ADMIN_EMAILS.has(String(email).toLowerCase());
-  }
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  // UI
-  const authStatus = document.getElementById('tpl-auth-status');
-  const loginBtn = document.getElementById('tpl-login');
-  const logoutBtn = document.getElementById('tpl-logout');
-  const app = document.getElementById('tpl-app');
-
-  // Tabs
-  const tabs = document.querySelectorAll('[data-tab]');
-  const sections = {
-    cands: document.getElementById('section-cands'),
-    reservas: document.getElementById('section-reservas')
-  };
-  tabs.forEach(b=>b.addEventListener('click', ()=>{
-    tabs.forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    Object.values(sections).forEach(s=>s.classList.remove('active'));
-    sections[b.dataset.tab].classList.add('active');
-  }));
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Login: persistencia + sin redirección] -->
-  loginBtn.addEventListener('click', async ()=>{
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    await auth.signInWithPopup(provider);
-    // No redirigimos; el onAuthStateChanged mostrará el panel
-  });
-  <!-- TPL: FIN BLOQUE NUEVO -->
-  logoutBtn.addEventListener('click', ()=> auth.signOut());
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Auth state con check en minúsculas] -->
-  auth.onAuthStateChanged(user=>{
-    const ok = !!user && isAdminEmail(user.email);
-    authStatus.textContent = ok
-      ? `Sesión iniciada como ${user.email}.`
-      : (user ? 'No autorizado.' : 'Debes iniciar sesión para ver los datos.');
-    loginBtn.style.display = ok ? 'none':'inline-block';
-    logoutBtn.style.display = user ? 'inline-block':'none';
-    app.style.display = ok ? '' : 'none';
-    if (ok){ boot(); } // carga el panel directamente
-  });
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  // ======== CANDIDATURAS ========
-  const PROV = {"01":"Álava","02":"Albacete","03":"Alicante","04":"Almería","05":"Ávila","06":"Badajoz","07":"Islas Baleares","08":"Barcelona","09":"Burgos","10":"Cáceres","11":"Cádiz","12":"Castellón","13":"Ciudad Real","14":"Córdoba","15":"A Coruña","16":"Cuenca","17":"Girona","18":"Granada","19":"Guadalajara","20":"Gipuzkoa","21":"Huelva","22":"Huesca","23":"Jaén","24":"León","25":"Lleida","26":"La Rioja","27":"Lugo","28":"Madrid","29":"Málaga","30":"Murcia","31":"Navarra","32":"Ourense","33":"Asturias","34":"Palencia","35":"Las Palmas","36":"Pontevedra","37":"Salamanca","38":"Santa Cruz de Tenerife","39":"Cantabria","40":"Segovia","41":"Sevilla","42":"Soria","43":"Tarragona","44":"Teruel","45":"Toledo","46":"Valencia","47":"Valladolid","48":"Bizkaia","49":"Zamora","50":"Zaragoza","51":"Ceuta","52":"Melilla"};
-  function zonaSugerida(cp){ const s=(cp||'').toString().padStart(5,'0').slice(0,2); return PROV[s]||''; }
-  function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-  function fmt(ts){ if(!ts) return '-'; const d=ts.toDate(); return d.toLocaleDateString('es-ES',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
-  function textMatch(item, needle){ if(!needle) return true; const hay=[item.nombre,item.email,item.telefono,item.ciudad,item.cp,item.zonasCobertura,item.links].join(' ').toLowerCase(); return hay.includes(needle.toLowerCase()); }
-
-  const elC = {
-    status: document.getElementById('tpl-status-c'),
-    q: document.getElementById('tpl-q'),
-    fDisp: document.getElementById('tpl-f-disp'),
-    fEstado: document.getElementById('tpl-f-estado'),
-    fLimit: document.getElementById('tpl-f-limit'),
-    rows: document.getElementById('tpl-rows'),
-    exportBtn: document.getElementById('tpl-export')
-  };
-  let allC = [];
-
-  function renderC(){
-    const limit = parseInt(elC.fLimit.value||'50',10);
-    const needle = elC.q.value.trim();
-    const disp = elC.fDisp.value.trim();
-    const estado = elC.fEstado.value.trim();
-    const filtered = allC.filter(it => textMatch(it, needle) && (!disp || (it.disponibilidad||'')===disp) && (!estado || (it.estado||'pendiente')===estado)).slice(0,limit);
-    elC.rows.innerHTML = filtered.length ? filtered.map(it=>{
-      const archivos = (it.cvUrl?`<a class="btn sec" href="${it.cvUrl}" target="_blank" rel="noopener">CV</a>`:'')+' '+(it.tituloUrl?`<a class="btn sec" href="${it.tituloUrl}" target="_blank" rel="noopener">Título</a>`:'');
-      const zona = zonaSugerida(it.cp);
-      const canAccept = !it.cuidId;
-      const perfilHref = it.cuidId ? `tpl-perfil-cuidador.html?id=${encodeURIComponent(it.cuidId)}` : '#';
-      return `<tr>
-        <td class="nowrap">${fmt(it.createdAt)}</td>
-        <td><div><strong>${esc(it.nombre)}</strong></div><div class="muted">${esc(it.email||'-')} · ${esc(it.telefono||'-')}</div></td>
-        <td>${esc(it.ciudad||'-')}<br><span class="muted">${esc(it.cp||'')}</span></td>
-        <td>${zona?`<span class="pill">${zona}</span>`:'-'}</td>
-        <td>${esc(it.disponibilidad||'-')}</td>
-        <td>${archivos||'-'}</td>
-        <td>${canAccept ? `<button class="btn" data-accept="${it._id}">Aceptar</button>` : `<a class="btn" href="${perfilHref}">Ver perfil</a>`}</td>
-      </tr>`;
-    }).join('') : '<tr><td colspan="7">Sin resultados.</td></tr>';
-  }
-
-  async function loadC(){
-    elC.status.textContent = 'Cargando candidaturas…';
-    const snap = await db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get();
-    allC = snap.docs.map(d=>({ _id:d.id, ...d.data(), estado: d.data().estado || 'pendiente' }));
-    elC.status.textContent = `Cargadas ${allC.length}.`;
-    renderC();
-  }
-
-  [elC.q, elC.fDisp, elC.fEstado, elC.fLimit].forEach(n=> n.addEventListener('input', renderC));
-  elC.exportBtn.addEventListener('click', ()=>{
-    const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cvUrl','tituloUrl','cuidId'];
-    const lines = [head.join(',')];
-    allC.forEach(it=>{
-      const row = [ fmt(it.createdAt)||'', it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', it.cvUrl||'', it.tituloUrl||'', it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
-      lines.push(row.join(','));
-    });
-    const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
-  });
-
-  // Aceptar -> crear perfil + marcar candidatura
-  elC.rows.addEventListener('click', async ev=>{
-    const id = ev.target && ev.target.getAttribute('data-accept');
-    if(!id) return;
-    ev.target.disabled = true;
-    try{
-      const cand = allC.find(x=>x._id===id);
-      if(!cand) throw new Error('Candidatura no encontrada');
-      const cuidRef = await db.collection('cuidadores').add({
-        nombre: cand.nombre||'', email: cand.email||'', telefono: cand.telefono||'',
-        ciudad: cand.ciudad||'', cp: cand.cp||'', zona: zonaSugerida(cand.cp)||'',
-        especiePerro: true, especieGato: true, especieExotico: false,
-        disponibilidad: cand.disponibilidad||'', finesFestivos: cand.finesFestivos||'',
-        zonasCobertura: cand.zonasCobertura||'',
-        atvTitulado: cand.atvTitulado||'', otrasFormaciones: cand.otrasFormaciones||'',
-        experienciaLaboral: cand.experienciaLaboral || cand.experienciaPrev || '',
-        funcionesHabituales: cand.funcionesHabituales||'',
-        links: cand.links||'', descripcionPersonal: cand.descripcionPersonal||'',
-        estado: 'activo', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await db.collection('candidaturas').doc(id).update({ estado:'aceptada', cuidId: cuidRef.id });
-
-      const idx = allC.findIndex(x=>x._id===id);
-      if (idx>=0){ allC[idx].estado='aceptada'; allC[idx].cuidId=cuidRef.id; }
-      renderC();
-      alert('Candidatura aceptada y perfil creado.');
-    }catch(e){
-      console.error(e); alert('Error al aceptar (revisa reglas Firestore)');
-    }finally{
-      ev.target.disabled = false;
-    }
-  });
-
-  // ======== RESERVAS + SUGERENCIAS ========
-  const elR = {
-    status: document.getElementById('tpl-status-r'),
-    q: document.getElementById('tpl-r-q'),
-    especie: document.getElementById('tpl-r-especie'),
-    limit: document.getElementById('tpl-r-limit'),
-    rows: document.getElementById('tpl-r-rows'),
-    modal: document.getElementById('tpl-modal'),
-    close: document.getElementById('tpl-close'),
-    sugRows: document.getElementById('tpl-sug-rows'),
-    sugDesc: document.getElementById('tpl-sug-desc')
-  };
-  let allR = [];
-  let cachedCuid = [];
-
-  function renderR(){
-    const limit = parseInt(elR.limit.value||'50',10);
-    const needle = elR.q.value.trim().toLowerCase();
-    const especie = elR.especie.value;
-    const filtered = allR.filter(r=>{
-      const hay=[r.clienteNombre,r.clienteEmail,r.ciudad,r.cp].join(' ').toLowerCase();
-      const okText = !needle || hay.includes(needle);
-      const okEsp  = !especie || (r.especie===especie);
-      return okText && okEsp;
-    }).slice(0,limit);
-    elR.rows.innerHTML = filtered.length ? filtered.map(r=>`
-      <tr>
-        <td class="nowrap">${fmt(r.createdAt)}</td>
-        <td><strong>${esc(r.clienteNombre||'-')}</strong><div class="muted">${esc(r.clienteEmail||'')}</div></td>
-        <td>${esc(r.ciudad||'-')}<br><span class="muted">${esc(r.cp||'')}</span></td>
-        <td>${esc(r.especie||'-')}</td>
-        <td>${esc(r.servicio||'-')}<br><span class="muted">${esc(r.fechaInicio||'')} → ${esc(r.fechaFin||'')}</span></td>
-        <td><button class="btn" data-sugerir="${r._id}">Sugerir cuidadores</button></td>
-      </tr>
-    `).join('') : '<tr><td colspan="6">Sin reservas.</td></tr>';
-  }
-
-  async function loadR(){
-    elR.status.textContent = 'Cargando reservas…';
-    // Esperado en /reservas:
-    // { clienteNombre, clienteEmail, ciudad, cp, especie, servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt }
-    const snap = await db.collection('reservas').orderBy('createdAt','desc').limit(200).get();
-    allR = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
-    elR.status.textContent = `Cargadas ${allR.length}.`;
-    renderR();
-  }
-
-  async function ensureCuidadoresCache(){
-    if (cachedCuid.length) return;
-    const snap = await db.collection('cuidadores').where('estado','==','activo').limit(500).get();
-    cachedCuid = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-  }
-
-  async function sugerirParaReserva(reserva){
-    await ensureCuidadoresCache();
-    // 1) Especie
-    const esp = reserva.especie;
-    const porEspecie = cachedCuid.filter(c=>{
-      if (esp==='perro') return c.especiePerro !== false;
-      if (esp==='gato') return c.especieGato !== false;
-      if (esp==='exotico') return c.especieExotico === true;
-      return true;
-    });
-    // 2) Zona (CP/ciudad)
-    const prefCP = String(reserva.cp||'').slice(0,2);
-    function scoreZona(c){
-      let s=0;
-      if (c.cp && String(c.cp).slice(0,2)===prefCP) s+=3;
-      if ((c.ciudad||'').toLowerCase()===(reserva.ciudad||'').toLowerCase()) s+=2;
-      if ((c.zonasCobertura||'').toLowerCase().includes((reserva.ciudad||'').toLowerCase())) s+=1;
-      return s;
-    }
-    // 3) Disponibilidad (agenda)
-    const start = reserva.fechaInicio, end = reserva.fechaFin;
-    async function disponibilidadScore(c){
-      const q = await db.collection('cuidadores').doc(c.id).collection('agenda')
-        .where('date','>=', start).where('date','<=', end).get();
-      const evs = q.docs.map(d=>d.data());
-      const hayBusy = evs.some(e=> e.type==='busy');
-      const hayFree = evs.some(e=> e.type==='free');
-      return hayBusy ? -5 : (hayFree ? 2 : 0);
-    }
-    const base = porEspecie.map(c=>({ c, zona: scoreZona(c) }));
-    const availScores = await Promise.all(base.map(x=> disponibilidadScore(x.c)));
-    return base.map((x,i)=>({ c:x.c, score: x.zona + availScores[i], zonaScore:x.zona, dispScore: availScores[i] }))
-               .sort((a,b)=> b.score - a.score);
-  }
-
-  // Modal sugerencias
-  const openModal = ()=> document.getElementById('tpl-modal').style.display='flex';
-  const closeModal = ()=> document.getElementById('tpl-modal').style.display='none';
-  document.getElementById('tpl-close').addEventListener('click', closeModal);
-  document.getElementById('tpl-modal').addEventListener('click', e=>{ if(e.target.id==='tpl-modal') closeModal(); });
-
-  document.getElementById('tpl-r-rows').addEventListener('click', async ev=>{
-    const id = ev.target && ev.target.getAttribute('data-sugerir');
-    if(!id) return;
-    const r = allR.find(x=>x._id===id);
-    if(!r) return;
-    const sugRows = document.getElementById('tpl-sug-rows');
-    const sugDesc = document.getElementById('tpl-sug-desc');
-    sugRows.innerHTML = '<tr><td colspan="6">Calculando…</td></tr>';
-    sugDesc.textContent = `Reserva: ${r.ciudad||'-'} ${r.cp||''} · ${r.especie||'-'} · ${r.fechaInicio||''} → ${r.fechaFin||''}`;
-    openModal();
-    try{
-      const lista = await sugerirParaReserva(r);
-      if (!lista.length){
-        sugRows.innerHTML = '<tr><td colspan="6">No hay coincidencias. La reserva queda registrada.</td></tr>';
-        return;
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script>
+    (function(){
+      const firebaseConfig = {
+        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain: "thepetslovers-c1111.firebaseapp.com",
+        projectId: "thepetslovers-c1111",
+        storageBucket: "thepetslovers-c1111.appspot.com",
+        messagingSenderId: "415914577533",
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId: "G-FXPD69KXBG"
+      };
+      if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
       }
-      sugRows.innerHTML = lista.slice(0,30).map(x=>{
-        const esp = [
-          x.c.especiePerro!==false ? '🐶' : '—',
-          x.c.especieGato!==false ? '🐱' : '—',
-          x.c.especieExotico===true ? '🦎' : '—'
-        ].join(' ');
-        const dispTxt = x.dispScore<0 ? 'Ocupado' : (x.dispScore>0 ? 'Libre' : 'Sin datos');
-        return `<tr>
-          <td><strong>${esc(x.c.nombre||'-')}</strong><div class="muted">${esc(x.c.email||'')} · ${esc(x.c.telefono||'')}</div></td>
-          <td>${esc(x.c.ciudad||'-')} ${x.c.cp? '('+esc(x.c.cp)+')':''}</td>
-          <td>${esp}</td>
-          <td>${dispTxt}</td>
-          <td><span class="pill">Score ${x.score}</span></td>
-          <td><a class="btn sec" target="_blank" href="tpl-perfil-cuidador.html?id=${encodeURIComponent(x.c.id)}">Abrir perfil</a></td>
-        </tr>`;
-      }).join('');
-    }catch(e){
-      console.error(e);
-      sugRows.innerHTML = '<tr><td colspan="6">Error calculando sugerencias.</td></tr>';
-    }
-  });
+      window.__TPL_AUTH_INIT = true;
+    })();
+  </script>
 
-  ['tpl-r-q','tpl-r-especie','tpl-r-limit'].forEach(id=>{
-    const n=document.getElementById(id); n && n.addEventListener('input', renderR);
-  });
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: login + Google + reset + (sin auto-redirect si ya hay sesión)] -->
+  <script>
+    (function(){
+      const AUTH_FLAG = 'tplAuth';
+      const params = new URLSearchParams(location.search);
+      const NEXT = params.get('next'); // opcional
 
-  async function boot(){ await loadC(); await loadR(); }
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+      // Admin: si eres este correo → Panel
+      const PANEL_URL = 'tpl-candidaturas-admin.html';
+      const ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
+      const ADMIN_SET = new Set(ADMIN_EMAILS.map(x =>
+        String(x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      ));
+      function isAdminEmail(email){
+        const norm = String(email||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        return ADMIN_SET.has(norm);
+      }
+
+      const $ = (s, p=document)=>p.querySelector(s);
+      const form = $('#formAuth');
+      const email = $('#email');
+      const pass  = $('#password');
+      const btnForgot = $('#btnForgot');
+      const btnGoogle = $('#btnGoogle');
+      const btnSignup = $('#btnSignup');
+      const btnLogin = $('#btnLogin');
+      const msg = $('#msg');
+      const loggedBox = $('#tpl-logged');
+      const btnPanel = $('#tpl-btn-panel');
+      const btnPerfil = $('#tpl-btn-perfil');
+
+      // Resolver URL del perfil (fallbacks)
+      const PROFILE_URL_LS = 'tpl_profile_url_cache';
+      async function resolveProfileUrl(){
+        try{ const c = localStorage.getItem(PROFILE_URL_LS); if (c) return c; }catch(e){}
+        const candidates = ['mi-perfil.html','mi-cuenta.html','perfil.html'];
+        for (let p of candidates){
+          try{
+            let r = await fetch(p, { method:'HEAD', cache:'no-store' });
+            if (!r || !r.ok){ r = await fetch(p, { method:'GET', cache:'no-store' }); }
+            if (r && r.ok){ try{ localStorage.setItem(PROFILE_URL_LS, p); }catch(e){} return p; }
+          }catch(e){}
+        }
+        return 'mi-perfil.html';
+      }
+
+      async function safeGo(url){
+        try{
+          let r = await fetch(url, { method:'HEAD', cache:'no-store' });
+          if (!r || !r.ok){ r = await fetch(url, { method:'GET', cache:'no-store' }); }
+          if (r && r.ok){ location.href = url; return; }
+        }catch(e){}
+        location.href = await resolveProfileUrl();
+      }
+
+      function showMsg(t){ msg && (msg.textContent = t || ''); }
+      function setBusy(b){
+        try{
+          btnLogin && (btnLogin.disabled = b);
+          btnGoogle && (btnGoogle.disabled = b);
+        }catch(e){}
+      }
+      function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
+
+      // Decide destino por usuario tras autenticarse (no en carga)
+      async function nextUrlFor(user){
+        if (user && isAdminEmail(user.email)) return PANEL_URL; // admin ⇒ panel
+        if (NEXT) return NEXT;                                  // respeta ?next=
+        return await resolveProfileUrl();                       // resto ⇒ perfil
+      }
+
+      // 👇 YA NO REDIRIGIMOS AUTOMÁTICAMENTE si hay sesión.
+      // Mostramos aviso y botones “Ir a Panel / Ir a Mi perfil”.
+      document.addEventListener('DOMContentLoaded', async function(){
+        try{
+          const a = auth();
+          const u = a && a.currentUser;
+          const flag = localStorage.getItem(AUTH_FLAG)==='1';
+          if (u || flag){
+            if (loggedBox) loggedBox.style.display = '';
+            // Si eres admin, mostramos botón Panel
+            if (u && isAdminEmail(u.email)) { if(btnPanel) btnPanel.style.display='inline-block'; }
+            // Ajustamos el destino “Mi perfil” real si hace falta
+            btnPerfil && (btnPerfil.href = await resolveProfileUrl());
+            // NO redirigimos aquí. Solo informamos.
+          }
+        }catch(e){}
+      });
+
+      // Login email/contraseña
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const a = auth();
+        if (!a){ showMsg('Servicio de autenticación no disponible.'); setBusy(false); return; }
+        const em = (email.value||'').trim();
+        const pw = pass.value;
+        try{
+          showMsg('Accediendo…'); setBusy(true);
+          const cred = await a.signInWithEmailAndPassword(em, pw);
+          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
+          showMsg('¡Listo! Redirigiendo…');
+          await safeGo(await nextUrlFor(cred && cred.user));
+        }catch(err){
+          let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
+          if (/auth\/invalid-credential|auth\/wrong-password/.test(m)) m = 'Credenciales no válidas. Revisa tu email y contraseña.';
+          if (/auth\/user-not-found/.test(m)) m = 'No existe una cuenta con ese email.';
+          showMsg(m); setBusy(false);
+        }
+      });
+
+      // Reset password
+      btnForgot && btnForgot.addEventListener('click', async function(){
+        const a = auth();
+        if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
+        const em = (email.value||'').trim();
+        if (!em){ showMsg('Escribe tu email arriba y vuelve a pulsar.'); return; }
+        try{
+          showMsg('Enviando enlace de restablecimiento…');
+          await a.sendPasswordResetEmail(em);
+          showMsg('Revisa tu correo para restablecer la contraseña.');
+        }catch(e){
+          showMsg('No se pudo enviar el email. Revisa el correo indicado.');
+        }
+      });
+
+      // Google (popup + fallback redirect en iOS/Safari)
+      btnGoogle.addEventListener('click', async function(){
+        const a = auth();
+        if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
+        const provider = new firebase.auth.GoogleAuthProvider();
+        showMsg('Conectando con Google…'); setBusy(true);
+        try{
+          const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          let userCred;
+          if (isIOS && isSafari) { await a.signInWithRedirect(provider); return; }
+          else { userCred = await a.signInWithPopup(provider); }
+          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
+          const user = (userCred && userCred.user) || (a && a.currentUser);
+          await safeGo(await nextUrlFor(user));
+        }catch(err){
+          let m = (err && err.message) || 'No se pudo iniciar con Google.';
+          if (/popup-closed-by-user/i.test(m)) m = 'Has cerrado la ventana de Google.';
+          showMsg(m); setBusy(false);
+        }
+      });
+
+      // Si volvemos de redirect (iOS/Safari)
+      (async function handleRedirect(){
+        try{
+          const a = auth(); if (!a) return;
+          const res = await a.getRedirectResult();
+          if (res && res.user){
+            try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
+            await safeGo(await nextUrlFor(res.user));
+          }
+        }catch(e){}
+      })();
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
