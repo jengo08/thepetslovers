@@ -66,6 +66,24 @@
       max-width: 100%;
     }
     /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Estilo mínimo login inline] */
+    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+    .tpl-login-title{margin:0 0 8px;color:#58425a;font-weight:700;font-size:1.05rem;text-align:center}
+    .tpl-socials{display:grid;gap:10px;margin-bottom:8px}
+    .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600;color:var(--color-principal)}
+    .tpl-btn-social i{font-size:1rem}
+    .tpl-sep{position:relative;text-align:center;margin:6px 0 8px;color:#999;font-size:.9rem}
+    .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
+    .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
+    .tpl-login-form{display:grid;gap:8px}
+    .tpl-login-form label{font-size:.9rem;color:#58425a}
+    .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
+    .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
+    .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
@@ -103,6 +121,10 @@
         <a href="registro.html?next=reserva.html" class="cta-button" id="btnRegister" style="background:#fff;color:var(--color-principal);border:2px solid var(--color-principal);">Registrarme</a>
       </div>
       <p class="note">Cuando actives tu cuenta, podrás completar la reserva desde aquí.</p>
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Login inline dentro del muro] -->
+      <div id="tpl-inline-login"></div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
     </div>
 
     <!-- Formulario de reserva (Formspree activo) -->
@@ -970,6 +992,92 @@
       if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
     }
   </script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Login inline (Email + Google) para muro] -->
+  <script>
+    (function(){
+      if (typeof firebase === 'undefined') return;
+      const auth = firebase.auth();
+      const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      function renderInlineLogin(){
+        const host = document.getElementById('tpl-inline-login');
+        if(!host) return;
+        host.innerHTML = `
+          <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
+            <h3 class="tpl-login-title">Accede aquí mismo</h3>
+            <div class="tpl-socials">
+              <button type="button" class="tpl-btn-social" id="tpl-google-btn">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+              </button>
+            </div>
+            <div class="tpl-sep"><span>o</span></div>
+            <form class="tpl-login-form" id="tpl-inline-form" novalidate>
+              <label>Email</label>
+              <input type="email" name="email" required autocomplete="email" />
+              <label>Contraseña</label>
+              <input type="password" name="password" required autocomplete="current-password" />
+              <button type="submit" class="tpl-btn">Iniciar sesión</button>
+              <a class="tpl-btn-outline" href="registro.html?next=reserva.html">Crear cuenta</a>
+              <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
+              <p class="tpl-login-msg" aria-live="polite"></p>
+            </form>
+          </div>
+        `;
+
+        const form = document.getElementById('tpl-inline-form');
+        const msg  = host.querySelector('.tpl-login-msg');
+        const btnG = document.getElementById('tpl-google-btn');
+        const btnReset = document.getElementById('tpl-reset');
+
+        form.addEventListener('submit', async (e)=>{
+          e.preventDefault();
+          msg.textContent = 'Accediendo…';
+          const email = form.email.value.trim();
+          const pass  = form.password.value;
+          try{
+            await auth.signInWithEmailAndPassword(email, pass);
+            msg.textContent = '¡Listo!';
+            location.reload();
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
+          }
+        });
+
+        btnG.addEventListener('click', async (e)=>{
+          e.preventDefault();
+          msg.textContent = 'Conectando con Google…';
+          try{
+            const provider = new firebase.auth.GoogleAuthProvider();
+            if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
+            else { await auth.signInWithPopup(provider); }
+            // onAuthStateChanged redirige/oculta
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
+          }
+        });
+
+        btnReset.addEventListener('click', async (e)=>{
+          e.preventDefault();
+          const email = form.email.value.trim();
+          if(!email){ msg.textContent='Escribe tu email arriba para enviarte el enlace.'; return; }
+          try{
+            await auth.sendPasswordResetEmail(email);
+            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
+          }catch(err){
+            msg.textContent = (err && err.message) || 'No se pudo enviar el email.';
+          }
+        });
+      }
+
+      // Si no hay sesión al cargar → pinta inline login
+      auth.onAuthStateChanged(u=>{
+        if(!u) renderInlineLogin();
+      });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- TPL: INICIO BLOQUE NUEVO [Guardar reserva en Firestore y luego enviar a Formspree] -->
   <script>
