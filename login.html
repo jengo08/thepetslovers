@@ -29,6 +29,7 @@
     };
     if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const providerGoogle = new firebase.auth.GoogleAuthProvider();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -41,6 +42,9 @@
     .auth-form .actions{margin-top:10px;display:flex;gap:10px;align-items:center}
     .auth-note{color:#666;margin-top:8px}
     .auth-error{color:#b00020;margin-top:8px}
+    .auth-google{margin-top:20px;display:flex;justify-content:center}
+    .auth-google button{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--color-principal);padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:600;color:var(--color-principal);}
+    .auth-google button:hover{background:var(--color-principal);color:#fff}
     /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
@@ -65,14 +69,30 @@
       <p class="auth-note"><a href="#" id="tpl-reset">¿Olvidaste tu contraseña?</a></p>
       <p id="tpl-login-error" class="auth-error"></p>
     </form>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Botón Google] -->
+    <div class="auth-google">
+      <button id="btnGoogle"><i class="fa-brands fa-google"></i> Continuar con Google</button>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
   <footer id="tpl-footer"></footer>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Login + reset] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Login + reset + Google] -->
   <script>
     const loginForm = document.getElementById('tpl-login-form');
     const out = document.getElementById('tpl-login-error');
+    const btnGoogle = document.getElementById('btnGoogle');
+
+    // Redirigir si ya hay sesión
+    auth.onAuthStateChanged(user=>{
+      if(user){
+        const params = new URLSearchParams(location.search);
+        const next = params.get('next') || 'index.html';
+        location.href = next;
+      }
+    });
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -81,9 +101,6 @@
       const pass  = document.getElementById('tpl-login-pass').value;
       try {
         await auth.signInWithEmailAndPassword(email, pass);
-        const params = new URLSearchParams(location.search);
-        const next = params.get('next') || 'reserva.html';
-        location.href = next;
       } catch (err) {
         out.textContent = err?.message || 'Error al iniciar sesión';
       }
@@ -100,6 +117,15 @@
       }catch(err){
         out.style.color = '#b00020';
         out.textContent = err?.message || 'No se pudo enviar el email de restablecimiento.';
+      }
+    });
+
+    btnGoogle.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      try{
+        await auth.signInWithPopup(providerGoogle);
+      }catch(err){
+        out.textContent = err?.message || 'No se pudo iniciar con Google.';
       }
     });
   </script>
