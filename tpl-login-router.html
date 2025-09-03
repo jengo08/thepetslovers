@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrando… · The Pets Lovers</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
+    body{ margin:0; font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:#222; background:#f7f9f9 }
+    .wrap{ min-height:100dvh; display:grid; place-items:center; padding:24px }
+    .card{ background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); padding:20px; max-width:520px; width:100%; text-align:center }
+    .muted{ color:#666 }
+    .btn{ background:#339496; color:#fff; border-radius:999px; padding:10px 16px; text-decoration:none; display:inline-block; border:0; cursor:pointer; font-weight:700 }
+    .btn.sec{ background:#fff; color:#339496; border:2px solid #339496 }
+    .spinner{ width:22px; height:22px; border:3px solid #dff1f1; border-top-color:#339496; border-radius:50%; display:inline-block; animation:spin .9s linear infinite; vertical-align:middle }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1 style="margin:0 0 6px;">Conectando con tu cuenta…</h1>
+    <p class="muted" id="msg">Iniciando sesión segura con Google <span class="spinner"></span></p>
+    <div style="margin-top:14px; display:flex; gap:8px; justify-content:center;">
+      <button class="btn" id="retry" style="display:none">Reintentar</button>
+      <a class="btn sec" href="index.html">← Volver a la web</a>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+
+<!-- TPL: INICIO BLOQUE NUEVO [Login router: admin → panel | resto → perfil] -->
+<script>
+(function(){
+  // Init Firebase (igual que en tu proyecto)
+  if (!firebase.apps.length){
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.appspot.com",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+    firebase.initializeApp(firebaseConfig);
+  }
+  const auth = firebase.auth();
+
+  // Normaliza email: minúsculas + sin acentos
+  const ADMIN_SET = new Set(["4b.jenny.gomez@gmail.com"]);
+  function normalizeEmail(e){
+    return String(e||'').trim()
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // quita tildes
+  }
+  function isAdmin(email){
+    return ADMIN_SET.has(normalizeEmail(email));
+  }
+
+  const msg = document.getElementById('msg');
+  const retryBtn = document.getElementById('retry');
+
+  async function go(){
+    try{
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const res = await auth.signInWithPopup(provider);
+      const email = res.user && res.user.email || '';
+      // Ruta según correo
+      if (isAdmin(email)){
+        location.href = 'tpl-candidaturas-admin.html';   // Panel completo (Candidaturas/Reservas)
+      }else{
+        location.href = 'mi-perfil.html';                 // Perfil estándar para clientes/auxiliares
+      }
+    }catch(err){
+      console.error(err);
+      msg.textContent = 'No se pudo completar el inicio de sesión. Puedes reintentarlo o volver a la web.';
+      retryBtn.style.display = 'inline-block';
+    }
+  }
+
+  retryBtn.addEventListener('click', ()=>{ retryBtn.style.display='none'; msg.textContent='Reintentando…'; go(); });
+
+  // Si ya hay sesión, redirige sin pedir login
+  auth.onAuthStateChanged((user)=>{
+    if (user){
+      if (isAdmin(user.email)){ location.replace('tpl-candidaturas-admin.html'); }
+      else { location.replace('mi-perfil.html'); }
+    }else{
+      go();
+    }
+  });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
