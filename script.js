@@ -423,4 +423,23 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+/* ===========================
+   TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + Formspree + Firebase Firestore]
+   =========================== */
+( function(){ /* ... TU CÓDIGO EXACTO TAL CUAL LO PEGASTE ARRIBA ... */ } )();
+/* ===========================
+   TPL: FIN BLOQUE NUEVO
+   =========================== */
+
+/* ===========================
+   TPL: INICIO BLOQUE NUEVO [Airbag JS mínimo para evitar pantalla en blanco]
+   =========================== */
+( function(){
+  try {
+    window.addEventListener('error', e => console.warn('TPL: error global:', e.message));
+    window.addEventListener('unhandledrejection', e => console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason));
+  } catch(_) {}
+} )();
+/* TPL: FIN BLOQUE NUEVO */
+
 
