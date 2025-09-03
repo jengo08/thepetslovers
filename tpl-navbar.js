@@ -17,7 +17,15 @@
   function isAdminEmail(email){
     return ADMIN_SET.has(tplNormalizeEmail(email));
   }
+
+  // 🔧 NUEVO: primero intento leer un cache propio del email (tplEmail),
+  // si no existe, caigo al objeto de Firebase en localStorage.
   function getCurrentEmailFromFirebaseStorage(){
+    try{
+      var cached = localStorage.getItem('tplEmail');
+      if (cached) return String(cached);
+    }catch(e){}
+
     try{
       for(var i=0;i<localStorage.length;i++){
         var k = localStorage.key(i);
@@ -25,8 +33,11 @@
           var v = localStorage.getItem(k);
           if(!v) continue;
           var obj = JSON.parse(v);
-          // Compat: algunos guardan en obj.email, otros en obj['email']
-          if(obj && obj.email) return String(obj.email);
+          if(obj && obj.email){
+            // cacheo para futuras páginas sin Firebase
+            try{ localStorage.setItem('tplEmail', String(obj.email)); }catch(e){}
+            return String(obj.email);
+          }
         }
       }
     }catch(e){}
@@ -59,7 +70,7 @@
       }
       host.innerHTML = NAV_HTML;
       markActiveLink();
-      applySessionUI(); // pinta “Mi perfil” si ya estabas logueada
+      applySessionUI(); // pinta “Mi perfil/Panel” si ya estabas logueada
     }catch(e){ console.error('TPL navbar mount error:', e); }
   }
 
@@ -117,14 +128,14 @@
       if(!btn) return;
 
       if(logged){
-        // TPL: INICIO BLOQUE NUEVO [Decidir destino según si eres admin]
+        // Decidir destino según si eres admin
         var email = getCurrentEmailFromFirebaseStorage();
-        var dest = isAdminEmail(email) ? PANEL_URL : PROFILE_URL;
-        var label = isAdminEmail(email) ? 'Panel' : 'Mi perfil';
+        var isAdmin = isAdminEmail(email);
+        var dest = isAdmin ? PANEL_URL : PROFILE_URL;
+        var label = isAdmin ? 'Panel' : 'Mi perfil';
         btn.textContent = label;
         btn.setAttribute('href', dest);
         btn.setAttribute('aria-label','Ir a ' + label.toLowerCase());
-        // TPL: FIN BLOQUE NUEVO
       }else{
         btn.textContent = 'Iniciar sesión';
         btn.setAttribute('href', 'iniciar-sesion.html');
@@ -142,6 +153,11 @@
       if(window.firebase && firebase.auth){
         var a = firebase.auth();
         a.onAuthStateChanged(function(u){
+          // 🔧 NUEVO: cachear/limpiar tplEmail cuando haya Firebase
+          try{
+            if(u && u.email){ localStorage.setItem('tplEmail', String(u.email)); }
+            else { localStorage.removeItem('tplEmail'); }
+          }catch(e){}
           setLoginButton(!!u);
           hideLogoutEverywhere();
           try{
@@ -149,6 +165,12 @@
             else { localStorage.removeItem('tplAuth'); }
           }catch(e){}
         });
+      }else{
+        // 🔧 NUEVO: si no hay Firebase, intenta “autocompletar” tplEmail una vez
+        try{
+          var email = getCurrentEmailFromFirebaseStorage();
+          if(email){ localStorage.setItem('tplEmail', String(email)); }
+        }catch(e){}
       }
     }catch(e){}
   }
