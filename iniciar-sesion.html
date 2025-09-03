@@ -4,40 +4,31 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iniciar sesión · The Pets Lovers</title>
+  <meta name="description" content="Accede a tu cuenta o regístrate en The Pets Lovers. Profesionales del sector veterinario.">
 
-  <meta name="description" content="Accede o regístrate en The Pets Lovers. Profesionales del sector veterinario.">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del acceso] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de la página de acceso] -->
   <style>
     :root { --tpl-primary:#339496; --tpl-ink:#58425a; }
-    .auth-wrapper{ max-width: 920px; margin: 120px auto 60px; padding: 0 16px; }
-    .auth-grid{ display:grid; grid-template-columns: 1.2fr .8fr; gap:28px; }
-    @media (max-width: 900px){ .auth-grid{ grid-template-columns:1fr; } }
-    .auth-card{ background:#fff; border:1px solid #eee; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.05); padding:18px; }
-    .auth-title{ margin:0 0 8px; color:var(--tpl-ink) }
+    .auth-wrap{ max-width:560px; margin:120px auto 64px; padding:0 16px; }
+    .auth-card{ background:#fff; border:1px solid #eee; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.06); padding:18px; }
+    .auth-title{ margin:0 0 6px; color:var(--tpl-ink) }
     .auth-sub{ margin:0 0 14px; color:#666 }
-    .auth-tabs{ display:flex; gap:8px; margin-bottom:12px }
-    .auth-tab{ flex:1; text-align:center; padding:10px 12px; border:1px solid #ddd; border-radius:999px; cursor:pointer; font-weight:700; color:var(--tpl-primary); background:#fff }
-    .auth-tab.active{ background:var(--tpl-primary); color:#fff; border-color:var(--tpl-primary) }
-    .auth-socials{ display:grid; gap:10px; margin-bottom:10px }
-    .btn-google{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid #ddd; border-radius:999px; padding:10px 14px; background:#fff; cursor:pointer; font-weight:600; color:var(--tpl-primary) }
-    .auth-sep{ position:relative; text-align:center; margin:8px 0 12px; color:#999; font-size:.9rem }
-    .auth-sep span{ background:#fff; padding:0 8px; position:relative; z-index:1 }
-    .auth-sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee }
-    .auth-form{ display:grid; gap:10px }
-    .auth-form label{ font-size:.9rem; color:var(--tpl-ink) }
+    .auth-form{ display:grid; gap:10px; }
+    .auth-form label{ font-size:.92rem; color:var(--tpl-ink) }
     .auth-form input{ border:1px solid #ddd; border-radius:10px; padding:11px 12px; font-size:1rem }
-    .auth-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between }
-    .btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:10px 16px; cursor:pointer; font-weight:700 }
-    .btn-outline{ background:#fff; color:#339496; border:1px solid #339496; border-radius:999px; padding:10px 16px; cursor:pointer; font-weight:700 }
-    .link{ background:none; border:none; color:#339496; text-decoration:underline; cursor:pointer; padding:6px 0 }
-    .auth-msg{ min-height:1.2em; color:var(--tpl-ink); text-align:center }
-    .side-card{ background:#f9f9f9; border:1px solid #eee; border-radius:14px; padding:16px }
-    .side-card h3{ margin:0 0 8px; color:var(--tpl-ink) }
-    .side-list{ margin:0; padding-left:18px; color:#555 }
+    .btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100% }
+    .btn-outline{ background:#fff; color:#339496; border:1px solid #339496; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100% }
+    .btn-google{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid #ddd; border-radius:999px; padding:11px 16px; background:#fff; cursor:pointer; font-weight:700; width:100%; color:var(--tpl-primary) }
+    .row-actions{ display:grid; gap:10px; margin-top:10px; }
+    .link{ background:none; border:none; color:#339496; text-decoration:underline; cursor:pointer; padding:6px 0; font-weight:600 }
+    .sep{ position:relative; text-align:center; margin:10px 0 4px; color:#999; font-size:.9rem }
+    .sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee }
+    .sep span{ background:#fff; padding:0 8px; position:relative; z-index:1 }
+    .auth-msg{ min-height:1.2em; color:var(--tpl-ink); text-align:center; margin-top:6px }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -48,63 +39,33 @@
   <script src="tpl-navbar.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <main class="auth-wrapper container">
-    <div class="auth-grid">
-      <section class="auth-card" aria-label="Acceso a tu cuenta">
-        <h1 class="auth-title">Tu cuenta</h1>
-        <p class="auth-sub">Inicia sesión o <strong>regístrate</strong> para gestionar tus reservas y tu perfil.</p>
+  <main class="auth-wrap container">
+    <section class="auth-card" aria-label="Acceso">
+      <h1 class="auth-title">Iniciar sesión</h1>
+      <p class="auth-sub">Accede con tu email y contraseña. Luego puedes completar tu perfil.</p>
 
-        <!-- Conmutador login / registro -->
-        <div class="auth-tabs" role="tablist" aria-label="Modo de acceso">
-          <button id="tabLogin" class="auth-tab active" role="tab" aria-selected="true" aria-controls="panelLogin">Iniciar sesión</button>
-          <button id="tabSignup" class="auth-tab" role="tab" aria-selected="false" aria-controls="panelLogin">Regístrate</button>
+      <!-- Formulario: email + contraseña + botón único -->
+      <form id="formAuth" class="auth-form" novalidate>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" />
         </div>
-
-        <!-- Botón Google -->
-        <div class="auth-socials">
-          <button id="btnGoogle" class="btn-google" type="button">
-            <i class="fa-brands fa-google"></i> Continuar con Google
-          </button>
+        <div>
+          <label for="password">Contraseña</label>
+          <input id="password" name="password" type="password" required autocomplete="current-password" />
         </div>
+        <button id="btnLogin" class="btn" type="submit">Iniciar sesión</button>
+        <button id="btnForgot" class="link" type="button">¿Has olvidado la contraseña?</button>
+        <p id="msg" class="auth-msg" aria-live="polite"></p>
+      </form>
 
-        <div class="auth-sep"><span>o con tu email</span></div>
-
-        <!-- Formulario -->
-        <form id="formAuth" class="auth-form" novalidate>
-          <input type="hidden" name="mode" value="login" />
-          <div>
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" required autocomplete="email" />
-          </div>
-          <div>
-            <label for="password">Contraseña</label>
-            <input id="password" name="password" type="password" required autocomplete="current-password" />
-          </div>
-          <!-- Solo visible en REGISTRO -->
-          <div id="rowPassword2" style="display:none">
-            <label for="password2">Repite la contraseña</label>
-            <input id="password2" name="password2" type="password" autocomplete="new-password" />
-          </div>
-
-          <div class="auth-actions">
-            <button id="btnSubmit" class="btn" type="submit">Iniciar sesión</button>
-            <button id="btnForgot" class="link" type="button">¿Has olvidado la contraseña?</button>
-          </div>
-
-          <p id="msg" class="auth-msg" aria-live="polite"></p>
-        </form>
-      </section>
-
-      <aside class="side-card" aria-label="Ventajas rápidas">
-        <h3>Ventajas</h3>
-        <ul class="side-list">
-          <li>Profesionales del sector veterinario</li>
-          <li>Mi perfil y mascotas en un mismo lugar</li>
-          <li>Seguimiento diario de servicios</li>
-          <li>Pagos seguros</li>
-        </ul>
-      </aside>
-    </div>
+      <!-- Acciones secundarias (sin duplicar login) -->
+      <div class="sep"><span>o</span></div>
+      <div class="row-actions">
+        <a id="btnSignup" class="btn-outline" href="registro.html?mode=signup">Regístrate</a>
+        <button id="btnGoogle" class="btn-google" type="button"><i class="fa-brands fa-google"></i> Continuar con Google</button>
+      </div>
+    </section>
   </main>
 
   <!-- TPL: INICIO BLOQUE NUEVO [Footer centralizado] -->
@@ -117,7 +78,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script>
     (function(){
-      // Tu proyecto (igual que en otras páginas)
       const firebaseConfig = {
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
         authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -135,125 +95,98 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de acceso/registro + Google + persistencia] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: login, Google, reset, redirección sin 404] -->
   <script>
     (function(){
-      const PROFILE_URL = 'mi-cuenta.html'; // Cambia aquí si tu perfil usa otra ruta
-      const AUTH_FLAG = 'tplAuth';          // Flag global para navbar
-
-      const qs = (s, p=document) => p.querySelector(s);
-      const $tabLogin  = qs('#tabLogin');
-      const $tabSignup = qs('#tabSignup');
-      const $form = qs('#formAuth');
-      const $mode = qs('input[name="mode"]', $form);
-      const $rowPassword2 = qs('#rowPassword2');
-      const $btnSubmit = qs('#btnSubmit');
-      const $btnForgot = qs('#btnForgot');
-      const $btnGoogle = qs('#btnGoogle');
-      const $msg = qs('#msg');
-      const $email = qs('#email');
-      const $password = qs('#password');
-      const $password2 = qs('#password2');
-
-      // Lee ?next=... para redirigir después
+      const AUTH_FLAG = 'tplAuth';
       const params = new URLSearchParams(location.search);
-      const NEXT = params.get('next');
+      const NEXT = params.get('next'); // opcional
 
-      // Activa pestañas
-      function setMode(mode){
-        if (mode === 'signup'){
-          $mode.value = 'signup';
-          $tabLogin.classList.remove('active');
-          $tabSignup.classList.add('active');
-          $rowPassword2.style.display = '';
-          $btnSubmit.textContent = 'Regístrate';
-        } else {
-          $mode.value = 'login';
-          $tabSignup.classList.remove('active');
-          $tabLogin.classList.add('active');
-          $rowPassword2.style.display = 'none';
-          $btnSubmit.textContent = 'Iniciar sesión';
+      const $ = (s, p=document)=>p.querySelector(s);
+      const form = $('#formAuth');
+      const email = $('#email');
+      const pass  = $('#password');
+      const btnForgot = $('#btnForgot');
+      const btnGoogle = $('#btnGoogle');
+      const msg = $('#msg');
+
+      // Resolver URL del perfil existente (mi-perfil.html / mi-cuenta.html / perfil.html)
+      const PROFILE_URL_LS = 'tpl_profile_url_cache';
+      async function resolveProfileUrl(){
+        try{ const c = localStorage.getItem(PROFILE_URL_LS); if (c) return c; }catch(e){}
+        const candidates = ['mi-perfil.html','mi-cuenta.html','perfil.html'];
+        for (let p of candidates){
+          try{
+            let r = await fetch(p, { method:'HEAD', cache:'no-store' });
+            if (!r || !r.ok){ r = await fetch(p, { method:'GET', cache:'no-store' }); }
+            if (r && r.ok){ try{ localStorage.setItem(PROFILE_URL_LS, p); }catch(e){} return p; }
+          }catch(e){}
         }
-        $msg.textContent = '';
+        return 'mi-perfil.html';
       }
-      $tabLogin.addEventListener('click', () => setMode('login'));
-      $tabSignup.addEventListener('click', () => setMode('signup'));
 
-      // Si venimos de un CTA "Regístrate", puedes forzar ?mode=signup
-      if (params.get('mode') === 'signup') setMode('signup');
+      async function safeGo(url){
+        // Evita “Not Found” si NEXT apunta mal: validamos primero
+        try{
+          let r = await fetch(url, { method:'HEAD', cache:'no-store' });
+          if (!r || !r.ok){ r = await fetch(url, { method:'GET', cache:'no-store' }); }
+          if (r && r.ok){ location.href = url; return; }
+        }catch(e){}
+        location.href = await resolveProfileUrl();
+      }
 
-      // Helpers de UI
-      function showMsg(t){ $msg.textContent = t || ''; }
-      function toProfile(){ window.location.href = NEXT || PROFILE_URL; }
+      function showMsg(t){ msg.textContent = t || ''; }
 
-      // ---- Firebase helpers
       function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
 
-      // Si YA hay sesión, redirige directamente (evita el mensaje “ya está iniciada”)
-      document.addEventListener('DOMContentLoaded', function(){
+      // Si ya hay sesión activa, entra directo (sin “ya iniciada”)
+      document.addEventListener('DOMContentLoaded', async function(){
         const a = auth();
-        if (a && a.currentUser) {
-          localStorage.setItem(AUTH_FLAG, '1');
-          toProfile();
-        } else if (localStorage.getItem(AUTH_FLAG)==='1') {
-          // Si no está Firebase cargado por alguna razón pero hay flag, redirigimos igual
-          toProfile();
+        const logged = a && a.currentUser;
+        const flag = localStorage.getItem(AUTH_FLAG)==='1';
+        if (logged || flag){
+          await safeGo(NEXT || await resolveProfileUrl());
         }
       });
 
-      // Submit (login o registro)
-      $form.addEventListener('submit', async function(e){
+      // Login email/contraseña (botón único)
+      form.addEventListener('submit', async function(e){
         e.preventDefault();
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
-        const email = $email.value.trim();
-        const pass  = $password.value;
-
+        const em = (email.value||'').trim();
+        const pw = pass.value;
         try{
-          showMsg($mode.value==='signup' ? 'Creando cuenta…' : 'Accediendo…');
-
-          if ($mode.value==='signup'){
-            if (!$password2.value || $password2.value !== pass){
-              showMsg('Las contraseñas no coinciden.'); return;
-            }
-            await a.createUserWithEmailAndPassword(email, pass);
-          } else {
-            await a.signInWithEmailAndPassword(email, pass);
-          }
-
-          // Persistencia UI global (navbar)
-          localStorage.setItem(AUTH_FLAG, '1');
-
+          showMsg('Accediendo…');
+          await a.signInWithEmailAndPassword(em, pw);
+          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
           showMsg('¡Listo! Redirigiendo…');
-          toProfile();
+          await safeGo(NEXT || await resolveProfileUrl());
         }catch(err){
-          // Mensajes comunes en castellano
           let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
-          if (/auth\/email-already-in-use/.test(m)) m = 'Ese email ya está registrado. Inicia sesión.';
           if (/auth\/invalid-credential|auth\/wrong-password/.test(m)) m = 'Credenciales no válidas. Revisa tu email y contraseña.';
           if (/auth\/user-not-found/.test(m)) m = 'No existe una cuenta con ese email.';
-          if (/auth\/weak-password/.test(m)) m = 'La contraseña es demasiado débil (mínimo 6 caracteres).';
           showMsg(m);
         }
       });
 
-      // Reset password
-      $btnForgot.addEventListener('click', async function(){
+      // Reset (una sola línea, sin recargar)
+      btnForgot.addEventListener('click', async function(){
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
-        const email = ($email.value || '').trim();
-        if (!email){ showMsg('Escribe tu email arriba y vuelve a pulsar.'); return; }
+        const em = (email.value||'').trim();
+        if (!em){ showMsg('Escribe tu email arriba y vuelve a pulsar.'); return; }
         try{
           showMsg('Enviando enlace de restablecimiento…');
-          await a.sendPasswordResetEmail(email);
+          await a.sendPasswordResetEmail(em);
           showMsg('Revisa tu correo para restablecer la contraseña.');
-        }catch(err){
+        }catch(e){
           showMsg('No se pudo enviar el email. Revisa el correo indicado.');
         }
       });
 
-      // Google Sign-In (popup + fallback redirect en iOS/Safari)
-      $btnGoogle.addEventListener('click', async function(){
+      // Google (popup + fallback redirect en iOS/Safari)
+      btnGoogle.addEventListener('click', async function(){
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -263,40 +196,36 @@
           const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
           if (isIOS && isSafari) { await a.signInWithRedirect(provider); }
           else { await a.signInWithPopup(provider); }
-
-          localStorage.setItem(AUTH_FLAG, '1');
-          showMsg('¡Listo! Redirigiendo…');
-          toProfile();
+          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
+          await safeGo(NEXT || await resolveProfileUrl());
         }catch(err){
           let m = (err && err.message) || 'No se pudo iniciar con Google.';
-          // Usuario cerró el popup
-          if (/popup-closed-by-user/.test(m)) m = 'Has cerrado la ventana de Google.';
+          if (/popup-closed-by-user/i.test(m)) m = 'Has cerrado la ventana de Google.';
           showMsg(m);
         }
       });
 
-      // Si volvemos de signInWithRedirect (iOS/Safari), procesamos el resultado
-      (async function handleRedirectResult(){
+      // Si volvemos de redirect (iOS/Safari)
+      (async function handleRedirect(){
         try{
           const a = auth(); if (!a) return;
           const res = await a.getRedirectResult();
           if (res && res.user){
-            localStorage.setItem(AUTH_FLAG, '1');
-            toProfile();
+            try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
+            await safeGo(NEXT || await resolveProfileUrl());
           }
         }catch(e){}
       })();
 
-      // Escucha cambios reales de auth y sincroniza flag/UI (por si abre nueva pestaña)
+      // Sincroniza flag para el navbar entre pestañas
       try{
         const a = auth();
         if (a) {
           a.onAuthStateChanged(function(user){
-            if (user) {
-              localStorage.setItem(AUTH_FLAG, '1');
-            } else {
-              localStorage.removeItem(AUTH_FLAG);
-            }
+            try{
+              if (user) localStorage.setItem(AUTH_FLAG,'1');
+              else localStorage.removeItem(AUTH_FLAG);
+            }catch(e){}
           });
         }
       }catch(e){}
