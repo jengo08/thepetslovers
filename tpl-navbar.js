@@ -1,6 +1,9 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js centralizado] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js centralizado + “Mi cuenta” → perfil] */
 (function () {
-  // Copia 1:1 de la barra de Index como Fallback (por si falla el fetch)
+  // 👉 Cambia esto si tu perfil tiene otra ruta (p. ej. 'perfil.html')
+  var PROFILE_URL = 'mi-cuenta.html';
+
+  // Fallback 1:1 de la barra (por si falla el fetch de tpl-navbar.html)
   var FALLBACK_HTML = '\
 <nav class="navbar">\
   <div class="logo">\
@@ -18,7 +21,7 @@
   <a class="login-button" href="iniciar-sesion.html">Iniciar sesión</a>\
 </nav>';
 
-  // 1) Garantizar punto de montaje (si no existe, lo creamos al principio del <body>)
+  // Garantizar punto de montaje
   function getMount() {
     var el = document.getElementById('tpl-navbar');
     if (el) return el;
@@ -29,7 +32,7 @@
     return div;
   }
 
-  // 2) Inyectar HTML de la barra y luego aplicar lógica de sesión
+  // Inyectar HTML y luego aplicar estado de sesión
   function injectHTML(html) {
     var mount = getMount();
     if (!mount) return;
@@ -37,7 +40,7 @@
     requestAnimationFrame(applySessionState);
   }
 
-  // 3) Detección “suave” de sesión (Firebase si existe; si no, banderitas propias)
+  // Detección “suave” de sesión
   function isLoggedIn() {
     try { if (window.firebase?.auth) return !!window.firebase.auth().currentUser; } catch(e){}
     if (window.tplIsLogged === true) return true;
@@ -45,7 +48,7 @@
     return false;
   }
 
-  // Oculta cualquier botón de “Cerrar sesión” por si existiera en alguna página
+  // Ocultar cualquier “Cerrar sesión”
   function hideLogoutButtons() {
     var cand = [
       ...document.querySelectorAll('[data-action="logout"], .logout-button, a[href*="logout"], button[href*="logout"]'),
@@ -57,37 +60,46 @@
     cand.forEach(function (el) { el.style.display = 'none'; el.setAttribute('aria-hidden','true'); });
   }
 
-  // 4) Aplica el estado de sesión a la UI de la barra
+  // Aplicar estado a la UI del botón derecho
+  function setLoginButton(logged) {
+    var btn = document.querySelector('.login-button');
+    if (!btn) return;
+
+    if (logged) {
+      btn.textContent = 'Mi perfil';
+      btn.setAttribute('href', PROFILE_URL);
+      btn.setAttribute('aria-label', 'Ir a mi perfil');
+      // Refuerzo por si algún script externo cambiara el href después:
+      btn.addEventListener('click', function (e) {
+        // Si por lo que sea el href no coincide, garantizamos la redirección correcta
+        if (btn.getAttribute('href') !== PROFILE_URL) {
+          e.preventDefault();
+          window.location.href = PROFILE_URL;
+        }
+      }, { once: true });
+    } else {
+      btn.textContent = 'Iniciar sesión';
+      btn.setAttribute('href', 'iniciar-sesion.html');
+      btn.setAttribute('aria-label', 'Iniciar sesión');
+    }
+  }
+
   function applySessionState() {
     hideLogoutButtons(); // nunca mostramos “Cerrar sesión” en la barra
+    setLoginButton(isLoggedIn());
 
-    var logged = isLoggedIn();
-    var loginBtn = document.querySelector('.login-button');
-    if (loginBtn) {
-      if (logged) {
-        loginBtn.textContent = 'Mi perfil';
-        loginBtn.setAttribute('href', 'mi-cuenta.html');
-      } else {
-        loginBtn.textContent = 'Iniciar sesión';
-        loginBtn.setAttribute('href', 'iniciar-sesion.html');
-      }
-    }
-
-    // Enganche a Firebase para reaccionar a cambios reales de auth
+    // Reaccionar a cambios reales de auth (Firebase)
     try {
       if (window.firebase?.auth) {
         window.firebase.auth().onAuthStateChanged(function (user) {
           hideLogoutButtons();
-          var btn = document.querySelector('.login-button');
-          if (!btn) return;
-          if (user) { btn.textContent = 'Mi perfil'; btn.setAttribute('href','mi-cuenta.html'); }
-          else      { btn.textContent = 'Iniciar sesión'; btn.setAttribute('href','iniciar-sesion.html'); }
+          setLoginButton(!!user);
         });
       }
     } catch(e){}
   }
 
-  // 5) Cargar partial maestro (si falla, usamos fallback)
+  // Cargar partial maestro (si falla, usar fallback)
   function injectNavbar() {
     fetch('tpl-navbar.html', { cache: 'no-cache' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
