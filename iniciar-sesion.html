@@ -34,15 +34,14 @@
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar centralizada] -->
+  <!-- Navbar centralizada -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <main class="auth-wrap container">
     <section class="auth-card" aria-label="Acceso">
       <h1 class="auth-title">Iniciar sesión</h1>
-      <p class="auth-sub">Accede con tu email y contraseña. Luego puedes completar tu perfil.</p>
+      <p class="auth-sub">Accede con tu email y contraseña. Luego podrás completar tu perfil.</p>
 
       <!-- Formulario: email + contraseña + botón único -->
       <form id="formAuth" class="auth-form" novalidate>
@@ -62,18 +61,18 @@
       <!-- Acciones secundarias (sin duplicar login) -->
       <div class="sep"><span>o</span></div>
       <div class="row-actions">
-        <a id="btnSignup" class="btn-outline" href="registro.html?mode=signup">Regístrate</a>
+        <!-- href base: lo sobreescribe el JS si hay ?next= o si vienes de Trabaja con nosotros -->
+        <a id="btnSignup" class="btn-outline" href="registro.html">Regístrate</a>
         <button id="btnGoogle" class="btn-google" type="button"><i class="fa-brands fa-google"></i> Continuar con Google</button>
       </div>
     </section>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer centralizado] -->
+  <!-- Footer centralizado -->
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat SDKs + init] -->
+  <!-- Firebase compat SDKs + init -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script>
@@ -93,9 +92,8 @@
       window.__TPL_AUTH_INIT = true;
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: login, Google, reset, redirección sin 404] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: login, Google, reset, redirección segura + propagación next] -->
   <script>
     (function(){
       const AUTH_FLAG = 'tplAuth';
@@ -108,7 +106,20 @@
       const pass  = $('#password');
       const btnForgot = $('#btnForgot');
       const btnGoogle = $('#btnGoogle');
+      const btnSignup = $('#btnSignup');
       const msg = $('#msg');
+
+      // TPL: INICIO BLOQUE NUEVO [Propagar ?next= y default desde Trabaja con nosotros]
+      function setSignupHref(){
+        var target = 'registro.html';
+        if (NEXT) {
+          target += '?next=' + encodeURIComponent(NEXT);
+        } else if (document.referrer && /trabaja-con-nosotros\.html/i.test(document.referrer)) {
+          target += '?next=cuestionario-candidatos.html';
+        }
+        if (btnSignup) btnSignup.setAttribute('href', target);
+      }
+      // TPL: FIN BLOQUE NUEVO
 
       // Resolver URL del perfil existente (mi-perfil.html / mi-cuenta.html / perfil.html)
       const PROFILE_URL_LS = 'tpl_profile_url_cache';
@@ -126,7 +137,6 @@
       }
 
       async function safeGo(url){
-        // Evita “Not Found” si NEXT apunta mal: validamos primero
         try{
           let r = await fetch(url, { method:'HEAD', cache:'no-store' });
           if (!r || !r.ok){ r = await fetch(url, { method:'GET', cache:'no-store' }); }
@@ -139,8 +149,10 @@
 
       function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
 
-      // Si ya hay sesión activa, entra directo (sin “ya iniciada”)
       document.addEventListener('DOMContentLoaded', async function(){
+        setSignupHref(); // <-- aplica el href correcto al “Regístrate”
+
+        // Si ya hay sesión activa, entra directo (sin “ya iniciada”)
         const a = auth();
         const logged = a && a.currentUser;
         const flag = localStorage.getItem(AUTH_FLAG)==='1';
@@ -149,7 +161,7 @@
         }
       });
 
-      // Login email/contraseña (botón único)
+      // Login email/contraseña
       form.addEventListener('submit', async function(e){
         e.preventDefault();
         const a = auth();
@@ -170,7 +182,7 @@
         }
       });
 
-      // Reset (una sola línea, sin recargar)
+      // Reset password
       btnForgot.addEventListener('click', async function(){
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
