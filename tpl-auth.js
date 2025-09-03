@@ -1,7 +1,7 @@
 // TPL: INICIO BLOQUE NUEVO [tpl-auth.js]
 // ===== The Pets Lovers · Control unificado de sesión =====
 // Requisitos: Firebase inicializado ANTES de este script.
-// Este script NO cambia tu diseño; alterna visibilidad por data-attributes.
+// Alterna visibilidad con data-auth-visible="signed-in|signed-out" sin cambiar tu diseño.
 
 (function(){
   function applyAuthVisibility(user){
@@ -48,12 +48,8 @@
     });
   }
 
-  function addBootClass(){
-    document.documentElement.classList.add('tpl-auth-boot');
-  }
-
   function init(){
-    addBootClass();
+    document.documentElement.classList.add('tpl-auth-boot');
     wireLogout();
     wireGoogleLogin();
 
