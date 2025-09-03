@@ -16,8 +16,8 @@
     <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>
   </ul>
 
-  <!-- Estado de sesión controlado por tpl-auth.js -->
-  <a href="inicio-sesion.html?next=perfil.html" class="login-button" data-auth-visible="signed-out">Iniciar sesión</a>
+  <!-- Sesión (el JS alterna visibilidad con data-auth-visible) -->
+  <a href="iniciar-sesion.html?next=perfil.html" class="login-button" data-auth-visible="signed-out">Iniciar sesión</a>
   <a href="perfil.html" class="login-button" data-auth-visible="signed-in">Mi perfil</a>
   <a href="#" id="tpl-logout" class="login-button" data-auth-visible="signed-in">Cerrar sesión</a>
 </nav>
