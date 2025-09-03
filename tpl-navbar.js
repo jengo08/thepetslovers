@@ -3,6 +3,37 @@
   // 👉 Ajusta esta ruta si tu perfil se llama distinto
   var PROFILE_URL = 'perfil.html'; // TPL: CAMBIO (antes: 'mi-perfil.html')
 
+  // TPL: INICIO BLOQUE NUEVO [Rutas y correo admin → solo panel para ti]
+  var PANEL_URL = 'tpl-candidaturas-admin.html';
+  // OJO: escribe aquí tu correo **exacto**; lo normalizamos para tildes y mayúsculas.
+  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
+  function tplNormalizeEmail(e){
+    return String(e||'')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // quita tildes/acentos
+  }
+  var ADMIN_SET = new Set(ADMIN_EMAILS.map(tplNormalizeEmail));
+  function isAdminEmail(email){
+    return ADMIN_SET.has(tplNormalizeEmail(email));
+  }
+  function getCurrentEmailFromFirebaseStorage(){
+    try{
+      for(var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if(k && k.indexOf('firebase:authUser:')===0){
+          var v = localStorage.getItem(k);
+          if(!v) continue;
+          var obj = JSON.parse(v);
+          // Compat: algunos guardan en obj.email, otros en obj['email']
+          if(obj && obj.email) return String(obj.email);
+        }
+      }
+    }catch(e){}
+    return '';
+  }
+  // TPL: FIN BLOQUE NUEVO
+
   // --- HTML del navbar (igual que Index, con “¿Necesitas ayuda?”)
   var NAV_HTML =
     '<nav class="navbar">'
@@ -84,10 +115,16 @@
     try{
       var btn = document.querySelector('.navbar .login-button');
       if(!btn) return;
+
       if(logged){
-        btn.textContent = 'Mi perfil';
-        btn.setAttribute('href', PROFILE_URL);
-        btn.setAttribute('aria-label','Ir a mi perfil');
+        // TPL: INICIO BLOQUE NUEVO [Decidir destino según si eres admin]
+        var email = getCurrentEmailFromFirebaseStorage();
+        var dest = isAdminEmail(email) ? PANEL_URL : PROFILE_URL;
+        var label = isAdminEmail(email) ? 'Panel' : 'Mi perfil';
+        btn.textContent = label;
+        btn.setAttribute('href', dest);
+        btn.setAttribute('aria-label','Ir a ' + label.toLowerCase());
+        // TPL: FIN BLOQUE NUEVO
       }else{
         btn.textContent = 'Iniciar sesión';
         btn.setAttribute('href', 'iniciar-sesion.html');
