@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin candidaturas · The Pets Lovers</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
+    .page{ padding-top:120px; }
+    .tpl-card{ max-width:1100px; margin:0 auto 60px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); padding:16px; }
+    .filters{ display:grid; gap:10px; grid-template-columns:1fr; }
+    @media (min-width:900px){ .filters{ grid-template-columns: 1fr 200px 200px 160px; } }
+    .filters input,.filters select{ border:1px solid #ddd; border-radius:10px; padding:10px; font:inherit; }
+    table{ width:100%; border-collapse:collapse; margin-top:12px; }
+    th,td{ text-align:left; padding:10px; border-bottom:1px solid #f0f0f0; vertical-align:top; }
+    th{ color:var(--tpl-ink); font-weight:700; }
+    .pill{ display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #d7efef; color:#339496; background:#f5fbfb; font-size:.85rem; }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; }
+    .btn{ background:#339496; color:#fff; border-radius:999px; padding:8px 12px; text-decoration:none; border:2px solid transparent; display:inline-block; }
+    .btn.outline{ background:#fff; color:#339496; border-color:#339496; }
+    .status{ margin-top:8px; color:#666; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div id="tpl-navbar"></div>
+
+  <main class="page">
+    <section class="tpl-card">
+      <h1>👩‍⚕️ Admin · Candidaturas</h1>
+      <p class="status" id="status">Cargando…</p>
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Filtros] -->
+      <div class="filters" role="region" aria-label="Filtros">
+        <input id="q" type="search" placeholder="Buscar por nombre, email, ciudad, zonas…" aria-label="Buscar texto">
+        <select id="f-rol" aria-label="Filtrar por rol">
+          <option value="">Rol (todos)</option>
+          <option>Auxiliar de Veterinaria</option>
+          <option>Veterinario/a</option>
+        </select>
+        <select id="f-disp" aria-label="Filtrar por disponibilidad">
+          <option value="">Disponibilidad (todas)</option>
+          <option>Mañanas</option><option>Tardes</option><option>Noches</option>
+          <option>Fines de semana</option><option>Completa</option>
+        </select>
+        <select id="f-limit" aria-label="Límite">
+          <option>25</option><option selected>50</option><option>100</option>
+        </select>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Tabla] -->
+      <div style="overflow:auto">
+        <table aria-describedby="status">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Nombre / Contacto</th>
+              <th>Rol / Zona</th>
+              <th>Disponibilidad</th>
+              <th>Experiencia / Enlaces</th>
+              <th>Archivos</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="6">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    </section>
+  </main>
+
+  <div id="tpl-footer"></div>
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase — igual que el resto del sitio] -->
+  <script>
+    (function(){
+      if (!firebase.apps.length) {
+        const firebaseConfig = {
+          apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+          authDomain: "thepetslovers-c1111.firebaseapp.com",
+          projectId: "thepetslovers-c1111"
+        };
+        firebase.initializeApp(firebaseConfig);
+      }
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Carga + filtros] -->
+  <script>
+    (function(){
+      const db = firebase.firestore();
+      const rows = document.getElementById('rows');
+      const status = document.getElementById('status');
+      const q = document.getElementById('q');
+      const fRol = document.getElementById('f-rol');
+      const fDisp = document.getElementById('f-disp');
+      const fLimit = document.getElementById('f-limit');
+
+      let all = [];
+
+      function fmt(ts){
+        if (!ts) return '-';
+        const d = ts.toDate();
+        return d.toLocaleDateString('es-ES', {year:'numeric', month:'2-digit', day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+      }
+
+      function escapeHtml(s){
+        return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+      }
+
+      function matchText(item, needle){
+        if (!needle) return true;
+        const hay = [
+          item.nombre, item.email, item.telefono, item.ciudad, item.cp, item.zonasCobertura,
+          item.rol, item.disponibilidad, item.links
+        ].join(' ').toLowerCase();
+        return hay.includes(needle.toLowerCase());
+      }
+
+      function render(){
+        const limit = parseInt(fLimit.value||'50',10);
+        const needle = q.value.trim();
+        const rol = fRol.value.trim();
+        const disp = fDisp.value.trim();
+
+        const filtered = all.filter(it =>
+          matchText(it, needle) &&
+          (!rol || (it.rol||'')===rol) &&
+          (!disp || (it.disponibilidad||'')===disp)
+        ).slice(0, limit);
+
+        if (!filtered.length){
+          rows.innerHTML = '<tr><td colspan="6">Sin resultados con los filtros actuales.</td></tr>';
+          return;
+        }
+
+        rows.innerHTML = filtered.map(it=>{
+          const archivos = `
+            ${it.cvUrl ? `<a class="btn outline" href="${it.cvUrl}" target="_blank" rel="noopener">CV</a>`:''}
+            ${it.tituloUrl ? `<a class="btn outline" href="${it.tituloUrl}" target="_blank" rel="noopener">Título</a>`:''}
+          `;
+          const enlaces = it.links ? `<div><a href="${escapeHtml(it.links)}" target="_blank" rel="noopener">${escapeHtml(it.links)}</a></div>` : '';
+          return `
+            <tr>
+              <td>${fmt(it.createdAt)}</td>
+              <td>
+                <div><strong>${escapeHtml(it.nombre)}</strong></div>
+                <div>${escapeHtml(it.email||'-')} · ${escapeHtml(it.telefono||'-')}</div>
+              </td>
+              <td>
+                <div><span class="pill">${escapeHtml(it.rol||'-')}</span></div>
+                <div>${escapeHtml(it.ciudad||'-')} ${it.cp?('('+escapeHtml(it.cp)+')'):''}</div>
+              </td>
+              <td>
+                <div>${escapeHtml(it.disponibilidad||'-')}</div>
+                <div>${escapeHtml(it.finesFestivos||'')}</div>
+              </td>
+              <td>
+                <div>${escapeHtml(it.experienciaPrev||it.experiencia||'-')}</div>
+                ${enlaces}
+              </td>
+              <td class="actions">
+                ${archivos || '-'}
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function load(){
+        status.textContent = 'Cargando…';
+        db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get()
+          .then(snap=>{
+            all = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+            status.textContent = `Cargadas ${all.length} candidaturas. Usa los filtros para refinar.`;
+            render();
+          })
+          .catch(err=>{
+            console.error(err);
+            status.textContent = 'No se pudieron cargar las candidaturas (revisa permisos Firestore).';
+          });
+      }
+
+      [q,fRol,fDisp,fLimit].forEach(el=> el.addEventListener('input', render));
+      document.readyState==='loading' ? document.addEventListener('DOMContentLoaded', load) : load();
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
