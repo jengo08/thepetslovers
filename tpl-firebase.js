@@ -1,10 +1,7 @@
-<!-- TPL: INICIO BLOQUE NUEVO [tpl-firebase.js — Inicialización Firebase para navegador] -->
-<script type="module">
+// TPL: INICIO BLOQUE NUEVO [tpl-firebase.js — Inicialización Firebase para navegador]
 // SDKs desde CDN (válidos en navegador, sin bundlers)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js";
-// (Opcional) Si más adelante quieres analytics, lo dejo envainado para que no rompa nada
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-analytics.js";
-// (Los usaremos en pasos siguientes, solo los expongo)
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-storage.js";
@@ -23,15 +20,13 @@ const firebaseConfig = {
 // Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 
-// Analytics (no obligatorio). Lo intento y si no se puede, sigo sin fallar la página.
-try { getAnalytics(app); } catch (e) { /* noop */ }
+// Analytics opcional (si falla, seguimos igual)
+try { getAnalytics(app); } catch { /* noop */ }
 
-// Expongo en window para que cualquier otro script pueda usarlo.
+// Expón en window para que otros scripts puedan usarlo
 window.firebaseConfig = firebaseConfig;
 window.firebaseApp = app;
-// Atajos a los “get*” sin instanciar todavía (los usaremos después)
 window.tplFirebase = { getAuth, getFirestore, getStorage };
 
 console.log('[TPL] Firebase inicializado:', app?.name || 'ok');
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+// TPL: FIN BLOQUE NUEVO
