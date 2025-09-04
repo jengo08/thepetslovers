@@ -33,10 +33,12 @@
 /* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js — RESCATE SIMPLE y ESTABLE] */
 (function(){
   // 👉 Ajusta esta ruta si tu perfil se llama distinto
-  var PROFILE_URL = 'perfil.html';
+  // CAMBIO: rutas absolutas para evitar 404 desde subcarpetas
+  var PROFILE_URL = '/perfil.html';
 
   // Solo tú ves el panel admin
-  var PANEL_URL = 'tpl-candidaturas-admin.html';
+  // CAMBIO: ruta absoluta
+  var PANEL_URL = '/tpl-candidaturas-admin.html';
 
   // ⬇⬇⬇ TPL: ADMIN — si cambias de email admin, actualiza aquí
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
