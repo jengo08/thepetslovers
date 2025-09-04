@@ -306,9 +306,20 @@
       window.addEventListener('tpl:reserva', async (ev) => {
         try {
           const d = ev.detail || {};
+          const labelFromKey = (key)=>({
+            "guarderia-dia":"Guardería de día",
+            "visitas":"Visitas a domicilio (gatos)",
+            "alojamiento":"Alojamiento nocturno",
+            "paseos":"Paseos",
+            "transporte":"Transporte",
+            "bodas":"Bodas",
+            "postoperatorio":"Postoperatorio",
+            "exoticos":"Exóticos"
+          }[key]||key||'Servicio');
+
           await addDoc(collection(db, "reservas_rapidas"), {
             ...d,
-            servicio_label: (${labelFromKey.toString()})(d.servicio),
+            servicio_label: labelFromKey(d.servicio),
             createdAt: serverTimestamp(),
             userAgent: navigator.userAgent || '',
             page: location.href
@@ -341,111 +352,12 @@
   } catch(_) {}
 })();
 /* TPL: FIN BLOQUE NUEVO */
-<!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Firebase + Proveedores Email/Google/Facebook/Microsoft] -->
-<script>
-(function(){
-  // 1) TU CONFIG (ya la traías). La dejo disponible globalmente para otros módulos (p. ej. el modal de reservas).
-  window.__TPL_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-    authDomain: "thepetslovers-c1111.firebaseapp.com",
-    projectId: "thepetslovers-c1111",
-    storageBucket: "thepetslovers-c1111.firebasestorage.app",
-    messagingSenderId: "415914577533",
-    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-    measurementId: "G-FXPD69KXBG"
-  };
 
-  // 2) Inyecto un módulo ES para usar el SDK modular sin build y sin romper tu JS actual.
-  const mod = document.createElement('script');
-  mod.type = 'module';
-  mod.textContent = `
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
-      GoogleAuthProvider, FacebookAuthProvider, OAuthProvider,
-      signInWithPopup, signInWithRedirect, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-    const cfg = window.__TPL_FIREBASE_CONFIG;
-    let app = getApps().length ? getApp() : initializeApp(cfg);
-    const auth = getAuth(app);
-    const db = getFirestore(app); // por si lo necesitas en el futuro
-
-    // Proveedores
-    const providerGoogle = new GoogleAuthProvider();
-    const providerFacebook = new FacebookAuthProvider();
-    const providerMicrosoft = new OAuthProvider('microsoft.com');
-
-    const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-    // Exponemos una API simple para la UI (login modal/inline que pongamos)
-    const listeners = [];
-    onAuthStateChanged(auth, (user) => { listeners.forEach(fn => fn(user || null)); });
-
-    async function signInProvider(provider){
-      // En iOS Safari mejor redirect para evitar bloqueos de pop-up
-      if (isIOS && isSafari) return signInWithRedirect(auth, provider);
-      return signInWithPopup(auth, provider);
-    }
-
-    window.tplAuth = {
-      // Estado
-      onChange(cb){ if (typeof cb==='function') listeners.push(cb); },
-      getUser(){ return auth.currentUser || null; },
-
-      // Email/Password
-      async emailSignIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
-      async emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
-      async emailReset(email){ return sendPasswordResetEmail(auth, email); },
-
-      // Sociales
-      google(){ return signInProvider(providerGoogle); },
-      facebook(){ return signInProvider(providerFacebook); },
-      microsoft(){ return signInProvider(providerMicrosoft); },
-
-      // Salir
-      async signOut(){ return signOut(auth); }
-    };
-
-    // Utilidad opcional por si quieres mostrar/ocultar botones con data-auth-visible="in|out"
-    function syncAuthVisibility(user){
-      document.querySelectorAll('[data-auth-visible]').forEach(el=>{
-        const mode = el.getAttribute('data-auth-visible');
-        el.style.display = (mode==='in' && user) || (mode==='out' && !user) ? '' : 'none';
-      });
-    }
-    window.tplAuth.onChange(syncAuthVisibility);
-    syncAuthVisibility(auth.currentUser);
-  `;
-  document.head.appendChild(mod);
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + Formspree + Firebase Firestore]
-   =========================== */
-( function(){ /* ... TU CÓDIGO EXACTO TAL CUAL LO PEGASTE ARRIBA ... */ } )();
-/* ===========================
-   TPL: FIN BLOQUE NUEVO
-   =========================== */
-
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Airbag JS mínimo para evitar pantalla en blanco]
-   =========================== */
-( function(){
-  try {
-    window.addEventListener('error', e => console.warn('TPL: error global:', e.message));
-    window.addEventListener('unhandledrejection', e => console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason));
-  } catch(_) {}
-} )();
-/* TPL: FIN BLOQUE NUEVO */
 /* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google]
+   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google + (Facebook/Microsoft opcional)]
    =========================================================== */
 (function(){
-  // Tu configuración (la dejamos global por si otros módulos la necesitan)
+  // Tu configuración (global para otros módulos)
   window.__TPL_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
     authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -464,17 +376,19 @@
     import {
       getAuth, onAuthStateChanged,
       signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
-      GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut
+      GoogleAuthProvider, FacebookAuthProvider, OAuthProvider,
+      signInWithPopup, signInWithRedirect, signOut
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
     const cfg  = window.__TPL_FIREBASE_CONFIG;
     const app  = getApps().length ? getApp() : initializeApp(cfg);
     const auth = getAuth(app);
 
-    // Proveedor Google
+    // Proveedores
     const providerGoogle = new GoogleAuthProvider();
+    const providerFacebook = new FacebookAuthProvider();
+    const providerMicrosoft = new OAuthProvider('microsoft.com');
 
-    // iOS Safari -> redirect es más fiable que popup
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const useRedirect = (isIOS && isSafari);
@@ -482,6 +396,11 @@
     async function googleSignIn(){
       return useRedirect ? signInWithRedirect(auth, providerGoogle)
                          : signInWithPopup(auth, providerGoogle);
+    }
+
+    async function providerSignIn(p){
+      return useRedirect ? signInWithRedirect(auth, p)
+                         : signInWithPopup(auth, p);
     }
 
     // API pública
@@ -497,8 +416,10 @@
       emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
       emailReset(email){ return sendPasswordResetEmail(auth, email); },
 
-      // Google
+      // Sociales
       google(){ return googleSignIn(); },
+      facebook(){ return providerSignIn(providerFacebook); },
+      microsoft(){ return providerSignIn(providerMicrosoft); },
 
       // Salir
       signOut(){ return signOut(auth); },
@@ -641,6 +562,3 @@
 /* ===========================================================
    TPL: FIN BLOQUE NUEVO
    =========================================================== */
-
-
-
