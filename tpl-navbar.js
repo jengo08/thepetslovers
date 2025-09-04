@@ -256,7 +256,7 @@
 /* TPL: FIN BLOQUE NUEVO */
 
 
-/* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Aviso automático + Unificación Owner/Pet] */
+/* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Aviso automático + Unificación por Prefijos y por Grupo] */
 (function(){
   // ======= CONFIGURA AQUÍ TUS IDS DE EMAILJS =======
   var EMAILJS_CONFIG = {
@@ -268,14 +268,15 @@
       default: 'template_wmz159o',        // ✅ tu Template ID genérica
       candidatura: 'TEMPLATE_ID_CANDIDATURA', // opcional (si la creas)
       reserva: 'TEMPLATE_ID_RESERVA',         // opcional (si la creas)
-      contacto: 'TEMPLATE_ID_CONTACTO'        // opcional (si la creas)
+      contacto: 'TEMPLATE_ID_CONTACTO',       // opcional (si la creas)
+      perfil: 'template_wmz159o'              // reutilizamos la genérica
     },
     // Email de destino por defecto (en tu plantilla puedes usar {{to_email}} si quieres)
     toEmail: 'gestion@thepetslovers.es'
   };
   if (!EMAILJS_CONFIG.enabled) return;
 
-  // Hacemos accesible config (por si una página necesita usar EmailJS directo)
+  // Exponer config para otras páginas que necesiten EmailJS directo
   window.__TPL_EMAILJS = {
     publicKey: EMAILJS_CONFIG.publicKey,
     serviceId: EMAILJS_CONFIG.serviceId,
@@ -283,13 +284,25 @@
     toEmail: EMAILJS_CONFIG.toEmail
   };
 
-  // Prefijos para unificar Propietario (owner_) y Mascota (pet_)
+  // --- Constantes de unificación ---
+  // A) Unificación por prefijo (no hace falta tocar tus forms si ya usas estos names)
   var OWNER_PREFIX = 'owner_';
   var PET_PREFIX   = 'pet_';
   var LS_OWNER = 'TPL_OWNER_DATA';
   var LS_PET   = 'TPL_PET_DATA';
 
-  // --- Cargar SDK EmailJS (una vez)
+  // B) Unificación por grupo (data-tpl-type="perfil", data-tpl-group="propietario"/"mascota")
+  // Guardamos cada mitad bajo una clave de sesión (p.ej. PERFIL: propietario/mascota)
+  function groupKey(form){
+    var type  = (form.getAttribute('data-tpl-type')||'').trim().toLowerCase();
+    var group = (form.getAttribute('data-tpl-group')||'').trim().toLowerCase();
+    return type ? ('TPL_GROUP_'+type) : '';
+  }
+  function subgroup(form){
+    return (form.getAttribute('data-tpl-group')||'').trim().toLowerCase();
+  }
+
+  // --- Cargar SDK EmailJS (una vez) ---
   function loadScript(src){
     return new Promise(function(res,rej){
       var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
@@ -306,7 +319,7 @@
       });
   }
 
-  // --- Utilidades
+  // --- Utilidades comunes ---
   function collectFormData(form){
     var data = {};
     var els = form.querySelectorAll('input, select, textarea');
@@ -356,47 +369,81 @@
   }
   function saveLS(key, val){ try{ localStorage.setItem(key, JSON.stringify(val||{})); }catch(e){} }
   function loadLS(key){ try{ return JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){ return {}; } }
-  function clearOP(){ try{ localStorage.removeItem(LS_OWNER); localStorage.removeItem(LS_PET);}catch(e){} }
+  function clearLS(key){ try{ localStorage.removeItem(key); }catch(e){} }
+  function clearOP(){ clearLS(LS_OWNER); clearLS(LS_PET); }
 
-  // --- Envío EmailJS simple
+  // --- EmailJS send ---
   function sendEmail(type, params){
     var templateId = EMAILJS_CONFIG.templates[type] || EMAILJS_CONFIG.templates.default;
     params.table_html = buildTableHTML(params);
-    params.subject = (type==='candidatura' ? 'Nueva candidatura' :
-                     (type==='reserva' ? 'Nueva reserva' :
-                     (type==='contacto' ? 'Nuevo contacto' : 'Nuevo formulario')))
-                     + (params.from_name ? (' · ' + params.from_name) : '');
+    var base = (type==='candidatura' ? 'Nueva candidatura' :
+                type==='reserva'     ? 'Nueva reserva'     :
+                type==='contacto'    ? 'Nuevo contacto'    :
+                type==='perfil'      ? 'Nuevo perfil'      :
+                'Nuevo formulario');
+    params.subject = base + (params.from_name ? (' · ' + params.from_name) : '');
     return emailjs.send(EMAILJS_CONFIG.serviceId, templateId, params);
   }
 
-  // --- Envío unificado Owner+Pet (se lanza al recibir el segundo)
-  function tryUnifiedSend(currentParams){
+  // --- Unificación por PREFIJOS (owner_ / pet_) ---
+  function tryUnifiedSendByPrefix(currentParams){
     var isOwner = hasPrefix(currentParams, OWNER_PREFIX);
     var isPet   = hasPrefix(currentParams, PET_PREFIX);
     var ownerLS = loadLS(LS_OWNER), petLS = loadLS(LS_PET);
 
-    // Guarda la parte actual
+    // Guarda mitad actual
     if (isOwner) saveLS(LS_OWNER, pick(currentParams, OWNER_PREFIX));
     if (isPet)   saveLS(LS_PET,   pick(currentParams, PET_PREFIX));
 
-    // ¿Tenemos ambas partes?
+    // ¿Tenemos ambas?
     ownerLS = loadLS(LS_OWNER); petLS = loadLS(LS_PET);
     var haveBoth = Object.keys(ownerLS).length && Object.keys(petLS).length;
-    if (!haveBoth) return false; // aún no enviamos
+    if (!haveBoth) return false;
 
-    // Mezclar y enviar un solo correo
+    // Mezclar y enviar 1 correo
     var merged = {};
     for (var k in currentParams){ merged[k]=currentParams[k]; }
     for (var k2 in ownerLS){ merged[k2]=ownerLS[k2]; }
     for (var k3 in petLS){ merged[k3]=petLS[k3]; }
-    merged.unified_info = 'Propietario + Mascota (unificado)';
-
+    merged.unified_info = 'Propietario + Mascota (unificado por prefijos)';
     clearOP();
-    sendEmail('default', merged).catch(function(){ /* silencioso */ });
+    sendEmail('perfil', merged).catch(function(){});
     return true;
   }
 
-  // --- Enganche global: se dispara en TODOS los formularios
+  // --- Unificación por GRUPO (data-tpl-type="perfil", data-tpl-group="propietario|mascota") ---
+  function tryUnifiedSendByGroup(form, currentParams){
+    var gKey = groupKey(form);
+    var sub  = subgroup(form); // 'propietario' | 'mascota' (o lo que definas)
+    if (!gKey || !sub) return false;
+
+    // Persistimos la mitad actual
+    var cacheAll = loadLS(gKey);
+    cacheAll[sub] = currentParams;
+    saveLS(gKey, cacheAll);
+
+    // ¿Están ambas?
+    var haveOwner = !!cacheAll.propietario;
+    var havePet   = !!cacheAll.mascota;
+    if (!(haveOwner && havePet)) return false;
+
+    // Mezclamos y enviamos 1 correo
+    var merged = {};
+    var owner = cacheAll.propietario || {};
+    var pet   = cacheAll.mascota     || {};
+    for (var k in owner){ merged['owner_'+k] = owner[k]; }
+    for (var k2 in pet){ merged['pet_'+k2] = pet[k2]; }
+
+    // Añadimos el contexto de la página actual también
+    for (var k3 in currentParams){ if (!merged.hasOwnProperty(k3)) merged[k3]=currentParams[k3]; }
+
+    merged.unified_info = 'Propietario + Mascota (unificado por grupo)';
+    clearLS(gKey);
+    sendEmail('perfil', merged).catch(function(){});
+    return true;
+  }
+
+  // --- Enganche global: se dispara en TODOS los formularios (sin impedir el submit nativo) ---
   function onAnyFormSubmit(ev){
     var form = ev.target;
     if (!form || form.nodeName!=='FORM') return;
@@ -405,20 +452,22 @@
     if (form.hasAttribute('data-tpl-no-emailjs')) return;
 
     try{
-      var type = form.getAttribute('data-tpl-type') || 'default';
+      var type = (form.getAttribute('data-tpl-type') || 'default').toLowerCase();
       var params = collectFormData(form);
 
-      // Lógica de unificación Owner/Pet:
-      var ownerOnly = hasPrefix(params, OWNER_PREFIX) && !hasPrefix(params, PET_PREFIX);
-      var petOnly   = hasPrefix(params, PET_PREFIX)   && !hasPrefix(params, OWNER_PREFIX);
-
-      if (ownerOnly || petOnly){
-        // Solo guardamos; al llegar la otra parte se enviará 1 único correo
-        tryUnifiedSend(params);
-        return; // no enviamos este aún
+      // 1) Intento unificación por GRUPO (si es un perfil con data-tpl-group)
+      var unifiedByGroup = false;
+      var t = (form.getAttribute('data-tpl-type')||'').toLowerCase();
+      if (t === 'perfil' && subgroup(form)){
+        unifiedByGroup = tryUnifiedSendByGroup(form, params);
+        if (unifiedByGroup) return; // ya se enviará cuando estén ambas partes
       }
 
-      // Si el form ya trae ambas partes o es otro tipo, enviamos ya
+      // 2) Intento unificación por PREFIJOS (si los campos usan owner_/pet_)
+      var unifiedByPrefix = tryUnifiedSendByPrefix(params);
+      if (unifiedByPrefix) return; // ya enviado combinado
+
+      // 3) Si no hay unificación, envío normal
       sendEmail(type, params).catch(function(){ /* silencioso */ });
     }catch(e){ /* silencioso */ }
 
@@ -493,7 +542,7 @@
     btns.forEach(function(b){ b.disabled = true; b.dataset._tplText = b.textContent; b.textContent = 'Enviando…'; });
 
     // Mostrar overlay "Enviando…"
-    showOverlay('Enviando…', 'Subiendo archivos (CV, título…) y guardando datos. Puede tardar unos segundos.');
+    showOverlay('Enviando…', 'Subiendo archivos (si aplica) y guardando datos. Puede tardar unos segundos.');
 
     // Estrategia "optimista": si en X segundos no ha navegado la página,
     // mostramos el OK y redirigimos si está configurado.
