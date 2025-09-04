@@ -5,7 +5,7 @@
 
   // TPL: INICIO BLOQUE NUEVO [Rutas y correo admin → solo panel para ti]
   var PANEL_URL = 'tpl-candidaturas-admin.html';
-  // OJO: escribe aquí tu correo **exacto**; lo normalizamos para tildes y mayúsculas.
+  // OJO: escribe aquí tu correo **exacto**; lo normalizamos para tildes/acentos y mayúsculas.
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
   function tplNormalizeEmail(e){
     return String(e||'')
@@ -262,14 +262,14 @@
   // 1) Entra en EmailJS y copia tu Public Key, Service ID y los Template IDs.
   var EMAILJS_CONFIG = {
     enabled: true, // pon false para desactivar globalmente
-    publicKey: 'TU_PUBLIC_KEY_AQUI',       // <-- CAMBIA
-    serviceId: 'TU_SERVICE_ID_AQUI',       // <-- CAMBIA
+    publicKey: 'L2xAATfVuHJwj4EIV',       // ✅ tu Public Key
+    serviceId: 'service_odjqrfl',         // ✅ tu Service ID
     templates: {
       // Plantillas opcionales por tipo; si no hay match, usa "default"
-      default: 'TEMPLATE_ID_GENERICO',     // <-- CAMBIA (crea una plantilla genérica)
-      candidatura: 'TEMPLATE_ID_CANDIDATURA', // opcional
-      reserva: 'TEMPLATE_ID_RESERVA',         // opcional
-      contacto: 'TEMPLATE_ID_CONTACTO'        // opcional
+      default: 'template_wmz159o',        // ✅ tu Template ID genérica
+      candidatura: 'TEMPLATE_ID_CANDIDATURA', // opcional (si la creas)
+      reserva: 'TEMPLATE_ID_RESERVA',         // opcional (si la creas)
+      contacto: 'TEMPLATE_ID_CONTACTO'        // opcional (si la creas)
     },
     // Email de destino por defecto (en tu plantilla puedes usar {{to_email}} si quieres)
     toEmail: 'gestion@thepetslovers.es'
