@@ -229,14 +229,16 @@
 (function(){
   var EMAILJS_CONFIG = {
     enabled: true,
-    publicKey: 'L2xAATfVuHJwj4EIV',
+    // ⬇⬇⬇ TPL: AJUSTE SOLICITADO — claves reales que me diste
+    publicKey: 'Chuvina69',
     serviceId: 'service_odjqrfl',
+    // Map de plantillas: usamos 2 (candidatura y reservas) y el resto cae en la de reservas por defecto
     templates: {
-      default: 'template_wmz159o',
-      candidatura: 'TEMPLATE_ID_CANDIDATURA',
-      reserva: 'TEMPLATE_ID_RESERVA',
-      contacto: 'TEMPLATE_ID_CONTACTO',
-      perfil: 'template_wmz159o'
+      default:  'template_rao5n0c',     // por defecto (contacto/registro/etc.) → reservas
+      candidatura: 'template_32z2wj4',  // candidaturas (RRHH)
+      reserva: 'template_rao5n0c',      // reservas (gestión)
+      contacto: 'template_rao5n0c',
+      perfil:   'template_rao5n0c'
     },
     toEmail: 'gestion@thepetslovers.es'
   };
