@@ -302,6 +302,25 @@ html.tpl-auth-boot [data-auth-visible="signed-out"]{
   visibility: hidden;
 }
 /* TPL: FIN BLOQUE NUEVO */
+/* TPL: INICIO BLOQUE NUEVO [Overlay envío de formularios] */
+.tpl-form-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  display: none; align-items: center; justify-content: center; z-index: 9999;
+}
+.tpl-form-overlay.show { display: flex; }
+.tpl-form-card {
+  background:#fff; border-radius:14px; padding:18px 16px; max-width: 480px; width: calc(100% - 32px);
+  box-shadow: 0 10px 30px rgba(0,0,0,.15); text-align:center; font-family: inherit;
+}
+.tpl-form-card h3 { margin: 0 0 6px; color: #339496; }
+.tpl-form-card p { margin: 0; color:#58425a; }
+.tpl-form-spinner {
+  width:22px; height:22px; border:3px solid #e8f4f4; border-top-color:#339496; border-radius:50%;
+  margin: 0 auto 10px; animation: tplspin 0.9s linear infinite;
+}
+@keyframes tplspin { to { transform: rotate(360deg); } }
+/* TPL: FIN BLOQUE NUEVO */
+
 
 
 
