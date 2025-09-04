@@ -176,6 +176,77 @@
 /* TPL: FIN BLOQUE NUEVO */
 
 
+/* TPL: INICIO BLOQUE NUEVO [Guardia reservas/candidaturas requieren login] */
+(function(){
+  // Lee el estado de Auth desde el almacenamiento local de Firebase (sin dependencias)
+  function getAuthSnapshot(){
+    try{
+      for (var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        if (k && k.indexOf('firebase:authUser:') === 0){
+          var obj = JSON.parse(localStorage.getItem(k) || '{}');
+          if (obj && obj.uid){
+            var isAnon = !!obj.isAnonymous;
+            var provs = Array.isArray(obj.providerData) ? obj.providerData.map(function(p){ return p && p.providerId; }) : [];
+            if (provs.length === 0 && isAnon !== false) isAnon = true;
+            return { logged: true, isAnonymous: isAnon, email: obj.email || '' };
+          }
+        }
+      }
+    }catch(e){}
+    return { logged: false, isAnonymous: true, email: '' };
+  }
+
+  function needsLogin(form){
+    var t = (form.getAttribute('data-tpl-type') || '').toLowerCase();
+    return t === 'reserva' || t === 'candidatura';
+  }
+
+  function gotoLogin(nextUrl){
+    var next = nextUrl || location.href;
+    var ov = document.getElementById('tpl-form-overlay');
+    if (ov){
+      ov.classList.add('show');
+      var t = ov.querySelector('#tpl-form-title');
+      var m = ov.querySelector('#tpl-form-msg');
+      var actions = ov.querySelector('#tpl-form-actions');
+      if (t) t.textContent = 'Inicia sesión';
+      if (m) m.textContent = 'Necesitas iniciar sesión para continuar.';
+      if (actions) actions.style.display = 'flex';
+      var btn = ov.querySelector('#tpl-form-accept');
+      if (btn){
+        btn.replaceWith(btn.cloneNode(true));
+        btn = ov.querySelector('#tpl-form-accept');
+        btn.addEventListener('click', function(){
+          location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(next);
+        }, { once:true });
+        setTimeout(function(){ btn.focus(); }, 60);
+        return;
+      }
+    }
+    alert('Necesitas iniciar sesión para continuar.');
+    location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(next);
+  }
+
+  function onSubmitGuard(ev){
+    var form = ev.target;
+    if (!form || form.nodeName !== 'FORM') return;
+    if (!needsLogin(form)) return;
+
+    var snap = getAuthSnapshot();
+    if (!snap.logged || snap.isAnonymous){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var next = form.getAttribute('data-tpl-redirect') || location.href;
+      gotoLogin(next);
+    }
+  }
+
+  document.addEventListener('submit', onSubmitGuard, true);
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
+
 /* TPL: INICIO BLOQUE NUEVO [Tracking de visitas centralizado — JS puro, sin <script>] */
 (function(){
   if (document.body && document.body.hasAttribute('data-tpl-no-track')) return;
@@ -238,7 +309,8 @@
       candidatura: 'template_32z2wj4',  // candidaturas (gestión o RRHH)
       reserva: 'template_rao5n0c',      // reservas (gestión)
       contacto: 'template_rao5n0c',
-      perfil:   'template_rao5n0c'
+      // 👇 TPL: APUNTA también el envío unificado propietario+mascota a la plantilla de CANDIDATURAS
+      perfil:   'template_32z2wj4'
     },
     toEmail: 'gestion@thepetslovers.es'
   };
@@ -309,11 +381,16 @@
   function sendEmail(type, params){
     var templateId = EMAILJS_CONFIG.templates[type] || EMAILJS_CONFIG.templates.default;
     params.table_html = buildTableHTML(params);
-    var base = (type==='candidatura'?'Nueva candidatura':type==='reserva'?'Nueva reserva':type==='contacto'?'Nuevo contacto':type==='perfil'?'Nuevo perfil':'Nuevo formulario');
+    var base = (type==='candidatura'?'Nueva candidatura'
+               :type==='reserva'   ?'Nueva reserva'
+               :type==='perfil'    ?'Registro de propietario + mascota'
+               :type==='contacto'  ?'Nuevo contacto'
+               :'Nuevo formulario');
     params.subject = base + (params.from_name ? (' · ' + params.from_name) : '');
     return emailjs.send(EMAILJS_CONFIG.serviceId, templateId, params);
   }
 
+  // ⬇⬇⬇ TPL: MOD — Unificación por PREFIJOS: ahora envía por la plantilla de CANDIDATURAS
   function tryUnifiedSendByPrefix(currentParams){
     var isOwner=hasPrefix(currentParams,OWNER_PREFIX), isPet=hasPrefix(currentParams,PET_PREFIX);
     var ownerLS=loadLS(LS_OWNER), petLS=loadLS(LS_PET);
@@ -322,27 +399,35 @@
     ownerLS=loadLS(LS_OWNER); petLS=loadLS(LS_PET);
     var haveBoth = Object.keys(ownerLS).length && Object.keys(petLS).length;
     if(!haveBoth) return false;
+
     var merged={}; for(var k in currentParams){ merged[k]=currentParams[k]; }
     for(var k2 in ownerLS){ merged[k2]=ownerLS[k2]; }
     for(var k3 in petLS){ merged[k3]=petLS[k3]; }
     merged.unified_info='Propietario + Mascota (unificado por prefijos)';
     clearOP();
+
+    // 👇 Enviar como "perfil" pero usando plantilla de CANDIDATURAS (config arriba)
     sendEmail('perfil', merged).catch(function(){});
     return true;
   }
 
+  // ⬇⬇⬇ TPL: MOD — Unificación por GRUPO: también a la plantilla de CANDIDATURAS
   function tryUnifiedSendByGroup(form, currentParams){
     var gKey=groupKey(form); var sub=subgroup(form);
     if(!gKey || !sub) return false;
+
     var cacheAll=loadLS(gKey); cacheAll[sub]=currentParams; saveLS(gKey, cacheAll);
     var haveOwner=!!cacheAll.propietario, havePet=!!cacheAll.mascota;
     if(!(haveOwner&&havePet)) return false;
+
     var merged={}, owner=cacheAll.propietario||{}, pet=cacheAll.mascota||{};
     for(var k in owner){ merged['owner_'+k]=owner[k]; }
     for(var k2 in pet){ merged['pet_'+k2]=pet[k2]; }
     for(var k3 in currentParams){ if(!merged.hasOwnProperty(k3)) merged[k3]=currentParams[k3]; }
     merged.unified_info='Propietario + Mascota (unificado por grupo)';
     clearLS(gKey);
+
+    // 👇 Igual que arriba, lo canalizamos por "perfil" → plantilla CANDIDATURAS
     sendEmail('perfil', merged).catch(function(){});
     return true;
   }
@@ -353,11 +438,15 @@
     try{
       var type = (form.getAttribute('data-tpl-type')||'default').toLowerCase();
       var params = collectFormData(form);
+
+      // Primero probamos unificación (perfil propietario + mascota)
       var unifiedByGroup = false;
       var t=(form.getAttribute('data-tpl-type')||'').toLowerCase();
       if(t==='perfil' && subgroup(form)){ unifiedByGroup = tryUnifiedSendByGroup(form, params); if(unifiedByGroup) return; }
       var unifiedByPrefix = tryUnifiedSendByPrefix(params);
       if(unifiedByPrefix) return;
+
+      // Si no hay unificación, enviamos según data-tpl-type (candidatura / reserva / contacto ...)
       sendEmail(type, params).catch(function(){});
     }catch(e){}
   }
@@ -424,14 +513,12 @@
 
     if (opts && opts.showAccept){
       actions.style.display = 'flex';
-      // quitar listeners previos
       btn.replaceWith(btn.cloneNode(true));
       btn = o.querySelector('#tpl-form-accept');
       btn.addEventListener('click', function(){
         try{ actions.style.display='none'; }catch(e){}
         if (opts.onAccept) opts.onAccept();
       }, { once:true });
-      // foco para accesibilidad
       setTimeout(function(){ btn.focus(); }, 60);
     } else {
       actions.style.display = 'none';
@@ -452,38 +539,29 @@
     var form = ev.target;
     if (!form || form.nodeName !== 'FORM') return;
 
-    // Mensaje de éxito:
-    // - Usa data-tpl-success si está
-    // - Si es candidatura y no hay data-tpl-success, usamos el texto que me diste
     var typeAttr = (form.getAttribute('data-tpl-type')||'').toLowerCase();
     var successAttr = form.getAttribute('data-tpl-success');
     var candidaturaFallback = 'Listo, tu solicitud se ha enviado correctamente. Te mandaremos un enlace una vez esté aceptada para que puedas crear tu perfil y tu disponibilidad.';
     var successMsg = successAttr || (typeAttr === 'candidatura' ? candidaturaFallback : '');
 
-    if (!successMsg) return; // si no hay mensaje, no mostramos overlay
+    if (!successMsg) return;
 
-    // Desactivar botones mientras sube
     var btns = form.querySelectorAll('button, [type=submit]');
     btns.forEach(function(b){ b.disabled=true; b.dataset._tplText=b.textContent; b.textContent='Enviando…'; });
 
-    // Overlay “Enviando…”
     showOverlay('Enviando…', 'Guardando datos. Puede tardar unos segundos.');
 
-    // Redirección por defecto
     var redirectToAttr = form.getAttribute('data-tpl-redirect');
     var defaultRedirect = typeAttr ? (typeAttr==='candidatura' ? 'index.html' : 'perfil.html') : '';
     var redirectTo = redirectToAttr || defaultRedirect;
 
-    // Si la página realmente navega, el overlay se va solo
     var unloaded=false; window.addEventListener('beforeunload', function(){ unloaded=true; }, {once:true});
 
-    // Temporizador “optimista” (mostramos la tarjeta si no hubo navegación real)
     var waitMs = parseInt(form.getAttribute('data-tpl-wait')||'12000', 10);
 
     setTimeout(function(){
       if (unloaded) return;
 
-      // CANDIDATURA → mostrar tarjeta con botón ACEPTAR y redirigir solo al pulsarlo
       if (typeAttr === 'candidatura'){
         showSuccess({
           msg: successMsg,
@@ -495,7 +573,6 @@
           }
         });
       } else {
-        // Otros tipos → auto-redirect como antes
         showSuccess({ msg: successMsg, showAccept: false });
         btns.forEach(function(b){ try{ b.disabled=false; if(b.dataset._tplText) b.textContent=b.dataset._tplText; }catch(e){} });
         if (redirectTo){ setTimeout(function(){ location.href=redirectTo; }, 2200); }
@@ -503,7 +580,6 @@
       }
     }, waitMs);
 
-    // Si tu código de envío hace form.reset(), adelantamos el OK
     form.addEventListener('reset', function(){
       if (typeAttr === 'candidatura'){
         showSuccess({
