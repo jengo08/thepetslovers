@@ -2,9 +2,9 @@
 /* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js — RESCATE SIMPLE y ESTABLE] */
 (function(){
   // 👉 Ajusta esta ruta si tu perfil se llama distinto
-  var PROFILE_URL = 'perfil.html'; // TPL: CAMBIO (antes: 'mi-perfil.html')
+  var PROFILE_URL = 'perfil.html';
 
-  // TPL: INICIO BLOQUE NUEVO [Rutas y correo admin → solo panel para ti]
+  // Solo tú ves el panel admin
   var PANEL_URL = 'tpl-candidaturas-admin.html';
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
   function tplNormalizeEmail(e){
@@ -16,7 +16,7 @@
   var ADMIN_SET = new Set(ADMIN_EMAILS.map(tplNormalizeEmail));
   function isAdminEmail(email){ return ADMIN_SET.has(tplNormalizeEmail(email)); }
 
-  // 🔧 Lee email actual desde cache propio o del objeto de Firebase en localStorage
+  // Email actual desde cache o del objeto de Firebase en localStorage
   function getCurrentEmailFromFirebaseStorage(){
     try{ var cached = localStorage.getItem('tplEmail'); if (cached) return String(cached); }catch(e){}
     try{
@@ -35,7 +35,6 @@
     }catch(e){}
     return '';
   }
-  // TPL: FIN BLOQUE NUEVO
 
   // --- HTML del navbar
   var NAV_HTML =
@@ -345,19 +344,21 @@
     var wrap = document.createElement('div');
     wrap.id = 'tpl-form-overlay';
     wrap.className = 'tpl-form-overlay';
-    // estilos mínimos por si no existen en la página
+
+    // estilos mínimos (por si la página no los trae)
     var css = document.createElement('style');
-    css.textContent = ''+
-      '.tpl-form-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}'+
-      '.tpl-form-overlay.show{display:flex}'+
-      '.tpl-form-card{background:#fff;max-width:520px;width:100%;border-radius:12px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.18)}'+
-      '.tpl-form-spinner{width:28px;height:28px;border-radius:50%;border:3px solid #eee;border-top-color:#339496;animation:tplspin 1s linear infinite;margin:6px 0 10px}'+
-      '@keyframes tplspin{to{transform:rotate(360deg)}}'+
-      '.tpl-form-actions{display:none;margin-top:12px;display:flex;gap:8px;justify-content:flex-end}'+
-      '.tpl-cta{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer}'+
-      '.tpl-cta.link{background:#fff;color:#339496;border:2px solid #339496}'+
-      '.tpl-muted{color:#666}';
+    css.textContent =
+      '.tpl-form-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;padding:16px}'
+      +'.tpl-form-overlay.show{display:flex}'
+      +'.tpl-form-card{background:#fff;max-width:520px;width:100%;border-radius:12px;padding:16px;box-shadow:0 8px 28px rgba(0,0,0,.18)}'
+      +'.tpl-form-spinner{width:28px;height:28px;border-radius:50%;border:3px solid #eee;border-top-color:#339496;animation:tplspin 1s linear infinite;margin:6px 0 10px}'
+      +'@keyframes tplspin{to{transform:rotate(360deg)}}'
+      +'.tpl-form-actions{margin-top:12px;display:none;gap:8px;justify-content:flex-end}'
+      +'.tpl-cta{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer}'
+      +'.tpl-cta.link{background:#fff;color:#339496;border:2px solid #339496}'
+      +'.tpl-muted{color:#666}';
     document.head.appendChild(css);
+
     wrap.innerHTML =
       '<div class="tpl-form-card" role="alertdialog" aria-live="polite" aria-label="Estado del envío">'
       + '  <div class="tpl-form-spinner" aria-hidden="true"></div>'
@@ -413,13 +414,20 @@
     var actions = o.querySelector('#tpl-form-actions'); if (actions) actions.style.display='none';
   }
 
-  // Interceptamos submit solo para feedback
+  // Interceptamos submit SOLO para UX (no rompemos el submit nativo)
   document.addEventListener('submit', function(ev){
     var form = ev.target;
     if (!form || form.nodeName !== 'FORM') return;
 
-    var successMsg = form.getAttribute('data-tpl-success');
-    if (!successMsg) return;
+    // Mensaje de éxito:
+    // - Usa data-tpl-success si está
+    // - Si es candidatura y no hay data-tpl-success, usamos el texto que me diste
+    var typeAttr = (form.getAttribute('data-tpl-type')||'').toLowerCase();
+    var successAttr = form.getAttribute('data-tpl-success');
+    var candidaturaFallback = 'Listo, tu solicitud se ha enviado correctamente. Te mandaremos un enlace una vez esté aceptada para que puedas crear tu perfil y tu disponibilidad.';
+    var successMsg = successAttr || (typeAttr === 'candidatura' ? candidaturaFallback : '');
+
+    if (!successMsg) return; // si no hay mensaje, no mostramos overlay
 
     // Desactivar botones mientras sube
     var btns = form.querySelectorAll('button, [type=submit]');
@@ -428,8 +436,7 @@
     // Overlay “Enviando…”
     showOverlay('Enviando…', 'Guardando datos. Puede tardar unos segundos.');
 
-    // Lógica de redirección por defecto según tipo
-    var typeAttr = (form.getAttribute('data-tpl-type')||'').toLowerCase();
+    // Redirección por defecto
     var redirectToAttr = form.getAttribute('data-tpl-redirect');
     var defaultRedirect = typeAttr ? (typeAttr==='candidatura' ? 'index.html' : 'perfil.html') : '';
     var redirectTo = redirectToAttr || defaultRedirect;
@@ -437,7 +444,7 @@
     // Si la página realmente navega, el overlay se va solo
     var unloaded=false; window.addEventListener('beforeunload', function(){ unloaded=true; }, {once:true});
 
-    // Temporizador “optimista” SOLO para no-candidatura
+    // Temporizador “optimista” (mostramos la tarjeta si no hubo navegación real)
     var waitMs = parseInt(form.getAttribute('data-tpl-wait')||'12000', 10);
 
     setTimeout(function(){
@@ -455,7 +462,7 @@
           }
         });
       } else {
-        // Otros tipos → comportamiento anterior (auto-redirect)
+        // Otros tipos → auto-redirect como antes
         showSuccess({ msg: successMsg, showAccept: false });
         btns.forEach(function(b){ try{ b.disabled=false; if(b.dataset._tplText) b.textContent=b.dataset._tplText; }catch(e){} });
         if (redirectTo){ setTimeout(function(){ location.href=redirectTo; }, 2200); }
