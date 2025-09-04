@@ -256,10 +256,9 @@
 /* TPL: FIN BLOQUE NUEVO */
 
 
-/* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Aviso automático para TODOS los formularios] */
+/* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Aviso automático + Unificación Owner/Pet] */
 (function(){
   // ======= CONFIGURA AQUÍ TUS IDS DE EMAILJS =======
-  // 1) Entra en EmailJS y copia tu Public Key, Service ID y los Template IDs.
   var EMAILJS_CONFIG = {
     enabled: true, // pon false para desactivar globalmente
     publicKey: 'L2xAATfVuHJwj4EIV',       // ✅ tu Public Key
@@ -274,16 +273,28 @@
     // Email de destino por defecto (en tu plantilla puedes usar {{to_email}} si quieres)
     toEmail: 'gestion@thepetslovers.es'
   };
-
   if (!EMAILJS_CONFIG.enabled) return;
 
-  // Cargar SDK EmailJS en caliente (1 vez)
+  // Hacemos accesible config (por si una página necesita usar EmailJS directo)
+  window.__TPL_EMAILJS = {
+    publicKey: EMAILJS_CONFIG.publicKey,
+    serviceId: EMAILJS_CONFIG.serviceId,
+    templateDefault: EMAILJS_CONFIG.templates.default,
+    toEmail: EMAILJS_CONFIG.toEmail
+  };
+
+  // Prefijos para unificar Propietario (owner_) y Mascota (pet_)
+  var OWNER_PREFIX = 'owner_';
+  var PET_PREFIX   = 'pet_';
+  var LS_OWNER = 'TPL_OWNER_DATA';
+  var LS_PET   = 'TPL_PET_DATA';
+
+  // --- Cargar SDK EmailJS (una vez)
   function loadScript(src){
     return new Promise(function(res,rej){
       var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
     });
   }
-
   function initEmailJS(){
     if (window.emailjs && emailjs.init) {
       try{ emailjs.init(EMAILJS_CONFIG.publicKey); }catch(e){}
@@ -295,7 +306,7 @@
       });
   }
 
-  // Serializador de formularios → objeto plano
+  // --- Utilidades
   function collectFormData(form){
     var data = {};
     var els = form.querySelectorAll('input, select, textarea');
@@ -318,7 +329,7 @@
     data.__sent_at    = new Date().toISOString();
     data.to_email     = EMAILJS_CONFIG.toEmail;
 
-    // Campos “típicos” para Reply-To si existen
+    // Campos “típicos”
     var emailField = form.querySelector('[name=email], [name=correo], [type=email]');
     if (emailField && emailField.value) data.reply_to = emailField.value;
 
@@ -327,56 +338,99 @@
 
     return data;
   }
-
-  // Tabla HTML bonita con los campos (para la plantilla genérica)
   function buildTableHTML(obj){
     var rows = Object.keys(obj).filter(function(k){
-      return k.indexOf('__')!==0 && k!=='to_email' && k!=='reply_to' && k!=='from_name';
+      return k.indexOf('__')!==0 && k!=='to_email' && k!=='reply_to' && k!=='from_name' && k!=='table_html' && k!=='subject';
     }).map(function(k){
       var val = String(obj[k]).replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return '<tr><td style="padding:6px 10px;border:1px solid #eee;"><b>'+k+'</b></td><td style="padding:6px 10px;border:1px solid #eee;">'+val+'</td></tr>';
     }).join('');
     return '<table style="border-collapse:collapse;border:1px solid #eee;font-family:system-ui,Segoe UI,Roboto,Arial;font-size:14px">'+rows+'</table>';
   }
+  function hasPrefix(obj, prefix){
+    for (var k in obj){ if (Object.prototype.hasOwnProperty.call(obj,k) && k.indexOf(prefix)===0) return true; }
+    return false;
+  }
+  function pick(obj, prefix){
+    var r={}; for (var k in obj){ if (k.indexOf(prefix)===0) r[k]=obj[k]; } return r;
+  }
+  function saveLS(key, val){ try{ localStorage.setItem(key, JSON.stringify(val||{})); }catch(e){} }
+  function loadLS(key){ try{ return JSON.parse(localStorage.getItem(key)||'{}'); }catch(e){ return {}; } }
+  function clearOP(){ try{ localStorage.removeItem(LS_OWNER); localStorage.removeItem(LS_PET);}catch(e){} }
 
-  // Envío “en paralelo” sin romper el flujo del formulario
-  function sendEmailForForm(form){
-    if (!window.emailjs) return;
-    var type = form.getAttribute('data-tpl-type') || 'default'; // opcional
+  // --- Envío EmailJS simple
+  function sendEmail(type, params){
     var templateId = EMAILJS_CONFIG.templates[type] || EMAILJS_CONFIG.templates.default;
-
-    var params = collectFormData(form);
-    // Para plantilla genérica, añadimos un HTML completo con todos los campos
     params.table_html = buildTableHTML(params);
     params.subject = (type==='candidatura' ? 'Nueva candidatura' :
                      (type==='reserva' ? 'Nueva reserva' :
-                     (type==='contacto' ? 'Nuevo contacto' : 'Nuevo formulario'))) + ' · ' + (params.from_name || '');
-
-    // No bloqueamos el submit original
-    emailjs.send(EMAILJS_CONFIG.serviceId, templateId, params)
-      .then(function(){ /* ok, silencioso */ })
-      .catch(function(){ /* silencioso */ });
+                     (type==='contacto' ? 'Nuevo contacto' : 'Nuevo formulario')))
+                     + (params.from_name ? (' · ' + params.from_name) : '');
+    return emailjs.send(EMAILJS_CONFIG.serviceId, templateId, params);
   }
 
-  // Enganche global: se dispara en TODOS los formularios
+  // --- Envío unificado Owner+Pet (se lanza al recibir el segundo)
+  function tryUnifiedSend(currentParams){
+    var isOwner = hasPrefix(currentParams, OWNER_PREFIX);
+    var isPet   = hasPrefix(currentParams, PET_PREFIX);
+    var ownerLS = loadLS(LS_OWNER), petLS = loadLS(LS_PET);
+
+    // Guarda la parte actual
+    if (isOwner) saveLS(LS_OWNER, pick(currentParams, OWNER_PREFIX));
+    if (isPet)   saveLS(LS_PET,   pick(currentParams, PET_PREFIX));
+
+    // ¿Tenemos ambas partes?
+    ownerLS = loadLS(LS_OWNER); petLS = loadLS(LS_PET);
+    var haveBoth = Object.keys(ownerLS).length && Object.keys(petLS).length;
+    if (!haveBoth) return false; // aún no enviamos
+
+    // Mezclar y enviar un solo correo
+    var merged = {};
+    for (var k in currentParams){ merged[k]=currentParams[k]; }
+    for (var k2 in ownerLS){ merged[k2]=ownerLS[k2]; }
+    for (var k3 in petLS){ merged[k3]=petLS[k3]; }
+    merged.unified_info = 'Propietario + Mascota (unificado)';
+
+    clearOP();
+    sendEmail('default', merged).catch(function(){ /* silencioso */ });
+    return true;
+  }
+
+  // --- Enganche global: se dispara en TODOS los formularios
   function onAnyFormSubmit(ev){
     var form = ev.target;
     if (!form || form.nodeName!=='FORM') return;
+
     // Opt-out por formulario
     if (form.hasAttribute('data-tpl-no-emailjs')) return;
+
     try{
-      sendEmailForForm(form);
+      var type = form.getAttribute('data-tpl-type') || 'default';
+      var params = collectFormData(form);
+
+      // Lógica de unificación Owner/Pet:
+      var ownerOnly = hasPrefix(params, OWNER_PREFIX) && !hasPrefix(params, PET_PREFIX);
+      var petOnly   = hasPrefix(params, PET_PREFIX)   && !hasPrefix(params, OWNER_PREFIX);
+
+      if (ownerOnly || petOnly){
+        // Solo guardamos; al llegar la otra parte se enviará 1 único correo
+        tryUnifiedSend(params);
+        return; // no enviamos este aún
+      }
+
+      // Si el form ya trae ambas partes o es otro tipo, enviamos ya
+      sendEmail(type, params).catch(function(){ /* silencioso */ });
     }catch(e){ /* silencioso */ }
-    // IMPORTANTE: NO hacemos preventDefault, para no romper tu lógica
+
+    // IMPORTANTE: NO hacemos preventDefault → no rompemos tu lógica ni redirecciones nativas
   }
 
-  // Arranque
+  // --- Arranque
   function boot(){
     initEmailJS().then(function(){
       document.addEventListener('submit', onAnyFormSubmit, true);
     });
   }
-
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot, { once:true });
   } else {
@@ -384,6 +438,8 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
+
+
 /* TPL: INICIO BLOQUE NUEVO [UX formularios — feedback y redirección optimista] */
 (function(){
   // Crea (una vez) el overlay reutilizable
