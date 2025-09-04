@@ -229,13 +229,13 @@
 (function(){
   var EMAILJS_CONFIG = {
     enabled: true,
-    // ⬇⬇⬇ TPL: AJUSTE SOLICITADO — claves reales que me diste
-    publicKey: 'Chuvina69',
+    // ⬇⬇⬇ TPL: AJUSTE — actualizada con tu Public Key REAL
+    publicKey: 'L2xAATfVuHJwj4EIV',
     serviceId: 'service_odjqrfl',
     // Map de plantillas: usamos 2 (candidatura y reservas) y el resto cae en la de reservas por defecto
     templates: {
       default:  'template_rao5n0c',     // por defecto (contacto/registro/etc.) → reservas
-      candidatura: 'template_32z2wj4',  // candidaturas (RRHH)
+      candidatura: 'template_32z2wj4',  // candidaturas (gestión o RRHH)
       reserva: 'template_rao5n0c',      // reservas (gestión)
       contacto: 'template_rao5n0c',
       perfil:   'template_rao5n0c'
