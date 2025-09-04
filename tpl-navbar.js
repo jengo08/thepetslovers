@@ -1,3 +1,34 @@
+/* TPL: INICIO BLOQUE NUEVO [Auth anónima rápida en navbar] */
+(function(){
+  // Necesita que ya exista window.__TPL_FIREBASE_CONFIG (lo definimos en tu script.js)
+  const cfg = window.__TPL_FIREBASE_CONFIG;
+  if (!cfg) {
+    console.warn('TPL navbar: no hay __TPL_FIREBASE_CONFIG aún. Se intentará más tarde.');
+    return;
+  }
+
+  // Inyectamos un módulo ESM muy pequeño que hace signInAnonymously
+  const mod = document.createElement('script');
+  mod.type = 'module';
+  mod.textContent = `
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    const cfg = window.__TPL_FIREBASE_CONFIG;
+    try{
+      const app  = getApps().length ? getApp() : initializeApp(cfg);
+      const auth = getAuth(app);
+      // Top-level await en módulo: válido en navegadores modernos
+      await signInAnonymously(auth);
+      console.log('[TPL navbar] Auth anónima OK');
+    }catch(e){
+      console.warn('[TPL navbar] No se pudo iniciar auth anónima (seguimos sin romper):', e?.message || e);
+    }
+  `;
+  document.head.appendChild(mod);
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
 <!-- tpl-navbar.js -->
 /* TPL: INICIO BLOQUE NUEVO [tpl-navbar.js — RESCATE SIMPLE y ESTABLE] */
 (function(){
