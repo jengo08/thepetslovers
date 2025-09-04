@@ -118,7 +118,16 @@
       </p>
 
       <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Honeypot] -->
-      <form id="tpl-form-auxiliares" action="https://formspree.io/f/mpwjjoyq" method="POST" enctype="multipart/form-data" novalidate>
+      <!-- TPL: INICIO BLOQUE NUEVO [Atributos UX envío] -->
+      <form id="tpl-form-auxiliares"
+            action="https://formspree.io/f/mpwjjoyq"
+            method="POST"
+            enctype="multipart/form-data"
+            novalidate
+            data-tpl-type="candidatura"
+            data-tpl-success="Tu candidatura ya está enviada. En cuanto la revisemos y la aceptemos, recibirás un correo para crear y gestionar tu perfil."
+            data-tpl-redirect="index.html">
+      <!-- TPL: FIN BLOQUE NUEVO -->
         <input type="hidden" name="_subject" value="Nueva candidatura: Auxiliar Veterinario/a · The Pets Lovers">
         <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="sr-only" aria-hidden="true" />
 
