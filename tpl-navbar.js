@@ -254,3 +254,133 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
+
+
+/* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Aviso automático para TODOS los formularios] */
+(function(){
+  // ======= CONFIGURA AQUÍ TUS IDS DE EMAILJS =======
+  // 1) Entra en EmailJS y copia tu Public Key, Service ID y los Template IDs.
+  var EMAILJS_CONFIG = {
+    enabled: true, // pon false para desactivar globalmente
+    publicKey: 'TU_PUBLIC_KEY_AQUI',       // <-- CAMBIA
+    serviceId: 'TU_SERVICE_ID_AQUI',       // <-- CAMBIA
+    templates: {
+      // Plantillas opcionales por tipo; si no hay match, usa "default"
+      default: 'TEMPLATE_ID_GENERICO',     // <-- CAMBIA (crea una plantilla genérica)
+      candidatura: 'TEMPLATE_ID_CANDIDATURA', // opcional
+      reserva: 'TEMPLATE_ID_RESERVA',         // opcional
+      contacto: 'TEMPLATE_ID_CONTACTO'        // opcional
+    },
+    // Email de destino por defecto (en tu plantilla puedes usar {{to_email}} si quieres)
+    toEmail: 'gestion@thepetslovers.es'
+  };
+
+  if (!EMAILJS_CONFIG.enabled) return;
+
+  // Cargar SDK EmailJS en caliente (1 vez)
+  function loadScript(src){
+    return new Promise(function(res,rej){
+      var s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s);
+    });
+  }
+
+  function initEmailJS(){
+    if (window.emailjs && emailjs.init) {
+      try{ emailjs.init(EMAILJS_CONFIG.publicKey); }catch(e){}
+      return Promise.resolve();
+    }
+    return loadScript('https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js')
+      .then(function(){
+        try{ emailjs.init(EMAILJS_CONFIG.publicKey); }catch(e){}
+      });
+  }
+
+  // Serializador de formularios → objeto plano
+  function collectFormData(form){
+    var data = {};
+    var els = form.querySelectorAll('input, select, textarea');
+    for (var i=0; i<els.length; i++){
+      var el = els[i];
+      if (!el.name) continue;
+      if (el.type === 'checkbox') {
+        data[el.name] = el.checked ? 'Sí' : 'No';
+      } else if (el.type === 'radio') {
+        if (el.checked) data[el.name] = el.value;
+      } else {
+        data[el.name] = el.value || '';
+      }
+    }
+    // Extras útiles
+    data.__page_title = document.title || '';
+    data.__page_url   = location.href;
+    data.__form_id    = form.id || '';
+    data.__form_name  = form.getAttribute('name') || '';
+    data.__sent_at    = new Date().toISOString();
+    data.to_email     = EMAILJS_CONFIG.toEmail;
+
+    // Campos “típicos” para Reply-To si existen
+    var emailField = form.querySelector('[name=email], [name=correo], [type=email]');
+    if (emailField && emailField.value) data.reply_to = emailField.value;
+
+    var nameField = form.querySelector('[name=nombre], [name=name]');
+    if (nameField && nameField.value) data.from_name = nameField.value;
+
+    return data;
+  }
+
+  // Tabla HTML bonita con los campos (para la plantilla genérica)
+  function buildTableHTML(obj){
+    var rows = Object.keys(obj).filter(function(k){
+      return k.indexOf('__')!==0 && k!=='to_email' && k!=='reply_to' && k!=='from_name';
+    }).map(function(k){
+      var val = String(obj[k]).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<tr><td style="padding:6px 10px;border:1px solid #eee;"><b>'+k+'</b></td><td style="padding:6px 10px;border:1px solid #eee;">'+val+'</td></tr>';
+    }).join('');
+    return '<table style="border-collapse:collapse;border:1px solid #eee;font-family:system-ui,Segoe UI,Roboto,Arial;font-size:14px">'+rows+'</table>';
+  }
+
+  // Envío “en paralelo” sin romper el flujo del formulario
+  function sendEmailForForm(form){
+    if (!window.emailjs) return;
+    var type = form.getAttribute('data-tpl-type') || 'default'; // opcional
+    var templateId = EMAILJS_CONFIG.templates[type] || EMAILJS_CONFIG.templates.default;
+
+    var params = collectFormData(form);
+    // Para plantilla genérica, añadimos un HTML completo con todos los campos
+    params.table_html = buildTableHTML(params);
+    params.subject = (type==='candidatura' ? 'Nueva candidatura' :
+                     (type==='reserva' ? 'Nueva reserva' :
+                     (type==='contacto' ? 'Nuevo contacto' : 'Nuevo formulario'))) + ' · ' + (params.from_name || '');
+
+    // No bloqueamos el submit original
+    emailjs.send(EMAILJS_CONFIG.serviceId, templateId, params)
+      .then(function(){ /* ok, silencioso */ })
+      .catch(function(){ /* silencioso */ });
+  }
+
+  // Enganche global: se dispara en TODOS los formularios
+  function onAnyFormSubmit(ev){
+    var form = ev.target;
+    if (!form || form.nodeName!=='FORM') return;
+    // Opt-out por formulario
+    if (form.hasAttribute('data-tpl-no-emailjs')) return;
+    try{
+      sendEmailForForm(form);
+    }catch(e){ /* silencioso */ }
+    // IMPORTANTE: NO hacemos preventDefault, para no romper tu lógica
+  }
+
+  // Arranque
+  function boot(){
+    initEmailJS().then(function(){
+      document.addEventListener('submit', onAnyFormSubmit, true);
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot, { once:true });
+  } else {
+    boot();
+  }
+})();
+/* TPL: FIN BLOQUE NUEVO */
