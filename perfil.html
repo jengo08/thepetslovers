@@ -1,566 +1,420 @@
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + Formspree + Firebase Firestore]
-   =========================== */
-(function () {
-  'use strict';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi perfil · The Pets Lovers</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <!-- TPL: INICIO BLOQUE NUEVO [Iconos footer visibles en esta página] -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  // -------- AJUSTA AQUÍ TU ENDPOINT DE FORMSPREE --------
-  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mpwjjoyq';
-  // ------------------------------------------------------
+  <style>
+    .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
 
-  // --- Mapeo de servicios (clave -> etiqueta visible) ---
-  const SERVICE_LABELS = {
-    "guarderia-dia": "Guardería de día",
-    "visitas": "Visitas a domicilio (gatos)",
-    "alojamiento": "Alojamiento nocturno",
-    "paseos": "Paseos",
-    "transporte": "Transporte",
-    "bodas": "Bodas",
-    "postoperatorio": "Postoperatorio",
-    "exoticos": "Exóticos"
-  };
+    /* TPL: INICIO BLOQUE NUEVO [barra acciones superiores] */
+    .tpl-profile-top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    }
+    .tpl-profile-actions{ display:flex; align-items:center; gap:8px; }
+    .tpl-btn-ghost{
+      background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
+    }
+    /* TPL: FIN BLOQUE NUEVO */
 
-  // --- CSS mínimo del modal (no toca tu CSS global) ---
-  const CSS_ID = 'tpl-modal-styles';
-  if (!document.getElementById(CSS_ID)) {
-    const style = document.createElement('style');
-    style.id = CSS_ID;
-    style.textContent = `
-      .tpl-modal{position:fixed;inset:0;z-index:9999;display:none}
-      .tpl-modal[aria-hidden="false"]{display:block}
-      .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-      .tpl-modal__dialog{position:relative;max-width:640px;margin:5vh auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-      .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-      .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:var(--color-texto, #333)}
-      .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
-      .tpl-modal__close:hover{background:#e9e9e9}
-      .tpl-form{display:grid;gap:12px}
-      @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
-      .tpl-form .full{grid-column:1 / -1}
-      .tpl-input,.tpl-select,.tpl-textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit}
-      .tpl-submit{background:var(--color-principal,#339496);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
-      .tpl-submit:hover{background:#2a7e80}
-      .tpl-help{font-size:.9rem;color:#555}
-    `;
-    document.head.appendChild(style);
-  }
+    .tpl-sub{ color:#666; margin-bottom:18px; }
 
-  // --- Crear modal una sola vez ---
-  let modal = document.getElementById('tpl-modal-reserva');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.className = 'tpl-modal';
-    modal.id = 'tpl-modal-reserva';
-    modal.setAttribute('aria-hidden', 'true');
-    modal.innerHTML = `
-      <div class="tpl-modal__backdrop" data-close></div>
-      <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tpl-modal-title">
-        <div class="tpl-modal__header">
-          <h3 class="tpl-modal__title" id="tpl-modal-title">Reserva rápida</h3>
-          <button class="tpl-modal__close" type="button" aria-label="Cerrar" data-close>✕</button>
-        </div>
-        <form id="tpl-reserva-form" class="tpl-form" action="#" method="post" novalidate>
-          <input type="hidden" id="tpl-servicio" name="servicio" value="">
-          <div class="full">
-            <label for="tpl-servicio-select">Servicio</label>
-            <select id="tpl-servicio-select" class="tpl-select" required>
-              <option value="" disabled selected>Selecciona un servicio</option>
-              ${Object.entries(SERVICE_LABELS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}
-            </select>
-          </div>
+    /* TPL: INICIO BLOQUE NUEVO [Grid 2 columnas + card amplia] */
+    .tpl-cards{
+      display:grid; gap:14px;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      align-items:start;
+    }
+    .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; background:#fff; }
+    .tpl-card h2{ font-size:18px; margin:0 0 10px; color:#58425a; }
+    .tpl-card-wide{ grid-column:1 / -1; } /* Reservas a todo el ancho */
+    /* TPL: FIN BLOQUE NUEVO */
 
-          <!-- SOLO para VISITAS GATOS -->
-          <div id="tpl-visitas-block" class="full" style="display:none">
-            <div class="tpl-form">
-              <div>
-                <label for="tpl-visitas-duracion">Duración de la visita (gatos)</label>
-                <select id="tpl-visitas-duracion" name="visitas_duracion" class="tpl-select">
-                  <option value="60">60 minutos</option>
-                  <option value="90">90 minutos</option>
-                </select>
-              </div>
-              <div>
-                <label for="tpl-visitas-diarias">Visitas diarias</label>
-                <select id="tpl-visitas-diarias" name="visitas_diarias" class="tpl-select">
-                  <option value="1">1 visita al día</option>
-                  <option value="2">2 visitas al día</option>
-                </select>
-                <small class="tpl-help">La 2ª visita del día es de medicación y se tarifica como tal.</small>
-              </div>
-            </div>
-          </div>
-          <!-- FIN SOLO VISITAS GATOS -->
+    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
+    .link{ background:#fff; color:#339496; border:2px solid #339496; }
 
-          <div>
-            <label for="tpl-fecha">Fecha</label>
-            <input type="date" id="tpl-fecha" name="fecha" class="tpl-input" required>
-          </div>
-          <div>
-            <label for="tpl-hora">Hora estimada</label>
-            <input type="time" id="tpl-hora" name="hora" class="tpl-input" required>
-          </div>
-          <div>
-            <label for="tpl-nombre">Tu nombre</label>
-            <input type="text" id="tpl-nombre" name="nombre" class="tpl-input" placeholder="Nombre y apellidos" required>
-          </div>
-          <div>
-            <label for="tpl-telefono">Teléfono</label>
-            <input type="tel" id="tpl-telefono" name="telefono" class="tpl-input" inputmode="tel" placeholder="+34 ..." required>
-          </div>
-          <div class="full">
-            <label for="tpl-direccion">Dirección (si aplica)</label>
-            <input type="text" id="tpl-direccion" name="direccion" class="tpl-input" placeholder="Calle, nº, localidad">
-          </div>
-          <div class="full">
-            <label for="tpl-notas">Notas</label>
-            <textarea id="tpl-notas" name="notas" class="tpl-textarea" rows="3" placeholder="Hábitos, medicación, pautas del adiestrador..."></textarea>
-          </div>
-          <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button type="submit" class="tpl-submit">Enviar solicitud</button>
-            <span class="tpl-help">Al enviar, te contactaremos para confirmar disponibilidad y el/la cuidador/a más adecuado/a.</span>
-          </div>
-        </form>
+    /* TPL: INICIO BLOQUE NUEVO [vistas compactas + badges + anti overflow] */
+    .tpl-view{ background:#fafafa; border:1px solid #eee; border-radius:10px; padding:12px; }
+    .tpl-view dl{
+      margin:0; display:grid; grid-template-columns: 170px 1fr; row-gap:6px; column-gap:10px;
+    }
+    .tpl-view dt{ font-weight:700; color:#58425a; }
+    .tpl-view dd{
+      margin:0; overflow-wrap:anywhere; word-break:break-word; color:#333;
+    }
+    @media (max-width:480px){
+      .tpl-view dl{ grid-template-columns: 130px 1fr; }
+    }
+    .tpl-empty{ color:#666; font-style:italic; }
+    .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
+    .tpl-status i{ font-size:1rem; }
+    .tpl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
+    .tpl-hidden{ display:none !important; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Editar perfil pequeño] */
+    .tpl-edit-small{
+      position:absolute; right:12px; bottom:12px;
+      font-size:.9rem; font-weight:700; color:#339496; text-decoration:none;
+    }
+    .tpl-edit-small i{ margin-right:6px; }
+    .tpl-edit-small:focus, .tpl-edit-small:hover{ text-decoration:underline; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [lista de mascotas con avatar y popover] */
+    .tpl-pets{
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;
+    }
+    .tpl-pet{
+      position:relative; display:flex; align-items:center; gap:10px;
+      padding:10px; border:1px solid #eee; border-radius:12px; background:#fff;
+    }
+    .tpl-avatar{
+      width:56px; height:56px; border-radius:50%; flex:0 0 56px; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a;
+    }
+    .tpl-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .tpl-pet-name{ font-weight:700; color:#58425a; line-height:1.2 }
+    .tpl-pet-secondary{ font-size:.9rem; color:#666 }
+
+    .tpl-pet-actions{ margin-left:auto; display:flex; gap:6px }
+    .tpl-btn-sm{ padding:6px 10px; border-radius:999px; font-weight:700; border:none; cursor:pointer; }
+    .tpl-btn-outline{ background:#fff; color:#339496; border:2px solid #339496; }
+
+    /* Popover al pasar el ratón */
+    .tpl-popover{
+      position:absolute; left:10px; right:10px; top:calc(100% + 8px);
+      background:#fff; border:1px solid #eee; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,.08);
+      opacity:0; pointer-events:none; transform:translateY(-4px); transition:opacity .15s ease, transform .15s ease;
+      z-index:3;
+    }
+    .tpl-pet:hover .tpl-popover, .tpl-pet:focus-within .tpl-popover{ opacity:1; pointer-events:auto; transform:translateY(0); }
+    .tpl-popover dl{ margin:0; display:grid; grid-template-columns:120px 1fr; row-gap:6px; column-gap:8px; }
+    .tpl-popover dt{ font-weight:700; color:#58425a }
+    .tpl-popover .tpl-notas{ margin-top:6px; font-size:.95rem; color:#444 }
+    @media (hover:none){
+      .tpl-popover{ position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; margin-top:8px; }
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+  </style>
+</head>
+<body>
+  <div id="tpl-navbar"></div>
+  <script src="tpl-navbar.js" defer></script>
+
+  <main class="tpl-profile" aria-labelledby="t">
+    <!-- TPL: INICIO BLOQUE NUEVO [barra superior con logout discreto] -->
+    <div class="tpl-profile-top">
+      <h1 id="t" style="margin:0">Mi perfil</h1>
+      <div class="tpl-profile-actions">
+        <button type="button" class="tpl-btn-ghost" id="tpl-logout-btn" aria-label="Cerrar sesión">Cerrar sesión</button>
       </div>
-    `;
-    document.body.appendChild(modal);
-  }
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-  // --- Referencias ---
-  const els = {
-    modal,
-    closeBtn: modal.querySelector('.tpl-modal__close'),
-    form: modal.querySelector('#tpl-reserva-form'),
-    servicioHidden: modal.querySelector('#tpl-servicio'),
-    servicioSelect: modal.querySelector('#tpl-servicio-select'),
-    fecha: modal.querySelector('#tpl-fecha'),
-    hora: modal.querySelector('#tpl-hora'),
-    title: modal.querySelector('#tpl-modal-title'),
-    visitasBlock: modal.querySelector('#tpl-visitas-block')
-  };
+    <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
 
-  // --- Utilidades fecha/hora ---
-  function setMinDateToday() {
-    const t = new Date();
-    els.fecha.min = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  }
-  function roundTimeToNextQuarter() {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15))%15, 0, 0);
-    els.hora.value = d.toTimeString().slice(0,5);
-  }
+    <section class="tpl-cards">
 
-  // --- Helpers ---
-  function labelFromKey(key) { return SERVICE_LABELS[key] || key || 'Servicio'; }
-  function syncVisitFields() {
-    const isVisitas = (els.servicioSelect.value === 'visitas');
-    if (els.visitasBlock) els.visitasBlock.style.display = isVisitas ? 'block' : 'none';
-  }
-  function preselectService(key) {
-    if (!key) return;
-    els.servicioHidden.value = key;
-    els.servicioSelect.value = key;
-    els.title.textContent = `Reserva rápida — ${labelFromKey(key)}`;
-    syncVisitFields();
-  }
-  function openModal(key) {
-    preselectService(key);
-    setMinDateToday();
-    roundTimeToNextQuarter();
-    els.modal.setAttribute('aria-hidden','false');
-    setTimeout(()=> els.servicioSelect.focus(), 0);
-    document.documentElement.style.overflow = 'hidden'; // bloquear fondo
-  }
-  function closeModal() {
-    els.modal.setAttribute('aria-hidden','true');
-    document.documentElement.style.overflow = '';
-  }
+      <!-- DATOS DE CLIENTE (Card grande) -->
+      <article class="tpl-card" id="tpl-card-cliente" aria-labelledby="h-cliente">
+        <!-- TPL: INICIO BLOQUE NUEVO [Badge perfil completo] -->
+        <div id="tpl-cliente-status" class="tpl-status tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-circle-check"></i> Perfil completo
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-  // --- Cierre del modal ---
-  modal.addEventListener('click', (e)=> { if (e.target.matches('[data-close]')) closeModal(); });
-  els.closeBtn.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e)=> { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal(); });
-  els.servicioSelect.addEventListener('change', syncVisitFields);
+        <h2 id="h-cliente">Datos de cliente</h2>
+        <p id="tpl-cliente-empty" class="tpl-empty">Aún no has creado tu perfil. Usa el botón para rellenarlo.</p>
 
-  // --- Envío a Formspree + Firebase ---
-  els.form.addEventListener('submit', async (e)=> {
-    e.preventDefault();
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista solo lectura de datos] -->
+        <div id="tpl-cliente-view" class="tpl-view tpl-hidden" aria-live="polite">
+          <dl>
+            <dt>Nombre</dt><dd id="tpl-view-nombre">—</dd>
+            <dt>Teléfono</dt><dd id="tpl-view-telefono">—</dd>
+            <dt>Email</dt><dd id="tpl-view-email">—</dd>
+            <dt>Dirección</dt><dd id="tpl-view-direccion">—</dd>
+            <dt>Código postal</dt><dd id="tpl-view-cp">—</dd>
+            <dt>Preferencias</dt><dd id="tpl-view-pref">—</dd>
+          </dl>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-    const payload = Object.fromEntries(new FormData(els.form).entries());
-    // 1) Guardar en Firebase Firestore (si está disponible o si tenemos config)
-    try {
-      await ensureFirebaseModuleReady();
-      window.dispatchEvent(new CustomEvent('tpl:reserva', { detail: payload }));
-    } catch (err) {
-      console.warn('TPL: Firebase no disponible, continuamos solo con Formspree.', err);
-    }
+        <div class="tpl-actions" id="tpl-actions-perfil">
+          <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
+        </div>
 
-    // 2) Enviar a Formspree (correo)
-    try {
-      const fd = new FormData();
-      // Campos “bonitos” para el email
-      fd.append('Servicio', labelFromKey(payload.servicio));
-      fd.append('Fecha', payload.fecha || '');
-      fd.append('Hora', payload.hora || '');
-      fd.append('Nombre', payload.nombre || '');
-      fd.append('Teléfono', payload.telefono || '');
-      fd.append('Dirección', payload.direccion || '');
-      fd.append('Notas', payload.notas || '');
-      if (payload.servicio === 'visitas') {
-        fd.append('Duración (min)', payload.visitas_duracion || '');
-        fd.append('Visitas diarias', payload.visitas_diarias || '');
-      }
-      // Marca interna
-      fd.append('_subject', 'Nueva reserva rápida — The Pets Lovers');
-      fd.append('_template', 'table');
+        <!-- TPL: INICIO BLOQUE NUEVO [enlace pequeño editar cuando perfil completo] -->
+        <a id="tpl-link-editar" href="registro.html?next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-pen-to-square"></i> Editar perfil
+        </a>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+      </article>
 
-      await fetch(FORMSPREE_ENDPOINT, { method: 'POST', body: fd, mode: 'cors' });
-      alert('¡Gracias! Hemos recibido tu solicitud. Te contactaremos para confirmar.');
-      closeModal();
-      els.form.reset();
-      syncVisitFields();
-    } catch (err) {
-      console.error('TPL: Error enviando a Formspree:', err);
-      alert('Tu solicitud no pudo enviarse por email. Inténtalo de nuevo en unos minutos o contáctanos por WhatsApp.');
-    }
-  });
+      <!-- MASCOTAS (Card grande) -->
+      <article class="tpl-card" id="tpl-card-mascotas" aria-labelledby="h-mascotas">
+        <h2 id="h-mascotas">Mis mascotas</h2>
+        <!-- TPL: INICIO BLOQUE NUEVO [Chip conteo] -->
+        <div id="tpl-chip-mascotas" class="tpl-chip tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-paw"></i> <span id="tpl-count-mascotas">0</span>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-  // --- API global para abrir desde botones: onclick="abrirReserva('guarderia-dia')" ---
-  window.abrirReserva = function(key){ openModal(key); };
+        <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
 
-  // --- Interceptor de enlaces relevantes ---
-  document.addEventListener('click', function(e){
-    const a = e.target.closest('a'); if (!a) return;
+        <!-- TPL: INICIO BLOQUE NUEVO [Grid con tarjetas + hover + foto automática] -->
+        <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
+          <div id="tpl-mascotas-list" class="tpl-pets"></div>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
-    // 1) Hash clásico
-    if (a.getAttribute('href') === '#reserva-rapida') {
-      e.preventDefault();
-      openModal('guarderia-dia');
-      return;
-    }
+        <div class="tpl-actions">
+          <!-- TPL: INICIO BLOQUE NUEVO [Solo "Añadir mascota"] -->
+          <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
+          <!-- TPL: FIN BLOQUE NUEVO -->
+        </div>
+      </article>
 
-    // 2) Links a reserva.html (con o sin ?servicio=)
-    const href = a.getAttribute('href') || '';
-    if (href.startsWith('reserva.html')) {
-      e.preventDefault();
-      const params = new URLSearchParams((href.split('?')[1]||''));
-      const key = params.get('servicio') || guessServiceFromContext(a) || 'guarderia-dia';
-      openModal(key);
-    }
-  });
+      <!-- RESERVAS (al final, ancho completo) -->
+      <article class="tpl-card tpl-card-wide" aria-labelledby="h-reservas">
+        <h2 id="h-reservas">Reservas</h2>
+        <p>Cuando tu perfil esté completo podrás reservar.</p>
+        <div class="tpl-actions">
+          <a class="cta-button" href="reserva.html">Ir a reservar</a>
+        </div>
+      </article>
 
-  // --- Deducción del servicio por contexto de tarjeta (fallback) ---
-  function guessServiceFromContext(anchor) {
-    const card = anchor.closest('.service-card');
-    const h3 = card ? card.querySelector('h3') : null;
-    const txt = (h3 ? h3.textContent : '').toLowerCase();
-    if (txt.includes('guardería')) return 'guarderia-dia';
-    if (txt.includes('visitas')) return 'visitas';
-    if (txt.includes('alojamiento')) return 'alojamiento';
-    if (txt.includes('paseos')) return 'paseos';
-    if (txt.includes('transporte')) return 'transporte';
-    if (txt.includes('bodas')) return 'bodas';
-    if (txt.includes('post')) return 'postoperatorio';
-    if (txt.includes('exót') || txt.includes('exot')) return 'exoticos';
-    return '';
-  }
+    </section>
+  </main>
 
-  // --- Auto-abrir si la URL actual trae ?servicio= ---
-  (function autoOpenFromQuery(){
-    try {
-      const params = new URLSearchParams(location.search);
-      const key = params.get('servicio');
-      if (key) openModal(key);
-    } catch(e){}
-  })();
+  <div id="tpl-footer"></div>
+  <script src="tpl-footer.js" defer></script>
 
-  // ============================================
-  //  CARGA DEL MÓDULO FIREBASE (solo si hace falta)
-  //  - Inyectamos un <script type="module"> que escucha el evento 'tpl:reserva'
-  //  - Reutiliza la app existente (getApps), o usa window.__TPL_FIREBASE_CONFIG
-  // ============================================
-  let firebaseModuleInjected = false;
-  async function ensureFirebaseModuleReady() {
-    if (firebaseModuleInjected) return;
-    firebaseModuleInjected = true;
-
-    const mod = document.createElement('script');
-    mod.type = 'module';
-    mod.textContent = `
-      import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-      // Reusar app si ya existe (por tus reservas). Si no, inicializar con window.__TPL_FIREBASE_CONFIG
-      let app;
-      if (getApps().length) {
-        app = getApp();
-      } else {
-        const cfg = window.__TPL_FIREBASE_CONFIG;
-        if (!cfg) {
-          throw new Error("No hay app Firebase ni __TPL_FIREBASE_CONFIG definido.");
-        }
-        app = initializeApp(cfg);
-      }
-      const db = getFirestore(app);
-
-      // Escuchar el evento del modal para guardar en Firestore
-      window.addEventListener('tpl:reserva', async (ev) => {
-        try {
-          const d = ev.detail || {};
-          const labelFromKey = (key)=>({
-            "guarderia-dia":"Guardería de día",
-            "visitas":"Visitas a domicilio (gatos)",
-            "alojamiento":"Alojamiento nocturno",
-            "paseos":"Paseos",
-            "transporte":"Transporte",
-            "bodas":"Bodas",
-            "postoperatorio":"Postoperatorio",
-            "exoticos":"Exóticos"
-          }[key]||key||'Servicio');
-
-          await addDoc(collection(db, "reservas_rapidas"), {
-            ...d,
-            servicio_label: labelFromKey(d.servicio),
-            createdAt: serverTimestamp(),
-            userAgent: navigator.userAgent || '',
-            page: location.href
-          });
-          console.log('TPL(Firebase): reserva guardada en Firestore');
-        } catch (err) {
-          console.warn('TPL(Firebase): no se pudo guardar la reserva:', err?.message || err);
-        }
-      });
-    `;
-    document.head.appendChild(mod);
-  }
-
-})();
-/* ===========================
-   TPL: FIN BLOQUE NUEVO
-   =========================== */
-
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Airbag JS mínimo para evitar pantalla en blanco]
-   =========================== */
-(function(){
-  try {
-    window.addEventListener('error', function(e){
-      console.warn('TPL: error global capturado:', e.message);
-    });
-    window.addEventListener('unhandledrejection', function(e){
-      console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason);
-    });
-  } catch(_) {}
-})();
- /* TPL: FIN BLOQUE NUEVO */
-
-/* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google + (Facebook/Microsoft opcional)]
-   =========================================================== */
-(function(){
-  // Tu configuración (global para otros módulos)
-  window.__TPL_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-    authDomain: "thepetslovers-c1111.firebaseapp.com",
-    projectId: "thepetslovers-c1111",
-    storageBucket: "thepetslovers-c1111.firebasestorage.app",
-    messagingSenderId: "415914577533",
-    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-    measurementId: "G-FXPD69KXBG"
-  };
-
-  // Inyectamos un módulo para el SDK modular (sin build)
-  const mod = document.createElement('script');
-  mod.type = 'module';
-  mod.textContent = `
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged,
-      signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
-      GoogleAuthProvider, FacebookAuthProvider, OAuthProvider,
-      signInWithPopup, signInWithRedirect, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-
-    const cfg  = window.__TPL_FIREBASE_CONFIG;
-    const app  = getApps().length ? getApp() : initializeApp(cfg);
-    const auth = getAuth(app);
-
-    // Proveedores
-    const providerGoogle = new GoogleAuthProvider();
-    const providerFacebook = new FacebookAuthProvider();
-    const providerMicrosoft = new OAuthProvider('microsoft.com');
-
-    const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const useRedirect = (isIOS && isSafari);
-
-    async function googleSignIn(){
-      return useRedirect ? signInWithRedirect(auth, providerGoogle)
-                         : signInWithPopup(auth, providerGoogle);
-    }
-
-    async function providerSignIn(p){
-      return useRedirect ? signInWithRedirect(auth, p)
-                         : signInWithPopup(auth, p);
-    }
-
-    // API pública
-    const subs = [];
-    onAuthStateChanged(auth, (user)=>{ subs.forEach(fn=>fn(user||null)); syncAuthNodes(user); });
-
-    window.tplAuth = {
-      onChange(cb){ if(typeof cb==='function') subs.push(cb); },
-      getUser(){ return auth.currentUser || null; },
-
-      // Email/Password
-      emailSignIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
-      emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
-      emailReset(email){ return sendPasswordResetEmail(auth, email); },
-
-      // Sociales
-      google(){ return googleSignIn(); },
-      facebook(){ return providerSignIn(providerFacebook); },
-      microsoft(){ return providerSignIn(providerMicrosoft); },
-
-      // Salir
-      signOut(){ return signOut(auth); },
-
-      // Render compacto reutilizable (inline)
-      renderInlineLogin(host, { title='Accede a tu cuenta' } = {}){
-        if(!host) return;
-        host.innerHTML = \`
-          <div class="tpl-login-card">
-            <h3 class="tpl-login-title">\${title}</h3>
-            <div class="tpl-socials">
-              <button type="button" class="tpl-btn-social" data-provider="google" aria-label="Iniciar sesión con Google">
-                <i class="fa-brands fa-google"></i> Continuar con Google
-              </button>
-            </div>
-            <div class="tpl-sep"><span>o</span></div>
-            <form class="tpl-login-form" novalidate>
-              <label>Email</label>
-              <input type="email" name="email" required autocomplete="email" />
-              <label>Contraseña</label>
-              <input type="password" name="password" required autocomplete="current-password" />
-              <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <button type="button" class="tpl-btn-outline" data-action="signup">Crear cuenta</button>
-              <button type="button" class="tpl-link" data-action="reset">¿Has olvidado la contraseña?</button>
-              <p class="tpl-login-msg" aria-live="polite"></p>
-            </form>
-          </div>\`;
-
-        const form = host.querySelector('.tpl-login-form');
-        const msg  = host.querySelector('.tpl-login-msg');
-
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault();
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          msg.textContent = 'Accediendo…';
-          try{
-            await window.tplAuth.emailSignIn(email, pass);
-            msg.textContent = '¡Listo!';
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        });
-
-        form.querySelector('[data-action="signup"]').onclick = async ()=>{
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          msg.textContent = 'Creando cuenta…';
-          try{
-            await window.tplAuth.emailSignUp(email, pass);
-            msg.textContent = 'Cuenta creada.';
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        form.querySelector('[data-action="reset"]').onclick = async ()=>{
-          const email = form.email.value.trim();
-          if(!email){ msg.textContent = 'Escribe tu email para enviarte el enlace.'; return; }
-          msg.textContent = 'Enviando enlace…';
-          try{
-            await window.tplAuth.emailReset(email);
-            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        host.querySelector('.tpl-btn-social[data-provider="google"]').onclick = async ()=>{
-          msg.textContent = 'Conectando con Google…';
-          try{
-            await window.tplAuth.google();
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        function normalizaError(err){
-          const m = (err && err.code) ? String(err.code) : String(err||'');
-          if (m.includes('auth/invalid-email')) return 'Email no válido.';
-          if (m.includes('auth/user-not-found')) return 'No existe ninguna cuenta con ese email.';
-          if (m.includes('auth/wrong-password')) return 'Contraseña incorrecta.';
-          if (m.includes('auth/email-already-in-use')) return 'Ese email ya está registrado.';
-          if (m.includes('auth/weak-password')) return 'La contraseña es demasiado débil.';
-          if (m.includes('auth/popup-closed-by-user')) return 'Se cerró la ventana antes de completar el acceso.';
-          return 'Ha ocurrido un error. Inténtalo de nuevo.';
-        }
-      }
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat + tu configuración] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <script>
+    // Tu proyecto Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
     };
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-    // === ÚNICO CAMBIO: Navbar muestra "Mi perfil" → perfil.html con sesión; "Iniciar sesión" sin sesión ===
-    function syncAuthNodes(user){
-      document.querySelectorAll('[data-auth-visible]').forEach(el=>{
-        const mode = el.getAttribute('data-auth-visible');
-        el.style.display = (mode==='in' && user) || (mode==='out' && !user) ? '' : 'none';
-      });
-      const btn = document.querySelector('.login-button');
-      if (btn){
-        if (user){
-          btn.textContent = 'Mi perfil';
-          btn.setAttribute('href', 'perfil.html'); // <--- aquí tu redirección exacta
-          btn.onclick = null;
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI condiciones] -->
+  <script>
+    (function(){
+      const app = firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      const LS_PROFILE_KEY = 'tpl-profile';
+      const LS_PETS_KEY = 'tpl-pets';
+
+      // Refs UI
+      const emptyCliente  = document.getElementById('tpl-cliente-empty');
+      const viewCliente   = document.getElementById('tpl-cliente-view');
+      const statusCliente = document.getElementById('tpl-cliente-status');
+      const actionsPerfil = document.getElementById('tpl-actions-perfil');
+      const linkEditar    = document.getElementById('tpl-link-editar');
+
+      const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
+      const mascotasView  = document.getElementById('tpl-mascotas-view');
+      const mascotasList  = document.getElementById('tpl-mascotas-list');
+      const chipMascotas  = document.getElementById('tpl-chip-mascotas');
+      const cntMascotas   = document.getElementById('tpl-count-mascotas');
+
+      const logoutBtn     = document.getElementById('tpl-logout-btn');
+
+      function updateBadge(profile){
+        const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
+        statusCliente.classList.toggle('tpl-hidden', !complete);
+        statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
+
+        // CTA grande vs enlace pequeño
+        if (complete) {
+          if (actionsPerfil) actionsPerfil.classList.add('tpl-hidden');
+          if (linkEditar) {
+            linkEditar.classList.remove('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','false');
+          }
         } else {
-          btn.textContent = 'Iniciar sesión';
-          btn.setAttribute('href', 'login.html');
-          btn.onclick = null;
+          if (actionsPerfil) actionsPerfil.classList.remove('tpl-hidden');
+          if (linkEditar) {
+            linkEditar.classList.add('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','true');
+          }
         }
       }
-    }
-    // Llamada inicial
-    syncAuthNodes(auth.currentUser);
-  `;
-  document.head.appendChild(mod);
-})();
-/* ===========================================================
-   TPL: FIN BLOQUE NUEVO
-   =========================================================== */
 
-/* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Estilos mínimos del login inline]
-   =========================================================== */
-(function(){
-  const CSS_ID='tpl-login-styles';
-  if(document.getElementById(CSS_ID)) return;
-  const s=document.createElement('style'); s.id=CSS_ID; s.textContent=`
-  .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:20px;background:#fff;max-width:460px;margin:20px auto;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-  .tpl-login-title{margin:0 0 10px;color:#58425a;font-weight:700;font-size:1.15rem;text-align:center}
-  .tpl-socials{display:grid;gap:10px;margin-bottom:10px}
-  .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600}
-  .tpl-btn-social i{font-size:1rem}
-  .tpl-sep{position:relative;text-align:center;margin:8px 0 10px;color:#999;font-size:.9rem}
-  .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
-  .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
-  .tpl-login-form{display:grid;gap:10px}
-  .tpl-login-form label{font-size:.9rem;color:#58425a}
-  .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
-  .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-  .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-  .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
-  .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:6px}
-  `;
-  document.head.appendChild(s);
-})();
-/* ===========================================================
-   TPL: FIN BLOQUE NUEVO
-   =========================================================== */
+      async function getProfile(uid){
+        if (uid) {
+          const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+          return doc.exists ? doc.data() : null;
+        }
+        try { return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); } catch(e){ return null; }
+      }
+
+      async function getPets(uid){
+        if (uid) {
+          const snap = await db.collection('users').doc(uid).collection('pets').get();
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        try { return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); } catch(e){ return []; }
+      }
+
+      function petEditHref(pet, idx, isFirebase){
+        return (isFirebase && pet.id)
+          ? ('perfil-mascotas.html?id=' + encodeURIComponent(pet.id))
+          : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
+      }
+
+      // Helpers
+      function getInitials(name){
+        if(!name) return '—';
+        const parts = String(name).trim().split(/\s+/).slice(0,2);
+        return parts.map(p=>p[0]?.toUpperCase()||'').join('') || '—';
+      }
+      function fmt(val, fallback='—'){
+        return (val===0 || !!val) ? String(val) : fallback;
+      }
+
+      async function render(uid){
+        const isFirebase = !!uid;
+
+        // ----- Perfil
+        const profile = await getProfile(uid);
+        updateBadge(profile);
+        if (profile && profile.nombre) {
+          document.getElementById('tpl-view-nombre').textContent    = profile.nombre || '—';
+          document.getElementById('tpl-view-telefono').textContent  = profile.telefono || '—';
+          document.getElementById('tpl-view-email').textContent     = profile.email || '—';
+          document.getElementById('tpl-view-direccion').textContent = profile.direccion || '—';
+          document.getElementById('tpl-view-cp').textContent        = profile.cp || '—';
+          document.getElementById('tpl-view-pref').textContent      = profile.preferencias || '—';
+          emptyCliente.classList.add('tpl-hidden');
+          viewCliente.classList.remove('tpl-hidden');
+        } else {
+          viewCliente.classList.add('tpl-hidden');
+          emptyCliente.classList.remove('tpl-hidden');
+        }
+
+        // ----- Mascotas
+        const pets = await getPets(uid);
+        mascotasList.innerHTML = '';
+        const count = pets ? pets.length : 0;
+
+        if (count > 0) {
+          mascotasEmpty.classList.add('tpl-hidden');
+          mascotasView.classList.remove('tpl-hidden');
+          chipMascotas.classList.remove('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','false');
+          cntMascotas.textContent = String(count);
+
+          pets.forEach((p, idx) => {
+            const especie = p.especie || '—';
+            const edad    = (p.edad || p.edadAnios || p.anios) ?? '—';
+            const peso    = p.peso ?? '—';
+            const sexo    = p.sexo || p.genero || '—';
+            const ester   = (p.esterilizado===true || p.esterilizada===true) ? 'Sí' : (p.esterilizado===false || p.esterilizada===false) ? 'No' : '—';
+            const notas   = p.notas || p.comentarios || '';
+
+            const card   = document.createElement('div');
+            card.className = 'tpl-pet';
+
+            // Avatar: fotoUrl si existe; si no, iniciales
+            const avatar = document.createElement('div');
+            avatar.className = 'tpl-avatar';
+            if (p.fotoUrl){
+              const img = document.createElement('img');
+              img.src = p.fotoUrl;
+              img.alt = `Foto de ${p.nombre || 'la mascota'}`;
+              avatar.appendChild(img);
+            } else {
+              avatar.textContent = getInitials(p.nombre);
+            }
+
+            const textBox = document.createElement('div');
+            const nameEl  = document.createElement('div');
+            nameEl.className = 'tpl-pet-name';
+            nameEl.textContent = p.nombre || '—';
+
+            const secEl   = document.createElement('div');
+            secEl.className = 'tpl-pet-secondary';
+            secEl.textContent = especie;
+
+            textBox.appendChild(nameEl);
+            textBox.appendChild(secEl);
+
+            const actions = document.createElement('div');
+            actions.className = 'tpl-pet-actions';
+            const edit = document.createElement('a');
+            edit.textContent = 'Editar';
+            edit.className = 'tpl-btn-sm tpl-btn-outline';
+            edit.setAttribute('href', petEditHref(p, idx, isFirebase));
+            actions.appendChild(edit);
+
+            // Popover con detalles
+            const pop = document.createElement('div');
+            pop.className = 'tpl-popover';
+            pop.setAttribute('role','dialog');
+            pop.setAttribute('aria-label', `Detalles de ${p.nombre || 'mascota'}`);
+            pop.innerHTML = `
+              <dl>
+                <dt>Especie</dt><dd>${fmt(especie)}</dd>
+                <dt>Edad</dt><dd>${fmt(edad)}</dd>
+                <dt>Peso</dt><dd>${fmt(peso)}</dd>
+                <dt>Sexo</dt><dd>${fmt(sexo)}</dd>
+                <dt>Esterilizado</dt><dd>${fmt(ester)}</dd>
+              </dl>
+              ${notas ? `<div class="tpl-notas"><strong>Notas:</strong> ${fmt(notas,'')}</div>` : ''}
+            `;
+
+            card.appendChild(avatar);
+            card.appendChild(textBox);
+            card.appendChild(actions);
+            card.appendChild(pop);
+
+            mascotasList.appendChild(card);
+          });
+        } else {
+          mascotasView.classList.add('tpl-hidden');
+          mascotasEmpty.classList.remove('tpl-hidden');
+          chipMascotas.classList.add('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','true');
+          cntMascotas.textContent = '0';
+        }
+      }
+
+      // Logout robusto
+      async function doLogout(){
+        try { await auth.signOut(); } catch(e) { console.warn('signOut:', e); }
+        localStorage.removeItem(LS_PROFILE_KEY);
+        localStorage.removeItem(LS_PETS_KEY);
+        alert('Has cerrado sesión.');
+        location.href = 'index.html';
+      }
+      if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+
+      // Sesión
+      auth.onAuthStateChanged(async (u) => {
+        await render(u ? u.uid : null);
+      });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
