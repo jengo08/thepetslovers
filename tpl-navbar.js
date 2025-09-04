@@ -384,3 +384,94 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
+/* TPL: INICIO BLOQUE NUEVO [UX formularios — feedback y redirección optimista] */
+(function(){
+  // Crea (una vez) el overlay reutilizable
+  function ensureOverlay(){
+    var ex = document.getElementById('tpl-form-overlay');
+    if (ex) return ex;
+    var wrap = document.createElement('div');
+    wrap.id = 'tpl-form-overlay';
+    wrap.className = 'tpl-form-overlay';
+    wrap.innerHTML = '<div class="tpl-form-card" role="alertdialog" aria-live="polite" aria-label="Estado del envío">'
+      + '<div class="tpl-form-spinner" aria-hidden="true"></div>'
+      + '<h3 id="tpl-form-title">Enviando…</h3>'
+      + '<p id="tpl-form-msg" class="muted">No cierres esta ventana.</p>'
+      + '</div>';
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+
+  function showOverlay(title, msg){
+    var o = ensureOverlay();
+    o.querySelector('#tpl-form-title').textContent = title || 'Enviando…';
+    o.querySelector('#tpl-form-msg').textContent = msg || 'Subiendo archivos, un momento…';
+    o.classList.add('show');
+  }
+  function showSuccess(msg){
+    var o = ensureOverlay();
+    o.querySelector('.tpl-form-spinner').style.display = 'none';
+    o.querySelector('#tpl-form-title').textContent = '✅ ¡Listo!';
+    o.querySelector('#tpl-form-msg').textContent = msg || 'Tu solicitud se ha enviado correctamente.';
+    o.classList.add('show');
+  }
+  function hideOverlay(){
+    var o = document.getElementById('tpl-form-overlay');
+    if (!o) return;
+    o.classList.remove('show');
+    var sp = o.querySelector('.tpl-form-spinner');
+    if (sp) sp.style.display = ''; // re-activar para el próximo envío
+  }
+
+  // Interceptamos el submit SOLO para UX (no preventDefault): feedback inmediato
+  document.addEventListener('submit', function(ev){
+    var form = ev.target;
+    if (!form || form.nodeName !== 'FORM') return;
+
+    // ¿Tiene mensaje de éxito personalizado? (si no, no hacemos nada)
+    var successMsg = form.getAttribute('data-tpl-success');
+    if (!successMsg) return;
+
+    // Desactivar botones mientras sube
+    var btns = form.querySelectorAll('button, [type=submit]');
+    btns.forEach(function(b){ b.disabled = true; b.dataset._tplText = b.textContent; b.textContent = 'Enviando…'; });
+
+    // Mostrar overlay "Enviando…"
+    showOverlay('Enviando…', 'Subiendo archivos (CV, título…) y guardando datos. Puede tardar unos segundos.');
+
+    // Estrategia "optimista": si en X segundos no ha navegado la página,
+    // mostramos el OK y redirigimos si está configurado.
+    var waitMs = parseInt(form.getAttribute('data-tpl-wait')||'12000', 10); // 12s por defecto
+    var redirectTo = form.getAttribute('data-tpl-redirect'); // ej. "index.html"
+
+    // Si la página realmente navega (envío tradicional), el overlay se va solo.
+    var unloaded = false;
+    window.addEventListener('beforeunload', function(){ unloaded = true; }, { once:true });
+
+    setTimeout(function(){
+      if (unloaded) return; // la página ya cambió
+      // Mostramos éxito
+      showSuccess(successMsg);
+      // Rehabilitamos botones por si no hay redirección
+      btns.forEach(function(b){ b.disabled = false; if (b.dataset._tplText) b.textContent = b.dataset._tplText; });
+
+      // Redirección opcional tras 2.2s
+      if (redirectTo){
+        setTimeout(function(){ location.href = redirectTo; }, 2200);
+      } else {
+        // Si no hay redirección, ocultamos overlay tras 2.2s
+        setTimeout(hideOverlay, 2200);
+      }
+    }, waitMs);
+
+    // Si tu código de envío invoca form.reset() cuando termina, capturamos para adelantar el OK
+    form.addEventListener('reset', function(){
+      showSuccess(successMsg);
+      setTimeout(function(){
+        hideOverlay();
+        if (redirectTo) location.href = redirectTo;
+      }, 1200);
+    }, { once:true });
+  }, true);
+})();
+/* TPL: FIN BLOQUE NUEVO */
