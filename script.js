@@ -351,7 +351,7 @@
     });
   } catch(_) {}
 })();
-/* TPL: FIN BLOQUE NUEVO */
+ /* TPL: FIN BLOQUE NUEVO */
 
 /* ===========================================================
    TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google + (Facebook/Microsoft opcional)]
@@ -508,7 +508,7 @@
       }
     };
 
-    // Sincroniza elementos con data-auth-visible="in|out" y .login-button existente
+    // === ÚNICO CAMBIO: Navbar muestra "Mi perfil" con sesión, "Iniciar sesión" sin sesión ===
     function syncAuthNodes(user){
       document.querySelectorAll('[data-auth-visible]').forEach(el=>{
         const mode = el.getAttribute('data-auth-visible');
@@ -517,11 +517,13 @@
       const btn = document.querySelector('.login-button');
       if (btn){
         if (user){
-          btn.textContent = 'Cerrar sesión';
-          btn.onclick = (e)=>{ e.preventDefault(); signOut(auth); };
+          btn.textContent = 'Mi perfil';
+          btn.setAttribute('href', 'mi-perfil.html');
+          btn.onclick = null;
         } else {
           btn.textContent = 'Iniciar sesión';
-          btn.onclick = (e)=>{ e.preventDefault(); location.href = 'login.html'; };
+          btn.setAttribute('href', 'login.html');
+          btn.onclick = null;
         }
       }
     }
