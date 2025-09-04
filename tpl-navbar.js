@@ -37,7 +37,10 @@
 
   // Solo tú ves el panel admin
   var PANEL_URL = 'tpl-candidaturas-admin.html';
+
+  // ⬇⬇⬇ TPL: ADMIN — si cambias de email admin, actualiza aquí
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
+
   function tplNormalizeEmail(e){
     return String(e||'')
       .trim()
@@ -161,6 +164,19 @@
           setLoginButton(!!u);
           hideLogoutEverywhere();
           try{ if(u){ localStorage.setItem('tplAuth','1'); } else { localStorage.removeItem('tplAuth'); } }catch(e){}
+
+          /* TPL: INICIO BLOQUE NUEVO [Auto-redirect post-login desde iniciar-sesion] */
+          try{
+            var here = (location.pathname.split('/').pop() || '').toLowerCase();
+            if (u && here === 'iniciar-sesion.html') {
+              var email = (u.email || getCurrentEmailFromFirebaseStorage() || '');
+              var nextUrl = isAdminEmail(email) ? PANEL_URL : PROFILE_URL;
+              // Redirige al destino correcto sin parpadeo
+              location.replace(nextUrl);
+              return;
+            }
+          }catch(e){}
+          /* TPL: FIN BLOQUE NUEVO */
         });
       }else{
         try{
