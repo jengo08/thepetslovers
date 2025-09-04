@@ -414,7 +414,7 @@
   // --- Unificación por GRUPO (data-tpl-type="perfil", data-tpl-group="propietario|mascota") ---
   function tryUnifiedSendByGroup(form, currentParams){
     var gKey = groupKey(form);
-    var sub  = subgroup(form); // 'propietario' | 'mascota' (o lo que definas)
+    var sub  = subgroup(form); // 'propietario' | 'mascota'
     if (!gKey || !sub) return false;
 
     // Persistimos la mitad actual
@@ -434,7 +434,7 @@
     for (var k in owner){ merged['owner_'+k] = owner[k]; }
     for (var k2 in pet){ merged['pet_'+k2] = pet[k2]; }
 
-    // Añadimos el contexto de la página actual también
+    // Añadimos también el contexto de la página actual
     for (var k3 in currentParams){ if (!merged.hasOwnProperty(k3)) merged[k3]=currentParams[k3]; }
 
     merged.unified_info = 'Propietario + Mascota (unificado por grupo)';
@@ -468,8 +468,8 @@
       if (unifiedByPrefix) return; // ya enviado combinado
 
       // 3) Si no hay unificación, envío normal
-      sendEmail(type, params).catch(function(){ /* silencioso */ });
-    }catch(e){ /* silencioso */ }
+      sendEmail(type, params).catch(function(){});
+    }catch(e){}
 
     // IMPORTANTE: NO hacemos preventDefault → no rompemos tu lógica ni redirecciones nativas
   }
@@ -510,7 +510,7 @@
   function showOverlay(title, msg){
     var o = ensureOverlay();
     o.querySelector('#tpl-form-title').textContent = title || 'Enviando…';
-    o.querySelector('#tpl-form-msg').textContent = msg || 'Subiendo archivos, un momento…';
+    o.querySelector('#tpl-form-msg').textContent = msg || 'Subiendo archivos (si aplica) y guardando datos. Puede tardar unos segundos.';
     o.classList.add('show');
   }
   function showSuccess(msg){
@@ -542,12 +542,19 @@
     btns.forEach(function(b){ b.disabled = true; b.dataset._tplText = b.textContent; b.textContent = 'Enviando…'; });
 
     // Mostrar overlay "Enviando…"
-    showOverlay('Enviando…', 'Subiendo archivos (si aplica) y guardando datos. Puede tardar unos segundos.');
+    showOverlay('Enviando…');
+
+    // --- REDIRECCIÓN POR DEFECTO SEGÚN TIPO (lo que me pediste) ---
+    var typeAttr = (form.getAttribute('data-tpl-type')||'').toLowerCase();
+    var redirectToAttr = form.getAttribute('data-tpl-redirect');
+    // Si el formulario NO define data-tpl-redirect, aplico:
+    // - candidatura  → index.html
+    // - cualquier otro con data-tpl-type → perfil.html
+    var redirectTo = redirectToAttr || (typeAttr ? (typeAttr==='candidatura' ? 'index.html' : 'perfil.html') : '');
 
     // Estrategia "optimista": si en X segundos no ha navegado la página,
     // mostramos el OK y redirigimos si está configurado.
     var waitMs = parseInt(form.getAttribute('data-tpl-wait')||'12000', 10); // 12s por defecto
-    var redirectTo = form.getAttribute('data-tpl-redirect'); // ej. "index.html"
 
     // Si la página realmente navega (envío tradicional), el overlay se va solo.
     var unloaded = false;
