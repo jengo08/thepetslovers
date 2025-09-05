@@ -1,13 +1,12 @@
 /* TPL Navbar — estable, idempotente y sin bucles */
 (function(){
-  // Evita dobles ejecuciones si el script se incluye dos veces
   if (window.__TPL_NAVBAR_RUNNING__) return;
   window.__TPL_NAVBAR_RUNNING__ = true;
 
   // ========= CONFIG =========
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];    // admin(s)
-  var PANEL_URL    = 'tpl-candidaturas-admin.html';   // tu panel
-  var PROFILE_URL  = 'perfil.html';                   // SIEMPRE este para usuarios
+  var PANEL_URL    = 'tpl-candidaturas-admin.html';
+  var PROFILE_URL  = 'perfil.html';
 
   // ========= HELPERS =========
   function normEmail(s){
@@ -40,7 +39,6 @@
     var host = document.getElementById('tpl-navbar');
     var html = htmlNavbar();
     if (host){
-      // Solo escribe si está vacío o distinto (evita parpadeos)
       if (host.innerHTML.trim() !== html) host.innerHTML = html;
     } else {
       var wrap = document.createElement('div');
@@ -53,32 +51,21 @@
   function setBtn(text, href){
     var a = document.getElementById('tpl-login-link');
     if (!a) return;
-    // Evita cambios innecesarios (corta “peleas” con otros scripts)
     if (a.textContent.trim() !== text) a.textContent = text;
     if (a.getAttribute('href') !== href) a.setAttribute('href', href);
   }
-
-  // Botón por defecto hasta saber si hay sesión
   function setDefaultBtn(){ setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL)); }
 
-  // Actualiza según usuario
   function updateBtn(user){
     if (!user){ setDefaultBtn(); return; }
     var admin = isAdminEmail(user.email);
-    if (admin){
-      // La diosa pidió: en INDEX siempre “Mi panel” al ser admin
-      setBtn('Mi panel', PANEL_URL);
-    } else {
-      setBtn('Mi perfil', PROFILE_URL);
-    }
+    if (admin){ setBtn('Mi panel', PANEL_URL); }
+    else { setBtn('Mi perfil', PROFILE_URL); }
   }
 
-  // Carga Firebase solo si hace falta y sin duplicar
   function loadOnce(src){
     return new Promise(function(res, rej){
-      var already = Array.prototype.some.call(document.scripts, function(s){
-        return s.src === src;
-      });
+      var already = Array.prototype.some.call(document.scripts, function(s){ return s.src === src; });
       if (already) return res();
       var el = document.createElement('script');
       el.src = src; el.defer = true;
@@ -114,17 +101,6 @@
     return firebase.auth ? firebase.auth() : null;
   }
 
-  // TPL: INICIO BLOQUE NUEVO [auth anónima silenciosa para poder subir a Storage/Firestore]
-  async function ensureAnonAuth(auth){
-    try{
-      if (!auth) return;
-      var user = auth.currentUser;
-      if (!user) { await auth.signInAnonymously(); }
-    }catch(_){}
-  }
-  // TPL: FIN BLOQUE NUEVO
-
-  // Arranque seguro (sin observers ni reemplazos continuos)
   function start(){
     injectNavbarOnce();
     setDefaultBtn();
@@ -135,24 +111,15 @@
         var auth = initFirebase();
         if (!auth) return;
 
-        // 1) Actualiza ya con el usuario actual
         updateBtn(auth.currentUser);
 
-        // 2) Mantener botón actualizado
         auth.onAuthStateChanged(function(u){
           updateBtn(u);
           if (IS_HOME && u && u.email && isAdminEmail(u.email)){
             setTimeout(function(){ setBtn('Mi panel', PANEL_URL); }, 300);
           }
         });
-
-        // TPL: INICIO BLOQUE NUEVO [Auth anónima para visitantes]
-        if (!auth.currentUser) { await ensureAnonAuth(auth); }
-        // TPL: FIN BLOQUE NUEVO
-
-      }catch(_){
-        // Si Firebase falla, el navbar sigue visible con el botón por defecto
-      }
+      }catch(_){}
     })();
   }
 
@@ -162,24 +129,24 @@
     start();
   }
 })();
+
 /* ===========================
-   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + redirecciones (navbar) + subida a Firebase]
+   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + redirecciones (navbar) + subida condicionada a Firebase]
    =========================== */
 (function(){
   'use strict';
   if (window.__TPL_EMAILJS_BOOTSTRAPPED) return;
   window.__TPL_EMAILJS_BOOTSTRAPPED = true;
 
-  // 🔑 TUS CLAVES/IDS EmailJS
+  // 🔑 EmailJS
   const EMAILJS_PUBLIC_KEY = 'L2xAATfVuHJwj4EIV';
   const EMAILJS_SERVICE_ID = 'service_odjqrfl';
-  const TEMPLATE_CANDIDATURAS_REGISTROS = 'template_32z2wj4'; // candidaturas + registros
-  const TEMPLATE_RESERVAS = 'template_rao5n0c';                 // reservas
+  const TEMPLATE_CANDIDATURAS_REGISTROS = 'template_32z2wj4';
+  const TEMPLATE_RESERVAS = 'template_rao5n0c';
 
   const EMAILJS_URL = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
   const STYLE_ID = 'tpl-feedback-modal-css';
 
-  // ===== Estilos del modal =====
   function injectStyles(){
     if (document.getElementById(STYLE_ID)) return;
     const css = `
@@ -190,6 +157,7 @@
       .tpl-modal .tpl-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
       .tpl-btn{appearance:none;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer}
       .tpl-btn--primary{background:var(--tpl-primary,#339496);color:#fff}
+      .tpl-btn--ghost{background:#fff;border:1px solid var(--tpl-primary,#339496);color:var(--tpl-primary,#339496)}
     `;
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -219,7 +187,6 @@
     btn.focus();
   }
 
-  // ===== EmailJS loader =====
   function loadEmailJS(publicKey){
     return new Promise((resolve, reject)=>{
       if (window.emailjs && window.emailjs.send){
@@ -234,7 +201,6 @@
     });
   }
 
-  // ===== Utilidades de formulario =====
   function buildHTMLFromForm(form){
     const fd = new FormData(form);
     const rows = [];
@@ -279,15 +245,28 @@
     return o;
   }
 
-  function sanitizeName(name){
-    return String(name || '').replace(/[^\w.\-]+/g,'_').slice(0,120);
+  // TPL: INICIO BLOQUE NUEVO [helpers auth]
+  function currentAuth(){
+    try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; }
   }
+  function isLoggedNonAnonymous(){
+    const auth = currentAuth();
+    const u = auth && auth.currentUser;
+    return !!(u && !u.isAnonymous);
+  }
+  // TPL: FIN BLOQUE NUEVO
 
-  // ===== Subida a Firebase (Storage + Firestore) =====
+  // ===== Subida a Firebase (Storage + Firestore) — SOLO con sesión no anónima =====
   async function uploadAndSaveToFirebase(form, type){
     if (typeof firebase === 'undefined' || !firebase.firestore || !firebase.storage) return null;
-    const auth = firebase.auth && firebase.auth();
-    try{ if (auth && !auth.currentUser) await auth.signInAnonymously(); }catch(_){}
+
+    // TPL: INICIO BLOQUE NUEVO [exigir sesión no anónima]
+    const auth = currentAuth();
+    const user = auth && auth.currentUser;
+    if (!user || user.isAnonymous){
+      return { error: 'auth', message: 'Debes iniciar sesión para adjuntar archivos.' };
+    }
+    // TPL: FIN BLOQUE NUEVO
 
     const db = firebase.firestore();
     const storage = firebase.storage();
@@ -309,6 +288,8 @@
         }
       }
     }
+
+    function sanitizeName(name){ return String(name || '').replace(/[^\w.\-]+/g,'_').slice(0,120); }
 
     for (const input of fileInputs){
       const field = input.name || 'archivo';
@@ -336,17 +317,17 @@
     return { id, files: filesMeta };
   }
 
-  // ===== Detección y reglas =====
+  // Detección y textos
   function shouldHandle(form){
-    if (form.matches('[data-tpl-emailjs="false"]')) return false; // opt-out
-    if (form.querySelector('input[type="password"], [type="password"]')) return false; // no tocar login
+    if (form.matches('[data-tpl-emailjs="false"]')) return false;
+    if (form.querySelector('input[type="password"], [type="password"]')) return false;
     const path = (location.pathname || '').toLowerCase();
     const txt  = (form.textContent || '').toLowerCase();
-    if (form.matches('[data-tpl-emailjs="true"]')) return true; // opt-in explícito
+    if (form.matches('[data-tpl-emailjs="true"]')) return true;
 
-    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true; // candidaturas
-    if (path.includes('perfil') || path.includes('registro')) return true;                 // registro propietario+mascota
-    if (path.includes('reserva')) return true;                                             // (si quieres, también lo guardamos)
+    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true;
+    if (path.includes('perfil') || path.includes('registro')) return true;
+    if (path.includes('reserva')) return true;
 
     if (txt.includes('enviar candidatura')) return true;
     if (txt.includes('guardar') || txt.includes('crear perfil')) return true;
@@ -358,7 +339,6 @@
   function detectType(form){
     const ds = form.dataset || {};
     if (ds.type) return ds.type.toLowerCase();
-
     const path = (location.pathname || '').toLowerCase();
     const txt  = (form.textContent || '').toLowerCase();
     if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario') || txt.includes('enviar candidatura')) return 'cuestionario';
@@ -404,12 +384,10 @@
     }
   }
 
-  // ===== Handler principal =====
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;
 
-    // Evitar dobles tarjetas de otros scripts
     ev.preventDefault();
     ev.stopImmediatePropagation();
     ev.stopPropagation();
@@ -427,7 +405,6 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    // Adjuntos: si hay archivos, validamos pesos (para UX)
     const hasFiles = !!form.querySelector('input[type="file"]');
     if (hasFiles) {
       form.setAttribute('enctype','multipart/form-data');
@@ -444,30 +421,44 @@
       if (oversize || total > MAX_TOTAL){
         showModal({
           title: 'Archivos demasiado pesados',
-          message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB. Reduce el tamaño e inténtalo de nuevo.',
+          message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB.',
           ctaText: 'Entendido'
         });
         return;
       }
     }
 
-    // Bloquear submit
     const submits = form.querySelectorAll('[type="submit"]');
     submits.forEach(b=>{ b.disabled = true; b.dataset._oldText = b.textContent; b.textContent = 'Enviando…'; });
 
-    // Preparar contenido email (sin adjuntos)
     const html = buildHTMLFromForm(form);
     const pageUrl = location.href;
 
     try{
-      // 1) Subir a Firebase (solo guardamos en BD/Storage; NO email con adjuntos)
-      if (type === 'cuestionario' || type === 'perfil'){
-        await ensureFirebase();
-        await uploadAndSaveToFirebase(form, type); // si falla, mostramos genérico más abajo
-      }
-      // (Opcional: si quieres guardar también reservas en Firestore, avísame y lo activo para 'reserva')
+      await ensureFirebase();
 
-      // 2) Enviar correo-notificación (sin adjuntos) con EmailJS
+      // TPL: INICIO BLOQUE NUEVO [respeto a reglas: subir solo si logueado y no anónimo]
+      const canUpload = isLoggedNonAnonymous();
+      if (hasFiles && !canUpload){
+        showModal({
+          title:'Inicia sesión para adjuntar',
+          message:'Para adjuntar archivos debes iniciar sesión. Puedes iniciar sesión ahora y volveremos a esta página.',
+          ctaText:'Iniciar sesión',
+          redirect: 'iniciar-sesion.html?next='+encodeURIComponent(location.pathname + location.search)
+        });
+        return; // no seguimos; evitamos error
+      }
+
+      if (canUpload && (type==='cuestionario' || type==='perfil')){
+        const up = await uploadAndSaveToFirebase(form, type);
+        if (up && up.error==='size'){
+          showModal({ title:'Archivos demasiado pesados', message: up.message, ctaText:'Entendido' });
+          return;
+        }
+        // si hubo error 'auth' (no debería aquí), seguimos con email sin adjuntos
+      }
+      // TPL: FIN BLOQUE NUEVO
+
       await loadEmailJS(cfg.publicKey);
       await window.emailjs.send(cfg.serviceId, cfg.templateId, {
         subject: cfg.subject,
@@ -477,7 +468,6 @@
 
       try { form.reset(); } catch(_){}
 
-      // 3) Tarjeta final
       showModal({
         title: '¡Listo!',
         message: cfg.success,
@@ -493,7 +483,6 @@
     }
   }
 
-  // Enganche global
   function attach(){
     document.querySelectorAll('form').forEach(form=>{
       if (form.__tplBound) return;
