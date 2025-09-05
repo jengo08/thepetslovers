@@ -57,12 +57,11 @@
 
     .auth-msg{ min-height:1.1em; color:var(--tpl-ink); text-align:center; margin-top:4px; font-size:.92rem }
 
-    /* Subo este bloque reduciendo márgenes */
     .sep{ position:relative; text-align:center; margin:8px 0 6px; color:#999; font-size:.9rem }
     .sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee }
     .sep span{ background:#fff; padding:0 8px; position:relative; z-index:1 }
 
-    .row-actions{ display:grid; gap:8px; margin-top:6px; }   /* más junto */
+    .row-actions{ display:grid; gap:8px; margin-top:6px; }
 
     .below{ margin-top:8px; text-align:center; font-size:.9rem; }
     .below a{ color:var(--tpl-primary); font-weight:700; text-decoration:underline; }
@@ -73,8 +72,8 @@
       color:#339496; text-decoration:none
     }
 
-    /* Aviso de sesión iniciada sin redirección automática */
-    .already{ margin-top:8px; text-align:center; font-size:.92rem; color:#555; }
+    /* (el aviso HTML “ya estás logueado” lo dejamos oculto por JS; no cambia diseño) */
+    .already{ margin-top:8px; text-align:center; font-size:.92rem; color:#555; display:none; }
     .btn-chip{
       display:inline-block; margin:6px 6px 0 6px; padding:8px 12px;
       border-radius:999px; border:1px solid #d7efef; background:#f5fbfb;
@@ -94,10 +93,10 @@
       <h1 class="auth-title">Iniciar sesión</h1>
       <p class="auth-sub">Introduce tu email y contraseña.</p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Aviso de sesión iniciada] -->
-      <div id="tpl-logged" class="already" style="display:none">
+      <!-- TPL: INICIO BLOQUE NUEVO [Aviso (se mantiene pero no se muestra; redirigimos directo)] -->
+      <div id="tpl-logged" class="already">
         Ya has iniciado sesión.
-        <a href="tpl-candidaturas-admin.html" class="btn-chip" id="tpl-btn-panel" style="display:none">Ir a Panel</a>
+        <a href="tpl-candidaturas-admin.html" class="btn-chip" id="tpl-btn-panel">Ir a Panel</a>
         <a href="perfil.html" class="btn-chip" id="tpl-btn-perfil">Ir a Mi perfil</a>
       </div>
       <!-- TPL: FIN BLOQUE NUEVO -->
@@ -158,160 +157,134 @@
     })();
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica: login + Google + reset + sin auto-redirect si ya hay sesión] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Redirección inmediata post-login sin mensajes] -->
   <script>
     (function(){
-      const AUTH_FLAG = 'tplAuth';
-      const params = new URLSearchParams(location.search);
-      const NEXT = params.get('next'); // opcional
-
-      // Admin: si eres este correo → Panel
+      // Admin ⇒ panel, resto ⇒ perfil
       const PANEL_URL = 'tpl-candidaturas-admin.html';
+      const PROFILE_URL = 'perfil.html';
       const ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
       const ADMIN_SET = new Set(ADMIN_EMAILS.map(x =>
         String(x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
       ));
-      function isAdminEmail(email){
+      const isAdminEmail = (email) => {
         const norm = String(email||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
         return ADMIN_SET.has(norm);
-      }
+      };
 
-      const $ = (s, p=document)=>p.querySelector(s);
+      const $ = (s,p=document)=>p.querySelector(s);
       const form = $('#formAuth');
       const email = $('#email');
       const pass  = $('#password');
       const btnForgot = $('#btnForgot');
       const btnGoogle = $('#btnGoogle');
-      const btnSignup = $('#btnSignup');
       const btnLogin = $('#btnLogin');
       const msg = $('#msg');
-      const loggedBox = $('#tpl-logged');
-      const btnPanel = $('#tpl-btn-panel');
-      const btnPerfil = $('#tpl-btn-perfil');
 
-      // Resolver URL del perfil (fallbacks)
-      const PROFILE_URL_LS = 'tpl_profile_url_cache';
-      async function resolveProfileUrl(){
-        try{ const c = localStorage.getItem(PROFILE_URL_LS); if (c) return c; }catch(e){}
-        const candidates = ['mi-perfil.html','mi-cuenta.html','perfil.html'];
-        for (let p of candidates){
-          try{
-            let r = await fetch(p, { method:'HEAD', cache:'no-store' });
-            if (!r || !r.ok){ r = await fetch(p, { method:'GET', cache:'no-store' }); }
-            if (r && r.ok){ try{ localStorage.setItem(PROFILE_URL_LS, p); }catch(e){} return p; }
-          }catch(e){}
-        }
-        return 'mi-perfil.html';
+      const auth = () => (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null;
+
+      async function go(url){
+        // Redirección directa; sin mensajes
+        location.href = url;
+      }
+      async function decideNext(user){
+        return (user && isAdminEmail(user.email)) ? PANEL_URL : PROFILE_URL;
       }
 
-      async function safeGo(url){
+      // Si ya hay sesión al entrar aquí → redirigir sin mostrar nada
+      document.addEventListener('DOMContentLoaded', function(){
         try{
-          let r = await fetch(url, { method:'HEAD', cache:'no-store' });
-          if (!r || !r.ok){ r = await fetch(url, { method:'GET', cache:'no-store' }); }
-          if (r && r.ok){ location.href = url; return; }
+          const a = auth();
+          if (!a) return;
+          a.onAuthStateChanged(async function(u){
+            if (u && !u.isAnonymous){
+              // cache ligero para navbar (opcional)
+              try{ localStorage.setItem('tplAuth','1'); if(u.email) localStorage.setItem('tplEmail', String(u.email)); }catch(e){}
+              await go(await decideNext(u));
+            }
+          });
         }catch(e){}
-        location.href = await resolveProfileUrl();
-      }
+      });
 
-      function showMsg(t){ msg && (msg.textContent = t || ''); }
       function setBusy(b){
         try{
           btnLogin && (btnLogin.disabled = b);
           btnGoogle && (btnGoogle.disabled = b);
         }catch(e){}
       }
-      function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
+      function showError(t){ msg && (msg.textContent = t || ''); }
 
-      // Decide destino por usuario tras autenticarse (no en carga)
-      async function nextUrlFor(user){
-        if (user && isAdminEmail(user.email)) return PANEL_URL; // admin ⇒ panel
-        if (NEXT) return NEXT;                                  // respeta ?next=
-        return await resolveProfileUrl();                       // resto ⇒ perfil
-      }
-
-      // No redirigimos automáticamente si ya hay sesión: mostramos aviso
-      document.addEventListener('DOMContentLoaded', async function(){
-        try{
-          const a = auth();
-          const u = a && a.currentUser;
-          const flag = localStorage.getItem(AUTH_FLAG)==='1';
-          if (u || flag){
-            if (loggedBox) loggedBox.style.display = '';
-            if (u && isAdminEmail(u.email)) { if(btnPanel) btnPanel.style.display='inline-block'; }
-            btnPerfil && (btnPerfil.href = await resolveProfileUrl());
-          }
-        }catch(e){}
-      });
-
-      // Login email/contraseña
+      // Email/contraseña
       form.addEventListener('submit', async function(e){
         e.preventDefault();
         const a = auth();
-        if (!a){ showMsg('Servicio de autenticación no disponible.'); setBusy(false); return; }
+        if (!a){ showError('Servicio de autenticación no disponible.'); return; }
         const em = (email.value||'').trim();
         const pw = pass.value;
         try{
-          showMsg('Accediendo…'); setBusy(true);
+          setBusy(true);
           const cred = await a.signInWithEmailAndPassword(em, pw);
-          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-          showMsg('¡Listo! Redirigiendo…');
-          await safeGo(await nextUrlFor(cred && cred.user));
+          try{ localStorage.setItem('tplAuth','1'); if(cred.user && cred.user.email) localStorage.setItem('tplEmail', String(cred.user.email)); }catch(e){}
+          await go(await decideNext(cred.user));
         }catch(err){
           let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
           if (/auth\/invalid-credential|auth\/wrong-password/.test(m)) m = 'Credenciales no válidas. Revisa tu email y contraseña.';
           if (/auth\/user-not-found/.test(m)) m = 'No existe una cuenta con ese email.';
-          showMsg(m); setBusy(false);
+          showError(m);
+          setBusy(false);
         }
       });
 
-      // Reset password
-      btnForgot && btnForgot.addEventListener('click', async function(){
-        const a = auth();
-        if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
-        const em = (email.value||'').trim();
-        if (!em){ showMsg('Escribe tu email arriba y vuelve a pulsar.'); return; }
-        try{
-          showMsg('Enviando enlace de restablecimiento…');
-          await a.sendPasswordResetEmail(em);
-          showMsg('Revisa tu correo para restablecer la contraseña.');
-        }catch(e){
-          showMsg('No se pudo enviar el email. Revisa el correo indicado.');
-        }
-      });
-
-      // Google (popup + fallback redirect en iOS/Safari)
+      // Google (popup / redirect en iOS-Safari)
       btnGoogle.addEventListener('click', async function(){
         const a = auth();
-        if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
+        if (!a){ showError('Servicio de autenticación no disponible.'); return; }
         const provider = new firebase.auth.GoogleAuthProvider();
-        showMsg('Conectando con Google…'); setBusy(true);
+        setBusy(true);
         try{
           const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
           const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-          let userCred;
-          if (isIOS && isSafari) { await a.signInWithRedirect(provider); return; }
-          else { userCred = await a.signInWithPopup(provider); }
-          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-          const user = (userCred && userCred.user) || (a && a.currentUser);
-          await safeGo(await nextUrlFor(user));
+          if (isIOS && isSafari){
+            await a.signInWithRedirect(provider);
+            return; // vuelve con getRedirectResult
+          } else {
+            const res = await a.signInWithPopup(provider);
+            try{ localStorage.setItem('tplAuth','1'); if(res.user && res.user.email) localStorage.setItem('tplEmail', String(res.user.email)); }catch(e){}
+            await go(await decideNext(res.user));
+          }
         }catch(err){
           let m = (err && err.message) || 'No se pudo iniciar con Google.';
           if (/popup-closed-by-user/i.test(m)) m = 'Has cerrado la ventana de Google.';
-          showMsg(m); setBusy(false);
+          showError(m);
+          setBusy(false);
         }
       });
 
-      // Si volvemos de redirect (iOS/Safari)
+      // Si volvemos de redirect de Google
       (async function handleRedirect(){
         try{
           const a = auth(); if (!a) return;
           const res = await a.getRedirectResult();
           if (res && res.user){
-            try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-            await safeGo(await nextUrlFor(res.user));
+            try{ localStorage.setItem('tplAuth','1'); if(res.user.email) localStorage.setItem('tplEmail', String(res.user.email)); }catch(e){}
+            await go(await decideNext(res.user));
           }
         }catch(e){}
       })();
+
+      // Reset password
+      btnForgot && btnForgot.addEventListener('click', async function(){
+        const a = auth();
+        if (!a){ showError('Servicio de autenticación no disponible.'); return; }
+        const em = (email.value||'').trim();
+        if (!em){ showError('Escribe tu email arriba y vuelve a pulsar.'); return; }
+        try{
+          await a.sendPasswordResetEmail(em);
+          showError('Revisa tu correo para restablecer la contraseña.');
+        }catch(e){
+          showError('No se pudo enviar el email. Revisa el correo indicado.');
+        }
+      });
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
