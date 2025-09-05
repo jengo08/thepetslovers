@@ -276,14 +276,14 @@
 
   function defaultsFor(type){
     switch(type){
-      case 'cuestionario':
-        return {
-          subject: '[TPL] Candidatura de auxiliar',
-          success: 'Tu candidatura está subida. Te avisaremos por email.',
-          cta: 'Volver al inicio',
-          redirect: 'index.html',
-          templateId: TEMPLATE_CANDIDATURAS_REGISTROS
-        };
+     case 'cuestionario':
+  return {
+    subject: '[TPL] Candidatura de auxiliar',
+    success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
+    cta: 'Volver al inicio',
+    redirect: 'index.html',
+    templateId: TEMPLATE_CANDIDATURAS_REGISTROS
+  };
       case 'reserva':
         return {
           subject: '[TPL] Nueva reserva',
