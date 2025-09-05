@@ -6,8 +6,7 @@
   'use strict';
 
   // ===== AJUSTES =====
-  // Incluyo tu Gmail además del correo de gestión para que puedas probar como admin.
-  var ADMIN_EMAILS = ['gestion@thepetslovers.es', '4b.jenny.gomez@gmail.com'];
+  var ADMIN_EMAILS = ['gestion@thepetslovers.es']; // admin oficial
   var URLS = {
     PROFILE: 'perfil.html',
     ADMIN_PANEL: 'tpl-candidaturas-admin.html',
@@ -48,7 +47,7 @@
     }catch(_){}
   }
 
-  // --- Visibilidad declarativa (si la usas en tu HTML con data-auth-visible) ---
+  // --- Visibilidad declarativa (si usas data-auth-visible en tu HTML) ---
   function applyAuthVisibility(user){
     var signedIn = !!user && !user.isAnonymous; // SIN anónimo
     var nodes = document.querySelectorAll('[data-auth-visible]');
@@ -89,7 +88,7 @@
     window.TPL_LOGOUT = performLogout; // API global
   }
 
-  // --- Login con Google (si hay botones) ---
+  // --- Login con Google (si tienes botones con esos selectores) ---
   function wireGoogleLogin(){
     var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
     if (!btns.length) return;
