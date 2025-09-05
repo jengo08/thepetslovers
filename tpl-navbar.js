@@ -129,7 +129,7 @@
 })();
 
 /* ===========================
-   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + redirecciones (navbar) + subida condicionada a Firebase]
+   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + progreso + subida condicionada a Firebase]
    =========================== */
 (function(){
   'use strict';
@@ -145,6 +145,7 @@
   const EMAILJS_URL = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
   const STYLE_ID = 'tpl-feedback-modal-css';
 
+  // ========= UI (modales) =========
   function injectStyles(){
     if (document.getElementById(STYLE_ID)) return;
     const css = `
@@ -155,7 +156,11 @@
       .tpl-modal .tpl-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
       .tpl-btn{appearance:none;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer}
       .tpl-btn--primary{background:var(--tpl-primary,#339496);color:#fff}
-      .tpl-btn--ghost{background:#fff;border:1px solid var(--tpl-primary,#339496);color:var(--tpl-primary,#339496)}
+      .tpl-progress{display:flex;flex-direction:column;gap:8px}
+      .tpl-bar{width:100%;height:8px;background:#eee;border-radius:999px;overflow:hidden}
+      .tpl-bar > i{display:block;height:100%;width:0%}
+      .tpl-bar > i::after{content:'';display:block;height:100%;width:100%;background:var(--tpl-primary,#339496)}
+      .tpl-small{color:#666;font-size:.92rem}
     `;
     const style = document.createElement('style');
     style.id = STYLE_ID;
@@ -185,6 +190,42 @@
     btn.focus();
   }
 
+  // TPL: INICIO BLOQUE NUEVO [UI progreso de subida]
+  function beginUploadUI(totalFiles){
+    injectStyles();
+    const backdrop = document.createElement('div');
+    backdrop.className='tpl-modal-backdrop';
+    backdrop.id = 'tpl-upload-backdrop';
+    backdrop.innerHTML = `
+      <div class="tpl-modal" role="dialog" aria-modal="true" aria-live="polite">
+        <h3>Subiendo tus archivos…</h3>
+        <div class="tpl-progress">
+          <div class="tpl-bar"><i id="tpl-bar" style="width:0%"></i></div>
+          <div class="tpl-small" id="tpl-upload-msg">Preparando…</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    const bar = document.getElementById('tpl-bar');
+    const msg = document.getElementById('tpl-upload-msg');
+    return {
+      update({percent=0,fileIndex=0,total=totalFiles,fileName=''}) {
+        const p = Math.max(0, Math.min(100, Math.round(percent)));
+        bar.style.width = p + '%';
+        msg.textContent = `(${fileIndex}/${total}) ${fileName} — ${p}%`;
+      },
+      done() {
+        const bd = document.getElementById('tpl-upload-backdrop');
+        if (bd) bd.remove();
+      },
+      error(text){
+        msg.textContent = text || 'No se pudo subir.';
+      }
+    };
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  // ========= EmailJS =========
   function loadEmailJS(publicKey){
     return new Promise((resolve, reject)=>{
       if (window.emailjs && window.emailjs.send){
@@ -243,7 +284,7 @@
     return o;
   }
 
-  // ===== Helpers auth (no rompe si Firebase no está) =====
+  // ===== Helpers auth
   function currentAuth(){
     try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; }
   }
@@ -253,7 +294,7 @@
     return !!(u && !u.isAnonymous);
   }
 
-  /* TPL: INICIO BLOQUE NUEVO [Cargador local de Firebase SOLO si hace falta subir adjuntos] */
+  /* TPL: INICIO BLOQUE NUEVO [Loader Firebase local para este bloque] */
   async function ensureFirebaseEmailLayer(){
     if (typeof firebase !== 'undefined' && firebase.app) return;
     async function load(src){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.defer=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
@@ -275,8 +316,91 @@
   }
   /* TPL: FIN BLOQUE NUEVO */
 
-  // ===== Subida a Firebase (Storage + Firestore) — SOLO con sesión no anónima =====
-  async function uploadAndSaveToFirebase(form, type){
+  // TPL: INICIO BLOQUE NUEVO [Guardar doc en 'candidaturas' para el panel]
+  async function saveCandidaturaRecord(fields, filesMeta){
+    try{
+      await ensureFirebaseEmailLayer();
+      const db = firebase.firestore();
+
+      const byField = (fname)=> (filesMeta||[]).find(f => (f.field||'') === fname);
+      const cv   = byField('cv');
+      const tit  = byField('titulo');
+
+      const data = {
+        // Datos personales
+        nombre: fields.nombre||'',
+        ciudad: fields.ciudad||'',
+        cp: fields.cp||'',
+        telefono: fields.telefono||'',
+        email: fields._replyto || fields.email || '',
+        carnet: fields.carnet||'',
+        vehiculo: fields.vehiculo||'',
+        descripcionPersonal: fields.descripcionPersonal||'',
+
+        // Formación
+        atvTitulado: fields.atvTitulado||'',
+        otrasFormaciones: fields.otrasFormaciones||'',
+        experienciaLaboral: fields.experienciaLaboral||'',
+        funcionesHabituales: fields.funcionesHabituales||'',
+        links: fields.links||'',
+        descFormacion: fields.descFormacion||'',
+
+        // Experiencia
+        hasCuidado: fields.hasCuidado||'',
+        tiposAnimales: fields.tiposAnimales||'',
+        comunicacionPropietarios: fields.comunicacionPropietarios||'',
+        roturasGestion: fields.roturasGestion||'',
+        necesidadesEspeciales: fields.necesidadesEspeciales||'',
+        medicacion: fields.medicacion||'',
+
+        // Entorno
+        vivienda: fields.vivienda||'',
+        seguridadCasa: fields.seguridadCasa||'',
+        otrosAnimales: fields.otrosAnimales||'',
+        otrasPersonasCasa: fields.otrasPersonasCasa||'',
+        videovigilancia: fields.videovigilancia||'',
+        cuidarEnDomicilio: fields.cuidarEnDomicilio||'',
+        cuidarCasaPropietario: fields.cuidarCasaPropietario||'',
+        ofrecerPaseos: fields.ofrecerPaseos||'',
+        cachorrosSenior: fields.cachorrosSenior||'',
+
+        // Disponibilidad
+        disponibilidad: fields.disponibilidad||'',
+        tiempoLibre: fields.tiempoLibre||'',
+        finesFestivos: fields.finesFestivos||'',
+        zonasCobertura: fields.zonasCobertura||'',
+
+        // Motivación
+        porqueColaborar: fields.porqueColaborar||'',
+        motivaciones: fields.motivaciones||'',
+        preferenciasAnimales: fields.preferenciasAnimales||'',
+
+        // Archivos
+        cvUrl: cv ? cv.url : '',
+        tituloUrl: tit ? tit.url : '',
+
+        // Meta
+        estado: 'pendiente',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('candidaturas').add(data);
+    }catch(e){
+      console.warn('TPL: no se pudo guardar candidatura en panel:', e);
+    }
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  // ========= Subida a Firebase (con progreso) =========
+  function hasSelectedFiles(form){
+    let n = 0;
+    form.querySelectorAll('input[type="file"]').forEach(i=>{
+      n += (i.files ? i.files.length : 0);
+    });
+    return n > 0;
+  }
+
+  async function uploadAndSaveToFirebase(form, type, onProgress){
     try{
       await ensureFirebaseEmailLayer();
     }catch(_){
@@ -295,47 +419,80 @@
     const id = `${type}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     const fields = formToObject(form);
 
-    const filesMeta = [];
+    // Preparar archivos
     const fileInputs = form.querySelectorAll('input[type="file"]');
-    let total = 0;
+    const filesFlat = [];
+    fileInputs.forEach(input=>{
+      const field = input.name || 'archivo';
+      Array.from(input.files||[]).forEach(file=>{
+        filesFlat.push({ field, file });
+      });
+    });
+
+    let totalSize = filesFlat.reduce((acc,it)=> acc + (it.file?.size||0), 0);
     const MAX_FILE = 10 * 1024 * 1024;  // 10MB
     const MAX_TOTAL = 20 * 1024 * 1024; // 20MB
-
-    for (const input of fileInputs){
-      for (const file of (input.files || [])){
-        total += file.size;
-        if (file.size > MAX_FILE || total > MAX_TOTAL){
-          return { error: 'size', message: 'Cada archivo ≤ 10MB y el total ≤ 20MB.' };
-        }
-      }
+    if (filesFlat.some(it=> it.file.size > MAX_FILE) || totalSize > MAX_TOTAL){
+      return { error: 'size', message: 'Cada archivo ≤ 10MB y el total ≤ 20MB.' };
     }
 
-    function sanitizeName(name){ return String(name || '').replace(/[^\w.\-]+/g,'_').slice(0,120); }
-
-    for (const input of fileInputs){
-      const field = input.name || 'archivo';
-      for (const file of (input.files || [])){
-        const path = `tpl/${type}/${id}/${sanitizeName(field)}__${sanitizeName(file.name)}`;
-        const ref = storage.ref().child(path);
-        await ref.put(file, { contentType: file.type || 'application/octet-stream' }); // respetando reglas (no anónimos)
-        const url = await ref.getDownloadURL();
-        filesMeta.push({ field, name: file.name, size: file.size, contentType: file.type || '', path, url });
-      }
+    // Subida con progreso agregado
+    const filesMeta = [];
+    let uploadedBytesSoFar = 0;
+    for (let i=0;i<filesFlat.length;i++){
+      const { field, file } = filesFlat[i];
+      const safeName = String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(0,120);
+      const path = `tpl/${type}/${id}/${(field||'archivo')+'__'+safeName}`;
+      const ref = storage.ref().child(path);
+      await new Promise((resolve,reject)=>{
+        const task = ref.put(file, { contentType: file.type || 'application/octet-stream' });
+        task.on('state_changed',
+          (snap)=>{
+            if (onProgress){
+              const currentFileUploaded = snap.bytesTransferred;
+              const alreadyDoneOtherFiles = uploadedBytesSoFar;
+              const percent = ((alreadyDoneOtherFiles + currentFileUploaded) / totalSize) * 100;
+              onProgress({ percent, fileIndex: i+1, total: filesFlat.length, fileName: file.name });
+            }
+          },
+          (err)=>reject(err),
+          async ()=>{
+            try{
+              const url = await ref.getDownloadURL();
+              filesMeta.push({ field, name: file.name, size: file.size, contentType: file.type || '', path, url });
+              uploadedBytesSoFar += file.size;
+              if (onProgress){
+                const percent = (uploadedBytesSoFar / totalSize) * 100;
+                onProgress({ percent, fileIndex: i+1, total: filesFlat.length, fileName: file.name });
+              }
+              resolve();
+            }catch(e){ reject(e); }
+          }
+        );
+      });
     }
 
-    const doc = {
-      type,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      page: location.href,
-      fields,
-      files: filesMeta,
-      status: 'enviado'
-    };
-    await firebase.firestore().collection('tpl_submissions').doc(id).set(doc);
-    return { id, files: filesMeta };
+    // Registro “bruto” del envío (histórico opcional)
+    try{
+      await db.collection('tpl_submissions').doc(id).set({
+        type,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        page: location.href,
+        fields,
+        files: filesMeta,
+        status: 'enviado'
+      });
+    }catch(e){ /* opcional */ }
+
+    // Si es candidatura → crear documento en la colección que usa tu panel
+    if (type === 'cuestionario'){
+      await saveCandidaturaRecord(fields, filesMeta);
+    }
+
+    return { id, files: filesMeta, fields };
   }
 
-  // ===== Detección =====
+  // ========= Detección y textos =========
   function shouldHandle(form){
     if (form.matches('[data-tpl-emailjs="false"]')) return false;
     if (form.querySelector('input[type="password"], [type="password"]')) return false;
@@ -365,13 +522,11 @@
     return 'generico';
   }
 
-  // TPL: INICIO BLOQUE NUEVO [normalización del tipo]
+  // Normalización “candidatura” → “cuestionario”
   function normalizeType(t){
-    // Acepta "candidatura" como sinónimo de "cuestionario"
     if (t === 'candidatura') return 'cuestionario';
     return t;
   }
-  // TPL: FIN BLOQUE NUEVO
 
   function defaultsFor(type){
     switch(type){
@@ -410,16 +565,7 @@
     }
   }
 
-  // TPL: INICIO BLOQUE NUEVO [contar archivos seleccionados]
-  function hasSelectedFiles(form){
-    let n = 0;
-    form.querySelectorAll('input[type="file"]').forEach(i=>{
-      n += (i.files ? i.files.length : 0);
-    });
-    return n > 0;
-  }
-  // TPL: FIN BLOQUE NUEVO
-
+  // ========= Envío principal =========
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;
@@ -442,7 +588,7 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    // 🔒 Exigir sesión en Candidaturas ("cuestionario") y Reservas SIEMPRE (adjunten o no)
+    // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE (con o sin adjuntos)
     const loggedIn = isLoggedNonAnonymous();
     if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
       showModal({
@@ -454,21 +600,18 @@
       return;
     }
 
-    // ✅ Solo tratamos como “con archivos” si hay archivos SELECCIONADOS
     const filesSelected = hasSelectedFiles(form);
     if (filesSelected) {
       form.setAttribute('enctype','multipart/form-data');
       form.setAttribute('method','POST');
-
-      const MAX_FILE = 10 * 1024 * 1024;
-      const MAX_TOTAL = 20 * 1024 * 1024;
+      // Validación tamaño
       let total = 0, oversize = false;
       form.querySelectorAll('input[type="file"]').forEach(input=>{
         Array.from(input.files||[]).forEach(f=>{
-          total += f.size; if (f.size > MAX_FILE) oversize = true;
+          total += f.size; if (f.size > 10*1024*1024) oversize = true;
         });
       });
-      if (oversize || total > MAX_TOTAL){
+      if (oversize || total > 20*1024*1024){
         showModal({
           title: 'Archivos demasiado pesados',
           message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB.',
@@ -484,19 +627,35 @@
     const html = buildHTMLFromForm(form);
     const pageUrl = location.href;
 
+    // Progreso (si hay archivos)
+    const ui = filesSelected ? beginUploadUI(form.querySelectorAll('input[type="file"]').length) : null;
+
+    // Campos “no file” para crear candidatura aunque no suban archivos
+    const fieldsForRecord = formToObject(form);
+
     try{
-      // 1) Si hay archivos seleccionados → subir a Firebase (ya hay sesión por el guard)
+      // 1) Subida a Firebase (si hay archivos) + documento en 'candidaturas'
       if (filesSelected){
-        const up = await uploadAndSaveToFirebase(form, type);
-        if (up && up.error==='size'){
+        const up = await uploadAndSaveToFirebase(form, type, ui ? ui.update : null);
+        if (up && up.error === 'size'){
+          ui && ui.error('Archivos demasiado pesados.');
           showModal({ title:'Archivos demasiado pesados', message: up.message, ctaText:'Entendido' });
           return;
         }
         if (up && (up.error==='auth' || up.error==='firebase')){
+          ui && ui.error('No se pudo subir.');
           showModal({ title:'No se pudo subir archivos', message: up.message, ctaText:'Cerrar' });
           return;
         }
+        // Guardado en panel ya se hace dentro de uploadAndSaveToFirebase() si es candidatura
+      } else {
+        // Si ES candidatura y NO hay archivos, también creamos el doc en el panel (para que lo veas)
+        if (type === 'cuestionario'){
+          await saveCandidaturaRecord(fieldsForRecord, []);
+        }
       }
+
+      ui && ui.done();
 
       // 2) EmailJS (único canal)
       await loadEmailJS(cfg.publicKey);
@@ -517,8 +676,10 @@
 
     } catch(err){
       console.error('TPL envío error:', err);
+      ui && ui.error('No se pudo subir.');
       showModal({ title:'No se pudo enviar', message:'Ha ocurrido un error al enviar el formulario. Inténtalo de nuevo.', ctaText:'Cerrar' });
     } finally {
+      ui && ui.done();
       submits.forEach(b=>{ b.disabled = false; if (b.dataset._oldText) b.textContent = b.dataset._oldText; });
     }
   }
@@ -544,4 +705,3 @@
  /* ===========================
     TPL: FIN BLOQUE NUEVO
     =========================== */
-
