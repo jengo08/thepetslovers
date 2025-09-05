@@ -287,5 +287,26 @@
     <!-- TPL: INICIO BLOQUE NUEVO [Cargar auth unificado navbar] -->
     <script src="tpl-auth.js" defer></script>
     <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo runtime seguro] -->
+    <script>
+      (function(){
+        try{
+          // Quita cualquier clase de arranque que pudiera dejar la página sin clics
+          document.documentElement.classList.remove('tpl-auth-boot');
+          // Asegura que el overlay de formularios no quede mostrado por error
+          var ov = document.getElementById('tpl-form-overlay');
+          if (ov) ov.classList.remove('show');
+          // Repite al final de carga por si algún script tarda
+          window.addEventListener('load', function(){
+            document.documentElement.classList.remove('tpl-auth-boot');
+            var ov2 = document.getElementById('tpl-form-overlay');
+            if (ov2) ov2.classList.remove('show');
+          });
+        }catch(_){}
+      })();
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
