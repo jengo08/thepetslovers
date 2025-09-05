@@ -122,7 +122,7 @@
          - data-tpl-success="..."       → mensaje que pediste
          - data-tpl-redirect="index.html" → Aceptar → Inicio
          - data-tpl-wait="800"          → casi inmediato
-         - onsubmit="return false"       → NO se navega; EmailJS envía el correo -->
+         (Sin onsubmit="return false;") -->
     <form
       id="bookingForm"
       class="disabled"
@@ -131,7 +131,6 @@
       data-tpl-success="Ya hemos registrado tu reserva. Nos pondremos en contacto contigo lo antes posible para encontrar al cuidador que mejor se adapte a tus necesidades."
       data-tpl-redirect="index.html"
       data-tpl-wait="800"
-      onsubmit="return false;"
     >
       <!-- =================== DATOS DEL SERVICIO =================== -->
       <section class="tpl-section" aria-labelledby="sec-servicio">
@@ -833,7 +832,7 @@
         const doc = await db.collection('users').doc(u.uid).get();
         const d = doc.exists ? doc.data() : {};
         els.firstName.value = d?.nombre || u.displayName?.split(' ')?.[0] || '';
-        els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
+        els.lastName.value  = d?.apellidos || u.displayName?.split(1).join(' ') || '';
         els.email.value     = d?.email || u.email || '';
         els.phone.value     = d?.telefono || u.phoneNumber || '';
         if(d?.direccion) els.address.value = d.direccion;
