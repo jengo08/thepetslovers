@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-auth.js — Control unificado de sesión en navbar + visibilidad] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-auth.js — Control unificado de sesión en navbar + visibilidad (antibloqueo)] */
 (function(){
   if (window.__TPL_AUTH_LOADED__) return;
   window.__TPL_AUTH_LOADED__ = true;
@@ -6,7 +6,8 @@
   'use strict';
 
   // ===== AJUSTES =====
-  var ADMIN_EMAILS = ['gestion@thepetslovers.es']; // añade más si quieres
+  // Incluyo tu Gmail además del correo de gestión para que puedas probar como admin.
+  var ADMIN_EMAILS = ['gestion@thepetslovers.es', '4b.jenny.gomez@gmail.com'];
   var URLS = {
     PROFILE: 'perfil.html',
     ADMIN_PANEL: 'tpl-candidaturas-admin.html',
@@ -47,7 +48,7 @@
     }catch(_){}
   }
 
-  // --- Visibilidad declarativa (lo que ya usabas) ---
+  // --- Visibilidad declarativa (si la usas en tu HTML con data-auth-visible) ---
   function applyAuthVisibility(user){
     var signedIn = !!user && !user.isAnonymous; // SIN anónimo
     var nodes = document.querySelectorAll('[data-auth-visible]');
@@ -57,12 +58,11 @@
       var show = (want === 'signed-in') ? signedIn : !signedIn;
       el.style.display = show ? '' : 'none';
     }
-    document.documentElement.classList.remove('tpl-auth-boot');
   }
 
   // --- Logout (global) ---
   function performLogout(){
-    if (!window.firebase || !firebase.auth) {
+    if (!(window.firebase && firebase.auth)) {
       setButtonState('guest');
       window.location.href = URLS.INDEX;
       return;
@@ -96,7 +96,7 @@
     Array.prototype.forEach.call(btns, function(btn){
       btn.addEventListener('click', function(e){
         e.preventDefault();
-        if (!window.firebase || !firebase.auth) return;
+        if (!(window.firebase && firebase.auth)) return;
         var provider = new firebase.auth.GoogleAuthProvider();
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
           .then(function(){ return firebase.auth().signInWithPopup(provider); })
@@ -137,38 +137,43 @@
 
   // --- INIT ---
   function init(){
-    document.documentElement.classList.add('tpl-auth-boot');
-
     wireLogout();
     wireGoogleLogin();
     setButtonState('guest'); // estado por defecto rápido
 
     lazyLoadFirebaseIfNeeded(function(){
       try{
+        if (!(window.firebase && firebase.initializeApp)) { setButtonState('guest'); return; }
         if (!firebase.apps || !firebase.apps.length){
           var cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
-          if (cfg && firebase.initializeApp) firebase.initializeApp(cfg);
+          if (cfg) firebase.initializeApp(cfg);
         }
       }catch(e){ console.warn('[TPL auth] init app warn:', e); }
 
-      if (!firebase.auth || !firebase.auth()){
+      if (!(window.firebase && firebase.auth && firebase.auth())){
         console.warn('[TPL auth] Firebase Auth no disponible (¿SDK no cargado o init faltante?).');
-        document.documentElement.classList.remove('tpl-auth-boot');
+        setButtonState('guest');
         return;
       }
 
-      firebase.auth().onAuthStateChanged(function(user){
-        applyAuthVisibility(user);
-        setButtonState(stateFromUser(user));
+      // Pintar según sesión
+      try{
+        firebase.auth().onAuthStateChanged(function(user){
+          applyAuthVisibility(user);
+          setButtonState(stateFromUser(user));
 
-        if (!window.__TPL_NAV_OBS_ATTACHED__){
-          attachObserver(function(){
-            var u = (firebase.auth && firebase.auth().currentUser) || null;
-            return stateFromUser(u);
-          });
-          window.__TPL_NAV_OBS_ATTACHED__ = true;
-        }
-      });
+          if (!window.__TPL_NAV_OBS_ATTACHED__){
+            attachObserver(function(){
+              var u = (window.firebase && firebase.auth && firebase.auth().currentUser) || null;
+              return stateFromUser(u);
+            });
+            window.__TPL_NAV_OBS_ATTACHED__ = true;
+          }
+        });
+      }catch(e){
+        console.error('[TPL auth] onAuthStateChanged error:', e);
+        setButtonState('guest');
+      }
     });
   }
 
