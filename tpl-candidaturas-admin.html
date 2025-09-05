@@ -131,6 +131,7 @@
           </div>
         </div>
       </div>
+
       <!-- =================== CANDIDATURAS =================== -->
       <div id="section-cands" class="section" aria-labelledby="tab-cands">
         <p id="tpl-status-c" class="status">Cargando candidaturas…</p>
@@ -267,9 +268,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-<!-- TPL: INICIO BLOQUE NUEVO [Firebase Storage SDK] -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
-<!-- TPL: FIN BLOQUE NUEVO -->
 
 <!-- TPL: INICIO BLOQUE NUEVO [Init + Auth + Lógica] -->
 <script>
@@ -292,9 +291,7 @@
 
   /* TPL: INICIO BLOQUE NUEVO [Admins + helper en minúsculas] */
   const ADMIN_EMAILS = new Set(["4b.jenny.gomez@gmail.com"]);
-  function isAdminEmail(email){
-    return !!email && ADMIN_EMAILS.has(String(email).toLowerCase());
-  }
+  function isAdminEmail(email){ return !!email && ADMIN_EMAILS.has(String(email).toLowerCase()); }
   /* TPL: FIN BLOQUE NUEVO */
 
   // UI
@@ -318,7 +315,7 @@
     sections[b.dataset.tab].classList.add('active');
   }));
 
-  /* TPL: INICIO BLOQUE NUEVO [Login: persistencia + sin redirección + manejo de errores] */
+  /* TPL: INICIO BLOQUE NUEVO [Login con manejo de errores] */
   loginBtn.addEventListener('click', async ()=>{
     try{
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -326,29 +323,25 @@
       await auth.signInWithPopup(provider);
     }catch(e){
       console.error(e);
-      alert('No se pudo iniciar sesión. Revisa que tu dominio esté autorizado en Firebase Auth o prueba en una ventana privada.');
+      alert('No se pudo iniciar sesión. Revisa dominios autorizados en Firebase Auth y prueba en ventana privada.');
     }
   });
-  /* TPL: FIN BLOQUE NUEVO */
   logoutBtn.addEventListener('click', ()=> auth.signOut());
+  /* TPL: FIN BLOQUE NUEVO */
 
-  /* TPL: INICIO BLOQUE NUEVO [Auth state con check en minúsculas] */
+  /* TPL: INICIO BLOQUE NUEVO [Auth state + boot()] */
   auth.onAuthStateChanged(user=>{
     const ok = !!user && isAdminEmail(user.email);
-    authStatus.textContent = ok
-      ? `Sesión iniciada como ${user.email}.`
-      : (user ? 'No autorizado.' : 'Debes iniciar sesión para ver los datos.');
+    authStatus.textContent = ok ? `Sesión iniciada como ${user.email}.`
+                                : (user ? 'No autorizado.' : 'Debes iniciar sesión para ver los datos.');
     loginBtn.style.display = ok ? 'none':'inline-block';
     logoutBtn.style.display = user ? 'inline-block':'none';
     app.style.display = ok ? '' : 'none';
-    if (ok){ boot(); } // carga el panel directamente
+    if (ok){ boot(); }
   });
-  /* TPL: FIN BLOQUE NUEVO */
-
-  /* TPL: INICIO BLOQUE NUEVO [Boot del panel (antes faltaba)] */
   async function boot(){
     try{
-      await loadC(); // De momento cargamos candidaturas; el resto puede ir después
+      await loadC();
       document.getElementById('tpl-status-panel').textContent = 'Panel listo.';
     }catch(e){
       console.error(e);
@@ -357,7 +350,7 @@
   }
   /* TPL: FIN BLOQUE NUEVO */
 
-  // ======== Helpers comunes ========
+  // ======== Helpers ========
   const PROV = {"01":"Álava","02":"Albacete","03":"Alicante","04":"Almería","05":"Ávila","06":"Badajoz","07":"Islas Baleares","08":"Barcelona","09":"Burgos","10":"Cáceres","11":"Cádiz","12":"Castellón","13":"Ciudad Real","14":"Córdoba","15":"A Coruña","16":"Cuenca","17":"Girona","18":"Granada","19":"Guadalajara","20":"Gipuzkoa","21":"Huelva","22":"Huesca","23":"Jaén","24":"León","25":"Lleida","26":"La Rioja","27":"Lugo","28":"Madrid","29":"Málaga","30":"Murcia","31":"Navarra","32":"Ourense","33":"Asturias","34":"Palencia","35":"Las Palmas","36":"Pontevedra","37":"Salamanca","38":"Santa Cruz de Tenerife","39":"Cantabria","40":"Segovia","41":"Sevilla","42":"Soria","43":"Tarragona","44":"Teruel","45":"Toledo","46":"Valencia","47":"Valladolid","48":"Bizkaia","49":"Zamora","50":"Zaragoza","51":"Ceuta","52":"Melilla"};
   function zonaSugerida(cp){ const s=(cp||'').toString().padStart(5,'0').slice(0,2); return PROV[s]||''; }
   function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
@@ -376,22 +369,20 @@
   };
   let allC = [];
 
-  /* TPL: INICIO BLOQUE NUEVO [Resolver enlaces de Storage: CV/Título/DNI/Otros] */
+  /* TPL: INICIO BLOQUE NUEVO [Resolver enlaces: CV/Título/DNI/Otros] */
   async function resolveStorageLinks(items){
     if (!items || !items.length) return;
     const storage = firebase.storage();
-
     async function hrefFrom(url, path){
       try{
         if (path) return await storage.ref(path).getDownloadURL();
         if (url){
           try { return await storage.refFromURL(url).getDownloadURL(); }
-          catch(_){ return url; }
+          catch(_){ return url; } // Para URLs externas (Cloudinary), devolver tal cual
         }
       }catch(_){}
       return '';
     }
-
     await Promise.all(items.map(async it=>{
       it.cvHref     = await hrefFrom(it.cvUrl,     it.cvPath);
       it.tituloHref = await hrefFrom(it.tituloUrl, it.tituloPath);
@@ -401,6 +392,9 @@
         for (const p of it.otrosPaths){
           try{ it.otrosHrefs.push(await storage.ref(p).getDownloadURL()); }catch(_){}
         }
+      }
+      if (Array.isArray(it.otrosUrls)){ // soporte directo de URLs externas
+        it.otrosHrefs.push(...it.otrosUrls);
       }
     }));
   }
@@ -413,12 +407,10 @@
     const estado = elC.fEstado.value.trim();
     const filtered = allC.filter(it => textMatch(it, needle) && (!disp || (it.disponibilidad||'')===disp) && (!estado || (it.estado||'pendiente')===estado)).slice(0,limit);
     elC.rows.innerHTML = filtered.length ? filtered.map(it=>{
-      const cvLink = it.cvHref || it.cvUrl || '';
-      const tiLink = it.tituloHref || it.tituloUrl || '';
       const badges = [];
-      if (cvLink) badges.push(`<a class="btn sec" href="${cvLink}" target="_blank" rel="noopener">CV</a>`);
-      if (tiLink) badges.push(`<a class="btn sec" href="${tiLink}" target="_blank" rel="noopener">Título</a>`);
-      if (it.dniHref || it.dniUrl) badges.push(`<a class="btn sec" href="${it.dniHref||it.dniUrl}" target="_blank" rel="noopener">DNI</a>`);
+      if (it.cvHref || it.cvUrl)       badges.push(`<a class="btn sec" href="${it.cvHref||it.cvUrl}" target="_blank" rel="noopener">CV</a>`);
+      if (it.tituloHref || it.tituloUrl) badges.push(`<a class="btn sec" href="${it.tituloHref||it.tituloUrl}" target="_blank" rel="noopener">Título</a>`);
+      if (it.dniHref || it.dniUrl)     badges.push(`<a class="btn sec" href="${it.dniHref||it.dniUrl}" target="_blank" rel="noopener">DNI</a>`);
       if (Array.isArray(it.otrosHrefs) && it.otrosHrefs.length){
         it.otrosHrefs.forEach((h,i)=>badges.push(`<a class="btn sec" href="${h}" target="_blank" rel="noopener">Otros ${i+1}</a>`));
       }
@@ -438,23 +430,24 @@
     }).join('') : '<tr><td colspan="7">Sin resultados.</td></tr>';
   }
 
-  /* TPL: INICIO BLOQUE NUEVO [Normalización de docs (top-level o files.*)] */
+  /* TPL: INICIO BLOQUE NUEVO [Normalización docs] */
   async function loadC(){
     elC.status.textContent = 'Cargando candidaturas…';
     const snap = await db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get();
     allC = snap.docs.map(d=>{
       const raw = d.data(); const f = raw.files || {};
       return {
-        _id: d.id,
-        ...raw,
+        _id: d.id, ...raw,
         estado: raw.estado || 'pendiente',
+        // Soporta Storage (paths) y URLs externas directas
         cvPath:     raw.cvPath     || f.cvPath     || '',
         tituloPath: raw.tituloPath || f.tituloPath || '',
         dniPath:    raw.dniPath    || f.dniPath    || '',
         cvUrl:      raw.cvUrl      || f.cvUrl      || '',
         tituloUrl:  raw.tituloUrl  || f.tituloUrl  || '',
         dniUrl:     raw.dniUrl     || f.dniUrl     || '',
-        otrosPaths: Array.isArray(raw.otrosPaths) ? raw.otrosPaths : (Array.isArray(f.otrosPaths) ? f.otrosPaths : [])
+        otrosPaths: Array.isArray(raw.otrosPaths) ? raw.otrosPaths : (Array.isArray(f.otrosPaths) ? f.otrosPaths : []),
+        otrosUrls:  Array.isArray(raw.otrosUrls)  ? raw.otrosUrls  : []
       };
     });
     await resolveStorageLinks(allC);
@@ -465,7 +458,7 @@
 
   [elC.q, elC.fDisp, elC.fEstado, elC.fLimit].forEach(n=> n.addEventListener('input', renderC));
   elC.exportBtn.addEventListener('click', ()=>{
-    const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cvLink','tituloLink','dniLink','cuidId'];
+    const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cv','titulo','dni','cuidId'];
     const lines = [head.join(',')];
     allC.forEach(it=>{
       const fecha = it.createdAt?.toDate ? fmt(it.createdAt) : '';
