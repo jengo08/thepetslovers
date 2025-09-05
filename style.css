@@ -320,6 +320,15 @@ html.tpl-auth-boot [data-auth-visible="signed-out"]{
 }
 @keyframes tplspin { to { transform: rotate(360deg); } }
 /* TPL: FIN BLOQUE NUEVO */
+/* TPL: INICIO BLOQUE NUEVO [Antibloqueo global] */
+.tpl-auth-boot, .tpl-auth-boot * {
+  pointer-events: auto !important;
+  cursor: auto !important;
+}
+/* Asegúrate de que ningún overlay quede forzado visible */
+#tpl-form-overlay { display: none !important; }
+/* TPL: FIN BLOQUE NUEVO */
+
 
 
 
