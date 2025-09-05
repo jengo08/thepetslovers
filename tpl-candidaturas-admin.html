@@ -62,16 +62,13 @@
     <!-- TPL: INICIO BLOQUE NUEVO [Tabs] -->
     <div id="tpl-app" style="display:none">
       <div class="tabbar" role="tablist" aria-label="Secciones">
-        <!-- NUEVA pestaña: Panel -->
         <button class="active" data-tab="panel" role="tab">Panel</button>
         <button data-tab="cands" role="tab">Candidaturas</button>
         <button data-tab="reservas" role="tab">Reservas</button>
-        <!-- NUEVA pestaña: Usuarios -->
         <button data-tab="usuarios" role="tab">Usuarios</button>
       </div>
 
       <!-- =================== PANEL (Dashboard) =================== -->
-      <!-- TPL: INICIO BLOQUE NUEVO [Sección Panel] -->
       <div id="section-panel" class="section active" aria-labelledby="tab-panel">
         <p class="status" id="tpl-status-panel">Cargando métricas…</p>
         <div class="tpl-grid">
@@ -134,8 +131,6 @@
           </div>
         </div>
       </div>
-      <!-- TPL: FIN BLOQUE NUEVO -->
-
       <!-- =================== CANDIDATURAS =================== -->
       <div id="section-cands" class="section" aria-labelledby="tab-cands">
         <p id="tpl-status-c" class="status">Cargando candidaturas…</p>
@@ -207,7 +202,6 @@
           </table>
         </div>
 
-        <!-- Modal sugerencias -->
         <div id="tpl-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); align-items:center; justify-content:center; padding:16px">
           <div style="background:#fff; max-width:900px; width:100%; border-radius:12px; padding:16px">
             <h3 style="margin-top:0">Sugerencias de cuidadores</h3>
@@ -230,7 +224,6 @@
       </div>
 
       <!-- =================== USUARIOS (Perfiles) =================== -->
-      <!-- TPL: INICIO BLOQUE NUEVO [Sección Usuarios] -->
       <div id="section-usuarios" class="section" aria-labelledby="tab-usuarios">
         <p id="tpl-status-u" class="status">Cargando usuarios…</p>
         <div class="filters">
@@ -262,7 +255,6 @@
           </table>
         </div>
       </div>
-      <!-- TPL: FIN BLOQUE NUEVO -->
     </div>
     <!-- TPL: FIN BLOQUE NUEVO -->
   </section>
@@ -298,13 +290,12 @@
   const db = firebase.firestore();
   const auth = firebase.auth();
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Admins + helper en minúsculas] -->
-  // SOLO estos emails (en minúsculas)
+  /* TPL: INICIO BLOQUE NUEVO [Admins + helper en minúsculas] */
   const ADMIN_EMAILS = new Set(["4b.jenny.gomez@gmail.com"]);
   function isAdminEmail(email){
     return !!email && ADMIN_EMAILS.has(String(email).toLowerCase());
   }
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  /* TPL: FIN BLOQUE NUEVO */
 
   // UI
   const authStatus = document.getElementById('tpl-auth-status');
@@ -327,16 +318,21 @@
     sections[b.dataset.tab].classList.add('active');
   }));
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Login: persistencia + sin redirección] -->
+  /* TPL: INICIO BLOQUE NUEVO [Login: persistencia + sin redirección + manejo de errores] */
   loginBtn.addEventListener('click', async ()=>{
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    await auth.signInWithPopup(provider);
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      await auth.signInWithPopup(provider);
+    }catch(e){
+      console.error(e);
+      alert('No se pudo iniciar sesión. Revisa que tu dominio esté autorizado en Firebase Auth o prueba en una ventana privada.');
+    }
   });
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  /* TPL: FIN BLOQUE NUEVO */
   logoutBtn.addEventListener('click', ()=> auth.signOut());
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Auth state con check en minúsculas] -->
+  /* TPL: INICIO BLOQUE NUEVO [Auth state con check en minúsculas] */
   auth.onAuthStateChanged(user=>{
     const ok = !!user && isAdminEmail(user.email);
     authStatus.textContent = ok
@@ -347,7 +343,19 @@
     app.style.display = ok ? '' : 'none';
     if (ok){ boot(); } // carga el panel directamente
   });
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  /* TPL: FIN BLOQUE NUEVO */
+
+  /* TPL: INICIO BLOQUE NUEVO [Boot del panel (antes faltaba)] */
+  async function boot(){
+    try{
+      await loadC(); // De momento cargamos candidaturas; el resto puede ir después
+      document.getElementById('tpl-status-panel').textContent = 'Panel listo.';
+    }catch(e){
+      console.error(e);
+      document.getElementById('tpl-status-panel').textContent = 'Error cargando datos.';
+    }
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ======== Helpers comunes ========
   const PROV = {"01":"Álava","02":"Albacete","03":"Alicante","04":"Almería","05":"Ávila","06":"Badajoz","07":"Islas Baleares","08":"Barcelona","09":"Burgos","10":"Cáceres","11":"Cádiz","12":"Castellón","13":"Ciudad Real","14":"Córdoba","15":"A Coruña","16":"Cuenca","17":"Girona","18":"Granada","19":"Guadalajara","20":"Gipuzkoa","21":"Huelva","22":"Huesca","23":"Jaén","24":"León","25":"Lleida","26":"La Rioja","27":"Lugo","28":"Madrid","29":"Málaga","30":"Murcia","31":"Navarra","32":"Ourense","33":"Asturias","34":"Palencia","35":"Las Palmas","36":"Pontevedra","37":"Salamanca","38":"Santa Cruz de Tenerife","39":"Cantabria","40":"Segovia","41":"Sevilla","42":"Soria","43":"Tarragona","44":"Teruel","45":"Toledo","46":"Valencia","47":"Valladolid","48":"Bizkaia","49":"Zamora","50":"Zaragoza","51":"Ceuta","52":"Melilla"};
@@ -355,9 +363,6 @@
   function esc(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
   function fmt(ts){ if(!ts) return '-'; const d=ts.toDate(); return d.toLocaleDateString('es-ES',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
   function textMatch(item, needle){ if(!needle) return true; const hay=[item.nombre,item.email,item.telefono,item.ciudad,item.cp,item.zonasCobertura,item.links].join(' ').toLowerCase(); return hay.includes(needle.toLowerCase()); }
-  function toYmd(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
-  function isSameMonth(d,ref){ return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth(); }
-  function isSameYear(d,ref){ return d.getFullYear()===ref.getFullYear(); }
 
   // ======== CANDIDATURAS ========
   const elC = {
@@ -371,24 +376,32 @@
   };
   let allC = [];
 
-  /* TPL: INICIO BLOQUE NUEVO [Resolver enlaces de Storage según reglas] */
+  /* TPL: INICIO BLOQUE NUEVO [Resolver enlaces de Storage: CV/Título/DNI/Otros] */
   async function resolveStorageLinks(items){
     if (!items || !items.length) return;
     const storage = firebase.storage();
-    async function toHref(url, path){
+
+    async function hrefFrom(url, path){
       try{
-        if (path) { return await storage.ref(path).getDownloadURL(); }
-        if (url)  {
-          // Intentamos forzar verificación de reglas con refFromURL; si falla, devolvemos la URL tal cual
+        if (path) return await storage.ref(path).getDownloadURL();
+        if (url){
           try { return await storage.refFromURL(url).getDownloadURL(); }
           catch(_){ return url; }
         }
-      }catch(_){ /* ignoramos */ }
+      }catch(_){}
       return '';
     }
+
     await Promise.all(items.map(async it=>{
-      it.cvHref     = await toHref(it.cvUrl, it.cvPath);
-      it.tituloHref = await toHref(it.tituloUrl, it.tituloPath);
+      it.cvHref     = await hrefFrom(it.cvUrl,     it.cvPath);
+      it.tituloHref = await hrefFrom(it.tituloUrl, it.tituloPath);
+      it.dniHref    = await hrefFrom(it.dniUrl,    it.dniPath);
+      it.otrosHrefs = [];
+      if (Array.isArray(it.otrosPaths)){
+        for (const p of it.otrosPaths){
+          try{ it.otrosHrefs.push(await storage.ref(p).getDownloadURL()); }catch(_){}
+        }
+      }
     }));
   }
   /* TPL: FIN BLOQUE NUEVO */
@@ -402,7 +415,14 @@
     elC.rows.innerHTML = filtered.length ? filtered.map(it=>{
       const cvLink = it.cvHref || it.cvUrl || '';
       const tiLink = it.tituloHref || it.tituloUrl || '';
-      const archivos = (cvLink?`<a class="btn sec" href="${cvLink}" target="_blank" rel="noopener">CV</a>`:'')+' '+(tiLink?`<a class="btn sec" href="${tiLink}" target="_blank" rel="noopener">Título</a>`:'');
+      const badges = [];
+      if (cvLink) badges.push(`<a class="btn sec" href="${cvLink}" target="_blank" rel="noopener">CV</a>`);
+      if (tiLink) badges.push(`<a class="btn sec" href="${tiLink}" target="_blank" rel="noopener">Título</a>`);
+      if (it.dniHref || it.dniUrl) badges.push(`<a class="btn sec" href="${it.dniHref||it.dniUrl}" target="_blank" rel="noopener">DNI</a>`);
+      if (Array.isArray(it.otrosHrefs) && it.otrosHrefs.length){
+        it.otrosHrefs.forEach((h,i)=>badges.push(`<a class="btn sec" href="${h}" target="_blank" rel="noopener">Otros ${i+1}</a>`));
+      }
+      const archivos = badges.join(' ');
       const zona = zonaSugerida(it.cp);
       const canAccept = !it.cuidId;
       const perfilHref = it.cuidId ? `tpl-perfil-cuidador.html?id=${encodeURIComponent(it.cuidId)}` : '#';
@@ -418,27 +438,42 @@
     }).join('') : '<tr><td colspan="7">Sin resultados.</td></tr>';
   }
 
+  /* TPL: INICIO BLOQUE NUEVO [Normalización de docs (top-level o files.*)] */
   async function loadC(){
     elC.status.textContent = 'Cargando candidaturas…';
     const snap = await db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get();
-    allC = snap.docs.map(d=>({ _id:d.id, ...d.data(), estado: d.data().estado || 'pendiente' }));
-    /* TPL: INICIO BLOQUE NUEVO [Aplicar resolución de enlaces con permisos] */
+    allC = snap.docs.map(d=>{
+      const raw = d.data(); const f = raw.files || {};
+      return {
+        _id: d.id,
+        ...raw,
+        estado: raw.estado || 'pendiente',
+        cvPath:     raw.cvPath     || f.cvPath     || '',
+        tituloPath: raw.tituloPath || f.tituloPath || '',
+        dniPath:    raw.dniPath    || f.dniPath    || '',
+        cvUrl:      raw.cvUrl      || f.cvUrl      || '',
+        tituloUrl:  raw.tituloUrl  || f.tituloUrl  || '',
+        dniUrl:     raw.dniUrl     || f.dniUrl     || '',
+        otrosPaths: Array.isArray(raw.otrosPaths) ? raw.otrosPaths : (Array.isArray(f.otrosPaths) ? f.otrosPaths : [])
+      };
+    });
     await resolveStorageLinks(allC);
-    /* TPL: FIN BLOQUE NUEVO */
     elC.status.textContent = `Cargadas ${allC.length}.`;
     renderC();
   }
+  /* TPL: FIN BLOQUE NUEVO */
 
   [elC.q, elC.fDisp, elC.fEstado, elC.fLimit].forEach(n=> n.addEventListener('input', renderC));
   elC.exportBtn.addEventListener('click', ()=>{
-    const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cvUrl','tituloUrl','cuidId'];
+    const head = ['fecha','nombre','email','telefono','ciudad','cp','disponibilidad','links','estado','cvLink','tituloLink','dniLink','cuidId'];
     const lines = [head.join(',')];
     allC.forEach(it=>{
       const fecha = it.createdAt?.toDate ? fmt(it.createdAt) : '';
-      const row = [ fecha, it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', (it.cvHref||it.cvUrl||''), (it.tituloHref||it.tituloUrl||''), it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+      const row = [ fecha, it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', (it.cvHref||it.cvUrl||''), (it.tituloHref||it.tituloUrl||''), (it.dniHref||it.dniUrl||''), it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
       lines.push(row.join(','));
     });
-    const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
+    const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
   });
 
   // Aceptar -> crear perfil + marcar candidatura
@@ -453,3 +488,18 @@
         nombre: cand.nombre||'', email: cand.email||'', telefono: cand.telefono||'',
         ciudad: cand.ciudad||'', cp: cand.cp||'', zona: zonaSugerida(cand.cp)||'',
         especiePerro: true, especieGato: true, especieExotico: false
+      });
+      await db.collection('candidaturas').doc(id).update({ estado:'aceptada', cuidId: cuidRef.id });
+      alert('Candidatura aceptada.');
+      await loadC();
+    }catch(e){
+      console.error(e);
+      alert('No se pudo aceptar la candidatura.');
+      ev.target.disabled = false;
+    }
+  });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
