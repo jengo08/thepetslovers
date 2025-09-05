@@ -57,9 +57,11 @@
       `tpl-navbar.js` se encarga de:
         • cargar Firebase SDK si falta,
         • inicializar con window.TPL_FIREBASE_CONFIG,
-        • cargar tpl-auth.js (login/logout/visibilidad).
+        • (opcional) cargar tpl-auth.js (login/logout/visibilidad).
     -->
-    <script src="tpl-navbar.js?v=2025-09-04a" defer></script>
+    <!-- TPL: INICIO BLOQUE NUEVO [Limpieza: eliminado duplicado de tpl-navbar.js en <head>] -->
+    <!-- (Se mantiene una sola carga al final del <body>) -->
+    <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -121,7 +123,7 @@
     <section id="servicios" class="services-section">
         <div class="container">
             <h2>Nuestros Servicios</h2>
-            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+        <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
             <div class="services-grid">
                 <div class="service-card">
                     <div class="service-icon"><i class="fa-solid fa-house"></i></div>
@@ -281,6 +283,9 @@
     <script src="tpl-navbar.js" defer></script>
     <script src="tpl-footer.js" defer></script>
     <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Cargar auth unificado navbar] -->
+    <script src="tpl-auth.js" defer></script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
-
