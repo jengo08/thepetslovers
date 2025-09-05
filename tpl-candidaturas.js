@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Subida candidatura → Storage(Firebase) o Cloudinary + Firestore + Formspree] */
+/* TPL: INICIO BLOQUE NUEVO [Subida candidatura → Storage(Firebase) o Cloudinary + Firestore + Formspree con timeouts] */
 (function(){
   'use strict';
 
@@ -13,12 +13,18 @@
   function getAll(fd, k){ return fd.getAll(k).filter(Boolean); }
   function getText(fd,k){ var v=getAll(fd,k); return !v.length?'':(v.length===1?String(v[0]):v.map(String).join(', ')); }
 
+  function withTimeout(promise, ms, label){
+    let timer; const err = new Error((label||'Operación')+' tardó demasiado');
+    const t = new Promise((_,rej)=> timer=setTimeout(()=>rej(err), ms));
+    return Promise.race([promise.finally(()=>clearTimeout(timer)), t]);
+  }
+
   async function uploadFirebase(st, base, file, prefix){
     if (!(file instanceof File) || !file.size) return { path:'', url:'' };
     if (file.size > 10*1024*1024) throw new Error('El archivo "'+file.name+'" supera 10MB.');
     const path = `${base}/${prefix}-${safeName(file.name||'doc')}`;
-    await st.ref(path).put(file, { contentType: file.type || 'application/octet-stream' });
-    return { path, url:'' }; // URL solo para admin
+    await withTimeout(st.ref(path).put(file, { contentType: file.type || 'application/octet-stream' }), 30000, 'Subida Firebase');
+    return { path, url:'' };
   }
 
   async function uploadCloudinary(cloud, preset, folder, file){
@@ -27,7 +33,7 @@
     body.append('upload_preset', preset);
     body.append('file', file);
     if (folder) body.append('folder', folder);
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/upload`, { method:'POST', body });
+    const res = await withTimeout(fetch(`https://api.cloudinary.com/v1_1/${cloud}/upload`, { method:'POST', body }), 30000, 'Subida Cloudinary');
     if (!res.ok) throw new Error('Cloudinary error '+res.status);
     const data = await res.json();
     return data.secure_url || data.url || '';
@@ -50,10 +56,9 @@
         const fd = new FormData(form);
         const cvFile     = fd.get('cv');
         const tituloFile = fd.get('titulo');
-        const dniFile    = fd.get('dni'); // opcional si existe en el HTML
+        const dniFile    = fd.get('dni'); // opcional
         const otrosFiles = getAll(fd,'otros').filter(f=>f instanceof File && f.size>0);
 
-        // Datos básicos (para Firestore/Formspree)
         const payloadBase = {
           createdAt: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : null,
           estado: 'pendiente',
@@ -72,14 +77,13 @@
         // ---- INTENTO A) FIREBASE STORAGE
         try{
           if (!window.firebase || !firebase.apps.length) throw new Error('Firebase no inicializado');
-          // necesitamos auth + storage + firestore
           if (!firebase.auth || !firebase.storage || !firebase.firestore) throw new Error('SDKs Firebase incompletos');
 
           const auth = firebase.auth();
           const st   = firebase.storage();
 
           await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-          if (!auth.currentUser) await auth.signInAnonymously();
+          if (!auth.currentUser) await withTimeout(auth.signInAnonymously(), 15000, 'Login anónimo');
           const uid = auth.currentUser && auth.currentUser.uid || 'anon';
           const base = `candidaturas/${uid}/${iso()}`;
 
@@ -91,18 +95,16 @@
           const otrosPaths = [];
           for (let i=0;i<otrosFiles.length;i++){
             const p = `${base}/otros/${safeName(otrosFiles[i].name)}`;
-            await st.ref(p).put(otrosFiles[i], { contentType: otrosFiles[i].type || 'application/octet-stream' });
+            await withTimeout(st.ref(p).put(otrosFiles[i], { contentType: otrosFiles[i].type || 'application/octet-stream' }), 30000, 'Subida Firebase (otros)');
             otrosPaths.push(p);
           }
 
-          docExtra = { ...docExtra,
-            cvPath: cvRes.path, tituloPath: tiRes.path, dniPath: dniRes.path, otrosPaths
-          };
+          docExtra = { ...docExtra, cvPath: cvRes.path, tituloPath: tiRes.path, dniPath: dniRes.path, otrosPaths };
           used = 'firebase';
         }catch(e1){
           console.warn('Firebase Storage falló o no disponible:', e1 && e1.message);
 
-          // ---- INTENTO B) CLOUDINARY (si hay configuración en el <form>)
+          // ---- INTENTO B) CLOUDINARY
           try{
             const cloud = form.dataset.cloudinaryName;
             const preset= form.dataset.cloudinaryPreset;
@@ -128,24 +130,23 @@
           }
         }
 
-        // ---- Guardar en Firestore si está disponible (sin coste)
+        // ---- Guardar en Firestore (si existe)
         try{
           if (window.firebase && firebase.firestore){
             const db = firebase.firestore();
             const doc = { ...payloadBase, ...docExtra };
-            await db.collection('candidaturas').add(doc);
+            await withTimeout(db.collection('candidaturas').add(doc), 15000, 'Guardar en Firestore');
           }
         }catch(e3){
           console.warn('Firestore no disponible:', e3 && e3.message);
         }
 
-        // ---- Enviar a Formspree (texto; añadimos rutas/URLs para referencia)
+        // ---- Enviar a Formspree (texto + rutas/URLs)
         try{
           const action = form.getAttribute('action') || '';
           if (/^https:\/\/formspree\.io\//.test(action)){
             const mfd = new FormData();
             fd.forEach((v,k)=>{ if (!(v instanceof File)) mfd.append(k,v); });
-            // Añadimos info de dónde quedaron los archivos
             if (docExtra.cvPath) mfd.append('cvPath', docExtra.cvPath);
             if (docExtra.tituloPath) mfd.append('tituloPath', docExtra.tituloPath);
             if (docExtra.dniPath) mfd.append('dniPath', docExtra.dniPath);
@@ -156,7 +157,7 @@
             (docExtra.otrosUrls||[]).forEach((u,i)=> mfd.append('otrosUrl_'+(i+1), u));
             if (!mfd.get('_subject')) mfd.append('_subject', '[TPL] Nueva candidatura');
 
-            await fetch(action, { method:'POST', body:mfd, headers:{'Accept':'application/json'} });
+            await withTimeout(fetch(action, { method:'POST', body:mfd, headers:{'Accept':'application/json'} }), 15000, 'Formspree');
           }
         }catch(_ignore){}
 
@@ -167,7 +168,7 @@
 
         try{ form.reset(); }catch(_){}
         const red = form.dataset.redirect;
-        if (red) setTimeout(()=>{ window.location.href = red; }, 1200);
+        if (red) setTimeout(()=>{ window.location.href = red; }, 1000);
 
       })().catch(err=>{
         console.error(err);
