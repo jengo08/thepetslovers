@@ -1,88 +1,22 @@
-/*!
- * tpl-navbar.js — The Pets Lovers
- * Barra unificada con sesión. Ajuste pedido:
- *  - Si user es admin y está en index → botón = "Mi panel" (forzado).
- *  - Resto de páginas se quedan EXACTAMENTE como estaban.
- */
-(function(){
-  var NAV_CONTAINER_ID = 'tpl-navbar';
+/* TPL NAVBAR – inyector unificado (sin tocar diseño) */
+(function () {
+  // Oculta estados firmados/no firmados mientras se resuelve la sesión (evita parpadeo)
+  try { document.documentElement.classList.add('tpl-auth-boot'); } catch (e) {}
 
-  // ==== Admins (mantén/añade correos aquí) ====
+  // --- CONFIG BÁSICA ---
+  var PROFILE_URL = 'perfil.html';
+  var PANEL_URL   = 'tpl-candidaturas-admin.html';
+
+  // Admins (normalizados)
   var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
-  function normEmail(x){
-    return String(x||'').trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  }
-  var ADMIN_SET = new Set(ADMIN_EMAILS.map(normEmail));
-  function isAdmin(user){ return !!(user && user.email && ADMIN_SET.has(normEmail(user.email))); }
+  function norm(s){ return String(s||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  var ADMIN_SET = {};
+  ADMIN_EMAILS.forEach(function(e){ ADMIN_SET[norm(e)] = true; });
+  function isAdmin(user){ return !!(user && user.email && ADMIN_SET[norm(user.email)]); }
 
-  // ==== Detección de "estoy en home" ====
-  function isHomePage(){
-    var p = (location.pathname || '').toLowerCase();
-    return p === '/' || p === '' || p.endsWith('/index') || p.endsWith('/index.html');
-  }
-
-  // ==== HTML (diseño intacto) ====
-  var NAV_HTML =
-    '<nav class="navbar">'+
-      '<div class="logo">'+
-        '<a href="index.html">'+
-          '<img src="images/logo.png.png" alt="The Pets Lovers">'+
-        '</a>'+
-      '</div>'+
-      '<a href="index.html" class="home-button">Inicio</a>'+
-      '<ul class="nav-links">'+
-        '<li><a href="como-funciona.html">Cómo funciona</a></li>'+
-        '<li><a href="servicios.html">Servicios</a></li>'+
-        '<li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>'+
-        '<li><a href="ayuda.html">¿Necesitas ayuda?</a></li>'+
-      '</ul>'+
-      '<a id="tpl-login-btn" class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>'+
-    '</nav>';
-
-  function mountNav(){
-    var host = document.getElementById(NAV_CONTAINER_ID);
-    if (!host) return;
-    host.innerHTML = NAV_HTML;
-  }
-
-  // ==== Botón según sesión ====
-  var BTN_ID = 'tpl-login-btn';
-  var URL_PANEL   = 'tpl-candidaturas-admin.html';
-  var URL_PERFIL  = 'perfil.html';
-  var URL_LOGIN   = 'iniciar-sesion.html?next=perfil.html';
-
-  function setBtn(text, href){
-    var btn = document.getElementById(BTN_ID);
-    if (!btn) return;
-    btn.textContent = text;
-    btn.setAttribute('href', href);
-  }
-
-  function applyUserState(user){
-    // Sin sesión
-    if (!user) { setBtn('Iniciar sesión', URL_LOGIN); return; }
-
-    // Con sesión: admin / no admin
-    if (isAdmin(user)) {
-      setBtn('Mi panel', URL_PANEL);
-      // —— Ajuste que pediste: en INDEX, forzar Mi panel (por si alguna lógica externa lo toca) ——
-      if (isHomePage()) setBtn('Mi panel', URL_PANEL);
-    } else {
-      setBtn('Mi perfil', URL_PERFIL);
-    }
-  }
-
-  // ==== Carga Firebase compat si hace falta ====
-  function loadScript(src){
-    return new Promise(function(res, rej){
-      var s = document.createElement('script');
-      s.src = src; s.async = true; s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
-    });
-  }
-
-  var DEFAULT_FB = {
+  // Firebase cfg: usa la global si existe; si no, esta
+  var FALLBACK_FIREBASE_CONFIG = {
     apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
     authDomain: "thepetslovers-c1111.firebaseapp.com",
     projectId: "thepetslovers-c1111",
@@ -91,40 +25,112 @@
     appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
     measurementId: "G-FXPD69KXBG"
   };
+  function cfg(){ return (window.TPL_FIREBASE_CONFIG || FALLBACK_FIREBASE_CONFIG); }
 
-  async function ensureFirebaseAuth(){
-    if (window.firebase && firebase.auth) return firebase;
-    // Cargar compat v10 si no está
-    if (!window.firebase){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
-    }
-    if (!firebase.auth){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
-    }
-    // Init si hace falta
-    if (firebase.apps && firebase.apps.length === 0){
-      var cfg = (window.TPL_FIREBASE_CONFIG || DEFAULT_FB);
-      firebase.initializeApp(cfg);
-    }
-    return firebase;
+  // --- UTILIDADES ---
+  function loadScript(src){
+    return new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = src; s.async = true; s.defer = true;
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  async function ensureFirebase(){
+    if (window.firebase && firebase.apps) return;
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+  }
+  function initFirebase(){
+    try{
+      if (!window.firebase) return null;
+      if (!firebase.apps.length) firebase.initializeApp(cfg());
+      return firebase.auth();
+    }catch(e){ return null; }
   }
 
-  // ==== Arranque ====
-  mountNav();
+  // --- RENDER NAVBAR ---
+  function hostEl(){
+    var host = document.getElementById('tpl-navbar');
+    if (!host){
+      host = document.createElement('div');
+      host.id = 'tpl-navbar';
+      document.body.insertBefore(host, document.body.firstChild);
+    }
+    return host;
+  }
 
+  function renderShell(){
+    var html = ''
+    + '<nav class="navbar">'
+    + '  <div class="logo">'
+    + '    <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>'
+    + '  </div>'
+    + '  <a href="index.html" class="home-button tpl-home-offset">Inicio</a>'
+    + '  <ul class="nav-links">'
+    + '    <li><a href="como-funciona.html">Cómo funciona</a></li>'
+    + '    <li><a href="servicios.html">Servicios</a></li>'
+    + '    <li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>'
+    + '    <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>'
+    + '  </ul>'
+    + '  <!-- Estado no logueado -->'
+    + '  <a class="login-button" data-auth-visible="signed-out"'
+    + '     href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>'
+    + '  <!-- Estado logueado -->'
+    + '  <a class="login-button" id="tpl-account-link" data-auth-visible="signed-in"'
+    + '     href="perfil.html" style="display:none">Mi perfil</a>'
+    + '</nav>';
+    hostEl().innerHTML = html;
+  }
+
+  function toggleAuthVisibility(logged){
+    var signedIn  = document.querySelectorAll('[data-auth-visible="signed-in"]');
+    var signedOut = document.querySelectorAll('[data-auth-visible="signed-out"]');
+    for (var i=0;i<signedIn.length;i++) { signedIn[i].style.display  = logged ? '' : 'none'; }
+    for (var j=0;j<signedOut.length;j++){ signedOut[j].style.display = logged ? 'none' : ''; }
+  }
+
+  function updateAccountLink(user){
+    var link = document.getElementById('tpl-account-link');
+    if (!link) return;
+    if (user){
+      if (isAdmin(user)){
+        // SIEMPRE "Mi panel" para admin (también en index)
+        link.textContent = 'Mi panel';
+        link.setAttribute('href', PANEL_URL);
+      } else {
+        link.textContent = 'Mi perfil';
+        link.setAttribute('href', PROFILE_URL); // siempre perfil.html
+      }
+    }
+  }
+
+  function ready(){ try{ document.documentElement.classList.remove('tpl-auth-boot'); }catch(e){} }
+
+  // --- BOOT ---
   (async function boot(){
+    renderShell(); // pinta ya (no bloquea)
     try{
-      var fb = await ensureFirebaseAuth();
-      var auth = fb.auth();
-      // Estado inmediato
-      applyUserState(auth.currentUser);
-      // Cambios de sesión
-      auth.onAuthStateChanged(function(u){
-        applyUserState(u);
-      });
-    }catch(e){
-      // Si Firebase falla por cualquier motivo, dejamos botón de login por defecto
-      setBtn('Iniciar sesión', URL_LOGIN);
+      await ensureFirebase();
+      var auth = initFirebase();
+
+      // Primer dibujo con estado actual (por si ya hay sesión cacheada)
+      var u = auth && auth.currentUser || null;
+      toggleAuthVisibility(!!u);
+      updateAccountLink(u);
+      ready();
+
+      // Y escucha cambios (esto arregla el caso de index que te mostraba "Mi perfil" hasta que llegue el user)
+      if (auth && auth.onAuthStateChanged){
+        auth.onAuthStateChanged(function(user){
+          toggleAuthVisibility(!!user);
+          updateAccountLink(user);
+        });
+      }
+    } catch(e){
+      // Si algo falla con Firebase, que el sitio siga funcionando (modo desconectado)
+      toggleAuthVisibility(false);
+      ready();
     }
   })();
 
