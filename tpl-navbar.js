@@ -335,7 +335,7 @@
     return { id, files: filesMeta };
   }
 
-  // Detección y textos
+  // ===== Detección =====
   function shouldHandle(form){
     if (form.matches('[data-tpl-emailjs="false"]')) return false;
     if (form.querySelector('input[type="password"], [type="password"]')) return false;
@@ -364,6 +364,14 @@
     if (path.includes('reserva') || txt.includes('reservar')) return 'reserva';
     return 'generico';
   }
+
+  // TPL: INICIO BLOQUE NUEVO [normalización del tipo]
+  function normalizeType(t){
+    // Acepta "candidatura" como sinónimo de "cuestionario"
+    if (t === 'candidatura') return 'cuestionario';
+    return t;
+  }
+  // TPL: FIN BLOQUE NUEVO
 
   function defaultsFor(type){
     switch(type){
@@ -402,6 +410,16 @@
     }
   }
 
+  // TPL: INICIO BLOQUE NUEVO [contar archivos seleccionados]
+  function hasSelectedFiles(form){
+    let n = 0;
+    form.querySelectorAll('input[type="file"]').forEach(i=>{
+      n += (i.files ? i.files.length : 0);
+    });
+    return n > 0;
+  }
+  // TPL: FIN BLOQUE NUEVO
+
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;
@@ -411,7 +429,8 @@
     ev.stopPropagation();
 
     const ds = form.dataset || {};
-    const type = detectType(form);
+    const rawType = detectType(form);
+    const type = normalizeType(ds.type ? ds.type.toLowerCase() : rawType);
     const base = defaultsFor(type);
     const cfg = Object.assign({}, base, {
       subject: ds.subject || base.subject,
@@ -423,7 +442,7 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    // 🚫 TPL: BLOQUEO sin sesión para Candidaturas y Reservas (con o sin adjuntos)
+    // 🔒 Exigir sesión en Candidaturas ("cuestionario") y Reservas SIEMPRE (adjunten o no)
     const loggedIn = isLoggedNonAnonymous();
     if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
       showModal({
@@ -435,8 +454,9 @@
       return;
     }
 
-    const hasFiles = !!form.querySelector('input[type="file"]');
-    if (hasFiles) {
+    // ✅ Solo tratamos como “con archivos” si hay archivos SELECCIONADOS
+    const filesSelected = hasSelectedFiles(form);
+    if (filesSelected) {
       form.setAttribute('enctype','multipart/form-data');
       form.setAttribute('method','POST');
 
@@ -465,8 +485,8 @@
     const pageUrl = location.href;
 
     try{
-      // Subida a Firebase solo si hay adjuntos (ya hay sesión por el guard anterior si type es cand/reserva)
-      if (hasFiles){
+      // 1) Si hay archivos seleccionados → subir a Firebase (ya hay sesión por el guard)
+      if (filesSelected){
         const up = await uploadAndSaveToFirebase(form, type);
         if (up && up.error==='size'){
           showModal({ title:'Archivos demasiado pesados', message: up.message, ctaText:'Entendido' });
@@ -478,7 +498,7 @@
         }
       }
 
-      // EmailJS (único canal; sin Formspree)
+      // 2) EmailJS (único canal)
       await loadEmailJS(cfg.publicKey);
       await window.emailjs.send(cfg.serviceId, cfg.templateId, {
         subject: cfg.subject,
@@ -524,3 +544,4 @@
  /* ===========================
     TPL: FIN BLOQUE NUEVO
     =========================== */
+
