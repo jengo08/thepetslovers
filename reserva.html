@@ -79,6 +79,12 @@
     .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
     .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
+
+    /* Overlay éxito */
+    .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .tpl-overlay.on{ display:flex; }
+    .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
+    .tpl-modal p{ margin:0 0 12px; }
   </style>
 </head>
 <body>
@@ -117,19 +123,13 @@
     </div>
 
     <!-- Formulario de reserva -->
-    <!-- IMPORTANTE:
-         - data-tpl-type="candidatura" → hace que el overlay muestre botón Aceptar
-         - data-tpl-success="..."       → mensaje que pediste
-         - data-tpl-redirect="index.html" → Aceptar → Inicio
-         - data-tpl-wait="800"          → casi inmediato
-         (Sin onsubmit="return false;") -->
     <form
       id="bookingForm"
       class="disabled"
       novalidate
-      data-tpl-type="candidatura"
-      data-tpl-success="Ya hemos registrado tu reserva. Nos pondremos en contacto contigo lo antes posible para encontrar al cuidador que mejor se adapte a tus necesidades."
-      data-tpl-redirect="index.html"
+      data-tpl-type="reserva"
+      data-tpl-success="Tu reserva se ha enviado. Podrás ver su estado (enviada, en revisión o aceptada) en tu panel."
+      data-tpl-redirect="perfil.html"
       data-tpl-wait="800"
     >
       <!-- =================== DATOS DEL SERVICIO =================== -->
@@ -145,6 +145,9 @@
               <option value="guarderia">Guardería de día</option>
               <option value="alojamiento">Alojamiento (por día)</option>
               <option value="bodas">Bodas y servicios exclusivos</option>
+              <option value="postquirurgico">Postquirúrgico</option>
+              <option value="transporte">Transporte</option>
+              <option value="exoticos">Exóticos</option>
             </select>
           </div>
 
@@ -208,8 +211,6 @@
               <option value="si">Sí</option>
             </select>
           </div>
-
-          <!-- TPL: BLOQUE MOVIDO (necesitas desplazamiento) -->
         </div>
       </section>
 
@@ -388,7 +389,7 @@
   <!-- ====== Constantes de precios y bonos ====== -->
   <script>
     const PRICES = {
-      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0 },
+      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 0, exoticos: 0 },
       puppyBase: { guarderia: 20, alojamiento: 35 },
       visita60: 22, visita90: 30,
       visita60_larga: 18, visita90_larga: 27,
@@ -486,15 +487,19 @@
     }
     function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-    /* Preselección de servicio */
+    /* Preselección de servicio (URL o referrer) */
     function inferServiceFromReferrer(){
       try{
         const u = new URL(document.referrer || '');
         const p = (u.pathname || '').toLowerCase();
         if(p.includes('servicio-guarderia') || p.includes('guarderia')) return 'guarderia';
-        if(p.includes('servicio-estancias') || p.includes('alojamiento')) return 'alojamiento';
+        if(p.includes('servicio-estancias') || p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
         if(p.includes('servicio-paseos') || p.includes('paseos')) return 'paseos';
         if(p.includes('servicio-visitas') || p.includes('visitas')) return 'visitas';
+        if(p.includes('servicio-bodas')   || p.includes('bodas')) return 'bodas';
+        if(p.includes('postquir')) return 'postquirurgico';
+        if(p.includes('transporte')) return 'transporte';
+        if(p.includes('exotico')) return 'exoticos';
       }catch(_){}
       return null;
     }
@@ -505,8 +510,11 @@
         visitas:'visitas','visitas-gatos':'visitas',
         paseos:'paseos',
         guarderia:'guarderia','guarderia-dia':'guarderia',
-        alojamiento:'alojamiento', estancias:'alojamiento',
-        bodas:'bodas'
+        alojamiento:'alojamiento','estancias':'alojamiento',
+        bodas:'bodas','boda':'bodas',
+        postquirurgico:'postquirurgico','post-quirurgico':'postquirurgico','postquirugico':'postquirurgico',
+        transporte:'transporte',
+        exoticos:'exoticos','exotico':'exoticos'
       };
       let val = map[norm] || inferServiceFromReferrer();
       if(val && els.service){ els.service.value = val; els.service.disabled = true; }
@@ -798,7 +806,7 @@
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Auto-cachorro desde perfil (si existe)
+    // Auto-cachorro y contacto desde perfil (si existe)
     async function autoPuppyFromProfile(){
       try{
         if(typeof firebase === 'undefined') return;
@@ -824,7 +832,6 @@
       }catch(_){}
     }
 
-    // Autorrelleno de contacto + mascotas desde Firebase
     async function autoContactFromProfile(u){
       try{
         if(!u || typeof firebase === 'undefined') return;
@@ -832,7 +839,7 @@
         const doc = await db.collection('users').doc(u.uid).get();
         const d = doc.exists ? doc.data() : {};
         els.firstName.value = d?.nombre || u.displayName?.split(' ')?.[0] || '';
-        els.lastName.value  = d?.apellidos || u.displayName?.split(1).join(' ') || '';
+        els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
         els.email.value     = d?.email || u.email || '';
         els.phone.value     = d?.telefono || u.phoneNumber || '';
         if(d?.direccion) els.address.value = d.direccion;
@@ -859,7 +866,7 @@
       return true;
     }
 
-    // Antes de enviar: preparar campo resumen (lo usa el email)
+    // Antes de enviar: preparar campo resumen (lo usa el correo)
     form.addEventListener('submit', async (e)=>{
       if(!validateContactPreference(e)) return;
       const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
@@ -957,7 +964,7 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase SDK compat (únicos y correctos) -->
+  <!-- Firebase SDK compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -976,6 +983,18 @@
       if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
       if (firebase.analytics) { try { firebase.analytics(); } catch(e){} }
     }
+  </script>
+
+  <!-- EmailJS (envío directo) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    (function(){
+      const cfg = window.TPL_EMAILJS || {};
+      if (window.emailjs) {
+        const pub = cfg.publicKey || cfg.userId || null;
+        if (pub) { try{ emailjs.init({ publicKey: pub }); }catch(_){/* noop */} }
+      }
+    })();
   </script>
 
   <!-- Login inline (Email + Google) para muro -->
@@ -1059,13 +1078,54 @@
     })();
   </script>
 
-  <!-- Guardado opcional en Firestore (sin Formspree; el envío por email lo hace el Router EmailJS del navbar) -->
+  <!-- Guardado en Firestore + EmailJS + Overlay éxito -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var form = document.getElementById('bookingForm');
       if (!form) return;
 
-      form.addEventListener('submit', async function () {
+      function showSuccessOverlay(){
+        var msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
+        var go  = form?.dataset?.tplRedirect || 'perfil.html';
+        var wrap = document.getElementById('tpl-overlay');
+        if(!wrap){
+          wrap = document.createElement('div');
+          wrap.id = 'tpl-overlay';
+          wrap.className = 'tpl-overlay';
+          wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button></div>';
+          document.body.appendChild(wrap);
+        }
+        wrap.querySelector('.tpl-modal p').textContent = msg;
+        wrap.classList.add('on');
+        wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
+      }
+
+      async function tryEmailJS(fd, extra){
+        if(!window.emailjs) return false;
+        try{
+          var cfg = window.TPL_EMAILJS || {};
+          var service  = cfg.serviceId || cfg.service;
+          var template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
+          var pubKey   = cfg.publicKey || cfg.userId;
+
+          if(service && template){
+            var payload = Object.fromEntries(fd.entries());
+            Object.assign(payload, extra || {});
+            // Si ya se hizo emailjs.init con publicKey, no hace falta pasar pubKey
+            if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
+            else { await emailjs.send(service, template, payload); }
+            return true;
+          }
+        }catch(err){
+          console.warn('EmailJS error', err);
+        }
+        return false;
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault(); // no navegamos; mostramos overlay + redirigimos a perfil.html
+
+        // Guardar en Firestore
         try {
           if (typeof firebase !== 'undefined' && firebase.firestore) {
             var db   = firebase.firestore();
@@ -1077,21 +1137,27 @@
             fd.forEach(function (v, k) { payload[k] = v; });
 
             payload._page = location.href;
-            if (firebase.firestore.FieldValue) {
-              payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            }
-            if (u) {
-              payload._uid = u.uid;
-              payload._email = u.email || null;
-            }
+            payload._estado = 'enviada';
+            if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
 
             await db.collection('reservas').add(payload);
             console.log('TPL: reserva guardada en Firestore');
+
+            // Enviar correo vía EmailJS (sin Formspree)
+            await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
+          // Aunque falle Firestore, intentamos el email igualmente
+          try {
+            var fd2 = new FormData(form);
+            await tryEmailJS(fd2, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
+          } catch(_){}
         }
-        /* No hacemos submit: el email se envía por EmailJS (tpl-navbar.js) y el overlay gestiona el éxito/redirección */
+
+        // Éxito visual + redirección a perfil.html
+        showSuccessOverlay();
       });
     });
   </script>
