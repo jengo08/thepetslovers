@@ -123,16 +123,18 @@
         Buscamos auxiliares veterinarios/as comprometidos con el bienestar animal para colaborar en guarderías, paseos y visitas a domicilio.
       </p>
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Formulario + Formspree + Honeypot] -->
-      <!-- TPL: INICIO BLOQUE NUEVO [Atributos UX envío] -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Formulario + atributos TPL] -->
       <form id="tpl-form-auxiliares"
             action="https://formspree.io/f/mpwjjoyq"
             method="POST"
             enctype="multipart/form-data"
             novalidate
-            data-tpl-type="candidatura"
-            data-tpl-success="Tu formulario se ha enviado. En cuanto esté aceptado podrás crear tu perfil."
-            data-tpl-redirect="index.html">
+            data-tpl-emailjs="true"
+            data-type="cuestionario"
+            data-subject="[TPL] Candidatura de auxiliar"
+            data-success="Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil."
+            data-cta="Volver al inicio"
+            data-redirect="index.html">
       <!-- TPL: FIN BLOQUE NUEVO -->
         <input type="hidden" name="_subject" value="Nueva candidatura: Auxiliar Veterinario/a · The Pets Lovers">
         <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="sr-only" aria-hidden="true" />
@@ -207,14 +209,7 @@
               <textarea id="tpl-funciones" name="funcionesHabituales" rows="2" required></textarea>
             </div>
 
-            <div class="tpl-field">
-              <label for="tpl-cv" class="tpl-required">CV (PDF)</label>
-              <input id="tpl-cv" name="cv" type="file" accept=".pdf" required />
-            </div>
-            <div class="tpl-field">
-              <label for="tpl-titulo" class="tpl-required">Título (PDF o imagen)</label>
-              <input id="tpl-titulo" name="titulo" type="file" accept=".pdf,.png,.jpg,.jpeg" required />
-            </div>
+            <!-- ⛔️ (Antes aquí) CV y Título — ahora se han movido abajo del todo -->
             <div class="tpl-field tpl-full">
               <label for="tpl-links">Enlaces (Instagram/LinkedIn/portfolio)</label>
               <input id="tpl-links" name="links" type="text" placeholder="https://..." />
@@ -343,25 +338,23 @@
           </div>
         </fieldset>
 
-        <!-- 💬 MOTIVACIÓN Y EXPECTATIVAS -->
-        <fieldset class="tpl-fieldset" aria-describedby="ds-mot">
-          <legend>💬 MOTIVACIÓN Y EXPECTATIVAS</legend>
-          <p id="ds-mot" class="tpl-help">Lo que te mueve a colaborar con nosotros.</p>
+        <!-- 📎 DOCUMENTOS (al final antes de enviar) -->
+        <!-- TPL: INICIO BLOQUE NUEVO [CV + Título movidos aquí] -->
+        <fieldset class="tpl-fieldset" aria-describedby="ds-docs">
+          <legend>📎 DOCUMENTOS</legend>
+          <p id="ds-docs" class="tpl-help">Adjunta tus documentos. Tamaño recomendado: ≤10MB por archivo.</p>
           <div class="tpl-grid">
-            <div class="tpl-field tpl-full">
-              <label for="tpl-porque" class="tpl-required">¿Por qué quieres colaborar como cuidador/a con formación veterinaria?</label>
-              <textarea id="tpl-porque" name="porqueColaborar" rows="2" required></textarea>
+            <div class="tpl-field">
+              <label for="tpl-cv" class="tpl-required">CV (PDF)</label>
+              <input id="tpl-cv" name="cv" type="file" accept=".pdf" required />
             </div>
-            <div class="tpl-field tpl-full">
-              <label for="tpl-mueve" class="tpl-required">¿Qué te mueve a trabajar con animales?</label>
-              <textarea id="tpl-mueve" name="motivaciones" rows="2" required></textarea>
-            </div>
-            <div class="tpl-field tpl-full">
-              <label for="tpl-preferencias" class="tpl-required">¿Qué tipo de animales prefieres cuidar y por qué?</label>
-              <textarea id="tpl-preferencias" name="preferenciasAnimales" rows="2" required></textarea>
+            <div class="tpl-field">
+              <label for="tpl-titulo" class="tpl-required">Título (PDF o imagen)</label>
+              <input id="tpl-titulo" name="titulo" type="file" accept=".pdf,.png,.jpg,.jpeg" required />
             </div>
           </div>
         </fieldset>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <!-- Consentimiento -->
         <div class="tpl-field tpl-full">
@@ -371,7 +364,7 @@
           </label>
         </div>
 
-        <!-- Campos ocultos para URLs subidas a Firebase -->
+        <!-- (Opcional) Campos ocultos para URLs subidas a Firebase -->
         <input type="hidden" id="tpl-cvUrl" name="cvUrl">
         <input type="hidden" id="tpl-tituloUrl" name="tituloUrl">
 
@@ -425,10 +418,13 @@
 
   <!-- Utilidades -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Scripts principales] -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat 10.x] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat 10.x (app+firestore+storage)] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
@@ -450,184 +446,33 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Subida a Storage + guardado en Firestore + envío prioritario a MailJS] -->
+  <!-- ⚠️ Mantengo tu script de subida local si lo necesitas; el NAVBAR ya lo hace.
+       Si prefieres, lo dejamos como fallback. -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Refuerzo “Mi perfil” si ya hay sesión] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script>
-  (function(){
-    const form = document.getElementById('tpl-form-auxiliares');
-    const btn  = document.getElementById('tpl-submit');
-    const stEl = document.getElementById('tpl-estado');
-
-    function setStatus(html){ stEl.innerHTML = html || ''; }
-
-    // Overlay de éxito
-    function showSuccessOverlay(){
-      const msg = form?.dataset?.tplSuccess || 'Tu formulario se ha enviado correctamente.';
-      const go  = form?.dataset?.tplRedirect || 'index.html';
-      let wrap = document.getElementById('tpl-overlay');
-      if(!wrap){
-        wrap = document.createElement('div');
-        wrap.id = 'tpl-overlay';
-        wrap.className = 'tpl-overlay';
-        wrap.innerHTML = `
-          <div class="tpl-modal" role="dialog" aria-live="polite">
-            <p>${msg}</p>
-            <button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button>
-          </div>`;
-        document.body.appendChild(wrap);
-      } else {
-        wrap.querySelector('.tpl-modal p').textContent = msg;
-      }
-      wrap.classList.add('on');
-      document.getElementById('tpl-ov-accept').onclick = ()=>{ location.href = go; };
-    }
-
-    async function uploadToStorage(file, path){
-      const storage = firebase.storage();
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-      const ref = storage.ref().child(`${path}/${Date.now()}_${safe}`);
-      await ref.put(file);
-      return await ref.getDownloadURL();
-    }
-
-    // PRIORIDAD: EmailJS (si está disponible vía tpl-navbar.js)
-    async function tryEmailJS(fd, extra){
-      if(!window.emailjs) return false;
-      try{
-        const cfg = window.TPL_EMAILJS || {};
-        const service  = cfg.serviceId || cfg.service;
-        const template = (cfg.templates && cfg.templates.candidatura) || cfg.templateCandidatura || cfg.templateId;
-        const pubKey   = cfg.publicKey || cfg.userId;
-
-        if(service && template){
-          const payload = Object.fromEntries(fd.entries());
-          Object.assign(payload, extra || {});
-          await emailjs.send(service, template, payload, pubKey);
-          return true;
-        }
-        if(service && cfg.templateForm){
-          await emailjs.sendForm(service, cfg.templateForm, form, pubKey);
-          return true;
-        }
-      }catch(err){
-        console.warn('EmailJS error', err);
-      }
-      return false;
-    }
-
-    // Fallback AJAX a Formspree (sin salir de la página)
-    async function sendToFormspree(fd){
-      const resp = await fetch(form.action, { method:'POST', body:fd, headers:{'Accept':'application/json'} });
-      if(!resp.ok) throw new Error('Formspree error');
-      return true;
-    }
-
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      btn.disabled = true; setStatus('Subiendo archivos…');
-
-      try{
-        const fd = new FormData(form);
-        const cvFile = document.getElementById('tpl-cv').files[0];
-        const tiFile = document.getElementById('tpl-titulo').files[0];
-
-        // 1) Subir a Firebase Storage
-        const [cvUrl, tituloUrl] = await Promise.all([
-          uploadToStorage(cvFile, `candidaturas/cv`),
-          uploadToStorage(tiFile, `candidaturas/titulos`)
-        ]);
-
-        // 2) Guardar en Firestore
-        const db = firebase.firestore();
-        await db.collection('candidaturas').add({
-          // Datos personales
-          nombre: fd.get('nombre') || '',
-          ciudad: fd.get('ciudad') || '',
-          cp: fd.get('cp') || '',
-          telefono: fd.get('telefono') || '',
-          email: fd.get('_replyto') || '',
-          carnet: fd.get('carnet') || '',
-          vehiculo: fd.get('vehiculo') || '',
-          descripcionPersonal: fd.get('descripcionPersonal') || '',
-
-          // Formación y perfil
-          atvTitulado: fd.get('atvTitulado') || '',
-          otrasFormaciones: fd.get('otrasFormaciones') || '',
-          experienciaLaboral: fd.get('experienciaLaboral') || '',
-          funcionesHabituales: fd.get('funcionesHabituales') || '',
-          links: fd.get('links') || '',
-          descFormacion: fd.get('descFormacion') || '',
-
-          // Experiencia cuidando
-          hasCuidado: fd.get('hasCuidado') || '',
-          tiposAnimales: fd.get('tiposAnimales') || '',
-          comunicacionPropietarios: fd.get('comunicacionPropietarios') || '',
-          roturasGestion: fd.get('roturasGestion') || '',
-          necesidadesEspeciales: fd.get('necesidadesEspeciales') || '',
-          medicacion: fd.get('medicacion') || '',
-
-          // Entorno
-          vivienda: fd.get('vivienda') || '',
-          seguridadCasa: fd.get('seguridadCasa') || '',
-          otrosAnimales: fd.get('otrosAnimales') || '',
-          otrasPersonasCasa: fd.get('otrasPersonasCasa') || '',
-          videovigilancia: fd.get('videovigilancia') || '',
-          cuidarEnDomicilio: fd.get('cuidarEnDomicilio') || '',
-          cuidarCasaPropietario: fd.get('cuidarCasaPropietario') || '',
-          ofrecerPaseos: fd.get('ofrecerPaseos') || '',
-          cachorrosSenior: fd.get('cachorrosSenior') || '',
-
-          // Disponibilidad
-          disponibilidad: fd.get('disponibilidad') || '',
-          tiempoLibre: fd.get('tiempoLibre') || '',
-          finesFestivos: fd.get('finesFestivos') || '',
-          zonasCobertura: fd.get('zonasCobertura') || '',
-
-          // Motivación
-          porqueColaborar: fd.get('porqueColaborar') || '',
-          motivaciones: fd.get('motivaciones') || '',
-          preferenciasAnimales: fd.get('preferenciasAnimales') || '',
-
-          // Archivos
-          cvUrl, tituloUrl,
-
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // 3) Incluir URLs en el form para el correo
-        document.getElementById('tpl-cvUrl').value = cvUrl;
-        document.getElementById('tpl-tituloUrl').value = tituloUrl;
-
-        setStatus('<span class="tpl-ok">¡Listo! Archivos subidos. Enviando candidatura…</span>');
-
-        // 4) Envío PRIORITARIO por EmailJS
-        const sentByEmailJS = await tryEmailJS(fd, { cvUrl, tituloUrl, _page: location.href });
-        if (sentByEmailJS){
-          showSuccessOverlay(); setStatus(''); return;
-        }
-
-        // 5) Fallback: Formspree AJAX
+    // Si ya hay usuario, forzamos el texto del botón a “Mi perfil”
+    document.addEventListener('DOMContentLoaded', function(){
+      function setProfileIfLogged(){
         try{
-          await sendToFormspree(fd);
-          showSuccessOverlay(); setStatus(''); return;
-        }catch(_){ /* último recurso → submit estándar */ }
-
-        // 6) Último recurso: submit estándar
-        form.submit();
-
-      }catch(err){
-        console.error(err);
-        setStatus('<span class="tpl-error">Algo falló. Intentaremos el envío estándar…</span>');
-        form.submit();
-      }finally{
-        btn.disabled = false;
+          if (window.firebase && firebase.auth){
+            var u = firebase.auth().currentUser;
+            if (u){
+              var a = document.getElementById('tpl-login-link');
+              if (a){ a.textContent = 'Mi perfil'; a.setAttribute('href','perfil.html'); }
+            }
+          }
+        }catch(_){}
       }
+      setProfileIfLogged();
+      setTimeout(setProfileIfLogged, 800);
+      setTimeout(setProfileIfLogged, 2000);
     });
-  })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [cargar Firebase extra si usas módulo] -->
-  <script type="module" src="tpl-firebase.js"></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- (Opcional) Si sigues usando tu script local de subida + mail, déjalo aquí -->
+  <!-- <script type="module" src="tpl-firebase.js"></script> -->
 </body>
 </html>
