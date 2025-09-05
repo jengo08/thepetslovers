@@ -314,7 +314,11 @@
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;  // deja pasar forms no gestionados
+
     ev.preventDefault();
+    // TPL: CORTAR CUALQUIER OTRO SUBMIT-HANDLER (evita dobles tarjetas)
+    ev.stopImmediatePropagation();  // TPL: NUEVO
+    ev.stopPropagation();           // TPL: NUEVO
 
     const ds = form.dataset || {};
     const type = detectType(form);
@@ -329,10 +333,37 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    // Adjuntos: si hay <input type="file">, fuerza enctype
-    if (form.querySelector('input[type="file"]')) {
-      form.setAttribute('enctype','multipart/form-data');
+    // ====== ARCHIVOS / FROMSPREE FIX ======
+    // TPL: Si hay archivos, nos aseguramos de que el form esté listo para adjuntos
+    const hasFiles = !!form.querySelector('input[type="file"]');
+    if (hasFiles) {
+      form.setAttribute('enctype','multipart/form-data');   // TPL: NUEVO
+      form.setAttribute('method','POST');                   // TPL: NUEVO
+
+      // Validación de tamaño: 10MB por archivo / 20MB total
+      const MAX_FILE = 10 * 1024 * 1024;
+      const MAX_TOTAL = 20 * 1024 * 1024;
+      let total = 0, oversize = false;
+      form.querySelectorAll('input[type="file"]').forEach(input=>{
+        Array.from(input.files||[]).forEach(f=>{
+          total += f.size;
+          if (f.size > MAX_FILE) oversize = true;
+        });
+      });
+      if (oversize || total > MAX_TOTAL){
+        showModal({
+          title: 'Archivos demasiado pesados',
+          message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB. Reduce el tamaño e inténtalo de nuevo.',
+          ctaText: 'Entendido'
+        });
+        return;
+      }
     }
+
+    // TPL: Evitar redirecciones a action/Formspree durante nuestro envío
+    const oldAction = form.getAttribute('action');          // TPL: NUEVO
+    const oldMethod = form.getAttribute('method');          // TPL: NUEVO
+    if (oldAction) form.removeAttribute('action');          // TPL: NUEVO
 
     // Bloquear botones
     const submits = form.querySelectorAll('[type="submit"]');
@@ -374,6 +405,10 @@
       console.error('TPL EmailJS error:', err);
       showModal({ title:'No se pudo enviar', message:'Ha ocurrido un error al enviar el formulario. Inténtalo de nuevo.', ctaText:'Cerrar' });
     } finally {
+      // TPL: Restaurar action/method originales por si hace falta en otra navegación
+      if (oldAction) form.setAttribute('action', oldAction);   // TPL: NUEVO
+      if (oldMethod) form.setAttribute('method', oldMethod);   // TPL: NUEVO
+
       submits.forEach(b=>{ b.disabled = false; if (b.dataset._oldText) b.textContent = b.dataset._oldText; });
     }
   }
@@ -382,7 +417,8 @@
     document.querySelectorAll('form').forEach(form=>{
       if (form.__tplBound) return;
       form.__tplBound = true;
-      form.addEventListener('submit', handleSubmit, { passive:false });
+      // 👇 TPL: nos enganchamos en CAPTURA para ejecutar antes que otros scripts
+      form.addEventListener('submit', handleSubmit, { passive:false, capture:true }); // TPL: CAMBIADO
     });
   }
 
