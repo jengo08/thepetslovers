@@ -87,7 +87,6 @@
     .tpl-btn-sm{ padding:6px 10px; border-radius:999px; font-weight:700; border:none; cursor:pointer; }
     .tpl-btn-outline{ background:#fff; color:#339496; border:2px solid #339496; }
 
-    /* Popover al pasar el ratón */
     .tpl-popover{
       position:absolute; left:10px; right:10px; top:calc(100% + 8px);
       background:#fff; border:1px solid #eee; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,.08);
@@ -217,12 +216,13 @@
   <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI condiciones] -->
   <script>
     (function(){
-      const app = firebase.initializeApp(firebaseConfig);
+      // ✅ Init seguro (evita “app already exists”)
+      if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
       const auth = firebase.auth();
-      const db = firebase.firestore();
+      const db   = firebase.firestore();
 
       const LS_PROFILE_KEY = 'tpl-profile';
-      const LS_PETS_KEY = 'tpl-pets';
+      const LS_PETS_KEY    = 'tpl-pets';
 
       // Refs UI
       const emptyCliente  = document.getElementById('tpl-cliente-empty');
@@ -399,20 +399,50 @@
         }
       }
 
-      // Logout robusto
+      // ✅ Logout silencioso + limpieza para que la navbar vuelva a “Iniciar sesión”
       async function doLogout(){
-        try { await auth.signOut(); } catch(e) { console.warn('signOut:', e); }
-        localStorage.removeItem(LS_PROFILE_KEY);
-        localStorage.removeItem(LS_PETS_KEY);
-        alert('Has cerrado sesión.');
+        try { await auth.signOut(); } catch(e) { /* silencioso */ }
+        try {
+          localStorage.removeItem('tplAuth');
+          localStorage.removeItem('tplEmail');
+          localStorage.removeItem(LS_PROFILE_KEY);
+          localStorage.removeItem(LS_PETS_KEY);
+        } catch(e) {}
+        // Limpia caches del SW si existiera (silencioso)
+        if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(()=>{}); }
         location.href = 'index.html';
       }
       if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
 
-      // Sesión
+      // 🔐 Guardia: si no hay sesión, envía a login
       auth.onAuthStateChanged(async (u) => {
-        await render(u ? u.uid : null);
+        if (u && !u.isAnonymous) {
+          try{
+            localStorage.setItem('tplAuth','1');
+            if (u.email) localStorage.setItem('tplEmail', String(u.email));
+          }catch(e){}
+          await render(u.uid);
+        } else {
+          location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
+        }
       });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo runtime seguro] -->
+  <script>
+    (function(){
+      try{
+        document.documentElement.classList.remove('tpl-auth-boot');
+        var ov = document.getElementById('tpl-form-overlay');
+        if (ov) ov.classList.remove('show');
+        window.addEventListener('load', function(){
+          document.documentElement.classList.remove('tpl-auth-boot');
+          var ov2 = document.getElementById('tpl-form-overlay');
+          if (ov2) ov2.classList.remove('show');
+        });
+      }catch(_){}
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
