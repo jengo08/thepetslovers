@@ -1,95 +1,114 @@
-/* TPL Reserva – sin Formspree; Firestore opcional + email a gestión + confirmación */
+/* TPL Navbar — versión final y estable para todas las páginas */
 (function(){
-  var FORM_ID = 'bookingForm';          // tu formulario de reservas
-  var OK_REDIRECT = 'index.html';       // botón Aceptar te lleva aquí
-  var MSG_SENDING = 'Subiendo archivos (si aplica) y guardando datos. Puede tardar unos segundos.';
-  var MSG_DONE = 'Ya hemos registrado tu reserva. Nos pondremos en contacto contigo lo antes posible para encontrar el cuidador que mejor se adapte a tus necesidades.';
+  // ========= CONFIG =========
+  // Email(s) de admin para mostrar “Mi panel”
+  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com']; // añade aquí tu email si es otro
+  var PANEL_URL   = 'tpl-candidaturas-admin.html';
+  var PROFILE_URL = 'perfil.html'; // SIEMPRE este
 
-  // Usa el overlay ya estilizado en tu CSS (.tpl-form-overlay / .tpl-form-card)
-  function ensureOverlay(){
-    var id='tpl-form-overlay', el=document.getElementById(id);
-    if (el) return el;
-    el=document.createElement('div'); el.id=id; el.className='tpl-form-overlay';
-    el.innerHTML = [
-      '<div class="tpl-form-card">',
-        '<div class="tpl-form-spinner"></div>',
-        '<h3>Procesando…</h3>',
-        '<p id="tpl-form-msg"></p>',
-      '</div>'
+  // ========= HELPERS =========
+  function normEmail(s){ return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  var ADMIN_SET = new Set(ADMIN_EMAILS.map(normEmail));
+  function isAdminEmail(email){ return ADMIN_SET.has(normEmail(email)); }
+
+  function buildHTML(){
+    return [
+      '<nav class="navbar">',
+        '<div class="logo">',
+          '<a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>',
+        '</div>',
+        '<a href="index.html" class="home-button">Inicio</a>',
+        '<ul class="nav-links">',
+          '<li><a href="como-funciona.html">Cómo funciona</a></li>',
+          '<li><a href="servicios.html">Servicios</a></li>',
+          '<li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>',
+          '<li><a href="ayuda.html">¿Necesitas ayuda?</a></li>',
+        '</ul>',
+        '<a id="tpl-login-link" class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>',
+      '</nav>'
     ].join('');
-    document.body.appendChild(el);
-    return el;
-  }
-  function showOverlay(text){
-    var ov = ensureOverlay();
-    var msg = ov.querySelector('#tpl-form-msg'); if (msg) msg.textContent = text || '';
-    ov.classList.add('show');
-  }
-  function hideOverlay(){
-    var ov = document.getElementById('tpl-form-overlay');
-    if (ov) ov.classList.remove('show');
-  }
-  function showFinalDialog(){
-    // Reutilizo el mismo overlay pero con CTA
-    var ov = ensureOverlay();
-    var card = ov.querySelector('.tpl-form-card');
-    card.innerHTML = [
-      '<div class="tpl-form-spinner" style="display:none"></div>',
-      '<h3>¡Reserva registrada!</h3>',
-      '<p style="margin:6px 0 12px">'+MSG_DONE+'</p>',
-      '<button id="tpl-accept" class="cta-button" type="button" style="width:100%">Aceptar</button>'
-    ].join('');
-    ov.classList.add('show');
-    var btn = card.querySelector('#tpl-accept');
-    if (btn) btn.addEventListener('click', function(){ location.href = OK_REDIRECT; });
   }
 
-  async function saveFirestoreCopy(payload){
-    try{
-      if (typeof firebase==='undefined' || !firebase.firestore) return;
-      var db = firebase.firestore();
-      var auth = firebase.auth ? firebase.auth() : null;
-      var u = auth && auth.currentUser ? auth.currentUser : null;
-      payload._page = location.href;
-      if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      if (u){ payload._uid = u.uid; payload._email = u.email || null; }
-      await db.collection('reservas').add(payload);
-    }catch(e){ console.warn('No se pudo guardar en Firestore', e); }
+  function injectNavbar(){
+    var host = document.getElementById('tpl-navbar');
+    var html = buildHTML();
+    if (host) { host.innerHTML = html; }
+    else {
+      var wrap = document.createElement('div');
+      wrap.id = 'tpl-navbar';
+      wrap.innerHTML = html;
+      document.body.insertBefore(wrap, document.body.firstChild);
+    }
   }
 
-  function formToObject(form){
-    var fd = new FormData(form), obj = {};
-    fd.forEach(function(v,k){ obj[k]=v; });
-    return obj;
+  function setBtn(text, href){
+    var a = document.getElementById('tpl-login-link');
+    if (!a) return;
+    a.textContent = text;
+    a.setAttribute('href', href);
   }
 
-  function attach(){
-    var form = document.getElementById(FORM_ID);
-    if (!form) return;
+  function updateBtn(user){
+    if (!user){
+      setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
+      return;
+    }
+    if (isAdminEmail(user.email)) setBtn('Mi panel', PANEL_URL);
+    else setBtn('Mi perfil', PROFILE_URL);
+  }
 
-    // Si aún tienes action="https://formspree..." da igual: preventDefault lo anula
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      showOverlay(MSG_SENDING);
-
-      // 1) Guardar copia (si hay Firebase)
-      try{ await saveFirestoreCopy(formToObject(form)); }catch(_){}
-
-      // 2) Enviar email a gestión (EmailJS)
-      try{
-        if (!window.TPL_MAIL || !TPL_MAIL.sendReserva) throw new Error('TPL_MAIL no disponible');
-        await TPL_MAIL.sendReserva(form);
-      }catch(err){
-        console.warn('EmailJS reserva falló:', err);
-        // seguimos mostrando el OK al usuario igualmente
-      }
-
-      // 3) Confirmación y CTA a inicio
-      hideOverlay();
-      showFinalDialog();
+  // ========= FIREBASE (opcional) =========
+  function loadOnce(src){
+    return new Promise(function(res, rej){
+      if ([...document.scripts].some(s => s.src === src)) return res();
+      var s = document.createElement('script');
+      s.src = src; s.defer = true; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
     });
   }
 
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', attach);
-  else attach();
+  async function ensureFirebase(){
+    if (typeof firebase !== 'undefined' && firebase.app) return;
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+  }
+
+  function initFirebase(){
+    if (typeof firebase === 'undefined') return null;
+    var cfg = window.TPL_FIREBASE_CONFIG || {
+      apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain:"thepetslovers-c1111.firebaseapp.com",
+      projectId:"thepetslovers-c1111",
+      storageBucket:"thepetslovers-c1111.appspot.com",
+      messagingSenderId:"415914577533",
+      appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId:"G-FXPD69KXBG"
+    };
+    if (firebase.apps.length === 0){ try{ firebase.initializeApp(cfg); }catch(_){ /* ignore */ } }
+    return firebase.auth ? firebase.auth() : null;
+  }
+
+  // ========= START =========
+  function start(){
+    // 1) Pinta SIEMPRE la barra (evita “barra borrada”)
+    injectNavbar();
+    // 2) Estado por defecto hasta saber si hay sesión
+    setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
+
+    // 3) Si hay Firebase, actualiza el botón al vuelo (usuario/admin)
+    (async function(){
+      try{
+        await ensureFirebase();
+        var auth = initFirebase();
+        if (!auth) return;
+        updateBtn(auth.currentUser);
+        auth.onAuthStateChanged(updateBtn);
+      }catch(_){
+        // Si falla Firebase, la barra sigue visible con el botón por defecto
+      }
+    })();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 })();
