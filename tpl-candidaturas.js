@@ -1,135 +1,180 @@
-/* TPL: INICIO BLOQUE NUEVO [Subida candidatura → Storage + Firestore + aviso Formspree] */
+/* TPL: INICIO BLOQUE NUEVO [Subida candidatura → Storage(Firebase) o Cloudinary + Firestore + Formspree] */
 (function(){
   'use strict';
 
-  // --- Dependencias requeridas en la página:
-  // firebase-app-compat.js, firebase-auth-compat.js, firebase-firestore-compat.js, firebase-storage-compat.js
-  if (!window.firebase || !firebase.apps.length) {
-    console.warn('TPL candidaturas: Firebase no está inicializado en esta página.');
-    return;
-  }
-
-  var auth = firebase.auth();
-  var db   = firebase.firestore();
-  var st   = firebase.storage();
-
+  function q(id){ return document.getElementById(id); }
   function safeName(name){ return String(name||'').replace(/[^\w.\-\u00C0-\u024F]+/g,'_').slice(0,140); }
   function iso(){ return new Date().toISOString().replace(/[:.]/g,'-'); }
   function setStatus(msg, ok){
-    var el = document.getElementById('tpl-estado');
-    if (!el) return;
+    var el = q('tpl-estado'); if (!el) return;
     el.textContent = msg;
     el.className = 'tpl-note ' + (ok ? 'tpl-ok' : 'tpl-error');
   }
+  function getAll(fd, k){ return fd.getAll(k).filter(Boolean); }
+  function getText(fd,k){ var v=getAll(fd,k); return !v.length?'':(v.length===1?String(v[0]):v.map(String).join(', ')); }
+
+  async function uploadFirebase(st, base, file, prefix){
+    if (!(file instanceof File) || !file.size) return { path:'', url:'' };
+    if (file.size > 10*1024*1024) throw new Error('El archivo "'+file.name+'" supera 10MB.');
+    const path = `${base}/${prefix}-${safeName(file.name||'doc')}`;
+    await st.ref(path).put(file, { contentType: file.type || 'application/octet-stream' });
+    return { path, url:'' }; // URL solo para admin
+  }
+
+  async function uploadCloudinary(cloud, preset, folder, file){
+    if (!(file instanceof File) || !file.size) return '';
+    const body = new FormData();
+    body.append('upload_preset', preset);
+    body.append('file', file);
+    if (folder) body.append('folder', folder);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud}/upload`, { method:'POST', body });
+    if (!res.ok) throw new Error('Cloudinary error '+res.status);
+    const data = await res.json();
+    return data.secure_url || data.url || '';
+  }
 
   document.addEventListener('DOMContentLoaded', function(){
-    var form = document.getElementById('tpl-form-auxiliares');
+    var form = q('tpl-form-auxiliares');
     if (!form) return;
 
-    var submitBtn = document.getElementById('tpl-submit');
-    var cvHidden  = document.getElementById('tpl-cvUrl');
-    var tiHidden  = document.getElementById('tpl-tituloUrl');
+    var submitBtn = q('tpl-submit');
+    var cvHidden  = q('tpl-cvUrl');
+    var tiHidden  = q('tpl-tituloUrl');
 
     form.addEventListener('submit', function(ev){
       if (!ev.defaultPrevented) ev.preventDefault();
       if (submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
-      setStatus('Subiendo documentos…', false);
+      setStatus('Preparando envío…', false);
 
       (async function(){
+        const fd = new FormData(form);
+        const cvFile     = fd.get('cv');
+        const tituloFile = fd.get('titulo');
+        const dniFile    = fd.get('dni'); // opcional si existe en el HTML
+        const otrosFiles = getAll(fd,'otros').filter(f=>f instanceof File && f.size>0);
+
+        // Datos básicos (para Firestore/Formspree)
+        const payloadBase = {
+          createdAt: (window.firebase && firebase.firestore) ? firebase.firestore.FieldValue.serverTimestamp() : null,
+          estado: 'pendiente',
+          nombre: getText(fd,'nombre'),
+          email:  getText(fd,'_replyto') || getText(fd,'email'),
+          telefono: getText(fd,'telefono'),
+          ciudad: getText(fd,'ciudad'),
+          cp: getText(fd,'cp'),
+          disponibilidad: getText(fd,'disponibilidad'),
+          links: getText(fd,'links')
+        };
+
+        let used = 'none';
+        let docExtra = { cvPath:'', tituloPath:'', dniPath:'', otrosPaths:[], cvUrl:'', tituloUrl:'', dniUrl:'', otrosUrls:[] };
+
+        // ---- INTENTO A) FIREBASE STORAGE
         try{
-          // 1) Sesión anónima
+          if (!window.firebase || !firebase.apps.length) throw new Error('Firebase no inicializado');
+          // necesitamos auth + storage + firestore
+          if (!firebase.auth || !firebase.storage || !firebase.firestore) throw new Error('SDKs Firebase incompletos');
+
+          const auth = firebase.auth();
+          const st   = firebase.storage();
+
           await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
           if (!auth.currentUser) await auth.signInAnonymously();
-          var uid = auth.currentUser.uid;
+          const uid = auth.currentUser && auth.currentUser.uid || 'anon';
+          const base = `candidaturas/${uid}/${iso()}`;
 
-          // 2) Datos + ficheros
-          var fd = new FormData(form);
-          var cvFile     = fd.get('cv');
-          var tituloFile = fd.get('titulo');
-          var dniFile    = fd.get('dni'); // opcional si lo añades en el futuro
-          var otrosFiles = fd.getAll('otros').filter(function(f){ return f instanceof File && f.size>0; });
+          setStatus('Subiendo documentos a servidor seguro…', false);
+          const cvRes     = await uploadFirebase(st, base, cvFile, 'cv');
+          const tiRes     = await uploadFirebase(st, base, tituloFile, 'titulo');
+          const dniRes    = await uploadFirebase(st, base, dniFile, 'dni');
 
-          var base = 'candidaturas/' + uid + '/' + iso();
-
-          async function upload(file, path){
-            if (!(file instanceof File) || !file.size) return '';
-            // Límite orientativo de 10MB (mismo que Rules). Aviso local rápido.
-            if (file.size > 10 * 1024 * 1024) {
-              throw new Error('El archivo "' + file.name + '" supera 10MB.');
-            }
-            var ref = st.ref(path);
-            await ref.put(file, { contentType: file.type || 'application/octet-stream' });
-            return path; // no getDownloadURL: lectura solo para admin
-          }
-
-          var cvPath     = await upload(cvFile,     base + '/cv-'     + safeName(cvFile && cvFile.name || 'documento'));
-          var tituloPath = await upload(tituloFile, base + '/titulo-' + safeName(tituloFile && tituloFile.name || 'documento'));
-          var dniPath    = await upload(dniFile,    base + '/dni-'    + safeName(dniFile && dniFile.name || 'documento'));
-
-          var otrosPaths = [];
-          for (var i=0;i<otrosFiles.length;i++){
-            var p = base + '/otros/' + safeName(otrosFiles[i].name);
+          const otrosPaths = [];
+          for (let i=0;i<otrosFiles.length;i++){
+            const p = `${base}/otros/${safeName(otrosFiles[i].name)}`;
             await st.ref(p).put(otrosFiles[i], { contentType: otrosFiles[i].type || 'application/octet-stream' });
             otrosPaths.push(p);
           }
 
-          if (cvHidden) cvHidden.value = cvPath || '';
-          if (tiHidden) tiHidden.value = tituloPath || '';
-
-          // 3) Construir doc Firestore (campos principales + rutas)
-          function getField(name){ var v = fd.getAll(name); return !v.length ? '' : (v.length===1 ? String(v[0]) : v.map(String).join(', ')); }
-          var email = getField('_replyto') || getField('email') || '';
-          var payload = {
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            estado: 'pendiente',
-            // Campos principales que tu admin lista:
-            nombre: getField('nombre') || '',
-            email:  email,
-            telefono: getField('telefono') || '',
-            ciudad: getField('ciudad') || '',
-            cp:     getField('cp') || '',
-            disponibilidad: getField('disponibilidad') || '',
-            links:  getField('links') || '',
-            // Rutas de ficheros (solo admin podrá leer/descargar)
-            cvPath: cvPath || '',
-            tituloPath: tituloPath || '',
-            dniPath: dniPath || '',
-            otrosPaths: otrosPaths
+          docExtra = { ...docExtra,
+            cvPath: cvRes.path, tituloPath: tiRes.path, dniPath: dniRes.path, otrosPaths
           };
+          used = 'firebase';
+        }catch(e1){
+          console.warn('Firebase Storage falló o no disponible:', e1 && e1.message);
 
-          await db.collection('candidaturas').add(payload);
+          // ---- INTENTO B) CLOUDINARY (si hay configuración en el <form>)
+          try{
+            const cloud = form.dataset.cloudinaryName;
+            const preset= form.dataset.cloudinaryPreset;
+            if (!cloud || !preset) throw new Error('Cloudinary sin configurar');
 
-          // 4) Enviar copia a Formspree (solo texto, añadimos paths informativos)
-          var action = form.getAttribute('action') || '';
-          if (/^https:\/\/formspree\.io\//.test(action)){
-            var mailFD = new FormData();
-            // Añadimos solo campos NO archivo
-            fd.forEach(function(v,k){ if (!(v instanceof File)) mailFD.append(k, v); });
-            // Anexamos rutas para referencia en el correo
-            if (cvPath) mailFD.append('cvPath', cvPath);
-            if (tituloPath) mailFD.append('tituloPath', tituloPath);
-            if (dniPath) mailFD.append('dniPath', dniPath);
-            for (var j=0;j<otrosPaths.length;j++){ mailFD.append('otrosPath_'+(j+1), otrosPaths[j]); }
-            // Asunto de respaldo
-            if (!mailFD.get('_subject')) mailFD.append('_subject', '[TPL] Nueva candidatura');
-            try{
-              await fetch(action, { method:'POST', body: mailFD, headers: { 'Accept': 'application/json' } });
-            }catch(_){ /* ignoramos fallo de email, los datos ya están en Firestore */ }
+            setStatus('Subiendo documentos (Cloudinary)…', false);
+            const folder = `thepetslovers/candidaturas/${iso()}`;
+            const cvUrl     = await uploadCloudinary(cloud, preset, folder, cvFile);
+            const tituloUrl = await uploadCloudinary(cloud, preset, folder, tituloFile);
+            const dniUrl    = await uploadCloudinary(cloud, preset, folder, dniFile);
+            const otrosUrls = [];
+            for (let i=0;i<otrosFiles.length;i++){
+              otrosUrls.push(await uploadCloudinary(cloud, preset, folder, otrosFiles[i]));
+            }
+
+            docExtra = { ...docExtra, cvUrl, tituloUrl, dniUrl, otrosUrls };
+            if (cvHidden) cvHidden.value = cvUrl || '';
+            if (tiHidden) tiHidden.value = tituloUrl || '';
+            used = 'cloudinary';
+          }catch(e2){
+            console.warn('Cloudinary no disponible:', e2 && e2.message);
+            used = 'none';
           }
-
-          setStatus(form.dataset.success || '¡Candidatura enviada con éxito! 🐾', true);
-          try{ form.reset(); }catch(_){}
-          // 5) Redirigir si lo has configurado en data-redirect
-          var red = form.dataset.redirect;
-          if (red) setTimeout(function(){ window.location.href = red; }, 1200);
-
-        }catch(err){
-          console.error(err);
-          setStatus('No se pudo enviar. ' + (err && err.message ? err.message : 'Inténtalo de nuevo.'), false);
-        }finally{
-          if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
         }
-      })();
+
+        // ---- Guardar en Firestore si está disponible (sin coste)
+        try{
+          if (window.firebase && firebase.firestore){
+            const db = firebase.firestore();
+            const doc = { ...payloadBase, ...docExtra };
+            await db.collection('candidaturas').add(doc);
+          }
+        }catch(e3){
+          console.warn('Firestore no disponible:', e3 && e3.message);
+        }
+
+        // ---- Enviar a Formspree (texto; añadimos rutas/URLs para referencia)
+        try{
+          const action = form.getAttribute('action') || '';
+          if (/^https:\/\/formspree\.io\//.test(action)){
+            const mfd = new FormData();
+            fd.forEach((v,k)=>{ if (!(v instanceof File)) mfd.append(k,v); });
+            // Añadimos info de dónde quedaron los archivos
+            if (docExtra.cvPath) mfd.append('cvPath', docExtra.cvPath);
+            if (docExtra.tituloPath) mfd.append('tituloPath', docExtra.tituloPath);
+            if (docExtra.dniPath) mfd.append('dniPath', docExtra.dniPath);
+            if (docExtra.cvUrl) mfd.append('cvUrl', docExtra.cvUrl);
+            if (docExtra.tituloUrl) mfd.append('tituloUrl', docExtra.tituloUrl);
+            if (docExtra.dniUrl) mfd.append('dniUrl', docExtra.dniUrl);
+            (docExtra.otrosPaths||[]).forEach((p,i)=> mfd.append('otrosPath_'+(i+1), p));
+            (docExtra.otrosUrls||[]).forEach((u,i)=> mfd.append('otrosUrl_'+(i+1), u));
+            if (!mfd.get('_subject')) mfd.append('_subject', '[TPL] Nueva candidatura');
+
+            await fetch(action, { method:'POST', body:mfd, headers:{'Accept':'application/json'} });
+          }
+        }catch(_ignore){}
+
+        const okMsg = form.dataset.success || '¡Candidatura enviada con éxito! 🐾';
+        if (used === 'firebase') setStatus(okMsg + ' (archivos en servidor seguro)', true);
+        else if (used === 'cloudinary') setStatus(okMsg + ' (archivos en Cloudinary)', true);
+        else setStatus('Enviado sin adjuntos (no se pudo subir archivos).', true);
+
+        try{ form.reset(); }catch(_){}
+        const red = form.dataset.redirect;
+        if (red) setTimeout(()=>{ window.location.href = red; }, 1200);
+
+      })().catch(err=>{
+        console.error(err);
+        setStatus('No se pudo enviar. ' + (err && err.message ? err.message : ''), false);
+      }).finally(()=>{
+        if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
+      });
     });
   });
 })();
