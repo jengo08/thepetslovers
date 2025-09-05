@@ -1,22 +1,7 @@
 /* TPL: INICIO BLOQUE NUEVO [Auth anónima rápida en navbar (opcional, no afecta botón)] */
-(function(){
-  var cfg = window.__TPL_FIREBASE_CONFIG;
-  if (!cfg) return;
-  var mod = document.createElement('script');
-  mod.type = 'module';
-  mod.textContent = `
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    try{
-      const app  = getApps().length ? getApp() : initializeApp(window.__TPL_FIREBASE_CONFIG);
-      const auth = getAuth(app);
-      await signInAnonymously(auth); // solo para lecturas; NO cambia el botón
-    }catch(e){
-      /* silencioso */
-    }
-  `;
-  document.head.appendChild(mod);
-})();
+// ⚠️ Desactivado a petición: eliminamos el login anónimo para no romper el estado del botón.
+// (Dejado vacío a propósito)
+(function(){ /* noop */ })();
 /* TPL: FIN BLOQUE NUEVO */
 
 
@@ -24,57 +9,8 @@
 (function(){
   if (window.__TPL_NAVBAR_BOOTED) return; window.__TPL_NAVBAR_BOOTED = true;
 
-  // 👉 Rutas fijas
-  var PROFILE_URL = 'perfil.html';
-  var PANEL_URL   = 'tpl-candidaturas-admin.html';
-  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
-
-  function tplNormalizeEmail(e){
-    return String(e||'').trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  }
-  var ADMIN_SET = new Set(ADMIN_EMAILS.map(tplNormalizeEmail));
-  function isAdminEmail(email){ return ADMIN_SET.has(tplNormalizeEmail(email)); }
-
-  // 🧠 Snapshot REAL de auth (ignora anónimos)
-  function getAuthSnapshot(){
-    try{
-      for (var i=0;i<localStorage.length;i++){
-        var k = localStorage.key(i);
-        if (!k || k.indexOf('firebase:authUser:') !== 0) continue;
-        var obj = JSON.parse(localStorage.getItem(k) || '{}');
-        if (!obj || !obj.uid) continue;
-        var isAnon = !!obj.isAnonymous;
-        var provs = Array.isArray(obj.providerData) ? obj.providerData.map(function(p){return p&&p.providerId;}) : [];
-        if (provs.length === 0 && isAnon !== false) isAnon = true; // sin proveedores => tratamos como anónimo
-        return { logged: !isAnon, isAnonymous: isAnon, email: obj.email || '' };
-      }
-    }catch(e){}
-    return { logged:false, isAnonymous:true, email:'' };
-  }
-
-  // Cache de email (para páginas sin Firebase)
-  function getCurrentEmailFromFirebaseStorage(){
-    try{
-      var cached = localStorage.getItem('tplEmail');
-      if (cached) return String(cached);
-    }catch(e){}
-    try{
-      for (var i=0;i<localStorage.length;i++){
-        var k = localStorage.key(i);
-        if(k && k.indexOf('firebase:authUser:')===0){
-          var v = localStorage.getItem(k);
-          if(!v) continue;
-          var obj = JSON.parse(v);
-          if(obj && obj.email){
-            try{ localStorage.setItem('tplEmail', String(obj.email)); }catch(e){}
-            return String(obj.email);
-          }
-        }
-      }
-    }catch(e){}
-    return '';
-  }
+  // ✅ Esta versión SOLO monta la navbar y marca el enlace activo.
+  // ❗ El botón .login-button lo gestiona tpl-auth.js (no lo tocamos aquí).
 
   // HTML por si la página no trae .navbar. Si ya existe, no se duplica.
   var NAV_HTML =
@@ -98,8 +34,7 @@
         host.innerHTML = NAV_HTML;
       }
       markActiveLink();
-      applySessionUI(true); // primera pintura
-      firstBootRetry();     // reintento corto (Index y páginas rápidas)
+      // ❌ Ya no llamamos a lógica de sesión aquí. Eso es de tpl-auth.js
     }catch(e){ console.error('TPL navbar mount error:', e); }
   }
 
@@ -113,108 +48,6 @@
       }
     }catch(e){}
   }
-
-  // 🎯 Localizar el “botón” aunque no tenga la clase .login-button
-  function queryLoginAnchor(){
-    // a) Preferimos .login-button
-    var el = document.querySelector('.navbar .login-button');
-    if (el) return el;
-
-    // b) Busca por texto/href típico
-    var links = document.querySelectorAll('.navbar a[href]');
-    for (var i=0;i<links.length;i++){
-      var a = links[i];
-      var href = (a.getAttribute('href')||'').toLowerCase();
-      var txt  = (a.textContent||'').trim().toLowerCase();
-      if (href.indexOf('iniciar-sesion')>-1 || txt==='iniciar sesión' || txt==='iniciar sesion' || txt==='mi perfil' || txt==='panel'){
-        return a;
-      }
-    }
-    // c) Último enlace de la navbar como fallback
-    var all = document.querySelectorAll('.navbar a[href]');
-    return all.length ? all[all.length-1] : null;
-  }
-
-  function hideLogoutEverywhere(){
-    try{
-      var elems = [].slice.call(document.querySelectorAll(
-        '[data-action="logout"], .logout-button, a[href*="logout"], button[href*="logout"]'
-      ));
-      [].slice.call(document.querySelectorAll('.navbar a, .navbar button')).forEach(function(el){
-        var t=(el.textContent||'').trim().toLowerCase();
-        if(t==='cerrar sesión'||t==='cerrar sesion'||t.indexOf('logout')>-1||t.indexOf('sign out')>-1){ elems.push(el); }
-      });
-      elems.forEach(function(el){ el.style.display='none'; el.setAttribute('aria-hidden','true'); });
-    }catch(e){}
-  }
-
-  // ✅ Set del botón (exactamente como antes, pero fiable)
-  function setLoginButtonFromSnapshot(){
-    try{
-      var btn = queryLoginAnchor(); if(!btn) return;
-      var snap = getAuthSnapshot();
-      if (snap.logged){
-        var email = getCurrentEmailFromFirebaseStorage();
-        var isAdmin = isAdminEmail(email);
-        var dest = isAdmin ? PANEL_URL : PROFILE_URL;
-        var label = isAdmin ? 'Panel' : 'Mi perfil';
-        btn.textContent = label;
-        btn.setAttribute('href', dest);
-        btn.setAttribute('aria-label','Ir a ' + label.toLowerCase());
-      }else{
-        btn.textContent = 'Iniciar sesión';
-        btn.setAttribute('href','iniciar-sesion.html');
-        btn.setAttribute('aria-label','Iniciar sesión');
-      }
-    }catch(e){}
-  }
-
-  function applySessionUI(isFirst){
-    hideLogoutEverywhere();
-    setLoginButtonFromSnapshot();
-
-    try{
-      if (window.firebase && firebase.auth){
-        var a = firebase.auth();
-        a.onAuthStateChanged(function(u){
-          try{
-            if(u && !u.isAnonymous && u.email){ localStorage.setItem('tplEmail', String(u.email)); }
-            else { localStorage.removeItem('tplEmail'); }
-          }catch(e){}
-          setLoginButtonFromSnapshot();
-          hideLogoutEverywhere();
-          try{
-            var loggedReal = !!(u && !u.isAnonymous);
-            if(loggedReal){ localStorage.setItem('tplAuth','1'); }
-            else { localStorage.removeItem('tplAuth'); }
-          }catch(e){}
-        });
-      }
-    }catch(e){}
-  }
-
-  // ⏳ Reintento inicial (10 intentos / ~3s) por si el snapshot llega tarde
-  function firstBootRetry(){
-    var tries = 0, maxTries = 10;
-    var t = setInterval(function(){
-      tries++;
-      setLoginButtonFromSnapshot();
-      if (tries >= maxTries) clearInterval(t);
-    }, 300);
-  }
-
-  // 🔄 Refrescar si vuelves a la pestaña o cambia localStorage (login en otra página)
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) setLoginButtonFromSnapshot();
-  });
-  var rerenderTimer=null;
-  window.addEventListener('storage', function(ev){
-    if(!ev) return;
-    if (/(firebase:authUser:|tplAuth|tplEmail)/.test(ev.key||'')){
-      clearTimeout(rerenderTimer);
-      rerenderTimer = setTimeout(function(){ setLoginButtonFromSnapshot(); }, 60);
-    }
-  });
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded', mountNavbar, {once:true});
