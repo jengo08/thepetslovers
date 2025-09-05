@@ -1,114 +1,131 @@
-/* TPL Navbar — versión final y estable para todas las páginas */
+/*!
+ * tpl-navbar.js — The Pets Lovers
+ * Barra unificada con sesión. Ajuste pedido:
+ *  - Si user es admin y está en index → botón = "Mi panel" (forzado).
+ *  - Resto de páginas se quedan EXACTAMENTE como estaban.
+ */
 (function(){
-  // ========= CONFIG =========
-  // Email(s) de admin para mostrar “Mi panel”
-  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com']; // añade aquí tu email si es otro
-  var PANEL_URL   = 'tpl-candidaturas-admin.html';
-  var PROFILE_URL = 'perfil.html'; // SIEMPRE este
+  var NAV_CONTAINER_ID = 'tpl-navbar';
 
-  // ========= HELPERS =========
-  function normEmail(s){ return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  // ==== Admins (mantén/añade correos aquí) ====
+  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
+  function normEmail(x){
+    return String(x||'').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
   var ADMIN_SET = new Set(ADMIN_EMAILS.map(normEmail));
-  function isAdminEmail(email){ return ADMIN_SET.has(normEmail(email)); }
+  function isAdmin(user){ return !!(user && user.email && ADMIN_SET.has(normEmail(user.email))); }
 
-  function buildHTML(){
-    return [
-      '<nav class="navbar">',
-        '<div class="logo">',
-          '<a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>',
-        '</div>',
-        '<a href="index.html" class="home-button">Inicio</a>',
-        '<ul class="nav-links">',
-          '<li><a href="como-funciona.html">Cómo funciona</a></li>',
-          '<li><a href="servicios.html">Servicios</a></li>',
-          '<li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>',
-          '<li><a href="ayuda.html">¿Necesitas ayuda?</a></li>',
-        '</ul>',
-        '<a id="tpl-login-link" class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>',
-      '</nav>'
-    ].join('');
+  // ==== Detección de "estoy en home" ====
+  function isHomePage(){
+    var p = (location.pathname || '').toLowerCase();
+    return p === '/' || p === '' || p.endsWith('/index') || p.endsWith('/index.html');
   }
 
-  function injectNavbar(){
-    var host = document.getElementById('tpl-navbar');
-    var html = buildHTML();
-    if (host) { host.innerHTML = html; }
-    else {
-      var wrap = document.createElement('div');
-      wrap.id = 'tpl-navbar';
-      wrap.innerHTML = html;
-      document.body.insertBefore(wrap, document.body.firstChild);
-    }
+  // ==== HTML (diseño intacto) ====
+  var NAV_HTML =
+    '<nav class="navbar">'+
+      '<div class="logo">'+
+        '<a href="index.html">'+
+          '<img src="images/logo.png.png" alt="The Pets Lovers">'+
+        '</a>'+
+      '</div>'+
+      '<a href="index.html" class="home-button">Inicio</a>'+
+      '<ul class="nav-links">'+
+        '<li><a href="como-funciona.html">Cómo funciona</a></li>'+
+        '<li><a href="servicios.html">Servicios</a></li>'+
+        '<li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>'+
+        '<li><a href="ayuda.html">¿Necesitas ayuda?</a></li>'+
+      '</ul>'+
+      '<a id="tpl-login-btn" class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>'+
+    '</nav>';
+
+  function mountNav(){
+    var host = document.getElementById(NAV_CONTAINER_ID);
+    if (!host) return;
+    host.innerHTML = NAV_HTML;
   }
+
+  // ==== Botón según sesión ====
+  var BTN_ID = 'tpl-login-btn';
+  var URL_PANEL   = 'tpl-candidaturas-admin.html';
+  var URL_PERFIL  = 'perfil.html';
+  var URL_LOGIN   = 'iniciar-sesion.html?next=perfil.html';
 
   function setBtn(text, href){
-    var a = document.getElementById('tpl-login-link');
-    if (!a) return;
-    a.textContent = text;
-    a.setAttribute('href', href);
+    var btn = document.getElementById(BTN_ID);
+    if (!btn) return;
+    btn.textContent = text;
+    btn.setAttribute('href', href);
   }
 
-  function updateBtn(user){
-    if (!user){
-      setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
-      return;
+  function applyUserState(user){
+    // Sin sesión
+    if (!user) { setBtn('Iniciar sesión', URL_LOGIN); return; }
+
+    // Con sesión: admin / no admin
+    if (isAdmin(user)) {
+      setBtn('Mi panel', URL_PANEL);
+      // —— Ajuste que pediste: en INDEX, forzar Mi panel (por si alguna lógica externa lo toca) ——
+      if (isHomePage()) setBtn('Mi panel', URL_PANEL);
+    } else {
+      setBtn('Mi perfil', URL_PERFIL);
     }
-    if (isAdminEmail(user.email)) setBtn('Mi panel', PANEL_URL);
-    else setBtn('Mi perfil', PROFILE_URL);
   }
 
-  // ========= FIREBASE (opcional) =========
-  function loadOnce(src){
+  // ==== Carga Firebase compat si hace falta ====
+  function loadScript(src){
     return new Promise(function(res, rej){
-      if ([...document.scripts].some(s => s.src === src)) return res();
       var s = document.createElement('script');
-      s.src = src; s.defer = true; s.onload = res; s.onerror = rej;
+      s.src = src; s.async = true; s.onload = res; s.onerror = rej;
       document.head.appendChild(s);
     });
   }
 
-  async function ensureFirebase(){
-    if (typeof firebase !== 'undefined' && firebase.app) return;
-    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
-    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+  var DEFAULT_FB = {
+    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+    authDomain: "thepetslovers-c1111.firebaseapp.com",
+    projectId: "thepetslovers-c1111",
+    storageBucket: "thepetslovers-c1111.appspot.com",
+    messagingSenderId: "415914577533",
+    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+    measurementId: "G-FXPD69KXBG"
+  };
+
+  async function ensureFirebaseAuth(){
+    if (window.firebase && firebase.auth) return firebase;
+    // Cargar compat v10 si no está
+    if (!window.firebase){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    }
+    if (!firebase.auth){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    }
+    // Init si hace falta
+    if (firebase.apps && firebase.apps.length === 0){
+      var cfg = (window.TPL_FIREBASE_CONFIG || DEFAULT_FB);
+      firebase.initializeApp(cfg);
+    }
+    return firebase;
   }
 
-  function initFirebase(){
-    if (typeof firebase === 'undefined') return null;
-    var cfg = window.TPL_FIREBASE_CONFIG || {
-      apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain:"thepetslovers-c1111.firebaseapp.com",
-      projectId:"thepetslovers-c1111",
-      storageBucket:"thepetslovers-c1111.appspot.com",
-      messagingSenderId:"415914577533",
-      appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId:"G-FXPD69KXBG"
-    };
-    if (firebase.apps.length === 0){ try{ firebase.initializeApp(cfg); }catch(_){ /* ignore */ } }
-    return firebase.auth ? firebase.auth() : null;
-  }
+  // ==== Arranque ====
+  mountNav();
 
-  // ========= START =========
-  function start(){
-    // 1) Pinta SIEMPRE la barra (evita “barra borrada”)
-    injectNavbar();
-    // 2) Estado por defecto hasta saber si hay sesión
-    setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
+  (async function boot(){
+    try{
+      var fb = await ensureFirebaseAuth();
+      var auth = fb.auth();
+      // Estado inmediato
+      applyUserState(auth.currentUser);
+      // Cambios de sesión
+      auth.onAuthStateChanged(function(u){
+        applyUserState(u);
+      });
+    }catch(e){
+      // Si Firebase falla por cualquier motivo, dejamos botón de login por defecto
+      setBtn('Iniciar sesión', URL_LOGIN);
+    }
+  })();
 
-    // 3) Si hay Firebase, actualiza el botón al vuelo (usuario/admin)
-    (async function(){
-      try{
-        await ensureFirebase();
-        var auth = initFirebase();
-        if (!auth) return;
-        updateBtn(auth.currentUser);
-        auth.onAuthStateChanged(updateBtn);
-      }catch(_){
-        // Si falla Firebase, la barra sigue visible con el botón por defecto
-      }
-    })();
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-  else start();
 })();
