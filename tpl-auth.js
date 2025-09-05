@@ -1,10 +1,12 @@
-<!-- TPL: INICIO BLOQUE NUEVO [tpl-auth.js — Control unificado de sesión en navbar + visibilidad] -->
-<script>
+/* TPL: INICIO BLOQUE NUEVO [tpl-auth.js — Control unificado de sesión en navbar + visibilidad] */
 (function(){
+  if (window.__TPL_AUTH_LOADED__) return;
+  window.__TPL_AUTH_LOADED__ = true;
+
   'use strict';
 
   // ===== AJUSTES =====
-  var ADMIN_EMAILS = ['gestion@thepetslovers.es']; // añade más si necesitas
+  var ADMIN_EMAILS = ['gestion@thepetslovers.es']; // añade más si quieres
   var URLS = {
     PROFILE: 'perfil.html',
     ADMIN_PANEL: 'tpl-candidaturas-admin.html',
@@ -12,12 +14,10 @@
     INDEX: 'index.html'
   };
 
-  // Encontrar todos los <a class="login-button">
+  // --- Helpers UI (navbar) ---
   function findLoginButtons(){
     return Array.prototype.slice.call(document.querySelectorAll('a.login-button'));
   }
-
-  // Cambiar texto y href del botón en TODAS las navbars presentes
   function setButtonState(state){
     var btns = findLoginButtons();
     for(var i=0;i<btns.length;i++){
@@ -40,8 +40,6 @@
       }
     }
   }
-
-  // Si la navbar se inyecta tarde (p. ej. con tpl-navbar.js), repintamos al aparecer
   function attachObserver(getCurrentState){
     try{
       var obs = new MutationObserver(function(){ setButtonState(getCurrentState()); });
@@ -49,8 +47,7 @@
     }catch(_){}
   }
 
-  // ======== VISIBILIDAD por data-auth-visible (lo que ya tenías) ========
-  // Alterna elementos con data-auth-visible="signed-in" | "signed-out"
+  // --- Visibilidad declarativa (lo que ya usabas) ---
   function applyAuthVisibility(user){
     var signedIn = !!user && !user.isAnonymous; // SIN anónimo
     var nodes = document.querySelectorAll('[data-auth-visible]');
@@ -63,10 +60,9 @@
     document.documentElement.classList.remove('tpl-auth-boot');
   }
 
-  // ======== Cerrar sesión ========
+  // --- Logout (global) ---
   function performLogout(){
     if (!window.firebase || !firebase.auth) {
-      // Sin Firebase, al menos devolvemos UI y redirigimos
       setButtonState('guest');
       window.location.href = URLS.INDEX;
       return;
@@ -74,7 +70,6 @@
     firebase.auth().signOut()
       .catch(function(err){ console.warn('[TPL auth] signOut:', err); })
       .then(function(){
-        // Limpieza opcional de caches
         if ('caches' in window) {
           return caches.keys().then(function(keys){
             return Promise.all(keys.map(function(k){ return caches.delete(k); }));
@@ -86,18 +81,15 @@
         window.location.href = URLS.INDEX; // SIEMPRE a inicio
       });
   }
-
-  // Botón con id="tpl-logout"
   function wireLogout(){
     var btn = document.getElementById('tpl-logout');
     if (btn){
       btn.addEventListener('click', function(e){ e.preventDefault(); performLogout(); });
     }
-    // API global por si quieres llamarlo desde cualquier enlace
-    window.TPL_LOGOUT = performLogout;
+    window.TPL_LOGOUT = performLogout; // API global
   }
 
-  // ======== Login con Google (lo que ya tenías) ========
+  // --- Login con Google (si hay botones) ---
   function wireGoogleLogin(){
     var btns = document.querySelectorAll('#tpl-google-login, .tpl-google-login');
     if (!btns.length) return;
@@ -117,42 +109,66 @@
     });
   }
 
-  // Estado derivado del usuario → 'guest' | 'user' | 'admin'
+  // --- Estado → 'guest' | 'user' | 'admin'
   function stateFromUser(user){
     if(!user || user.isAnonymous) return 'guest'; // SIN anónimo
     var email = (user.email || '').toLowerCase();
     return ADMIN_EMAILS.indexOf(email) >= 0 ? 'admin' : 'user';
   }
 
-  // ======== INIT ========
+  // --- Carga perezosa de Firebase v8 (namespaced) si no está presente ---
+  function lazyLoadFirebaseIfNeeded(cb){
+    if (window.firebase && window.firebase.app) { cb(); return; }
+    var urls = [
+      'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+      'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js'
+    ];
+    var i = 0;
+    (function next(){
+      if (i >= urls.length){ cb(); return; }
+      var s = document.createElement('script');
+      s.src = urls[i++];
+      s.async = true;
+      s.onload = next;
+      s.onerror = function(){ console.error('[TPL auth] No se pudo cargar Firebase SDK'); cb(); };
+      document.head.appendChild(s);
+    })();
+  }
+
+  // --- INIT ---
   function init(){
     document.documentElement.classList.add('tpl-auth-boot');
 
     wireLogout();
     wireGoogleLogin();
+    setButtonState('guest'); // estado por defecto rápido
 
-    // Estado por defecto: visitante
-    setButtonState('guest');
+    lazyLoadFirebaseIfNeeded(function(){
+      try{
+        if (!firebase.apps || !firebase.apps.length){
+          var cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
+          if (cfg && firebase.initializeApp) firebase.initializeApp(cfg);
+        }
+      }catch(e){ console.warn('[TPL auth] init app warn:', e); }
 
-    if (!window.firebase || !firebase.auth){
-      console.error('Firebase Auth no encontrado. Carga el SDK + init ANTES de tpl-auth.js');
-      document.documentElement.classList.remove('tpl-auth-boot');
-      return;
-    }
-
-    // Pintar según sesión
-    firebase.auth().onAuthStateChanged(function(user){
-      applyAuthVisibility(user);
-      setButtonState(stateFromUser(user));
-
-      // Si navbars se inyectan tarde, nos aseguramos de repintar
-      if (!window.__TPL_NAV_OBS_ATTACHED__) {
-        attachObserver(function(){
-          var u = (firebase.auth && firebase.auth().currentUser) || null;
-          return stateFromUser(u);
-        });
-        window.__TPL_NAV_OBS_ATTACHED__ = true;
+      if (!firebase.auth || !firebase.auth()){
+        console.warn('[TPL auth] Firebase Auth no disponible (¿SDK no cargado o init faltante?).');
+        document.documentElement.classList.remove('tpl-auth-boot');
+        return;
       }
+
+      firebase.auth().onAuthStateChanged(function(user){
+        applyAuthVisibility(user);
+        setButtonState(stateFromUser(user));
+
+        if (!window.__TPL_NAV_OBS_ATTACHED__){
+          attachObserver(function(){
+            var u = (firebase.auth && firebase.auth().currentUser) || null;
+            return stateFromUser(u);
+          });
+          window.__TPL_NAV_OBS_ATTACHED__ = true;
+        }
+      });
     });
   }
 
@@ -162,5 +178,4 @@
     init();
   }
 })();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+/* TPL: FIN BLOQUE NUEVO */
