@@ -78,10 +78,8 @@
     if (typeof firebase !== 'undefined' && firebase.app) return;
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
-    // TPL: INICIO BLOQUE NUEVO [cargar Firestore + Storage]
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
-    // TPL: FIN BLOQUE NUEVO
   }
 
   function initFirebase(){
@@ -245,7 +243,7 @@
     return o;
   }
 
-  // TPL: INICIO BLOQUE NUEVO [helpers auth]
+  // ===== Helpers auth (no rompe si Firebase no está) =====
   function currentAuth(){
     try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; }
   }
@@ -254,19 +252,42 @@
     const u = auth && auth.currentUser;
     return !!(u && !u.isAnonymous);
   }
-  // TPL: FIN BLOQUE NUEVO
+
+  /* TPL: INICIO BLOQUE NUEVO [Cargador local de Firebase SOLO si hace falta subir adjuntos] */
+  async function ensureFirebaseEmailLayer(){
+    if (typeof firebase !== 'undefined' && firebase.app) return;
+    async function load(src){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.defer=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
+    if (!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain:"thepetslovers-c1111.firebaseapp.com",
+        projectId:"thepetslovers-c1111",
+        storageBucket:"thepetslovers-c1111.appspot.com",
+        messagingSenderId:"415914577533",
+        appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId:"G-FXPD69KXBG"
+      });
+    }
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ===== Subida a Firebase (Storage + Firestore) — SOLO con sesión no anónima =====
   async function uploadAndSaveToFirebase(form, type){
-    if (typeof firebase === 'undefined' || !firebase.firestore || !firebase.storage) return null;
+    try{
+      await ensureFirebaseEmailLayer();
+    }catch(_){
+      return { error: 'firebase', message: 'No se pudo cargar Firebase en esta página.' };
+    }
 
-    // TPL: INICIO BLOQUE NUEVO [exigir sesión no anónima]
     const auth = currentAuth();
     const user = auth && auth.currentUser;
     if (!user || user.isAnonymous){
       return { error: 'auth', message: 'Debes iniciar sesión para adjuntar archivos.' };
     }
-    // TPL: FIN BLOQUE NUEVO
 
     const db = firebase.firestore();
     const storage = firebase.storage();
@@ -296,12 +317,9 @@
       for (const file of (input.files || [])){
         const path = `tpl/${type}/${id}/${sanitizeName(field)}__${sanitizeName(file.name)}`;
         const ref = storage.ref().child(path);
-        await ref.put(file, { contentType: file.type || 'application/octet-stream' });
+        await ref.put(file, { contentType: file.type || 'application/octet-stream' }); // respetando reglas (no anónimos)
         const url = await ref.getDownloadURL();
-        filesMeta.push({
-          field, name: file.name, size: file.size, contentType: file.type || '',
-          path, url
-        });
+        filesMeta.push({ field, name: file.name, size: file.size, contentType: file.type || '', path, url });
       }
     }
 
@@ -313,7 +331,7 @@
       files: filesMeta,
       status: 'enviado'
     };
-    await db.collection('tpl_submissions').doc(id).set(doc);
+    await firebase.firestore().collection('tpl_submissions').doc(id).set(doc);
     return { id, files: filesMeta };
   }
 
@@ -325,9 +343,9 @@
     const txt  = (form.textContent || '').toLowerCase();
     if (form.matches('[data-tpl-emailjs="true"]')) return true;
 
-    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true;
-    if (path.includes('perfil') || path.includes('registro')) return true;
-    if (path.includes('reserva')) return true;
+    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true; // Candidaturas
+    if (path.includes('perfil') || path.includes('registro')) return true;                    // Perfil
+    if (path.includes('reserva')) return true;                                                // Reservas
 
     if (txt.includes('enviar candidatura')) return true;
     if (txt.includes('guardar') || txt.includes('crear perfil')) return true;
@@ -405,6 +423,18 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
+    // 🚫 TPL: BLOQUEO sin sesión para Candidaturas y Reservas (con o sin adjuntos)
+    const loggedIn = isLoggedNonAnonymous();
+    if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
+      showModal({
+        title:'Inicia sesión para continuar',
+        message:'Para enviar tu candidatura o solicitar una reserva, primero inicia sesión. Te llevamos y volverás aquí automáticamente.',
+        ctaText:'Iniciar sesión',
+        redirect: 'iniciar-sesion.html?next='+encodeURIComponent(location.pathname + location.search)
+      });
+      return;
+    }
+
     const hasFiles = !!form.querySelector('input[type="file"]');
     if (hasFiles) {
       form.setAttribute('enctype','multipart/form-data');
@@ -435,30 +465,20 @@
     const pageUrl = location.href;
 
     try{
-      await ensureFirebase();
-
-      // TPL: INICIO BLOQUE NUEVO [respeto a reglas: subir solo si logueado y no anónimo]
-      const canUpload = isLoggedNonAnonymous();
-      if (hasFiles && !canUpload){
-        showModal({
-          title:'Inicia sesión para adjuntar',
-          message:'Para adjuntar archivos debes iniciar sesión. Puedes iniciar sesión ahora y volveremos a esta página.',
-          ctaText:'Iniciar sesión',
-          redirect: 'iniciar-sesion.html?next='+encodeURIComponent(location.pathname + location.search)
-        });
-        return; // no seguimos; evitamos error
-      }
-
-      if (canUpload && (type==='cuestionario' || type==='perfil')){
+      // Subida a Firebase solo si hay adjuntos (ya hay sesión por el guard anterior si type es cand/reserva)
+      if (hasFiles){
         const up = await uploadAndSaveToFirebase(form, type);
         if (up && up.error==='size'){
           showModal({ title:'Archivos demasiado pesados', message: up.message, ctaText:'Entendido' });
           return;
         }
-        // si hubo error 'auth' (no debería aquí), seguimos con email sin adjuntos
+        if (up && (up.error==='auth' || up.error==='firebase')){
+          showModal({ title:'No se pudo subir archivos', message: up.message, ctaText:'Cerrar' });
+          return;
+        }
       }
-      // TPL: FIN BLOQUE NUEVO
 
+      // EmailJS (único canal; sin Formspree)
       await loadEmailJS(cfg.publicKey);
       await window.emailjs.send(cfg.serviceId, cfg.templateId, {
         subject: cfg.subject,
@@ -476,7 +496,7 @@
       });
 
     } catch(err){
-      console.error('TPL EmailJS/Firebase error:', err);
+      console.error('TPL envío error:', err);
       showModal({ title:'No se pudo enviar', message:'Ha ocurrido un error al enviar el formulario. Inténtalo de nuevo.', ctaText:'Cerrar' });
     } finally {
       submits.forEach(b=>{ b.disabled = false; if (b.dataset._oldText) b.textContent = b.dataset._oldText; });
