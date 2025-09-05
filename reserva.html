@@ -60,14 +60,10 @@
     .tpl-section{ margin-top: 18px; }
     .tpl-section h2{ margin: 6px 0 8px; font-size:1.15rem; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Dirección más larga] */
-    #location{
-      width: 100%;
-      max-width: 100%;
-    }
-    /* TPL: FIN BLOQUE NUEVO */
+    /* Dirección más larga */
+    #location{ width:100%; max-width:100%; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Estilo mínimo login inline] */
+    /* Login inline */
     .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
     .tpl-login-title{margin:0 0 8px;color:#58425a;font-weight:700;font-size:1.05rem;text-align:center}
     .tpl-socials{display:grid;gap:10px;margin-bottom:8px}
@@ -83,13 +79,7 @@
     .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
     .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [ELIMINADO v8 + refs rotas] -->
-  <!-- Se ha retirado la carga duplicada de Firebase v8 y la init con claves vacías
-       que impedían detectar la sesión. Ahora solo usamos compat v10 (abajo). -->
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -121,19 +111,28 @@
     <!-- Muro de autenticación -->
     <div id="authWall" class="auth-wall">
       <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
-
-      <!-- TPL: INICIO BLOQUE NUEVO [Quitamos los 2 botones grandes de arriba] -->
-      <!-- (El acceso ahora es sólo con el login inline + Google, como en Candidatos) -->
-      <!-- TPL: FIN BLOQUE NUEVO -->
-
       <p class="note">Cuando accedas, el formulario se activará automáticamente.</p>
-
       <!-- Login inline (Email + Google) -->
       <div id="tpl-inline-login"></div>
     </div>
 
     <!-- Formulario de reserva -->
-    <form id="bookingForm" class="disabled" novalidate action="https://formspree.io/f/mdkdvlpr" method="POST">
+    <!-- IMPORTANTE:
+         - data-tpl-type="candidatura" → hace que el overlay muestre botón Aceptar
+         - data-tpl-success="..."       → mensaje que pediste
+         - data-tpl-redirect="index.html" → Aceptar → Inicio
+         - data-tpl-wait="800"          → casi inmediato
+         - onsubmit="return false"       → NO se navega; EmailJS envía el correo -->
+    <form
+      id="bookingForm"
+      class="disabled"
+      novalidate
+      data-tpl-type="candidatura"
+      data-tpl-success="Ya hemos registrado tu reserva. Nos pondremos en contacto contigo lo antes posible para encontrar al cuidador que mejor se adapte a tus necesidades."
+      data-tpl-redirect="index.html"
+      data-tpl-wait="800"
+      onsubmit="return false;"
+    >
       <!-- =================== DATOS DEL SERVICIO =================== -->
       <section class="tpl-section" aria-labelledby="sec-servicio">
         <h2 id="sec-servicio">Datos del servicio</h2>
@@ -403,7 +402,7 @@
     };
   </script>
 
-  <!-- ====== Lógica de reservas ====== -->
+  <!-- ====== Lógica de reservas (UI + cálculo) ====== -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('bookingForm');
@@ -488,7 +487,7 @@
     }
     function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
 
-    /* Preselección de servicio según referrer o query */
+    /* Preselección de servicio */
     function inferServiceFromReferrer(){
       try{
         const u = new URL(document.referrer || '');
@@ -762,7 +761,7 @@
     renderPetNameFields(1);
     recalcAll();
 
-    // Autocompletado dirección
+    // Autocompletado dirección (OSM)
     async function searchAddresses(q){
       const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
       const r = await fetch(url, { headers: { 'Accept':'application/json' }});
@@ -861,6 +860,7 @@
       return true;
     }
 
+    // Antes de enviar: preparar campo resumen (lo usa el email)
     form.addEventListener('submit', async (e)=>{
       if(!validateContactPreference(e)) return;
       const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
@@ -1005,9 +1005,7 @@
               <label>Contraseña</label>
               <input type="password" name="password" required autocomplete="current-password" />
               <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <!-- TPL: INICIO BLOQUE NUEVO [CTA Regístrate con next a reserva] -->
               <a class="tpl-btn-outline" href="registro.html?next=reserva.html">Regístrate</a>
-              <!-- TPL: FIN BLOQUE NUEVO -->
               <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
               <p class="tpl-login-msg" aria-live="polite"></p>
             </form>
@@ -1040,7 +1038,6 @@
             const provider = new firebase.auth.GoogleAuthProvider();
             if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
             else { await auth.signInWithPopup(provider); }
-            // onAuthStateChanged ocultará el muro
           }catch(err){
             msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
           }
@@ -1063,16 +1060,13 @@
     })();
   </script>
 
-  <!-- Guardar reserva en Firestore y luego enviar a Formspree -->
+  <!-- Guardado opcional en Firestore (sin Formspree; el envío por email lo hace el Router EmailJS del navbar) -->
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var form = document.getElementById('bookingForm');
       if (!form) return;
 
-      form.addEventListener('submit', async function (e) {
-        if (e.defaultPrevented) return; // otra validación ya frenó
-
-        e.preventDefault();
+      form.addEventListener('submit', async function () {
         try {
           if (typeof firebase !== 'undefined' && firebase.firestore) {
             var db   = firebase.firestore();
@@ -1097,17 +1091,11 @@
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
-        } finally {
-          form.submit(); // envía a Formspree
         }
+        /* No hacemos submit: el email se envía por EmailJS (tpl-navbar.js) y el overlay gestiona el éxito/redirección */
       });
     });
   </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [ELIMINADO muro antiguo que exigía localStorage tpl-profile] -->
-  <!-- Se ha eliminado el bloque que exigía flags de localStorage (tpl-auth / tpl-profile)
-       y provocaba que el formulario siguiera deshabilitado aunque hubiese sesión Firebase. -->
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
