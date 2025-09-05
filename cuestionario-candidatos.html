@@ -85,6 +85,12 @@
     .sr-only{ position:absolute!important; width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
     .cta-button{ display:inline-block; background:#339496; color:#fff; padding:12px 18px; border-radius:999px; border:2px solid transparent; text-decoration:none; font-weight:700; text-align:center; }
     .cta-button[disabled]{ opacity:.6; cursor:not-allowed; }
+
+    /* Overlay de éxito (reutilizable) */
+    .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .tpl-overlay.on{ display:flex; }
+    .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
+    .tpl-modal p{ margin:0 0 12px; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -125,7 +131,7 @@
             enctype="multipart/form-data"
             novalidate
             data-tpl-type="candidatura"
-            data-tpl-success="Tu candidatura ya está enviada. En cuanto la revisemos y la aceptemos, recibirás un correo para crear y gestionar tu perfil."
+            data-tpl-success="Tu formulario se ha enviado. En cuanto esté aceptado podrás crear tu perfil."
             data-tpl-redirect="index.html">
       <!-- TPL: FIN BLOQUE NUEVO -->
         <input type="hidden" name="_subject" value="Nueva candidatura: Auxiliar Veterinario/a · The Pets Lovers">
@@ -444,114 +450,184 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Subida a Storage + guardado en Firestore + envío a Formspree] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Subida a Storage + guardado en Firestore + envío prioritario a MailJS] -->
   <script>
-    (function(){
-      const form = document.getElementById('tpl-form-auxiliares');
-      const btn  = document.getElementById('tpl-submit');
-      const stEl = document.getElementById('tpl-estado');
+  (function(){
+    const form = document.getElementById('tpl-form-auxiliares');
+    const btn  = document.getElementById('tpl-submit');
+    const stEl = document.getElementById('tpl-estado');
 
-      function setStatus(html){ stEl.innerHTML = html || ''; }
+    function setStatus(html){ stEl.innerHTML = html || ''; }
 
-      async function uploadToStorage(file, path){
-        const storage = firebase.storage();
-        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-        const ref = storage.ref().child(`${path}/${Date.now()}_${safe}`);
-        await ref.put(file);
-        return await ref.getDownloadURL();
+    // Overlay de éxito
+    function showSuccessOverlay(){
+      const msg = form?.dataset?.tplSuccess || 'Tu formulario se ha enviado correctamente.';
+      const go  = form?.dataset?.tplRedirect || 'index.html';
+      let wrap = document.getElementById('tpl-overlay');
+      if(!wrap){
+        wrap = document.createElement('div');
+        wrap.id = 'tpl-overlay';
+        wrap.className = 'tpl-overlay';
+        wrap.innerHTML = `
+          <div class="tpl-modal" role="dialog" aria-live="polite">
+            <p>${msg}</p>
+            <button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button>
+          </div>`;
+        document.body.appendChild(wrap);
+      } else {
+        wrap.querySelector('.tpl-modal p').textContent = msg;
       }
+      wrap.classList.add('on');
+      document.getElementById('tpl-ov-accept').onclick = ()=>{ location.href = go; };
+    }
 
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        btn.disabled = true; setStatus('Subiendo archivos…');
+    async function uploadToStorage(file, path){
+      const storage = firebase.storage();
+      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const ref = storage.ref().child(`${path}/${Date.now()}_${safe}`);
+      await ref.put(file);
+      return await ref.getDownloadURL();
+    }
 
-        try{
-          const fd = new FormData(form);
-          const cvFile = document.getElementById('tpl-cv').files[0];
-          const tiFile = document.getElementById('tpl-titulo').files[0];
+    // PRIORIDAD: EmailJS (si está disponible vía tpl-navbar.js)
+    async function tryEmailJS(fd, extra){
+      if(!window.emailjs) return false;
+      try{
+        const cfg = window.TPL_EMAILJS || {};
+        const service  = cfg.serviceId || cfg.service;
+        const template = (cfg.templates && cfg.templates.candidatura) || cfg.templateCandidatura || cfg.templateId;
+        const pubKey   = cfg.publicKey || cfg.userId;
 
-          // Subir a Firebase Storage
-          const [cvUrl, tituloUrl] = await Promise.all([
-            uploadToStorage(cvFile,   `candidaturas/cv`),
-            uploadToStorage(tiFile,   `candidaturas/titulos`)
-          ]);
-
-          // Guardar en Firestore
-          const db = firebase.firestore();
-          await db.collection('candidaturas').add({
-            // Datos personales
-            nombre: fd.get('nombre') || '',
-            ciudad: fd.get('ciudad') || '',
-            cp: fd.get('cp') || '',
-            telefono: fd.get('telefono') || '',
-            email: fd.get('_replyto') || '',
-            carnet: fd.get('carnet') || '',
-            vehiculo: fd.get('vehiculo') || '',
-            descripcionPersonal: fd.get('descripcionPersonal') || '',
-
-            // Formación y perfil
-            atvTitulado: fd.get('atvTitulado') || '',
-            otrasFormaciones: fd.get('otrasFormaciones') || '',
-            experienciaLaboral: fd.get('experienciaLaboral') || '',
-            funcionesHabituales: fd.get('funcionesHabituales') || '',
-            links: fd.get('links') || '',
-            descFormacion: fd.get('descFormacion') || '',
-
-            // Experiencia cuidando
-            hasCuidado: fd.get('hasCuidado') || '',
-            tiposAnimales: fd.get('tiposAnimales') || '',
-            comunicacionPropietarios: fd.get('comunicacionPropietarios') || '',
-            roturasGestion: fd.get('roturasGestion') || '',
-            necesidadesEspeciales: fd.get('necesidadesEspeciales') || '',
-            medicacion: fd.get('medicacion') || '',
-
-            // Entorno
-            vivienda: fd.get('vivienda') || '',
-            seguridadCasa: fd.get('seguridadCasa') || '',
-            otrosAnimales: fd.get('otrosAnimales') || '',
-            otrasPersonasCasa: fd.get('otrasPersonasCasa') || '',
-            videovigilancia: fd.get('videovigilancia') || '',
-            cuidarEnDomicilio: fd.get('cuidarEnDomicilio') || '',
-            cuidarCasaPropietario: fd.get('cuidarCasaPropietario') || '',
-            ofrecerPaseos: fd.get('ofrecerPaseos') || '',
-            cachorrosSenior: fd.get('cachorrosSenior') || '',
-
-            // Disponibilidad
-            disponibilidad: fd.get('disponibilidad') || '',
-            tiempoLibre: fd.get('tiempoLibre') || '',
-            finesFestivos: fd.get('finesFestivos') || '',
-            zonasCobertura: fd.get('zonasCobertura') || '',
-
-            // Motivación
-            porqueColaborar: fd.get('porqueColaborar') || '',
-            motivaciones: fd.get('motivaciones') || '',
-            preferenciasAnimales: fd.get('preferenciasAnimales') || '',
-
-            // Archivos
-            cvUrl, tituloUrl,
-
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          // Incluir URLs en el envío a Formspree
-          document.getElementById('tpl-cvUrl').value = cvUrl;
-          document.getElementById('tpl-tituloUrl').value = tituloUrl;
-
-          setStatus('<span class="tpl-ok">¡Listo! Archivos subidos. Enviando formulario…</span>');
-          form.submit();
-        }catch(err){
-          console.error(err);
-          setStatus('<span class="tpl-error">No se pudo subir a Firebase. Enviaremos igualmente tu cuestionario por email.</span>');
-          form.submit();
-        }finally{
-          btn.disabled = false;
+        if(service && template){
+          const payload = Object.fromEntries(fd.entries());
+          Object.assign(payload, extra || {});
+          await emailjs.send(service, template, payload, pubKey);
+          return true;
         }
-      });
-    })();
+        if(service && cfg.templateForm){
+          await emailjs.sendForm(service, cfg.templateForm, form, pubKey);
+          return true;
+        }
+      }catch(err){
+        console.warn('EmailJS error', err);
+      }
+      return false;
+    }
+
+    // Fallback AJAX a Formspree (sin salir de la página)
+    async function sendToFormspree(fd){
+      const resp = await fetch(form.action, { method:'POST', body:fd, headers:{'Accept':'application/json'} });
+      if(!resp.ok) throw new Error('Formspree error');
+      return true;
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      btn.disabled = true; setStatus('Subiendo archivos…');
+
+      try{
+        const fd = new FormData(form);
+        const cvFile = document.getElementById('tpl-cv').files[0];
+        const tiFile = document.getElementById('tpl-titulo').files[0];
+
+        // 1) Subir a Firebase Storage
+        const [cvUrl, tituloUrl] = await Promise.all([
+          uploadToStorage(cvFile, `candidaturas/cv`),
+          uploadToStorage(tiFile, `candidaturas/titulos`)
+        ]);
+
+        // 2) Guardar en Firestore
+        const db = firebase.firestore();
+        await db.collection('candidaturas').add({
+          // Datos personales
+          nombre: fd.get('nombre') || '',
+          ciudad: fd.get('ciudad') || '',
+          cp: fd.get('cp') || '',
+          telefono: fd.get('telefono') || '',
+          email: fd.get('_replyto') || '',
+          carnet: fd.get('carnet') || '',
+          vehiculo: fd.get('vehiculo') || '',
+          descripcionPersonal: fd.get('descripcionPersonal') || '',
+
+          // Formación y perfil
+          atvTitulado: fd.get('atvTitulado') || '',
+          otrasFormaciones: fd.get('otrasFormaciones') || '',
+          experienciaLaboral: fd.get('experienciaLaboral') || '',
+          funcionesHabituales: fd.get('funcionesHabituales') || '',
+          links: fd.get('links') || '',
+          descFormacion: fd.get('descFormacion') || '',
+
+          // Experiencia cuidando
+          hasCuidado: fd.get('hasCuidado') || '',
+          tiposAnimales: fd.get('tiposAnimales') || '',
+          comunicacionPropietarios: fd.get('comunicacionPropietarios') || '',
+          roturasGestion: fd.get('roturasGestion') || '',
+          necesidadesEspeciales: fd.get('necesidadesEspeciales') || '',
+          medicacion: fd.get('medicacion') || '',
+
+          // Entorno
+          vivienda: fd.get('vivienda') || '',
+          seguridadCasa: fd.get('seguridadCasa') || '',
+          otrosAnimales: fd.get('otrosAnimales') || '',
+          otrasPersonasCasa: fd.get('otrasPersonasCasa') || '',
+          videovigilancia: fd.get('videovigilancia') || '',
+          cuidarEnDomicilio: fd.get('cuidarEnDomicilio') || '',
+          cuidarCasaPropietario: fd.get('cuidarCasaPropietario') || '',
+          ofrecerPaseos: fd.get('ofrecerPaseos') || '',
+          cachorrosSenior: fd.get('cachorrosSenior') || '',
+
+          // Disponibilidad
+          disponibilidad: fd.get('disponibilidad') || '',
+          tiempoLibre: fd.get('tiempoLibre') || '',
+          finesFestivos: fd.get('finesFestivos') || '',
+          zonasCobertura: fd.get('zonasCobertura') || '',
+
+          // Motivación
+          porqueColaborar: fd.get('porqueColaborar') || '',
+          motivaciones: fd.get('motivaciones') || '',
+          preferenciasAnimales: fd.get('preferenciasAnimales') || '',
+
+          // Archivos
+          cvUrl, tituloUrl,
+
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // 3) Incluir URLs en el form para el correo
+        document.getElementById('tpl-cvUrl').value = cvUrl;
+        document.getElementById('tpl-tituloUrl').value = tituloUrl;
+
+        setStatus('<span class="tpl-ok">¡Listo! Archivos subidos. Enviando candidatura…</span>');
+
+        // 4) Envío PRIORITARIO por EmailJS
+        const sentByEmailJS = await tryEmailJS(fd, { cvUrl, tituloUrl, _page: location.href });
+        if (sentByEmailJS){
+          showSuccessOverlay(); setStatus(''); return;
+        }
+
+        // 5) Fallback: Formspree AJAX
+        try{
+          await sendToFormspree(fd);
+          showSuccessOverlay(); setStatus(''); return;
+        }catch(_){ /* último recurso → submit estándar */ }
+
+        // 6) Último recurso: submit estándar
+        form.submit();
+
+      }catch(err){
+        console.error(err);
+        setStatus('<span class="tpl-error">Algo falló. Intentaremos el envío estándar…</span>');
+        form.submit();
+      }finally{
+        btn.disabled = false;
+      }
+    });
+  })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
-  <!-- TPL: INICIO BLOQUE NUEVO [cargar Firebase] -->
-<script type="module" src="tpl-firebase.js"></script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [cargar Firebase extra si usas módulo] -->
+  <script type="module" src="tpl-firebase.js"></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
