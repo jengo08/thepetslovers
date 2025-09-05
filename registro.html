@@ -72,6 +72,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script>
+    /* TPL: INICIO BLOQUE NUEVO [Init seguro Firebase] */
     (function(){
       const firebaseConfig = {
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
@@ -87,15 +88,27 @@
       }
       window.__TPL_AUTH_INIT = true;
     })();
+    /* TPL: FIN BLOQUE NUEVO */
   </script>
 
-  <!-- Lógica: registro simple, Google, y redirección segura al perfil -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica registro + Google + redirección inmediata + sync navbar] -->
   <script>
     (function(){
       const AUTH_FLAG = 'tplAuth';
       const PROFILE_URL_LS = 'tpl_profile_url_cache';
       const params = new URLSearchParams(location.search);
       const NEXT = params.get('next'); // opcional
+
+      // 👉 Admin → Panel (mismo criterio que navbar)
+      const PANEL_URL = 'tpl-candidaturas-admin.html';
+      const ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
+      const ADMIN_SET = new Set(ADMIN_EMAILS.map(x =>
+        String(x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      ));
+      function isAdminEmail(email){
+        const norm = String(email||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        return ADMIN_SET.has(norm);
+      }
 
       const $ = (s, p=document)=>p.querySelector(s);
       const form = $('#formSignup');
@@ -118,7 +131,14 @@
         return 'mi-perfil.html';
       }
 
-      // Comprueba que NEXT existe; si no, cae al perfil
+      // Decide destino por usuario
+      async function nextUrlFor(user){
+        if (user && isAdminEmail(user.email)) return PANEL_URL;
+        if (NEXT) return NEXT;
+        return await resolveProfileUrl();
+      }
+
+      // Comprueba que existe; si no, cae al perfil
       async function safeGo(url){
         try{
           let r = await fetch(url, { method:'HEAD', cache:'no-store' });
@@ -129,20 +149,32 @@
       }
 
       function showMsg(t){ msg.textContent = t || ''; }
-
       function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
 
-      // Si ya hay sesión activa, entra directo (por si viene aquí de rebote)
+      // 🔄 Sincroniza flags para que el botón del navbar cambie en TODAS las páginas
+      function syncNavbarFlags(u){
+        try{
+          if (u) {
+            localStorage.setItem(AUTH_FLAG,'1');
+            if (u.email) localStorage.setItem('tplEmail', String(u.email));
+          } else {
+            localStorage.removeItem(AUTH_FLAG);
+            localStorage.removeItem('tplEmail');
+          }
+        }catch(e){}
+      }
+
+      // 🚪 Si ya hay sesión activa, salta registro y ve al destino
       document.addEventListener('DOMContentLoaded', async function(){
         const a = auth();
-        const logged = a && a.currentUser;
+        const u = a && a.currentUser;
         const flag = localStorage.getItem(AUTH_FLAG)==='1';
-        if (logged || flag){
-          await safeGo(NEXT || await resolveProfileUrl());
+        if (u || flag){
+          await safeGo(await nextUrlFor(u));
         }
       });
 
-      // Registro email/contraseña (minimal)
+      // 🧾 Registro email/contraseña (sin esperas: redirige inmediato al terminar)
       form.addEventListener('submit', async function(e){
         e.preventDefault();
         const a = auth();
@@ -150,11 +182,10 @@
         const em = (email.value||'').trim();
         const pw = pass.value;
         try{
-          showMsg('Creando cuenta…');
-          await a.createUserWithEmailAndPassword(em, pw);
-          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-          showMsg('¡Listo! Redirigiendo…');
-          await safeGo(NEXT || await resolveProfileUrl());
+          const cred = await a.createUserWithEmailAndPassword(em, pw);
+          const u = cred && cred.user;
+          syncNavbarFlags(u);
+          await safeGo(await nextUrlFor(u));
         }catch(err){
           let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
           if (/auth\/email-already-in-use/.test(m)) m = 'Ese email ya está registrado. Inicia sesión.';
@@ -164,19 +195,20 @@
         }
       });
 
-      // Google Sign-Up (popup + fallback redirect en iOS/Safari)
+      // 🟦 Google (popup + fallback redirect en iOS/Safari)
       btnGoogle.addEventListener('click', async function(){
         const a = auth();
         if (!a){ showMsg('Servicio de autenticación no disponible.'); return; }
         const provider = new firebase.auth.GoogleAuthProvider();
-        showMsg('Conectando con Google…');
         try{
           const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
           const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-          if (isIOS && isSafari) { await a.signInWithRedirect(provider); }
-          else { await a.signInWithPopup(provider); }
-          try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-          await safeGo(NEXT || await resolveProfileUrl());
+          let res;
+          if (isIOS && isSafari) { await a.signInWithRedirect(provider); return; }
+          else { res = await a.signInWithPopup(provider); }
+          const u = (res && res.user) || (a && a.currentUser);
+          syncNavbarFlags(u);
+          await safeGo(await nextUrlFor(u));
         }catch(err){
           let m = (err && err.message) || 'No se pudo continuar con Google.';
           if (/popup-closed-by-user/i.test(m)) m = 'Has cerrado la ventana de Google.';
@@ -184,31 +216,27 @@
         }
       });
 
-      // Si volvemos de redirect (iOS/Safari)
+      // 🔁 Volver del redirect (iOS/Safari)
       (async function handleRedirect(){
         try{
           const a = auth(); if (!a) return;
           const res = await a.getRedirectResult();
           if (res && res.user){
-            try{ localStorage.setItem(AUTH_FLAG,'1'); }catch(e){}
-            await safeGo(NEXT || await resolveProfileUrl());
+            syncNavbarFlags(res.user);
+            await safeGo(await nextUrlFor(res.user));
           }
         }catch(e){}
       })();
 
-      // Sincroniza flag global para el navbar
+      // 👂 Además, si cambia el estado mientras estamos en esta página, sincroniza email/flag
       try{
         const a = auth();
         if (a) {
-          a.onAuthStateChanged(function(user){
-            try{
-              if (user) localStorage.setItem(AUTH_FLAG,'1');
-              else localStorage.removeItem(AUTH_FLAG);
-            }catch(e){}
-          });
+          a.onAuthStateChanged(function(user){ syncNavbarFlags(user); });
         }
       }catch(e){}
     })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
