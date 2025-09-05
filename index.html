@@ -307,6 +307,16 @@
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
-
+<script>
+  // Desbloquea la página si algún overlay quedó pillado
+  document.documentElement.classList.remove('tpl-auth-boot');
+  var ov = document.getElementById('tpl-form-overlay');
+  if (ov) ov.style.display = 'none';
+  // Asegura que los botones sean clicables
+  document.querySelectorAll('a,button').forEach(function(el){
+    el.style.pointerEvents = el.style.pointerEvents || 'auto';
+  });
+</script>
 </body>
 </html>
+
