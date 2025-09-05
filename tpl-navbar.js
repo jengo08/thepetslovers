@@ -1,18 +1,11 @@
-/* TPL: INICIO BLOQUE NUEVO [Auth anónima rápida en navbar (opcional, no afecta botón)] */
-// ⚠️ Desactivado a petición: eliminamos el login anónimo para no romper el estado del botón.
-// (Dejado vacío a propósito)
-(function(){ /* noop */ })();
+/* TPL: INICIO BLOQUE NUEVO [Auth anónima desactivada] */
+(function(){ /* noop: removido para evitar estados raros */ })();
 /* TPL: FIN BLOQUE NUEVO */
 
-
-/* TPL: INICIO BLOQUE NUEVO [tpl-navbar — MEJORADO y FIABLE (botón como antes, pero robusto)] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-navbar — Montaje + enlace activo] */
 (function(){
   if (window.__TPL_NAVBAR_BOOTED) return; window.__TPL_NAVBAR_BOOTED = true;
 
-  // ✅ Esta versión SOLO monta la navbar y marca el enlace activo.
-  // ❗ El botón .login-button lo gestiona tpl-auth.js (no lo tocamos aquí).
-
-  // HTML por si la página no trae .navbar. Si ya existe, no se duplica.
   var NAV_HTML =
     '<nav class="navbar">'
     + '  <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>'
@@ -34,7 +27,6 @@
         host.innerHTML = NAV_HTML;
       }
       markActiveLink();
-      // ❌ Ya no llamamos a lógica de sesión aquí. Eso es de tpl-auth.js
     }catch(e){ console.error('TPL navbar mount error:', e); }
   }
 
@@ -56,7 +48,6 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
-
 
 /* TPL: INICIO BLOQUE NUEVO [Guardia — reservas/candidaturas requieren login REAL] */
 (function(){
@@ -127,7 +118,6 @@
 })();
 /* TPL: FIN BLOQUE NUEVO */
 
-
 /* TPL: INICIO BLOQUE NUEVO [Tracking de visitas — Firestore] */
 (function(){
   if (document.body && document.body.hasAttribute('data-tpl-no-track')) return;
@@ -179,7 +169,6 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
-
 
 /* TPL: INICIO BLOQUE NUEVO [Router EmailJS — Unificación por prefijos/grupo] */
 (function(){
@@ -273,6 +262,15 @@
   }
 
   function tryUnifiedSendByPrefix(currentParams){
+    var OWNER_PREFIX='owner_', PET_PREFIX='pet_';
+    function hasPrefix(obj,prefix){ for (var k in obj){ if(Object.prototype.hasOwnProperty.call(obj,k) && k.indexOf(prefix)===0) return true; } return false; }
+    function pick(obj,prefix){ var r={}; for(var k in obj){ if(k.indexOf(prefix)===0) r[k]=obj[k]; } return r; }
+    var LS_OWNER='TPL_OWNER_DATA', LS_PET='TPL_PET_DATA';
+    function saveLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v||{})); }catch(e){} }
+    function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k)||'{}'); }catch(e){ return {}; } }
+    function clearLS(k){ try{ localStorage.removeItem(k); }catch(e){} }
+    function clearOP(){ clearLS(LS_OWNER); clearLS(LS_PET); }
+
     var isOwner=hasPrefix(currentParams,OWNER_PREFIX), isPet=hasPrefix(currentParams,PET_PREFIX);
     var ownerLS=loadLS(LS_OWNER), petLS=loadLS(LS_PET);
     if(isOwner) saveLS(LS_OWNER, pick(currentParams,OWNER_PREFIX));
@@ -291,9 +289,19 @@
     return true;
   }
 
+  function groupKey(form){
+    var type=(form.getAttribute('data-tpl-type')||'').trim().toLowerCase();
+    return type ? ('TPL_GROUP_'+type) : '';
+  }
+  function subgroup(form){ return (form.getAttribute('data-tpl-group')||'').trim().toLowerCase(); }
+
   function tryUnifiedSendByGroup(form, currentParams){
     var gKey=groupKey(form); var sub=subgroup(form);
     if(!gKey || !sub) return false;
+
+    function loadLS(k){ try{ return JSON.parse(localStorage.getItem(k)||'{}'); }catch(e){ return {}; } }
+    function saveLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v||{})); }catch(e){} }
+    function clearLS(k){ try{ localStorage.removeItem(k); }catch(e){} }
 
     var cacheAll=loadLS(gKey); cacheAll[sub]=currentParams; saveLS(gKey, cacheAll);
     var haveOwner=!!cacheAll.propietario, havePet=!!cacheAll.mascota;
@@ -331,7 +339,6 @@
   if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', boot, {once:true}); } else { boot(); }
 })();
 /* TPL: FIN BLOQUE NUEVO */
-
 
 /* TPL: INICIO BLOQUE NUEVO [UX formularios — feedback + redirección optimista] */
 (function(){
