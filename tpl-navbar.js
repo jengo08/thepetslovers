@@ -91,6 +91,10 @@
     if (typeof firebase !== 'undefined' && firebase.app) return;
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    // TPL: INICIO BLOQUE NUEVO [cargar Firestore + Storage]
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
+    // TPL: FIN BLOQUE NUEVO
   }
 
   function initFirebase(){
@@ -110,6 +114,16 @@
     return firebase.auth ? firebase.auth() : null;
   }
 
+  // TPL: INICIO BLOQUE NUEVO [auth anónima silenciosa para poder subir a Storage/Firestore]
+  async function ensureAnonAuth(auth){
+    try{
+      if (!auth) return;
+      var user = auth.currentUser;
+      if (!user) { await auth.signInAnonymously(); }
+    }catch(_){}
+  }
+  // TPL: FIN BLOQUE NUEVO
+
   // Arranque seguro (sin observers ni reemplazos continuos)
   function start(){
     injectNavbarOnce();
@@ -124,14 +138,18 @@
         // 1) Actualiza ya con el usuario actual
         updateBtn(auth.currentUser);
 
-        // 2) Y en cuanto cambie el estado
+        // 2) Mantener botón actualizado
         auth.onAuthStateChanged(function(u){
           updateBtn(u);
-          // Refuerzo: si eres admin y estás en index, re-afirma “Mi panel” tras 300ms (evita carreras)
-          if (IS_HOME && u && isAdminEmail(u.email)){
+          if (IS_HOME && u && u.email && isAdminEmail(u.email)){
             setTimeout(function(){ setBtn('Mi panel', PANEL_URL); }, 300);
           }
         });
+
+        // TPL: INICIO BLOQUE NUEVO [Auth anónima para visitantes]
+        if (!auth.currentUser) { await ensureAnonAuth(auth); }
+        // TPL: FIN BLOQUE NUEVO
+
       }catch(_){
         // Si Firebase falla, el navbar sigue visible con el botón por defecto
       }
@@ -145,14 +163,14 @@
   }
 })();
 /* ===========================
-   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + redirecciones (navbar)]
+   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + redirecciones (navbar) + subida a Firebase]
    =========================== */
 (function(){
   'use strict';
   if (window.__TPL_EMAILJS_BOOTSTRAPPED) return;
   window.__TPL_EMAILJS_BOOTSTRAPPED = true;
 
-  // 🔑 TUS CLAVES/IDS (ya puestas)
+  // 🔑 TUS CLAVES/IDS EmailJS
   const EMAILJS_PUBLIC_KEY = 'L2xAATfVuHJwj4EIV';
   const EMAILJS_SERVICE_ID = 'service_odjqrfl';
   const TEMPLATE_CANDIDATURAS_REGISTROS = 'template_32z2wj4'; // candidaturas + registros
@@ -161,6 +179,7 @@
   const EMAILJS_URL = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
   const STYLE_ID = 'tpl-feedback-modal-css';
 
+  // ===== Estilos del modal =====
   function injectStyles(){
     if (document.getElementById(STYLE_ID)) return;
     const css = `
@@ -200,9 +219,10 @@
     btn.focus();
   }
 
+  // ===== EmailJS loader =====
   function loadEmailJS(publicKey){
     return new Promise((resolve, reject)=>{
-      if (window.emailjs && window.emailjs.sendForm){
+      if (window.emailjs && window.emailjs.send){
         try { if (publicKey) window.emailjs.init({ publicKey }); } catch(e){}
         return resolve(window.emailjs);
       }
@@ -214,6 +234,7 @@
     });
   }
 
+  // ===== Utilidades de formulario =====
   function buildHTMLFromForm(form){
     const fd = new FormData(form);
     const rows = [];
@@ -243,7 +264,79 @@
     `;
   }
 
-  // ——— Detección y reglas ———
+  function formToObject(form){
+    const o = {};
+    const fd = new FormData(form);
+    fd.forEach((v,k)=>{
+      if (v instanceof File) return;
+      if (k in o){
+        if (Array.isArray(o[k])) o[k].push(String(v));
+        else o[k] = [o[k], String(v)];
+      } else {
+        o[k] = String(v);
+      }
+    });
+    return o;
+  }
+
+  function sanitizeName(name){
+    return String(name || '').replace(/[^\w.\-]+/g,'_').slice(0,120);
+  }
+
+  // ===== Subida a Firebase (Storage + Firestore) =====
+  async function uploadAndSaveToFirebase(form, type){
+    if (typeof firebase === 'undefined' || !firebase.firestore || !firebase.storage) return null;
+    const auth = firebase.auth && firebase.auth();
+    try{ if (auth && !auth.currentUser) await auth.signInAnonymously(); }catch(_){}
+
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const id = `${type}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const fields = formToObject(form);
+
+    const filesMeta = [];
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    let total = 0;
+    const MAX_FILE = 10 * 1024 * 1024;  // 10MB
+    const MAX_TOTAL = 20 * 1024 * 1024; // 20MB
+
+    for (const input of fileInputs){
+      for (const file of (input.files || [])){
+        total += file.size;
+        if (file.size > MAX_FILE || total > MAX_TOTAL){
+          return { error: 'size', message: 'Cada archivo ≤ 10MB y el total ≤ 20MB.' };
+        }
+      }
+    }
+
+    for (const input of fileInputs){
+      const field = input.name || 'archivo';
+      for (const file of (input.files || [])){
+        const path = `tpl/${type}/${id}/${sanitizeName(field)}__${sanitizeName(file.name)}`;
+        const ref = storage.ref().child(path);
+        await ref.put(file, { contentType: file.type || 'application/octet-stream' });
+        const url = await ref.getDownloadURL();
+        filesMeta.push({
+          field, name: file.name, size: file.size, contentType: file.type || '',
+          path, url
+        });
+      }
+    }
+
+    const doc = {
+      type,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      page: location.href,
+      fields,
+      files: filesMeta,
+      status: 'enviado'
+    };
+    await db.collection('tpl_submissions').doc(id).set(doc);
+    return { id, files: filesMeta };
+  }
+
+  // ===== Detección y reglas =====
   function shouldHandle(form){
     if (form.matches('[data-tpl-emailjs="false"]')) return false; // opt-out
     if (form.querySelector('input[type="password"], [type="password"]')) return false; // no tocar login
@@ -252,12 +345,12 @@
     if (form.matches('[data-tpl-emailjs="true"]')) return true; // opt-in explícito
 
     if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true; // candidaturas
-    if (path.includes('reserva')) return true;                                             // reservas
     if (path.includes('perfil') || path.includes('registro')) return true;                 // registro propietario+mascota
+    if (path.includes('reserva')) return true;                                             // (si quieres, también lo guardamos)
 
     if (txt.includes('enviar candidatura')) return true;
-    if (txt.includes('reservar')) return true;
     if (txt.includes('guardar') || txt.includes('crear perfil')) return true;
+    if (txt.includes('reservar')) return true;
 
     return false;
   }
@@ -269,28 +362,20 @@
     const path = (location.pathname || '').toLowerCase();
     const txt  = (form.textContent || '').toLowerCase();
     if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario') || txt.includes('enviar candidatura')) return 'cuestionario';
-    if (path.includes('reserva') || txt.includes('reservar')) return 'reserva';
     if (path.includes('perfil') || path.includes('registro') || txt.includes('guardar') || txt.includes('crear perfil')) return 'perfil';
+    if (path.includes('reserva') || txt.includes('reservar')) return 'reserva';
     return 'generico';
   }
 
   function defaultsFor(type){
     switch(type){
-     case 'cuestionario':
-  return {
-    subject: '[TPL] Candidatura de auxiliar',
-    success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
-    cta: 'Volver al inicio',
-    redirect: 'index.html',
-    templateId: TEMPLATE_CANDIDATURAS_REGISTROS
-  };
-      case 'reserva':
+      case 'cuestionario':
         return {
-          subject: '[TPL] Nueva reserva',
-          success: '¡Reserva enviada! Te contactaremos para agendar la primera visita gratuita.',
-          cta: 'Ir a mi perfil',
-          redirect: 'perfil.html',
-          templateId: TEMPLATE_RESERVAS
+          subject: '[TPL] Candidatura de auxiliar',
+          success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
+          cta: 'Volver al inicio',
+          redirect: 'index.html',
+          templateId: TEMPLATE_CANDIDATURAS_REGISTROS
         };
       case 'perfil':
         return {
@@ -299,6 +384,14 @@
           cta: 'Ir a mi perfil',
           redirect: 'perfil.html',
           templateId: TEMPLATE_CANDIDATURAS_REGISTROS
+        };
+      case 'reserva':
+        return {
+          subject: '[TPL] Nueva reserva',
+          success: 'Tu reserva ya está solicitada. Nos pondremos en contacto contigo lo antes posible para la visita gratuita.',
+          cta: 'Ir a mi perfil',
+          redirect: 'perfil.html',
+          templateId: TEMPLATE_RESERVAS
         };
       default:
         return {
@@ -311,14 +404,15 @@
     }
   }
 
+  // ===== Handler principal =====
   async function handleSubmit(ev){
     const form = ev.currentTarget;
-    if (!shouldHandle(form)) return;  // deja pasar forms no gestionados
+    if (!shouldHandle(form)) return;
 
+    // Evitar dobles tarjetas de otros scripts
     ev.preventDefault();
-    // TPL: CORTAR CUALQUIER OTRO SUBMIT-HANDLER (evita dobles tarjetas)
-    ev.stopImmediatePropagation();  // TPL: NUEVO
-    ev.stopPropagation();           // TPL: NUEVO
+    ev.stopImmediatePropagation();
+    ev.stopPropagation();
 
     const ds = form.dataset || {};
     const type = detectType(form);
@@ -333,21 +427,18 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    // ====== ARCHIVOS / FROMSPREE FIX ======
-    // TPL: Si hay archivos, nos aseguramos de que el form esté listo para adjuntos
+    // Adjuntos: si hay archivos, validamos pesos (para UX)
     const hasFiles = !!form.querySelector('input[type="file"]');
     if (hasFiles) {
-      form.setAttribute('enctype','multipart/form-data');   // TPL: NUEVO
-      form.setAttribute('method','POST');                   // TPL: NUEVO
+      form.setAttribute('enctype','multipart/form-data');
+      form.setAttribute('method','POST');
 
-      // Validación de tamaño: 10MB por archivo / 20MB total
       const MAX_FILE = 10 * 1024 * 1024;
       const MAX_TOTAL = 20 * 1024 * 1024;
       let total = 0, oversize = false;
       form.querySelectorAll('input[type="file"]').forEach(input=>{
         Array.from(input.files||[]).forEach(f=>{
-          total += f.size;
-          if (f.size > MAX_FILE) oversize = true;
+          total += f.size; if (f.size > MAX_FILE) oversize = true;
         });
       });
       if (oversize || total > MAX_TOTAL){
@@ -360,40 +451,33 @@
       }
     }
 
-    // TPL: Evitar redirecciones a action/Formspree durante nuestro envío
-    const oldAction = form.getAttribute('action');          // TPL: NUEVO
-    const oldMethod = form.getAttribute('method');          // TPL: NUEVO
-    if (oldAction) form.removeAttribute('action');          // TPL: NUEVO
-
-    // Bloquear botones
+    // Bloquear submit
     const submits = form.querySelectorAll('[type="submit"]');
     submits.forEach(b=>{ b.disabled = true; b.dataset._oldText = b.textContent; b.textContent = 'Enviando…'; });
 
+    // Preparar contenido email (sin adjuntos)
+    const html = buildHTMLFromForm(form);
+    const pageUrl = location.href;
+
     try{
+      // 1) Subir a Firebase (solo guardamos en BD/Storage; NO email con adjuntos)
+      if (type === 'cuestionario' || type === 'perfil'){
+        await ensureFirebase();
+        await uploadAndSaveToFirebase(form, type); // si falla, mostramos genérico más abajo
+      }
+      // (Opcional: si quieres guardar también reservas en Firestore, avísame y lo activo para 'reserva')
+
+      // 2) Enviar correo-notificación (sin adjuntos) con EmailJS
       await loadEmailJS(cfg.publicKey);
+      await window.emailjs.send(cfg.serviceId, cfg.templateId, {
+        subject: cfg.subject,
+        message_html: html,
+        page_url: pageUrl
+      });
 
-      // Subject + tabla HTML con todos los campos
-      const html = buildHTMLFromForm(form);
-      const hiddenHtml = document.createElement('input');
-      hiddenHtml.type = 'hidden';
-      hiddenHtml.name = 'message_html';
-      hiddenHtml.value = html;
+      try { form.reset(); } catch(_){}
 
-      const hiddenSubject = document.createElement('input');
-      hiddenSubject.type = 'hidden';
-      hiddenSubject.name = 'subject';
-      hiddenSubject.value = cfg.subject;
-
-      form.appendChild(hiddenHtml);
-      form.appendChild(hiddenSubject);
-
-      await window.emailjs.sendForm(cfg.serviceId, cfg.templateId, form);
-
-      hiddenHtml.remove();
-      hiddenSubject.remove();
-
-      try { form.reset(); } catch(e){}
-
+      // 3) Tarjeta final
       showModal({
         title: '¡Listo!',
         message: cfg.success,
@@ -402,23 +486,19 @@
       });
 
     } catch(err){
-      console.error('TPL EmailJS error:', err);
+      console.error('TPL EmailJS/Firebase error:', err);
       showModal({ title:'No se pudo enviar', message:'Ha ocurrido un error al enviar el formulario. Inténtalo de nuevo.', ctaText:'Cerrar' });
     } finally {
-      // TPL: Restaurar action/method originales por si hace falta en otra navegación
-      if (oldAction) form.setAttribute('action', oldAction);   // TPL: NUEVO
-      if (oldMethod) form.setAttribute('method', oldMethod);   // TPL: NUEVO
-
       submits.forEach(b=>{ b.disabled = false; if (b.dataset._oldText) b.textContent = b.dataset._oldText; });
     }
   }
 
+  // Enganche global
   function attach(){
     document.querySelectorAll('form').forEach(form=>{
       if (form.__tplBound) return;
       form.__tplBound = true;
-      // 👇 TPL: nos enganchamos en CAPTURA para ejecutar antes que otros scripts
-      form.addEventListener('submit', handleSubmit, { passive:false, capture:true }); // TPL: CAMBIADO
+      form.addEventListener('submit', handleSubmit, { passive:false, capture:true });
     });
   }
 
