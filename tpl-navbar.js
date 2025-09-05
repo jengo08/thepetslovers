@@ -209,12 +209,12 @@
     const bar = document.getElementById('tpl-bar');
     const msg = document.getElementById('tpl-upload-msg');
     return {
-      update({percent=0,fileIndex=0,total=totalFiles,fileName=''}) {
+      update({percent=0,fileIndex=0,total=totalFiles,fileName=''}){
         const p = Math.max(0, Math.min(100, Math.round(percent)));
         bar.style.width = p + '%';
         msg.textContent = `(${fileIndex}/${total}) ${fileName} — ${p}%`;
       },
-      done() {
+      done(){
         const bd = document.getElementById('tpl-upload-backdrop');
         if (bd) bd.remove();
       },
@@ -404,7 +404,6 @@
   function normalizeType(t){
     if (!t) return 'generico';
     t = String(t).toLowerCase();
-    // “candidatura” ≡ “cuestionario”
     if (t === 'candidatura') return 'cuestionario';
     return t;
   }
@@ -486,15 +485,15 @@
   // TPL: INICIO BLOQUE NUEVO [mapa de errores de Storage]
   function storageErrorMsg(err){
     const code = err && (err.code || err.error || '').toString();
-    if (code.includes('unauthorized')) return 'Permisos insuficientes en Storage. Revisa las reglas.';
-    if (code.includes('canceled'))     return 'La subida se canceló.';
+    if (code.includes('unauthorized'))   return 'Permisos insuficientes en Storage. Revisa las reglas.';
+    if (code.includes('canceled'))       return 'La subida se canceló.';
     if (code.includes('quota-exceeded')) return 'Se superó la cuota de Storage.';
-    if (code.includes('timeout'))      return 'La subida no progresa (timeout). Revisa reglas o conexión.';
+    if (code.includes('timeout'))        return 'La subida no progresa (timeout). Revisa reglas o conexión.';
     return (err && err.message) || 'Ha ocurrido un error.';
   }
   // TPL: FIN BLOQUE NUEVO
 
-  // TPL: INICIO BLOQUE NUEVO [subida con progreso + watchdog + auth sólido]
+  // TPL: INICIO BLOQUE NUEVO [subida con progreso + watchdog + auth sólido + RUTA CON UID]
   async function uploadAndSaveToFirebase(form, type, onProgress){
     try{
       await ensureFirebaseEmailLayer();
@@ -525,7 +524,11 @@
     });
 
     if (!filesFlat.length){
-      return { id, files: [], fields }; // nada que subir
+      // Si no hay archivos, aun así guardamos candidatura si aplica (sin URLs)
+      if (type === 'cuestionario'){
+        await saveCandidaturaRecord(fields, []);
+      }
+      return { id, files: [], fields };
     }
 
     const MAX_FILE = 10 * 1024 * 1024;  // 10MB
@@ -545,8 +548,8 @@
       const { field, file } = filesFlat[i];
       const safeName = String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(0,120);
 
-      // Ruta (si prefieres con uid: `tpl/${type}/${user.uid}/${id}/...`, dímelo)
-      const path = `tpl/${type}/${id}/${(field||'archivo')}__${safeName}`;
+      // ⚠️ RUTA NUEVA CON UID para cumplir reglas tipo tpl/{uid}/...
+      const path = `tpl/${user.uid}/${type}/${id}/${(field||'archivo')}__${safeName}`;
       const ref = storage.ref().child(path);
 
       await new Promise((resolve, reject)=>{
