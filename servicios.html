@@ -20,6 +20,8 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Servicios | The Pets Lovers">
   <meta name="twitter:description" content="Cuidado profesional de mascotas en toda España.">
+  <!-- Canonical -->
+  <link rel="canonical" href="https://www.thepetslovers.es/servicios.html">
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <style>
@@ -86,7 +88,7 @@
     /* TPL: FIN BLOQUE NUEVO */
   </style>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD actualizado con Bodas y Exóticos] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [JSON-LD actualizado con hasOfferCatalog] -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -98,64 +100,78 @@
     "areaServed": "España",
     "serviceArea": {"@type":"Country","name":"España"},
     "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados.",
-    "serviceOffer": [
-      {
-        "@type": "Service",
-        "name": "Visitas a domicilio (gatos)",
-        "areaServed": "España",
-        "offers": [
-          {"@type": "Offer", "name": "60 min", "price": "22", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "90 min", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita solo medicación (~20 min)", "price": "12", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name": "2ª visita (≥ día 11)", "price": "10", "priceCurrency": "EUR"}
-        ]
-      },
-      {
-        "@type": "Service",
-        "name": "Paseos",
-        "areaServed": "España",
-        "offers": [
-          {"@type": "Offer", "name":"Paseo estándar", "price": "12", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"2ª mascota (suplemento)", "price": "8", "priceCurrency": "EUR"}
-        ]
-      },
-      {
-        "@type": "Service",
-        "name": "Guardería de día",
-        "areaServed": "España",
-        "offers": [
-          {"@type": "Offer", "name":"Tarifa diaria (hasta 8h)", "price": "15", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Bonos (desde)", "price": "135", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "20", "priceCurrency": "EUR"}
-        ]
-      },
-      {
-        "@type": "Service",
-        "name": "Estancias nocturnas",
-        "areaServed": "España",
-        "offers": [
-          {"@type": "Offer", "name":"Día completo", "price": "30", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Cachorros (≤ 6 meses)", "price": "35", "priceCurrency": "EUR"},
-          {"@type": "Offer", "name":"Estancias largas (≥ día 11)", "price": "28", "priceCurrency": "EUR"}
-        ]
-      },
-      { "@type": "Service", "name": "Transporte", "areaServed": "España",
-        "offers": [{"@type": "Offer", "name":"Servicio base + km", "price": "20", "priceCurrency": "EUR"}]
-      },
-      { "@type": "Service", "name": "Bodas", "areaServed": "España",
-        "offers": [{"@type": "Offer", "name":"Pack básico (desde)", "price": "150", "priceCurrency": "EUR"}]
-      },
-      { "@type": "Service", "name": "Postquirúrgico", "areaServed": "España",
-        "offers": [{"@type": "Offer", "name":"Precio a consultar", "price": "0", "priceCurrency": "EUR"}]
-      },
-      { "@type": "Service", "name": "Exóticos", "areaServed": "España",
-        "offers": [
-          {"@type":"Offer","name":"Visita aves (pájaros)","price":"20","priceCurrency":"EUR"},
-          {"@type":"Offer","name":"Visita reptiles","price":"15","priceCurrency":"EUR"},
-          {"@type":"Offer","name":"Pequeños mamíferos — estancia en casa del cuidador (por día)","price":"25","priceCurrency":"EUR"}
-        ]
-      }
-    ]
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Servicios",
+      "itemListElement": [
+        {
+          "@type": "OfferCatalog",
+          "name": "Visitas a domicilio (gatos)",
+          "itemListElement": [
+            {"@type":"Offer","name":"60 min","price":"22","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"90 min","price":"30","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"2ª visita solo medicación (~20 min)","price":"12","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"2ª visita (≥ día 11)","price":"10","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Paseos",
+          "itemListElement": [
+            {"@type":"Offer","name":"Paseo estándar","price":"12","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"2ª mascota (suplemento)","price":"8","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Guardería de día",
+          "itemListElement": [
+            {"@type":"Offer","name":"Tarifa diaria (hasta 8h)","price":"15","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Bonos (desde)","price":"135","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Cachorros (≤ 6 meses)","price":"20","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Estancias nocturnas",
+          "itemListElement": [
+            {"@type":"Offer","name":"Día completo","price":"30","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Cachorros (≤ 6 meses)","price":"35","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Estancias largas (≥ día 11)","price":"28","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Transporte",
+          "itemListElement": [
+            {"@type":"Offer","name":"Servicio base + km","price":"20","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Bodas",
+          "itemListElement": [
+            {"@type":"Offer","name":"Pack básico (desde)","price":"150","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Postquirúrgico",
+          "itemListElement": [
+            {"@type":"Offer","name":"Precio a consultar","price":"0","priceCurrency":"EUR"}
+          ]
+        },
+        {
+          "@type": "OfferCatalog",
+          "name": "Exóticos",
+          "itemListElement": [
+            {"@type":"Offer","name":"Visita aves (pájaros)","price":"20","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Visita reptiles","price":"15","priceCurrency":"EUR"},
+            {"@type":"Offer","name":"Pequeños mamíferos — estancia (día)","price":"25","priceCurrency":"EUR"}
+          ]
+        }
+      ]
+    }
   }
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -493,11 +509,14 @@
   <script>
     // Año en footer
     document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-    // Abrir/cerrar detalles al pasar el ratón (hover)
-    document.querySelectorAll('details[data-hover]').forEach(d => {
-      d.addEventListener('mouseenter', () => d.setAttribute('open',''));
-      d.addEventListener('mouseleave', () => d.removeAttribute('open'));
-    });
+
+    // Abrir/cerrar detalles al pasar el ratón (solo en dispositivos con hover; no en móvil)
+    if (window.matchMedia('(hover: hover)').matches) {
+      document.querySelectorAll('details[data-hover]').forEach(d => {
+        d.addEventListener('mouseenter', () => d.setAttribute('open',''));
+        d.addEventListener('mouseleave', () => d.removeAttribute('open'));
+      });
+    }
   </script>
 
   <!-- Inyectores -->
