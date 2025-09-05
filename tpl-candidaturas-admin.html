@@ -275,6 +275,9 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<!-- TPL: INICIO BLOQUE NUEVO [Firebase Storage SDK] -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
 <!-- TPL: INICIO BLOQUE NUEVO [Init + Auth + Lógica] -->
 <script>
@@ -368,6 +371,28 @@
   };
   let allC = [];
 
+  /* TPL: INICIO BLOQUE NUEVO [Resolver enlaces de Storage según reglas] */
+  async function resolveStorageLinks(items){
+    if (!items || !items.length) return;
+    const storage = firebase.storage();
+    async function toHref(url, path){
+      try{
+        if (path) { return await storage.ref(path).getDownloadURL(); }
+        if (url)  {
+          // Intentamos forzar verificación de reglas con refFromURL; si falla, devolvemos la URL tal cual
+          try { return await storage.refFromURL(url).getDownloadURL(); }
+          catch(_){ return url; }
+        }
+      }catch(_){ /* ignoramos */ }
+      return '';
+    }
+    await Promise.all(items.map(async it=>{
+      it.cvHref     = await toHref(it.cvUrl, it.cvPath);
+      it.tituloHref = await toHref(it.tituloUrl, it.tituloPath);
+    }));
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   function renderC(){
     const limit = parseInt(elC.fLimit.value||'50',10);
     const needle = elC.q.value.trim();
@@ -375,7 +400,9 @@
     const estado = elC.fEstado.value.trim();
     const filtered = allC.filter(it => textMatch(it, needle) && (!disp || (it.disponibilidad||'')===disp) && (!estado || (it.estado||'pendiente')===estado)).slice(0,limit);
     elC.rows.innerHTML = filtered.length ? filtered.map(it=>{
-      const archivos = (it.cvUrl?`<a class="btn sec" href="${it.cvUrl}" target="_blank" rel="noopener">CV</a>`:'')+' '+(it.tituloUrl?`<a class="btn sec" href="${it.tituloUrl}" target="_blank" rel="noopener">Título</a>`:'');
+      const cvLink = it.cvHref || it.cvUrl || '';
+      const tiLink = it.tituloHref || it.tituloUrl || '';
+      const archivos = (cvLink?`<a class="btn sec" href="${cvLink}" target="_blank" rel="noopener">CV</a>`:'')+' '+(tiLink?`<a class="btn sec" href="${tiLink}" target="_blank" rel="noopener">Título</a>`:'');
       const zona = zonaSugerida(it.cp);
       const canAccept = !it.cuidId;
       const perfilHref = it.cuidId ? `tpl-perfil-cuidador.html?id=${encodeURIComponent(it.cuidId)}` : '#';
@@ -395,6 +422,9 @@
     elC.status.textContent = 'Cargando candidaturas…';
     const snap = await db.collection('candidaturas').orderBy('createdAt','desc').limit(300).get();
     allC = snap.docs.map(d=>({ _id:d.id, ...d.data(), estado: d.data().estado || 'pendiente' }));
+    /* TPL: INICIO BLOQUE NUEVO [Aplicar resolución de enlaces con permisos] */
+    await resolveStorageLinks(allC);
+    /* TPL: FIN BLOQUE NUEVO */
     elC.status.textContent = `Cargadas ${allC.length}.`;
     renderC();
   }
@@ -405,7 +435,7 @@
     const lines = [head.join(',')];
     allC.forEach(it=>{
       const fecha = it.createdAt?.toDate ? fmt(it.createdAt) : '';
-      const row = [ fecha, it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', it.cvUrl||'', it.tituloUrl||'', it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
+      const row = [ fecha, it.nombre||'', it.email||'', it.telefono||'', it.ciudad||'', it.cp||'', it.disponibilidad||'', it.links||'', it.estado||'', (it.cvHref||it.cvUrl||''), (it.tituloHref||it.tituloUrl||''), it.cuidId||'' ].map(v=>`"${String(v).replace(/"/g,'""')}"`);
       lines.push(row.join(','));
     });
     const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='candidaturas.csv'; a.click();
@@ -422,315 +452,4 @@
       const cuidRef = await db.collection('cuidadores').add({
         nombre: cand.nombre||'', email: cand.email||'', telefono: cand.telefono||'',
         ciudad: cand.ciudad||'', cp: cand.cp||'', zona: zonaSugerida(cand.cp)||'',
-        especiePerro: true, especieGato: true, especieExotico: false,
-        disponibilidad: cand.disponibilidad||'', finesFestivos: cand.finesFestivos||'',
-        zonasCobertura: cand.zonasCobertura||'',
-        atvTitulado: cand.atvTitulado||'', otrasFormaciones: cand.otrasFormaciones||'',
-        experienciaLaboral: cand.experienciaLaboral || cand.experienciaPrev || '',
-        funcionesHabituales: cand.funcionesHabituales||'',
-        links: cand.links||'', descripcionPersonal: cand.descripcionPersonal||'',
-        estado: 'activo', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await db.collection('candidaturas').doc(id).update({ estado:'aceptada', cuidId: cuidRef.id });
-
-      const idx = allC.findIndex(x=>x._id===id);
-      if (idx>=0){ allC[idx].estado='aceptada'; allC[idx].cuidId=cuidRef.id; }
-      renderC();
-      alert('Candidatura aceptada y perfil creado.');
-    }catch(e){
-      console.error(e); alert('Error al aceptar (revisa reglas Firestore)');
-    }finally{
-      ev.target.disabled = false;
-    }
-  });
-
-  // ======== RESERVAS + SUGERENCIAS ========
-  const elR = {
-    status: document.getElementById('tpl-status-r'),
-    q: document.getElementById('tpl-r-q'),
-    especie: document.getElementById('tpl-r-especie'),
-    limit: document.getElementById('tpl-r-limit'),
-    rows: document.getElementById('tpl-r-rows'),
-    modal: document.getElementById('tpl-modal'),
-    close: document.getElementById('tpl-close'),
-    sugRows: document.getElementById('tpl-sug-rows'),
-    sugDesc: document.getElementById('tpl-sug-desc')
-  };
-  let allR = [];
-  let cachedCuid = [];
-
-  function renderR(){
-    const limit = parseInt(elR.limit.value||'50',10);
-    const needle = elR.q.value.trim().toLowerCase();
-    const especie = elR.especie.value;
-    const filtered = allR.filter(r=>{
-      const hay=[r.clienteNombre,r.clienteEmail,r.ciudad,r.cp].join(' ').toLowerCase();
-      const okText = !needle || hay.includes(needle);
-      const okEsp  = !especie || (r.especie===especie);
-      return okText && okEsp;
-    }).slice(0,limit);
-    elR.rows.innerHTML = filtered.length ? filtered.map(r=>`
-      <tr>
-        <td class="nowrap">${fmt(r.createdAt)}</td>
-        <td><strong>${esc(r.clienteNombre||'-')}</strong><div class="muted">${esc(r.clienteEmail||'')}</div></td>
-        <td>${esc(r.ciudad||'-')}<br><span class="muted">${esc(r.cp||'')}</span></td>
-        <td>${esc(r.especie||'-')}</td>
-        <td>${esc(r.servicio||'-')}<br><span class="muted">${esc(r.fechaInicio||'')} → ${esc(r.fechaFin||'')}</span></td>
-        <td><button class="btn" data-sugerir="${r._id}">Sugerir cuidadores</button></td>
-      </tr>
-    `).join('') : '<tr><td colspan="6">Sin reservas.</td></tr>';
-  }
-
-  async function loadR(){
-    elR.status.textContent = 'Cargando reservas…';
-    // Esperado en /reservas:
-    // { clienteNombre, clienteEmail, ciudad, cp, especie, servicio, fechaInicio:'YYYY-MM-DD', fechaFin:'YYYY-MM-DD', createdAt, (opcional) importeReserva, importeAuxiliar }
-    const snap = await db.collection('reservas').orderBy('createdAt','desc').limit(200).get();
-    allR = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
-    elR.status.textContent = `Cargadas ${allR.length}.`;
-    renderR();
-  }
-
-  async function ensureCuidadoresCache(){
-    if (cachedCuid.length) return;
-    const snap = await db.collection('cuidadores').where('estado','==','activo').limit(500).get();
-    cachedCuid = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-  }
-
-  async function sugerirParaReserva(reserva){
-    await ensureCuidadoresCache();
-    // 1) Especie
-    const esp = reserva.especie;
-    const porEspecie = cachedCuid.filter(c=>{
-      if (esp==='perro') return c.especiePerro !== false;
-      if (esp==='gato') return c.especieGato !== false;
-      if (esp==='exotico') return c.especieExotico === true;
-      return true;
-    });
-    // 2) Zona (CP/ciudad)
-    const prefCP = String(reserva.cp||'').slice(0,2);
-    function scoreZona(c){
-      let s=0;
-      if (c.cp && String(c.cp).slice(0,2)===prefCP) s+=3;
-      if ((c.ciudad||'').toLowerCase()===(reserva.ciudad||'').toLowerCase()) s+=2;
-      if ((c.zonasCobertura||'').toLowerCase().includes((reserva.ciudad||'').toLowerCase())) s+=1;
-      return s;
-    }
-    // 3) Disponibilidad (agenda)
-    const start = reserva.fechaInicio, end = reserva.fechaFin;
-    async function disponibilidadScore(c){
-      const q = await db.collection('cuidadores').doc(c.id).collection('agenda')
-        .where('date','>=', start).where('date','<=', end).get();
-      const evs = q.docs.map(d=>d.data());
-      const hayBusy = evs.some(e=> e.type==='busy');
-      const hayFree = evs.some(e=> e.type==='free');
-      return hayBusy ? -5 : (hayFree ? 2 : 0);
-    }
-    const base = porEspecie.map(c=>({ c, zona: scoreZona(c) }));
-    const availScores = await Promise.all(base.map(x=> disponibilidadScore(x.c)));
-    return base.map((x,i)=>({ c:x.c, score: x.zona + availScores[i], zonaScore:x.zona, dispScore: availScores[i] }))
-               .sort((a,b)=> b.score - a.score);
-  }
-
-  // Modal sugerencias
-  const openModal = ()=> document.getElementById('tpl-modal').style.display='flex';
-  const closeModal = ()=> document.getElementById('tpl-modal').style.display='none';
-  document.getElementById('tpl-close').addEventListener('click', closeModal);
-  document.getElementById('tpl-modal').addEventListener('click', e=>{ if(e.target.id==='tpl-modal') closeModal(); });
-
-  document.getElementById('tpl-r-rows').addEventListener('click', async ev=>{
-    const id = ev.target && ev.target.getAttribute('data-sugerir');
-    if(!id) return;
-    const r = allR.find(x=>x._id===id);
-    if(!r) return;
-    const sugRows = document.getElementById('tpl-sug-rows');
-    const sugDesc = document.getElementById('tpl-sug-desc');
-    sugRows.innerHTML = '<tr><td colspan="6">Calculando…</td></tr>';
-    sugDesc.textContent = `Reserva: ${r.ciudad||'-'} ${r.cp||''} · ${r.especie||'-'} · ${r.fechaInicio||''} → ${r.fechaFin||''}`;
-    openModal();
-    try{
-      const lista = await sugerirParaReserva(r);
-      if (!lista.length){
-        sugRows.innerHTML = '<tr><td colspan="6">No hay coincidencias. La reserva queda registrada.</td></tr>';
-        return;
-      }
-      sugRows.innerHTML = lista.slice(0,30).map(x=>{
-        const esp = [
-          x.c.especiePerro!==false ? '🐶' : '—',
-          x.c.especieGato!==false ? '🐱' : '—',
-          x.c.especieExotico===true ? '🦎' : '—'
-        ].join(' ');
-        const dispTxt = x.dispScore<0 ? 'Ocupado' : (x.dispScore>0 ? 'Libre' : 'Sin datos');
-        return `<tr>
-          <td><strong>${esc(x.c.nombre||'-')}</strong><div class="muted">${esc(x.c.email||'')} · ${esc(x.c.telefono||'')}</div></td>
-          <td>${esc(x.c.ciudad||'-')} ${x.c.cp? '('+esc(x.c.cp)+')':''}</td>
-          <td>${esp}</td>
-          <td>${dispTxt}</td>
-          <td><span class="pill">Score ${x.score}</span></td>
-          <td><a class="btn sec" target="_blank" href="tpl-perfil-cuidador.html?id=${encodeURIComponent(x.c.id)}">Abrir perfil</a></td>
-        </tr>`;
-      }).join('');
-    }catch(e){
-      console.error(e);
-      sugRows.innerHTML = '<tr><td colspan="6">Error calculando sugerencias.</td></tr>';
-    }
-  });
-
-  ['tpl-r-q','tpl-r-especie','tpl-r-limit'].forEach(id=>{
-    const n=document.getElementById(id); n && n.addEventListener('input', renderR);
-  });
-
-  // ======== USUARIOS (Propietarios y Cuidadores) ========
-  // Convención recomendada:
-  // - Colección "users": { displayName, email, ciudad, cp, role: 'propietario' | 'cuidador', createdAt }
-  // - Colección "cuidadores": perfiles de cuidadores aprobados (ya existente)
-  const elU = {
-    status: document.getElementById('tpl-status-u'),
-    q: document.getElementById('tpl-u-q'),
-    rol: document.getElementById('tpl-u-rol'),
-    limit: document.getElementById('tpl-u-limit'),
-    rows: document.getElementById('tpl-u-rows'),
-    exportBtn: document.getElementById('tpl-u-export')
-  };
-  let allU = [];
-
-  function renderU(){
-    const limit = parseInt(elU.limit.value||'50',10);
-    const q = (elU.q.value||'').toLowerCase().trim();
-    const rol = elU.rol.value;
-    const filtered = allU.filter(u=>{
-      const hay = [u.displayName,u.email,u.ciudad,u.cp].join(' ').toLowerCase();
-      const okText = !q || hay.includes(q);
-      const okRol = !rol || (u.role===rol);
-      return okText && okRol;
-    }).slice(0,limit);
-    elU.rows.innerHTML = filtered.length ? filtered.map(u=>`
-      <tr>
-        <td class="nowrap">${fmt(u.createdAt)}</td>
-        <td><strong>${esc(u.displayName||'-')}</strong><div class="muted">${esc(u.email||'')}</div></td>
-        <td>${u.role ? `<span class="pill">${esc(u.role)}</span>`:'-'}</td>
-        <td>${esc(u.ciudad||'-')}<br><span class="muted">${esc(u.cp||'')}</span></td>
-        <td>${
-          u.role==='cuidador' && u.cuidId
-           ? `<a class="btn sec" href="tpl-perfil-cuidador.html?id=${encodeURIComponent(u.cuidId)}" target="_blank">Ver perfil</a>`
-           : '-'
-        }</td>
-      </tr>
-    `).join('') : '<tr><td colspan="5">Sin usuarios.</td></tr>';
-  }
-
-  async function loadU(){
-    elU.status.textContent = 'Cargando usuarios…';
-    const snap = await db.collection('users').orderBy('createdAt','desc').limit(500).get();
-    allU = snap.docs.map(d=>({ _id:d.id, ...d.data() }));
-    elU.status.textContent = `Cargados ${allU.length}.`;
-    renderU();
-  }
-
-  [elU.q, elU.rol, elU.limit].forEach(n=> n.addEventListener('input', renderU));
-  elU.exportBtn.addEventListener('click', ()=>{
-    const head = ['fecha','displayName','email','role','ciudad','cp','cuidId'];
-    const lines = [head.join(',')];
-    allU.forEach(u=>{
-      const fecha = u.createdAt?.toDate ? fmt(u.createdAt) : '';
-      const row = [fecha,u.displayName||'',u.email||'',u.role||'',u.ciudad||'',u.cp||'',u.cuidId||''].map(v=>`"${String(v).replace(/"/g,'""')}"`);
-      lines.push(row.join(','));
-    });
-    const blob = new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8;'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='usuarios.csv'; a.click();
-  });
-
-  // ======== PANEL (Dashboard): KPIs y actividad ========
-  async function loadKPIs(){
-    const status = document.getElementById('tpl-status-panel');
-    const now = new Date();
-    const todayYmd = toYmd(now);
-
-    // Helpers para contar por periodo a partir de createdAt
-    async function countDocs(collection, limit=1000){
-      const snap = await db.collection(collection).orderBy('createdAt','desc').limit(limit).get();
-      const docs = snap.docs.map(d=>d.data()).filter(d=>d.createdAt && d.createdAt.toDate);
-      let d=0,m=0,y=0;
-      const ref = now;
-      docs.forEach(x=>{
-        const dt = x.createdAt.toDate();
-        if (toYmd(dt)===todayYmd) d++;
-        if (isSameMonth(dt,ref)) m++;
-        if (isSameYear(dt,ref)) y++;
-      });
-      return {d,m,y, raw:docs};
-    }
-
-    // Registros (users)
-    const users = await countDocs('users', 1000);
-    document.getElementById('kpi-users-today').textContent = users.d;
-    document.getElementById('kpi-users-month').textContent = `Mes: ${users.m} · Año: ${users.y}`;
-
-    // Candidaturas
-    const cands = await countDocs('candidaturas', 1000);
-    document.getElementById('kpi-cands-today').textContent = cands.d;
-    document.getElementById('kpi-cands-month').textContent = `Mes: ${cands.m} · Año: ${cands.y}`;
-
-    // Reservas
-    const resv = await countDocs('reservas', 1000);
-    document.getElementById('kpi-resv-today').textContent = resv.d;
-    document.getElementById('kpi-resv-month').textContent = `Mes: ${resv.m} · Año: ${resv.y}`;
-
-    // Visitas (convención sugerida: colección "visitas" con docs por día { date:'YYYY-MM-DD', count:number, createdAt })
-    let visToday=0, visMonth=0, visYear=0;
-    try{
-      const vs = await db.collection('visitas').orderBy('date','desc').limit(400).get();
-      const refYear = String(now.getFullYear());
-      const refMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      vs.docs.forEach(doc=>{
-        const v = doc.data();
-        if (v?.date === todayYmd) visToday += (v.count||0);
-        if (String(v?.date||'').startsWith(refMonth)) visMonth += (v.count||0);
-        if (String(v?.date||'').startsWith(refYear)) visYear += (v.count||0);
-      });
-    }catch(e){ /* si no existe, dejamos en 0 */ }
-    document.getElementById('kpi-visits-today').textContent = visToday || 0;
-    document.getElementById('kpi-visits-month').textContent = `Mes: ${visMonth||0} · Año: ${visYear||0}`;
-
-    // Ingresos (estimación): sumar campos si existen
-    let eurReserva=0, eurAux=0;
-    resv.raw.forEach(r=>{
-      eurReserva += Number(r.importeReserva||0);
-      eurAux += Number(r.importeAuxiliar||0);
-    });
-    const total = eurReserva + eurAux;
-    document.getElementById('kpi-eur-total').textContent = `${total.toFixed(2)} €`;
-    document.getElementById('kpi-eur-split').textContent = `Reserva: ${eurReserva.toFixed(2)} € · Auxiliar: ${eurAux.toFixed(2)} €`;
-
-    // Distribución roles
-    let nProp=0, nCuid=0;
-    users.raw.forEach(u=>{
-      if (u.role==='propietario') nProp++;
-      if (u.role==='cuidador') nCuid++;
-    });
-    document.getElementById('kpi-roles-total').textContent = (nProp+nCuid);
-    document.getElementById('kpi-roles-split').textContent = `Propietarios: ${nProp} · Cuidadores: ${nCuid}`;
-
-    // Actividad reciente (tomamos últimos eventos de varias colecciones)
-    const actRows = document.getElementById('tpl-activity-rows');
-    const rows = [];
-    users.raw.slice(0,10).forEach(u=> rows.push({ts:u.createdAt, type:'Usuario', msg:`Alta de ${u.displayName||u.email||'—'}`}));
-    cands.raw.slice(0,10).forEach(c=> rows.push({ts:c.createdAt, type:'Candidatura', msg:`${c.nombre||c.email||'—'} · ${c.estado||'pendiente'}`}));
-    resv.raw.slice(0,10).forEach(r=> rows.push({ts:r.createdAt, type:'Reserva', msg:`${r.clienteNombre||r.clienteEmail||'—'} · ${r.servicio||''}`}));
-    rows.sort((a,b)=> b.ts?.toMillis?.() - a.ts?.toMillis?.());
-    const show = rows.slice(0,20);
-    actRows.innerHTML = show.length
-      ? show.map(x=>`<tr><td class="nowrap">${fmt(x.ts)}</td><td>${esc(x.type)}</td><td>${esc(x.msg)}</td></tr>`).join('')
-      : '<tr><td colspan="3">Sin actividad reciente.</td></tr>';
-
-    status.textContent = 'Métricas actualizadas.';
-  }
-
-  // ======== Boot general ========
-  async function boot(){
-    await Promise.all([loadC(), loadR(), loadU(), loadKPIs()]);
-  }
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-</body>
-</html>
+        especiePerro: true, especieGato: true, especieExotico: false
