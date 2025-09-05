@@ -1,16 +1,24 @@
-/* TPL Navbar — versión final y estable para todas las páginas (fix admin en index) */
+/* TPL Navbar — estable, idempotente y sin bucles */
 (function(){
+  // Evita dobles ejecuciones si el script se incluye dos veces
+  if (window.__TPL_NAVBAR_RUNNING__) return;
+  window.__TPL_NAVBAR_RUNNING__ = true;
+
   // ========= CONFIG =========
-  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com']; // emails admin
-  var PANEL_URL   = 'tpl-candidaturas-admin.html';  // panel admin
-  var PROFILE_URL = 'perfil.html';                  // SIEMPRE este para usuarios
+  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];    // admin(s)
+  var PANEL_URL    = 'tpl-candidaturas-admin.html';   // tu panel
+  var PROFILE_URL  = 'perfil.html';                   // SIEMPRE este para usuarios
 
   // ========= HELPERS =========
-  function normEmail(s){ return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function normEmail(s){
+    return String(s||'').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
   var ADMIN_SET = new Set(ADMIN_EMAILS.map(normEmail));
   function isAdminEmail(email){ return ADMIN_SET.has(normEmail(email)); }
+  var IS_HOME = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
 
-  function buildHTML(){
+  function htmlNavbar(){
     return [
       '<nav class="navbar">',
         '<div class="logo">',
@@ -28,11 +36,13 @@
     ].join('');
   }
 
-  function injectNavbar(){
+  function injectNavbarOnce(){
     var host = document.getElementById('tpl-navbar');
-    var html = buildHTML();
-    if (host) { host.innerHTML = html; }
-    else {
+    var html = htmlNavbar();
+    if (host){
+      // Solo escribe si está vacío o distinto (evita parpadeos)
+      if (host.innerHTML.trim() !== html) host.innerHTML = html;
+    } else {
       var wrap = document.createElement('div');
       wrap.id = 'tpl-navbar';
       wrap.innerHTML = html;
@@ -43,44 +53,37 @@
   function setBtn(text, href){
     var a = document.getElementById('tpl-login-link');
     if (!a) return;
-    a.textContent = text;
-    a.setAttribute('href', href);
+    // Evita cambios innecesarios (corta “peleas” con otros scripts)
+    if (a.textContent.trim() !== text) a.textContent = text;
+    if (a.getAttribute('href') !== href) a.setAttribute('href', href);
   }
 
-  var lastUserIsAdmin = false;
-  var IS_HOME = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+  // Botón por defecto hasta saber si hay sesión
+  function setDefaultBtn(){ setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL)); }
 
-  function enforceAdminOnHome(){
-    if (!(IS_HOME && lastUserIsAdmin)) return;
-    var a = document.getElementById('tpl-login-link');
-    if (!a) return;
-    if (a.textContent.trim() !== 'Mi panel' || a.getAttribute('href') !== PANEL_URL){
-      setBtn('Mi panel', PANEL_URL);
-    }
-  }
-
+  // Actualiza según usuario
   function updateBtn(user){
-    if (!user){
-      lastUserIsAdmin = false;
-      setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
-      return;
-    }
-    lastUserIsAdmin = isAdminEmail(user.email);
-    if (lastUserIsAdmin){
+    if (!user){ setDefaultBtn(); return; }
+    var admin = isAdminEmail(user.email);
+    if (admin){
+      // La diosa pidió: en INDEX siempre “Mi panel” al ser admin
       setBtn('Mi panel', PANEL_URL);
-      enforceAdminOnHome(); // fuerza en index si algo lo cambia
     } else {
       setBtn('Mi perfil', PROFILE_URL);
     }
   }
 
-  // ========= FIREBASE (opcional) =========
+  // Carga Firebase solo si hace falta y sin duplicar
   function loadOnce(src){
     return new Promise(function(res, rej){
-      if ([...document.scripts].some(s => s.src === src)) return res();
-      var s = document.createElement('script');
-      s.src = src; s.defer = true; s.onload = res; s.onerror = rej;
-      document.head.appendChild(s);
+      var already = Array.prototype.some.call(document.scripts, function(s){
+        return s.src === src;
+      });
+      if (already) return res();
+      var el = document.createElement('script');
+      el.src = src; el.defer = true;
+      el.onload = res; el.onerror = rej;
+      document.head.appendChild(el);
     });
   }
 
@@ -101,40 +104,43 @@
       appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId:"G-FXPD69KXBG"
     };
-    if (firebase.apps.length === 0){ try{ firebase.initializeApp(cfg); }catch(_){ /* ignore */ } }
+    if (firebase.apps.length === 0){
+      try{ firebase.initializeApp(cfg); }catch(_){}
+    }
     return firebase.auth ? firebase.auth() : null;
   }
 
-  // ========= START =========
+  // Arranque seguro (sin observers ni reemplazos continuos)
   function start(){
-    // 1) Pinta SIEMPRE la barra
-    injectNavbar();
-    // 2) Botón por defecto hasta saber si hay sesión
-    setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL));
+    injectNavbarOnce();
+    setDefaultBtn();
 
-    // 3) Observador solo en index para mantener "Mi panel" si otra cosa lo cambia
-    if (IS_HOME && 'MutationObserver' in window){
-      var target = document.getElementById('tpl-login-link');
-      if (target){
-        var mo = new MutationObserver(enforceAdminOnHome);
-        mo.observe(target, { childList:true, characterData:true, subtree:true, attributes:true, attributeFilter:['href'] });
-      }
-    }
-
-    // 4) Firebase (si está disponible): actualizar según usuario/admin
     (async function(){
       try{
         await ensureFirebase();
         var auth = initFirebase();
         if (!auth) return;
+
+        // 1) Actualiza ya con el usuario actual
         updateBtn(auth.currentUser);
-        auth.onAuthStateChanged(updateBtn);
+
+        // 2) Y en cuanto cambie el estado
+        auth.onAuthStateChanged(function(u){
+          updateBtn(u);
+          // Refuerzo: si eres admin y estás en index, re-afirma “Mi panel” tras 300ms (evita carreras)
+          if (IS_HOME && u && isAdminEmail(u.email)){
+            setTimeout(function(){ setBtn('Mi panel', PANEL_URL); }, 300);
+          }
+        });
       }catch(_){
-        // Si falla Firebase, la barra queda visible con el botón por defecto
+        // Si Firebase falla, el navbar sigue visible con el botón por defecto
       }
     })();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-  else start();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
 })();
