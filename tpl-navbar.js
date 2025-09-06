@@ -409,6 +409,11 @@
   }
 
   function shouldHandle(form){
+    /* TPL: FIX — No interceptar el formulario local del cuestionario,
+       ni ninguna forma si esta página contiene el cuestionario */
+    if (form && form.id === 'tpl-form-auxiliares') return false;        // <-- FIX
+    if (document.getElementById('tpl-form-auxiliares')) return false;   // <-- FIX
+
     if (form.matches('[data-tpl-emailjs="false"]')) return false;
     if (form.querySelector('input[type="password"], [type="password"]')) return false;
     const path = (location.pathname || '').toLowerCase();
@@ -761,6 +766,7 @@
     document.querySelectorAll('form').forEach(form=>{
       if (form.__tplBound) return;
       form.__tplBound = true;
+      // Importante: seguimos en captura, pero ahora shouldHandle() descarta el cuestionario local
       form.addEventListener('submit', handleSubmit, { passive:false, capture:true });
     });
   }
@@ -775,6 +781,6 @@
   }
   init();
 })();
- /* ===========================
-    TPL: FIN BLOQUE NUEVO
-    =========================== */
+/* ===========================
+   TPL: FIN BLOQUE NUEVO
+   =========================== */
