@@ -624,6 +624,14 @@
     return defaultsFor(type);
   }
 
+  /* TPL: INICIO FIX [helper para perfíl al finalizar] */
+  function getProfileHref(){
+    var a = document.getElementById('tpl-login-link');
+    if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
+    return 'perfil.html';
+  }
+  /* TPL: FIN FIX */
+
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;
@@ -645,6 +653,11 @@
       templateId: ds.templateId || base.templateId,
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
+
+    /* TPL: INICIO FIX [esperar a Auth antes de decidir si redirigir] */
+    try{ await ensureFirebaseEmailLayer(); }catch(_){}
+    await waitForAuth(6000);  // <-- evita falso “no logueado” si aún no se resolvió Firebase
+    /* TPL: FIN FIX */
 
     // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE
     const loggedIn = isLoggedNonAnonymous();
@@ -719,11 +732,17 @@
 
       try { form.reset(); } catch(_){}
 
+      /* TPL: INICIO FIX [tras éxito en candidaturas/reservas, enviar al PERFIL si hay sesión] */
+      const successRedirect = (type === 'cuestionario' || type === 'reserva')
+        ? getProfileHref()
+        : (cfg.redirect || getProfileHref());
+      /* TPL: FIN FIX */
+
       showModal({
         title: '¡Listo!',
         message: cfg.success,
         ctaText: cfg.cta,
-        redirect: cfg.redirect
+        redirect: successRedirect
       });
 
     } catch(err){
