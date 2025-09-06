@@ -37,27 +37,29 @@
     return window.emailjs;
   }
 
-  // ========= TPL: FIX — Firebase Auth mínimo para comprobar sesión =========
-  const FB_APP = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js';
+  /* =========================
+     TPL: FIX — Comprobación de sesión (Firebase Auth) antes de enviar
+     ========================= */
+  const FB_APP  = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js';
   const FB_AUTH = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js';
 
   async function ensureFirebaseAuth(){
     if (window.firebase && firebase.auth) return;
-    // Carga ligera: solo app+auth
-    await loadScript(FB_APP);
-    await loadScript(FB_AUTH);
-    if (!firebase.apps || !firebase.apps.length){
-      // Usa tu config (la misma de la web)
-      firebase.initializeApp({
-        apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-        authDomain:"thepetslovers-c1111.firebaseapp.com",
-        projectId:"thepetslovers-c1111",
-        storageBucket:"thepetslovers-c1111.appspot.com",
-        messagingSenderId:"415914577533",
-        appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
-        measurementId:"G-FXPD69KXBG"
-      });
-    }
+    try{
+      await loadScript(FB_APP);
+      await loadScript(FB_AUTH);
+      if (!firebase.apps || !firebase.apps.length){
+        firebase.initializeApp({
+          apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+          authDomain:"thepetslovers-c1111.firebaseapp.com",
+          projectId:"thepetslovers-c1111",
+          storageBucket:"thepetslovers-c1111.appspot.com",
+          messagingSenderId:"415914577533",
+          appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+          measurementId:"G-FXPD69KXBG"
+        });
+      }
+    }catch(_){}
   }
   function getAuth(){ try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; } }
   async function waitForAuth(timeoutMs=9000){
@@ -74,21 +76,19 @@
     const u = auth && auth.currentUser;
     return !!(u && !u.isAnonymous);
   }
-  // Fallback visual (si el navbar ya cambió el texto)
   function looksLoggedFromNavbar(){
     const a = document.getElementById('tpl-login-link'); if (!a) return false;
     const t = (a.textContent||'').toLowerCase();
     return t.includes('mi perfil') || t.includes('mi panel');
   }
   function resolveLoginUrl(){
-    // Busca el “Iniciar sesión” real para no adivinar
-    const a = $('.login-button[href]')
-          || $('a[href*="iniciar"][href$=".html"]')
-          || $('a[href*="#iniciar"]');
-    const href = a ? a.getAttribute('href') : 'iniciar-sesion.html';
-    // Añade ?next=[ruta actual]
-    const sep = href.includes('?') ? '&' : '?';
-    return href + sep + 'next=' + encodeURIComponent(location.pathname + location.search + location.hash);
+    const a = $('.login-button[href]') 
+           || $('a[href*="iniciar"][href$=".html"]') 
+           || $('a[href*="#iniciar"]');
+    const base = a ? a.getAttribute('href') : 'iniciar-sesion.html';
+    const sep = base.includes('?') ? '&' : '?';
+    // TPL: FIX — incluir ?next=ruta-actual
+    return base + sep + 'next=' + encodeURIComponent(location.pathname + location.search + location.hash);
   }
   function getProfileUrl(){
     const a = document.getElementById('tpl-login-link');
@@ -124,7 +124,7 @@
   function hideOverlay(){
     const ov = $('#tpl-overlay'); if (ov) ov.classList.remove('on');
   }
-  // TPL: FIX — aceptar con redirección configurable
+  /* TPL: FIX — Aceptar con redirección configurable */
   function wireAcceptRedirect(url){
     const ov = ensureOverlay();
     const btn = $('#tpl-ov-accept', ov);
@@ -144,7 +144,7 @@
       return;
     }
 
-    // TPL: FIX — Exigir sesión real antes de enviar (solo EmailJS)
+    /* TPL: FIX — Exigir sesión ANTES de enviar (con fallback al navbar) */
     try{ await ensureFirebaseAuth(); }catch(_){}
     await waitForAuth(9000);
     const logged = isLogged() || looksLoggedFromNavbar();
@@ -187,7 +187,7 @@
         okMsg + ' En cuanto esté aceptada podrás generar tu perfil; te llegará un correo para crear tu acceso.',
         true
       );
-      wireAcceptRedirect(getProfileUrl()); // → perfil (no a login)
+      wireAcceptRedirect(getProfileUrl()); // TPL: FIX — ahora va a PERFIL
 
       try{ form.reset(); }catch(_){}
 
@@ -216,7 +216,7 @@
       });
     }
 
-    // --- RESERVAS ---
+    // --- RESERVAS (si existe en esta página) ---
     const formR = q('tpl-form-reservas');
     if (formR){
       formR.addEventListener('submit', function(ev){
