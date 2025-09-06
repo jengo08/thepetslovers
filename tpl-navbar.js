@@ -624,6 +624,15 @@
     return defaultsFor(type);
   }
 
+  /* TPL: INICIO FIX — detectar sesión por el botón del navbar si Firebase tarda */
+  function looksLoggedFromNavbar(){
+    var a = document.getElementById('tpl-login-link');
+    if (!a) return false;
+    var t = (a.textContent || '').toLowerCase();
+    return t.includes('mi perfil') || t.includes('mi panel');
+  }
+  /* TPL: FIN FIX */
+
   /* TPL: INICIO FIX [helper para perfíl al finalizar] */
   function getProfileHref(){
     var a = document.getElementById('tpl-login-link');
@@ -654,19 +663,18 @@
       publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
     });
 
-    /* TPL: INICIO FIX [esperar a Auth antes de decidir si redirigir] */
     try{ await ensureFirebaseEmailLayer(); }catch(_){}
-    await waitForAuth(6000);  // <-- evita falso “no logueado” si aún no se resolvió Firebase
-    /* TPL: FIN FIX */
+    await waitForAuth(9000); // ⬅️ esperamos un poco más
 
-    // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE
-    const loggedIn = isLoggedNonAnonymous();
+    // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE (con fallback visual del navbar)
+    const loggedIn = isLoggedNonAnonymous() || looksLoggedFromNavbar(); /* TPL: FIX aplicado */
     if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
+      const next = location.pathname + location.search + location.hash;
       showModal({
         title:'Inicia sesión para continuar',
         message:'Para enviar tu candidatura o solicitar una reserva, primero inicia sesión. Te llevamos y volverás aquí automáticamente.',
         ctaText:'Iniciar sesión',
-        redirect: 'iniciar-sesion.html?next='+encodeURIComponent(location.pathname + location.search)
+        redirect: 'iniciar-sesion.html?next='+encodeURIComponent(next)
       });
       return;
     }
@@ -698,14 +706,11 @@
     const html = buildHTMLFromForm(form);
     const pageUrl = location.href;
 
-    // Progreso (si hay archivos)
     const ui = filesSelected ? beginUploadUI(form.querySelectorAll('input[type="file"]').length) : null;
 
-    // Campos “no file” para crear candidatura aunque no suban archivos
     const fieldsForRecord = formToObject(form);
 
     try{
-      // 1) Subida a Firebase (si hay archivos) + documento en 'candidaturas'
       if (filesSelected){
         const up = await uploadAndSaveToFirebase(form, type, ui ? ui.update : null);
         if (up && up.error){
@@ -714,7 +719,6 @@
           return;
         }
       } else {
-        // Si ES candidatura y NO hay archivos, también creamos el doc en el panel
         if (type === 'cuestionario'){
           await saveCandidaturaRecord(fieldsForRecord, []);
         }
@@ -722,7 +726,6 @@
 
       ui && ui.done();
 
-      // 2) EmailJS (único canal)
       await loadEmailJS(cfg.publicKey);
       await window.emailjs.send(cfg.serviceId, cfg.templateId, {
         subject: cfg.subject,
@@ -732,11 +735,9 @@
 
       try { form.reset(); } catch(_){}
 
-      /* TPL: INICIO FIX [tras éxito en candidaturas/reservas, enviar al PERFIL si hay sesión] */
       const successRedirect = (type === 'cuestionario' || type === 'reserva')
         ? getProfileHref()
         : (cfg.redirect || getProfileHref());
-      /* TPL: FIN FIX */
 
       showModal({
         title: '¡Listo!',
