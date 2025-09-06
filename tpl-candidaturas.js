@@ -37,6 +37,65 @@
     return window.emailjs;
   }
 
+  // ========= TPL: FIX — Firebase Auth mínimo para comprobar sesión =========
+  const FB_APP = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js';
+  const FB_AUTH = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js';
+
+  async function ensureFirebaseAuth(){
+    if (window.firebase && firebase.auth) return;
+    // Carga ligera: solo app+auth
+    await loadScript(FB_APP);
+    await loadScript(FB_AUTH);
+    if (!firebase.apps || !firebase.apps.length){
+      // Usa tu config (la misma de la web)
+      firebase.initializeApp({
+        apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain:"thepetslovers-c1111.firebaseapp.com",
+        projectId:"thepetslovers-c1111",
+        storageBucket:"thepetslovers-c1111.appspot.com",
+        messagingSenderId:"415914577533",
+        appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId:"G-FXPD69KXBG"
+      });
+    }
+  }
+  function getAuth(){ try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; } }
+  async function waitForAuth(timeoutMs=9000){
+    const auth = getAuth(); if (!auth) return null;
+    if (auth.currentUser) return auth.currentUser;
+    return await new Promise((resolve)=>{
+      let done = false;
+      const to = setTimeout(()=>{ if(!done){ done=true; resolve(auth.currentUser||null); } }, timeoutMs);
+      auth.onAuthStateChanged(u=>{ if(!done){ done=true; clearTimeout(to); resolve(u||null); } });
+    });
+  }
+  function isLogged(){
+    const auth = getAuth();
+    const u = auth && auth.currentUser;
+    return !!(u && !u.isAnonymous);
+  }
+  // Fallback visual (si el navbar ya cambió el texto)
+  function looksLoggedFromNavbar(){
+    const a = document.getElementById('tpl-login-link'); if (!a) return false;
+    const t = (a.textContent||'').toLowerCase();
+    return t.includes('mi perfil') || t.includes('mi panel');
+  }
+  function resolveLoginUrl(){
+    // Busca el “Iniciar sesión” real para no adivinar
+    const a = $('.login-button[href]')
+          || $('a[href*="iniciar"][href$=".html"]')
+          || $('a[href*="#iniciar"]');
+    const href = a ? a.getAttribute('href') : 'iniciar-sesion.html';
+    // Añade ?next=[ruta actual]
+    const sep = href.includes('?') ? '&' : '?';
+    return href + sep + 'next=' + encodeURIComponent(location.pathname + location.search + location.hash);
+  }
+  function getProfileUrl(){
+    const a = document.getElementById('tpl-login-link');
+    if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
+    return 'perfil.html';
+  }
+
   // ========= Overlay (tarjeta modal) =========
   function ensureOverlay(){
     let ov = $('#tpl-overlay');
@@ -65,23 +124,14 @@
   function hideOverlay(){
     const ov = $('#tpl-overlay'); if (ov) ov.classList.remove('on');
   }
-  function resolveLoginUrl(){
-    // Buscamos el botón/enlace real de “Iniciar sesión” para no adivinar la ruta
-    const a = $('.login-button[href]') 
-           || $('a[href*="iniciar"][href$=".html"]') 
-           || $('a[href*="#iniciar"]');
-    return a ? a.getAttribute('href') : 'iniciar-sesion.html';
-  }
-  function wireAcceptRedirect(){
+  // TPL: FIX — aceptar con redirección configurable
+  function wireAcceptRedirect(url){
     const ov = ensureOverlay();
     const btn = $('#tpl-ov-accept', ov);
-    if (!btn.__tpl_wired){
-      btn.__tpl_wired = true;
-      btn.addEventListener('click', function(){
-        const url = resolveLoginUrl();
-        window.location.href = url;
-      });
-    }
+    btn.onclick = null;
+    btn.addEventListener('click', function(){
+      window.location.href = url;
+    }, { once:true });
   }
 
   // ========= Lógica genérica para formularios EmailJS =========
@@ -91,6 +141,16 @@
     // Validación nativa
     if (typeof form.reportValidity === 'function' && !form.reportValidity()){
       setStatus('Revisa los campos obligatorios.', false);
+      return;
+    }
+
+    // TPL: FIX — Exigir sesión real antes de enviar (solo EmailJS)
+    try{ await ensureFirebaseAuth(); }catch(_){}
+    await waitForAuth(9000);
+    const logged = isLogged() || looksLoggedFromNavbar();
+    if (!logged){
+      showOverlay('Inicia sesión para continuar. Te llevamos y volverás aquí automáticamente.', true);
+      wireAcceptRedirect(resolveLoginUrl()); // → login con ?next
       return;
     }
 
@@ -120,14 +180,14 @@
         'EmailJS'
       );
 
-      // Éxito → mensaje + botón Aceptar que redirige a Iniciar sesión
+      // Éxito → mensaje + botón Aceptar que te lleva al PERFIL (ya hay sesión)
       const okMsg = successLabel || (form.dataset.success || '¡Envío realizado con éxito! 🐾');
       setStatus(okMsg + ' (correo enviado con adjuntos).', true);
       showOverlay(
         okMsg + ' En cuanto esté aceptada podrás generar tu perfil; te llegará un correo para crear tu acceso.',
         true
       );
-      wireAcceptRedirect();
+      wireAcceptRedirect(getProfileUrl()); // → perfil (no a login)
 
       try{ form.reset(); }catch(_){}
 
@@ -156,8 +216,7 @@
       });
     }
 
-    // --- RESERVAS (si esta página también tiene el formulario de reservas) ---
-    // Si quieres reutilizar este mismo archivo en tu página de reservas, pon allí el formulario con id="tpl-form-reservas"
+    // --- RESERVAS ---
     const formR = q('tpl-form-reservas');
     if (formR){
       formR.addEventListener('submit', function(ev){
