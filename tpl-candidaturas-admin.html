@@ -235,6 +235,21 @@
   function fmt(ts){ if(!ts) return '-'; const d=ts.toDate(); return d.toLocaleDateString('es-ES',{year:'numeric',month:'2-digit',day:'2-digit'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
   function textMatch(item, needle){ if(!needle) return true; const hay=[item.nombre,item.email,item.telefono,item.ciudad,item.cp,item.zonasCobertura,item.links].join(' ').toLowerCase(); return hay.includes(needle.toLowerCase()); }
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Helpers Cloudinary → descarga directa] -->
+  function tplIsCloudinary(u){
+    try{ return /https?:\/\/res\.cloudinary\.com\/[^/]+\/(?:image|video|raw)\/upload\//i.test(u||''); }catch(_){ return false; }
+  }
+  function tplCloudinaryToAttachment(u){
+    try{
+      if(!u) return '';
+      if(!tplIsCloudinary(u)) return u;
+      if(/\/upload\/.*fl_attachment/.test(u)) return u;
+      // Inserta fl_attachment tras /upload/
+      return u.replace('/upload/', '/upload/fl_attachment/');
+    }catch(_){ return u||''; }
+  }
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   // ======== CANDIDATURAS ========
   const elC = {
     status: document.getElementById('tpl-status-c'),
@@ -255,7 +270,7 @@
         if (path) return await storage.ref(path).getDownloadURL();
         if (url){
           try { return await storage.refFromURL(url).getDownloadURL(); }
-          catch(_){ return url; }
+          catch(_){ return url; } // no es Firebase → usar tal cual (Cloudinary, etc.)
         }
       }catch(_){}
       return '';
@@ -273,6 +288,13 @@
       if (Array.isArray(it.otrosUrls)){
         it.otrosHrefs.push(...it.otrosUrls);
       }
+
+      /* TPL: INICIO BLOQUE NUEVO [Forzar descarga en Cloudinary] */
+      it.cvHref     = tplCloudinaryToAttachment(it.cvHref     || '');
+      it.tituloHref = tplCloudinaryToAttachment(it.tituloHref || '');
+      it.dniHref    = tplCloudinaryToAttachment(it.dniHref    || '');
+      it.otrosHrefs = (it.otrosHrefs||[]).map(tplCloudinaryToAttachment);
+      /* TPL: FIN BLOQUE NUEVO */
     }));
   }
 
@@ -284,11 +306,11 @@
     const filtered = allC.filter(it => textMatch(it, needle) && (!disp || (it.disponibilidad||'')===disp) && (!estado || (it.estado||'pendiente')===estado)).slice(0,limit);
     elC.rows.innerHTML = filtered.length ? filtered.map(it=>{
       const badges = [];
-      if (it.cvHref || it.cvUrl)       badges.push(`<a class="btn sec" href="${it.cvHref||it.cvUrl}" target="_blank" rel="noopener">CV</a>`);
-      if (it.tituloHref || it.tituloUrl) badges.push(`<a class="btn sec" href="${it.tituloHref||it.tituloUrl}" target="_blank" rel="noopener">Título</a>`);
-      if (it.dniHref || it.dniUrl)     badges.push(`<a class="btn sec" href="${it.dniHref||it.dniUrl}" target="_blank" rel="noopener">DNI</a>`);
+      if (it.cvHref || it.cvUrl)       badges.push(`<a class="btn sec" href="${it.cvHref||it.cvUrl}" target="_blank" rel="noopener" download>CV</a>`);
+      if (it.tituloHref || it.tituloUrl) badges.push(`<a class="btn sec" href="${it.tituloHref||it.tituloUrl}" target="_blank" rel="noopener" download>Título</a>`);
+      if (it.dniHref || it.dniUrl)     badges.push(`<a class="btn sec" href="${it.dniHref||it.dniUrl}" target="_blank" rel="noopener" download>DNI</a>`);
       if (Array.isArray(it.otrosHrefs) && it.otrosHrefs.length){
-        it.otrosHrefs.forEach((h,i)=>badges.push(`<a class="btn sec" href="${h}" target="_blank" rel="noopener">Otros ${i+1}</a>`));
+        it.otrosHrefs.forEach((h,i)=>badges.push(`<a class="btn sec" href="${h}" target="_blank" rel="noopener" download>Otros ${i+1}</a>`));
       }
       const archivos = badges.join(' ');
       const zona = zonaSugerida(it.cp);
