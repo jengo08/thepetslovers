@@ -182,6 +182,9 @@
   function detectType(form){
     if (form && form.id === 'tpl-form-auxiliares') return 'cuestionario';
     if (form && form.id === 'tpl-form-reservas')    return 'reserva';
+    // heurística adicional (por si el form de reservas no tiene id)
+    const txt = (form.textContent||'').toLowerCase();
+    if (txt.includes('reserva') || txt.includes('reservar')) return 'reserva';
     return (form && (form.dataset.type||'generico')).toLowerCase();
   }
   function formToObject(form){
@@ -343,78 +346,82 @@
     }
   })();
 
-  /* PATCH específico para RESERVAS (CP) — deja el patrón correcto en el DOM */
-  function patchReservasCP(){
-    const f = q('tpl-form-reservas'); if (!f) return;
-    const cpInput =
-      f.querySelector('#tpl-cp') ||
-      f.querySelector('[name="cp"], [name="codigoPostal"], [name*="postal" i], [id*="cp" i]');
-    if (!cpInput) return;
-    cpInput.setAttribute('pattern', '^[0-9]{5}$');   // anclado
-    cpInput.setAttribute('inputmode', 'numeric');
-    cpInput.setAttribute('maxlength', '5');
-    if (!cpInput.getAttribute('title')) cpInput.setAttribute('title','Introduce 5 dígitos (España)');
-    cpInput.addEventListener('input', function(){
-      this.value = this.value.replace(/\D/g,'').slice(0,5);
+  /* TPL: INICIO BLOQUE NUEVO [CP universal — saneo y validación] */
+  function digits5(s){ return String(s||'').replace(/\D/g,'').slice(0,5); }
+
+  function findCpCandidates(form){
+    if (!form) return [];
+    const els = Array.from(form.querySelectorAll('input'));
+    return els.filter(el=>{
+      const n=(el.name||'').toLowerCase();
+      const i=(el.id||'').toLowerCase();
+      const ph=(el.getAttribute('placeholder')||'').toLowerCase();
+      let labTxt='';
+      if (el.id){
+        try{
+          const lab = form.querySelector('label[for="'+(CSS&&CSS.escape?CSS.escape(el.id):el.id)+'"]');
+          if (lab) labTxt = (lab.textContent||'').toLowerCase();
+        }catch(_){}
+      }
+      const wrap = el.closest('label');
+      if (wrap) labTxt += ' ' + (wrap.textContent||'').toLowerCase();
+      const hayCp = /(^|[^a-z])cp([^a-z]|$)/.test(n+i+ph+labTxt);
+      const hayPostal = /(postal|c[óo]digo\s*postal)/.test(n+i+ph+labTxt);
+      return hayCp || hayPostal;
     });
   }
 
-  /* TPL: INICIO BLOQUE NUEVO [FIX CP Reservas definitivo] */
-  function getReservasCpInput(form){
-    return form.querySelector('#tpl-cp')
-        || form.querySelector('input[name="cp"]')
-        || form.querySelector('input[name="codigoPostal"]')
-        || form.querySelector('input[name*="postal" i]')
-        || form.querySelector('input[id*="cp" i]')
-        || form.querySelector('input[type="number"],input[type="text"],input[type="tel"]');
-  }
-  function digits5(s){ return String(s||'').replace(/\D/g,'').slice(0,5); }
+  // Neutraliza attrs que provocan "pattern mismatch" y valida manualmente
+  function sanitizeCpInputsBeforeValidation(form){
+    const cands = findCpCandidates(form);
+    if (!cands.length) return { restoreAll: ()=>{}, hasError:false, inputs:[] };
 
-  // Normaliza CP y evita que el navegador bloquee por "pattern mismatch"
-  function sanitizeAndNeutralizeCp(form){
-    if (!form || detectType(form) !== 'reserva') return { cp:null, restored:null };
-    const cp = getReservasCpInput(form);
-    if (!cp) return { cp:null, restored:null };
+    const toRestore = [];
+    let hasError = false;
 
-    // Normaliza valor
-    cp.value = digits5(cp.value);
-    // Fuerza requisitos
-    cp.setAttribute('maxlength','5');
-    cp.setAttribute('inputmode','numeric');
+    cands.forEach(cp=>{
+      const prev = {
+        type: cp.getAttribute('type'),
+        pattern: cp.getAttribute('pattern'),
+        step: cp.getAttribute('step'),
+        min: cp.getAttribute('min'),
+        max: cp.getAttribute('max')
+      };
+      // normaliza valor
+      cp.value = digits5(cp.value);
+      cp.setAttribute('maxlength','5');
+      cp.setAttribute('inputmode','numeric');
 
-    // Si está correcto, quitamos el pattern temporalmente para que reportValidity no salte por mensajes heredados
-    const prevPattern = cp.getAttribute('pattern');
-    const prevType = cp.getAttribute('type') || '';
-    const prevStep = cp.getAttribute('step') || '';
-    const prevMin = cp.getAttribute('min') || '';
-    const prevMax = cp.getAttribute('max') || '';
+      // neutraliza
+      cp.setAttribute('type','text');
+      if (prev.pattern!=null) cp.removeAttribute('pattern');
+      if (prev.step) cp.removeAttribute('step');
+      if (prev.min) cp.removeAttribute('min');
+      if (prev.max) cp.removeAttribute('max');
 
-    // En type="number" algunos navegadores ignoran pattern y dan errores de step/min/max
-    // Lo neutralizamos temporalmente.
-    cp.setAttribute('type','text');
-    if (prevPattern != null) cp.removeAttribute('pattern');
-    if (prevStep) cp.removeAttribute('step');
-    if (prevMin) cp.removeAttribute('min');
-    if (prevMax) cp.removeAttribute('max');
+      // valida manual: si es required o si el usuario escribió algo
+      const must = cp.hasAttribute('required') || cp.value.length>0;
+      if (must && cp.value.length !== 5){
+        hasError = true;
+        cp.setCustomValidity('Introduce 5 dígitos (España)');
+      } else {
+        cp.setCustomValidity('');
+      }
 
-    // Validación manual del campo CP
-    if (cp.value.length !== 5){
-      cp.setCustomValidity('Introduce 5 dígitos (España)');
-    } else {
-      cp.setCustomValidity('');
-    }
+      toRestore.push(()=> {
+        if (prev.type) cp.setAttribute('type', prev.type); else cp.removeAttribute('type');
+        if (prev.pattern!=null) cp.setAttribute('pattern', prev.pattern); else cp.removeAttribute('pattern');
+        if (prev.step) cp.setAttribute('step', prev.step); else cp.removeAttribute('step');
+        if (prev.min) cp.setAttribute('min', prev.min); else cp.removeAttribute('min');
+        if (prev.max) cp.setAttribute('max', prev.max); else cp.removeAttribute('max');
+      });
+    });
 
-    // Función para restaurar atributos EXACTAMENTE como estaban
-    const restore = () => {
-      cp.setAttribute('type', prevType || 'text');
-      if (prevPattern != null) cp.setAttribute('pattern', prevPattern);
-      else cp.removeAttribute('pattern');
-      if (prevStep) cp.setAttribute('step', prevStep); else cp.removeAttribute('step');
-      if (prevMin) cp.setAttribute('min', prevMin); else cp.removeAttribute('min');
-      if (prevMax) cp.setAttribute('max', prevMax); else cp.removeAttribute('max');
+    return {
+      hasError,
+      inputs: cands,
+      restoreAll: ()=>{ toRestore.forEach(fn=>{ try{ fn(); }catch(_){}}); }
     };
-
-    return { cp, restored: restore };
   }
   /* TPL: FIN BLOQUE NUEVO */
 
@@ -422,24 +429,23 @@
   async function handleEmailSend(form, templateId, sendingLabel, successLabel){
     const submitBtn = form.querySelector('button[type="submit"], .cta-button');
 
-    /* 🔧 FIX: si es Reservas, sanitiza y neutraliza CP ANTES de validar */
-    const tmp = sanitizeAndNeutralizeCp(form);  /* ←————— TPL: NUEVO */
+    /* 🔧 FIX CP universal: sanea y neutraliza antes de validar */
+    const cpCtx = sanitizeCpInputsBeforeValidation(form);
 
-    // Validación nativa (el CP ya no dispara "pattern mismatch"/min/max)
+    // Validación nativa (ya no falla por pattern/number/min/max)
     if (typeof form.reportValidity === 'function' && !form.reportValidity()){
-      // Si falló, restaura atributos (por si el usuario quiere corregir)
-      if (tmp && typeof tmp.restored === 'function') tmp.restored();
+      cpCtx.restoreAll();
       setStatus('Revisa los campos obligatorios.', false);
       return;
     }
-    // Si pasó, comprueba que nuestro CP manual también es válido
-    if (tmp && tmp.cp && tmp.cp.value.length !== 5){
-      if (tmp && typeof tmp.restored === 'function') tmp.restored();
-      tmp.cp.reportValidity();
+    // Y, si nuestra verificación manual de CP falla, mostramos el aviso
+    if (cpCtx.hasError){
+      cpCtx.restoreAll();
+      const first = cpCtx.inputs[0]; if (first){ try{ first.reportValidity(); first.focus(); }catch(_){ } }
       return;
     }
-    // Restaurar atributos originales del CP antes de continuar
-    if (tmp && typeof tmp.restored === 'function') tmp.restored();
+    // Restaurar attrs originales antes de continuar
+    cpCtx.restoreAll();
 
     // Requiere sesión (robusta)
     const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
@@ -475,14 +481,13 @@
       }
     }catch(errUp){
       console.warn('Cloudinary falló, sigo con EmailJS adjuntos:', errUp);
-      // Si falla Cloudinary, seguimos con EmailJS con adjuntos (sin romper tu flujo)
+      // Si falla Cloudinary, seguimos con EmailJS con adjuntos
     }
 
     try{
       const emailjs = await ensureEmailJS();
       try{ emailjs.init(EMAILJS_PUBLIC_KEY); }catch(_){}
 
-      // Envío (si Cloudinary subió, irá sin adjuntos; si no, con adjuntos)
       await withTimeout(
         emailjs.sendForm(EMAILJS_SERVICE_ID, templateId, form),
         30000,
@@ -529,10 +534,11 @@
       });
     }
 
-    // --- RESERVAS ---
-    const formR = q('tpl-form-reservas');
+    // --- RESERVAS (o cualquier form de reservas aunque no se llame así) ---
+    const formR = q('tpl-form-reservas') || Array.from(document.forms).find(f => {
+      const t=(f.textContent||'').toLowerCase(); return t.includes('reserva')||t.includes('reservar');
+    });
     if (formR){
-      patchReservasCP(); // deja el patrón bien puesto “como antes”
       formR.addEventListener('submit', function(ev){
         ev.preventDefault();
         handleEmailSend(
