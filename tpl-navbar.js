@@ -56,8 +56,45 @@
   }
   function setDefaultBtn(){ setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL)); }
 
+  /* TPL: INICIO BLOQUE NUEVO [Puente ligero de sesión → localStorage + evento] */
+  function syncStorageFromUser(user){
+    try{
+      if (user && !user.isAnonymous && user.email){
+        localStorage.setItem('tpl_auth_email', user.email || '');
+        localStorage.setItem('tpl_auth_uid',   user.uid   || '');
+        document.body && document.body.setAttribute('data-auth','in');
+      } else {
+        localStorage.removeItem('tpl_auth_email');
+        localStorage.removeItem('tpl_auth_uid');
+        document.body && document.body.setAttribute('data-auth','out');
+      }
+      window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: (user && user.email) || null } }));
+    }catch(_){}
+  }
+  function getStoredEmail(){
+    try{ return localStorage.getItem('tpl_auth_email'); }catch(_){ return null; }
+  }
+  function renderFromStoredEmail(){
+    var e = getStoredEmail();
+    if (!e){ setDefaultBtn(); return; }
+    if (isAdminEmail(e)) setBtn('Mi panel', PANEL_URL);
+    else setBtn('Mi perfil', PROFILE_URL);
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   function updateBtn(user){
-    if (!user || user.isAnonymous){ setDefaultBtn(); return; }
+    // Mantengo tu lógica original
+    if (!user || user.isAnonymous){
+      setDefaultBtn();
+      /* TPL: INICIO BLOQUE NUEVO [Sin sesión → limpiar storage] */
+      syncStorageFromUser(null);
+      /* TPL: FIN BLOQUE NUEVO */
+      return;
+    }
+    /* TPL: INICIO BLOQUE NUEVO [Con sesión → sincronizar storage] */
+    syncStorageFromUser(user);
+    /* TPL: FIN BLOQUE NUEVO */
+
     var admin = isAdminEmail(user.email);
     if (admin){ setBtn('Mi panel', PANEL_URL); }
     else { setBtn('Mi perfil', PROFILE_URL); }
@@ -104,6 +141,11 @@
   function start(){
     injectNavbarOnce();
     setDefaultBtn();
+
+    /* TPL: INICIO BLOQUE NUEVO [Pintado inmediato según localStorage] */
+    // Si vienes ya logueada de otra página, el botón cambia sin esperar a Firebase.
+    renderFromStoredEmail();
+    /* TPL: FIN BLOQUE NUEVO */
 
     (async function(){
       try{
@@ -160,6 +202,13 @@
 
       }catch(_){}
     })();
+
+    /* TPL: INICIO BLOQUE NUEVO [Escuchar cambios en localStorage desde otras páginas/pestañas] */
+    window.addEventListener('storage', function(ev){
+      if (!ev || (ev.key!=='tpl_auth_email' && ev.key!=='tpl_auth_uid')) return;
+      renderFromStoredEmail();
+    });
+    /* TPL: FIN BLOQUE NUEVO */
   }
 
   if (document.readyState === 'loading') {
