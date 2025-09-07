@@ -202,6 +202,39 @@
 
   // ========= Inicialización por página =========
   document.addEventListener('DOMContentLoaded', function(){
+
+    /* =========================
+       TPL: PATCH VALIDACIÓN (CP + TEL) — añadido
+       Fuerza patrones correctos aunque el HTML tenga \\d{5}, etc.
+       ========================= */
+    (function patchValidationHints(){
+      const cp = q('tpl-cp');
+      if (cp){
+        cp.setAttribute('pattern', '[0-9]{5}');
+        cp.setAttribute('inputmode', 'numeric');
+        cp.setAttribute('maxlength', '5');
+        if (!cp.getAttribute('title')) cp.setAttribute('title','Introduce 5 dígitos (España)');
+        // Ayuda: solo dígitos y 5 máx
+        cp.addEventListener('input', function(){
+          this.value = this.value.replace(/\D/g,'').slice(0,5);
+        });
+      }
+      const tel = q('tpl-telefono');
+      if (tel){
+        tel.setAttribute('pattern', '(\\+34\\s?)?([0-9]{3}\\s?){3}');
+        tel.setAttribute('inputmode', 'tel');
+        if (!tel.getAttribute('title')) tel.setAttribute('title','Ej.: 600123456 o +34 600123456');
+        // Ayuda: solo +, dígitos y espacios
+        tel.addEventListener('input', function(){
+          this.value = this.value.replace(/[^0-9+ ]/g,'').replace(/\s{2,}/g,' ');
+        });
+        tel.addEventListener('blur', function(){
+          this.value = this.value.trim();
+        });
+      }
+    })();
+    /* ===== FIN PATCH ===== */
+
     // --- CANDIDATURAS ---
     const formC = q('tpl-form-auxiliares');
     if (formC){
