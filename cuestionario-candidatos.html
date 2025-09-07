@@ -394,6 +394,15 @@
 
   <script>document.querySelectorAll('.year-span')?.forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Refresco inmediato del navbar si ya hay sesión en localStorage] -->
+  <script defer>
+    document.addEventListener('DOMContentLoaded', function(){
+      try{ window.__TPL_NAVBAR_REFRESH && window.__TPL_NAVBAR_REFRESH(); }catch(_){}
+    });
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <script src="tpl-footer.js" defer></script>
 
   <!-- Firebase compat (por si está disponible; no es obligatorio para Cloudinary+Formspree) -->
@@ -422,7 +431,7 @@
     })();
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de envío: Firebase/Cloudinary/Formspree] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de envío (EmailJS) — sin depender de Formspree/Storage)] -->
   <script src="tpl-candidaturas.js" defer></script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
