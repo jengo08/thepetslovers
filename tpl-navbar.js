@@ -57,7 +57,7 @@
   function setDefaultBtn(){ setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL)); }
 
   function updateBtn(user){
-    if (!user){ setDefaultBtn(); return; }
+    if (!user || user.isAnonymous){ setDefaultBtn(); return; }
     var admin = isAdminEmail(user.email);
     if (admin){ setBtn('Mi panel', PANEL_URL); }
     else { setBtn('Mi perfil', PROFILE_URL); }
@@ -74,10 +74,12 @@
     });
   }
 
+  // ⬇️⬇️ FIX 1: solo retornar si TAMBIÉN existe firebase.auth
   async function ensureFirebase(){
-    if (typeof firebase !== 'undefined' && firebase.app) return;
+    if (typeof firebase !== 'undefined' && firebase.app && firebase.auth) return;
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    // (opcional, se dejan por compatibilidad con el resto del archivo)
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
   }
@@ -109,14 +111,32 @@
         var auth = initFirebase();
         if (!auth) return;
 
+        // Estado inicial
         updateBtn(auth.currentUser);
 
+        // Cambios de sesión
         auth.onAuthStateChanged(function(u){
           updateBtn(u);
           if (IS_HOME && u && u.email && isAdminEmail(u.email)){
             setTimeout(function(){ setBtn('Mi panel', PANEL_URL); }, 300);
           }
         });
+
+        // ⬇️⬇️ FIX 2: escuchar también cambios de token (casos de rehidratación lenta)
+        if (auth.onIdTokenChanged){
+          auth.onIdTokenChanged(function(u){ updateBtn(u); });
+        }
+
+        // Fallback tardío por si los scripts de Firebase tardan más en hidratar el usuario
+        setTimeout(function(){
+          if (!auth.currentUser) return;
+          // Si a estas alturas el botón sigue en "Iniciar sesión", forzamos actualización
+          var a = document.getElementById('tpl-login-link');
+          if (a && /iniciar sesión/i.test(a.textContent||'')){
+            updateBtn(auth.currentUser);
+          }
+        }, 1200);
+
       }catch(_){}
     })();
   }
