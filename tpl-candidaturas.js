@@ -343,7 +343,7 @@
     }
   })();
 
-  /* PATCH específico para RESERVAS (CP) — mantiene el patrón “como antes” */
+  /* PATCH específico para RESERVAS (CP) — deja el patrón correcto en el DOM */
   function patchReservasCP(){
     const f = q('tpl-form-reservas'); if (!f) return;
     const cpInput =
@@ -359,19 +359,62 @@
     });
   }
 
-  /* TPL: INICIO BLOQUE NUEVO — Sanitizado CP Reservas ANTES de validar (fix definitivo) */
-  function sanitizeReservasCP(form){
-    if (!form) return;
-    // Solo para Reservas
-    if (detectType(form) !== 'reserva') return;
-    const cp =
-      form.querySelector('#tpl-cp') ||
-      form.querySelector('[name="cp"], [name="codigoPostal"], [name*="postal" i], [id*="cp" i]');
-    if (!cp) return;
-    // Normaliza y asegura patrón correcto
-    cp.value = String(cp.value||'').replace(/\D/g,'').slice(0,5);
-    cp.setAttribute('pattern', '^[0-9]{5}$');
-    cp.setCustomValidity('');
+  /* TPL: INICIO BLOQUE NUEVO [FIX CP Reservas definitivo] */
+  function getReservasCpInput(form){
+    return form.querySelector('#tpl-cp')
+        || form.querySelector('input[name="cp"]')
+        || form.querySelector('input[name="codigoPostal"]')
+        || form.querySelector('input[name*="postal" i]')
+        || form.querySelector('input[id*="cp" i]')
+        || form.querySelector('input[type="number"],input[type="text"],input[type="tel"]');
+  }
+  function digits5(s){ return String(s||'').replace(/\D/g,'').slice(0,5); }
+
+  // Normaliza CP y evita que el navegador bloquee por "pattern mismatch"
+  function sanitizeAndNeutralizeCp(form){
+    if (!form || detectType(form) !== 'reserva') return { cp:null, restored:null };
+    const cp = getReservasCpInput(form);
+    if (!cp) return { cp:null, restored:null };
+
+    // Normaliza valor
+    cp.value = digits5(cp.value);
+    // Fuerza requisitos
+    cp.setAttribute('maxlength','5');
+    cp.setAttribute('inputmode','numeric');
+
+    // Si está correcto, quitamos el pattern temporalmente para que reportValidity no salte por mensajes heredados
+    const prevPattern = cp.getAttribute('pattern');
+    const prevType = cp.getAttribute('type') || '';
+    const prevStep = cp.getAttribute('step') || '';
+    const prevMin = cp.getAttribute('min') || '';
+    const prevMax = cp.getAttribute('max') || '';
+
+    // En type="number" algunos navegadores ignoran pattern y dan errores de step/min/max
+    // Lo neutralizamos temporalmente.
+    cp.setAttribute('type','text');
+    if (prevPattern != null) cp.removeAttribute('pattern');
+    if (prevStep) cp.removeAttribute('step');
+    if (prevMin) cp.removeAttribute('min');
+    if (prevMax) cp.removeAttribute('max');
+
+    // Validación manual del campo CP
+    if (cp.value.length !== 5){
+      cp.setCustomValidity('Introduce 5 dígitos (España)');
+    } else {
+      cp.setCustomValidity('');
+    }
+
+    // Función para restaurar atributos EXACTAMENTE como estaban
+    const restore = () => {
+      cp.setAttribute('type', prevType || 'text');
+      if (prevPattern != null) cp.setAttribute('pattern', prevPattern);
+      else cp.removeAttribute('pattern');
+      if (prevStep) cp.setAttribute('step', prevStep); else cp.removeAttribute('step');
+      if (prevMin) cp.setAttribute('min', prevMin); else cp.removeAttribute('min');
+      if (prevMax) cp.setAttribute('max', prevMax); else cp.removeAttribute('max');
+    };
+
+    return { cp, restored: restore };
   }
   /* TPL: FIN BLOQUE NUEVO */
 
@@ -379,14 +422,24 @@
   async function handleEmailSend(form, templateId, sendingLabel, successLabel){
     const submitBtn = form.querySelector('button[type="submit"], .cta-button');
 
-    /* 🔧 FIX: si es Reservas, sanitiza CP ANTES de validar */
-    sanitizeReservasCP(form);  /* ←————— TPL: NUEVO */
+    /* 🔧 FIX: si es Reservas, sanitiza y neutraliza CP ANTES de validar */
+    const tmp = sanitizeAndNeutralizeCp(form);  /* ←————— TPL: NUEVO */
 
-    // Validación nativa
+    // Validación nativa (el CP ya no dispara "pattern mismatch"/min/max)
     if (typeof form.reportValidity === 'function' && !form.reportValidity()){
+      // Si falló, restaura atributos (por si el usuario quiere corregir)
+      if (tmp && typeof tmp.restored === 'function') tmp.restored();
       setStatus('Revisa los campos obligatorios.', false);
       return;
     }
+    // Si pasó, comprueba que nuestro CP manual también es válido
+    if (tmp && tmp.cp && tmp.cp.value.length !== 5){
+      if (tmp && typeof tmp.restored === 'function') tmp.restored();
+      tmp.cp.reportValidity();
+      return;
+    }
+    // Restaurar atributos originales del CP antes de continuar
+    if (tmp && typeof tmp.restored === 'function') tmp.restored();
 
     // Requiere sesión (robusta)
     const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
