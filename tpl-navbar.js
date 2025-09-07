@@ -130,12 +130,33 @@
         // Fallback tardío por si los scripts de Firebase tardan más en hidratar el usuario
         setTimeout(function(){
           if (!auth.currentUser) return;
-          // Si a estas alturas el botón sigue en "Iniciar sesión", forzamos actualización
           var a = document.getElementById('tpl-login-link');
           if (a && /iniciar sesión/i.test(a.textContent||'')){
             updateBtn(auth.currentUser);
           }
         }, 1200);
+
+        /* TPL: INICIO BLOQUE NUEVO [Re-chequeo robusto + eventos de foco/visibilidad] */
+        (function(){
+          // Reintenta durante ~18s (60 intentos x 300ms) o hasta que vea usuario no anónimo
+          var tries = 0;
+          var iv = setInterval(function(){
+            tries++;
+            updateBtn(auth.currentUser);
+            if ((auth.currentUser && !auth.currentUser.isAnonymous) || tries > 60){
+              clearInterval(iv);
+            }
+          }, 300);
+
+          // Al volver a la pestaña o ganar foco tras login con redirect/popups, refrescar botón
+          window.addEventListener('visibilitychange', function(){
+            if (!document.hidden) updateBtn(auth.currentUser);
+          });
+          window.addEventListener('focus', function(){
+            updateBtn(auth.currentUser);
+          });
+        })();
+        /* TPL: FIN BLOQUE NUEVO */
 
       }catch(_){}
     })();
