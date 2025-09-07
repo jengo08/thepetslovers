@@ -81,6 +81,27 @@
     const t = (a.textContent||'').toLowerCase();
     return t.includes('mi perfil') || t.includes('mi panel');
   }
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura/Escritura de sesión en localStorage como respaldo] -->
+  function getStoredEmail(){
+    try{ return localStorage.getItem('tpl_auth_email') || ''; }catch(_){ return ''; }
+  }
+  function looksLoggedFromStorage(){
+    return !!getStoredEmail();
+  }
+  function syncStorageFromUser(user){
+    try{
+      if (user && !user.isAnonymous && user.email){
+        localStorage.setItem('tpl_auth_email', user.email || '');
+        localStorage.setItem('tpl_auth_uid',   user.uid   || '');
+      } else {
+        localStorage.removeItem('tpl_auth_email');
+        localStorage.removeItem('tpl_auth_uid');
+      }
+    }catch(_){}
+  }
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   function resolveLoginUrl(){
     const a = $('.login-button[href]') 
            || $('a[href*="iniciar"][href$=".html"]') 
@@ -92,19 +113,22 @@
   }
   function getProfileUrl(){
     const a = document.getElementById('tpl-login-link');
-    if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
+    const href = a ? (a.getAttribute('href')||'') : '';
+    if (/tpl-candidaturas-admin\.html/i.test(href)) return href; // si eres admin, ve a tu panel
+    if (/perfil/i.test(href)) return href;
     return 'perfil.html';
   }
 
-  /* TPL: INICIO BLOQUE NUEVO — Espera robusta hasta que la sesión sea visible (Firebase o navbar) */
+  /* TPL: INICIO BLOQUE NUEVO — Espera robusta hasta que la sesión sea visible (Firebase o navbar o storage) */
   async function waitUntilLogged({maxMs=12000, stepMs=150}={}){
     const t0 = Date.now();
     // Primer intento: dispara la rehidratación
     try{ await ensureFirebaseAuth(); }catch(_){}
-    await waitForAuth(9000);
+    const u = await waitForAuth(9000);
+    if (u) syncStorageFromUser(u); // sincroniza storage aunque no haya navbar
 
     while (Date.now() - t0 < maxMs){
-      if (isLogged() || looksLoggedFromNavbar()) return true;
+      if (isLogged() || looksLoggedFromNavbar() || looksLoggedFromStorage()) return true;
       await new Promise(r=>setTimeout(r, stepMs));
     }
     return false;
@@ -139,10 +163,11 @@
   function hideOverlay(){
     const ov = $('#tpl-overlay'); if (ov) ov.classList.remove('on');
   }
-  /* TPL: FIX — Aceptar con redirección configurable */
-  function wireAcceptRedirect(url){
+  /* TPL: FIX — Aceptar con redirección configurable + etiqueta del botón */
+  function wireAcceptRedirect(url, label){
     const ov = ensureOverlay();
     const btn = $('#tpl-ov-accept', ov);
+    if (label) btn.textContent = label;           // ← pone “Iniciar sesión” cuando toca
     btn.onclick = null;
     btn.addEventListener('click', function(){
       window.location.href = url;
@@ -159,11 +184,11 @@
       return;
     }
 
-    /* TPL: FIX — Exigir sesión ANTES de enviar (con espera robusta que detecta Firebase o navbar) */
+    /* TPL: FIX — Exigir sesión ANTES de enviar (con espera robusta que detecta Firebase, navbar o storage) */
     const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
     if (!logged){
       showOverlay('Inicia sesión para continuar. Te llevamos y volverás aquí automáticamente.', true);
-      wireAcceptRedirect(resolveLoginUrl()); // → login con ?next
+      wireAcceptRedirect(resolveLoginUrl(), 'Iniciar sesión'); // → login con ?next
       return;
     }
 
@@ -200,7 +225,7 @@
         okMsg + ' En cuanto esté aceptada podrás generar tu perfil; te llegará un correo para crear tu acceso.',
         true
       );
-      wireAcceptRedirect(getProfileUrl()); // TPL: FIX — ahora va a PERFIL
+      wireAcceptRedirect(getProfileUrl(), 'Ir a mi perfil'); // TPL: FIX — ahora etiqueta clara
 
       try{ form.reset(); }catch(_){}
 
