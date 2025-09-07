@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [EmailJS + Overlay — Candidaturas (y Reservas) con adjuntos, con fallback Firebase Storage + Firestore] */
+/* TPL: INICIO BLOQUE NUEVO [EmailJS + Overlay — Candidaturas (y Reservas) con adjuntos, con fallback Cloudinary unsigned + Firestore; SIN Firebase Storage] */
 (function () {
   'use strict';
 
@@ -42,6 +42,7 @@
      ========================= */
   const FB_APP  = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js';
   const FB_AUTH = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js';
+  const FB_DB   = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js';
 
   async function ensureFirebaseAuth(){
     if (window.firebase && firebase.auth) return;
@@ -60,6 +61,10 @@
         });
       }
     }catch(_){}
+  }
+  async function ensureFirestore(){
+    await ensureFirebaseAuth();
+    if (!(window.firebase && firebase.firestore)) await loadScript(FB_DB);
   }
   function getAuth(){ try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; } }
   async function waitForAuth(timeoutMs=9000){
@@ -82,10 +87,8 @@
     return t.includes('mi perfil') || t.includes('mi panel');
   }
 
-  /* TPL: INICIO BLOQUE NUEVO [Respaldo de sesión en localStorage] */
-  function getStoredEmail(){
-    try{ return localStorage.getItem('tpl_auth_email') || ''; }catch(_){ return ''; }
-  }
+  /* Respaldo de sesión en localStorage */
+  function getStoredEmail(){ try{ return localStorage.getItem('tpl_auth_email') || ''; }catch(_){ return ''; } }
   function looksLoggedFromStorage(){ return !!getStoredEmail(); }
   function syncStorageFromUser(user){
     try{
@@ -98,7 +101,6 @@
       }
     }catch(_){}
   }
-  /* TPL: FIN BLOQUE NUEVO */
 
   function resolveLoginUrl(){
     const a = $('.login-button[href]') 
@@ -116,20 +118,17 @@
     return 'perfil.html';
   }
 
-  /* TPL: INICIO BLOQUE NUEVO — Espera robusta hasta ver sesión (Firebase o navbar o storage) */
   async function waitUntilLogged({maxMs=12000, stepMs=150}={}){
     const t0 = Date.now();
     try{ await ensureFirebaseAuth(); }catch(_){}
     const u = await waitForAuth(9000);
     if (u) syncStorageFromUser(u);
-
     while (Date.now() - t0 < maxMs){
       if (isLogged() || looksLoggedFromNavbar() || looksLoggedFromStorage()) return true;
       await new Promise(r=>setTimeout(r, stepMs));
     }
     return false;
   }
-  /* TPL: FIN BLOQUE NUEVO */
 
   // ========= Overlay (tarjeta modal) =========
   function ensureOverlay(){
@@ -169,18 +168,7 @@
     }, { once:true });
   }
 
-  /* =========================
-     TPL: BLOQUE NUEVO — Fallback de adjuntos: Firebase Storage + Firestore
-     ========================= */
-  const FB_STORE = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js';
-  const FB_DB    = 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js';
-
-  async function ensureFirebaseData(){
-    await ensureFirebaseAuth();
-    if (!(firebase && firebase.firestore)) await loadScript(FB_DB);
-    if (!(firebase && firebase.storage))   await loadScript(FB_STORE);
-  }
-
+  // ========= Utilidades comunes =========
   function getFiles(form){
     const files = [];
     form.querySelectorAll('input[type="file"]').forEach(inp=>{
@@ -191,13 +179,11 @@
     });
     return files;
   }
-
   function detectType(form){
     if (form && form.id === 'tpl-form-auxiliares') return 'cuestionario';
     if (form && form.id === 'tpl-form-reservas')    return 'reserva';
     return (form && (form.dataset.type||'generico')).toLowerCase();
   }
-
   function formToObject(form){
     const o = {};
     const fd = new FormData(form);
@@ -213,24 +199,38 @@
     return o;
   }
 
-  async function uploadFilesToFirebase(form, type, onProgress){
-    await ensureFirebaseData();
-    const auth = getAuth();
-    const user = await waitForAuth(9000);
-    if (!user || user.isAnonymous) throw new Error('Debes iniciar sesión para adjuntar archivos.');
+  /* =========================
+     NUEVO: Subida a Cloudinary (unsigned, GRATIS)
+     ========================= */
+  async function uploadFilesToCloudinary(form, type, onProgress){
+    const ds = form.dataset || {};
+    const cloudName = ds.cloudinaryName;
+    const preset    = ds.cloudinaryPreset;
+    if (!cloudName || !preset){
+      // Si no hay Cloudinary configurado, retornamos null (seguirá con EmailJS adjuntos)
+      return null;
+    }
 
-    const storage = firebase.storage();
-    const db = firebase.firestore();
+    // Intentamos obtener uid para folder, si hay sesión
+    let uid = null;
+    try{
+      await ensureFirebaseAuth();
+      const u = await waitForAuth(4000);
+      uid = (u && u.uid) ? u.uid : 'anon';
+    }catch(_){
+      uid = 'anon';
+    }
 
     const files = getFiles(form);
-    if (!files.length) return { urls:{}, id:null, uid: user.uid };
+    if (!files.length) return { urls:{}, id:null, uid };
 
     const batchId = `${type}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const base = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/auto/upload`;
     const urls = {};
     const total = files.reduce((a,it)=> a + (it.file?.size||0), 0);
-    let done = 0;
+    let transferred = 0;
 
-    // Límite de tamaño (igual que el front)
+    // Límites front (iguales a los que ya usas)
     const MAX_FILE = 10*1024*1024, MAX_TOTAL = 20*1024*1024;
     if (files.some(f=>f.file.size > MAX_FILE) || total > MAX_TOTAL){
       throw new Error('Cada archivo ≤ 10MB y el total ≤ 20MB.');
@@ -238,54 +238,65 @@
 
     for (let i=0;i<files.length;i++){
       const { field, file } = files[i];
-      const safe = String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(0,120);
-      const path = `tpl/${user.uid}/${type}/${batchId}/${field}__${safe}`;
-      const ref = storage.ref().child(path);
+      const fd = new FormData();
+      fd.append('upload_preset', preset);
+      fd.append('file', file);
+      fd.append('folder', `tpl/${uid}/${type}/${batchId}`);
 
-      await new Promise((resolve,reject)=>{
-        const task = ref.put(file, { contentType: file.type||'application/octet-stream' });
-        task.on('state_changed',
-          snap=>{
-            if (onProgress){
-              const pct = Math.round(((done + snap.bytesTransferred) / total) * 100);
-              onProgress({ percent: pct, fileIndex: i+1, total: files.length, fileName: file.name });
-            }
-          },
-          err=> reject(err),
-          async ()=>{
-            done += file.size;
-            try{
-              const url = await ref.getDownloadURL();
-              urls[field] = urls[field] || [];
-              urls[field].push(url);
-              resolve();
-            }catch(e){ reject(e); }
+      await new Promise((resolve, reject)=>{
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', base, true);
+
+        xhr.upload.onprogress = function(ev){
+          if (ev.lengthComputable){
+            const doneThis = ev.loaded;
+            const pct = Math.round(((transferred + doneThis) / total) * 100);
+            onProgress && onProgress({ percent: pct, fileIndex: i+1, total: files.length, fileName: file.name });
           }
-        );
+        };
+        xhr.onreadystatechange = function(){
+          if (xhr.readyState === 4){
+            if (xhr.status >= 200 && xhr.status < 300){
+              try{
+                const res = JSON.parse(xhr.responseText || '{}');
+                const url = res.secure_url || res.url;
+                if (!url) throw new Error('Respuesta sin URL de Cloudinary.');
+                urls[field] = urls[field] || [];
+                urls[field].push(url);
+                transferred += file.size;
+                resolve();
+              }catch(e){ reject(e); }
+            } else {
+              reject(new Error('Error Cloudinary: '+xhr.status));
+            }
+          }
+        };
+        xhr.onerror = ()=> reject(new Error('Error de red al subir a Cloudinary.'));
+        xhr.send(fd);
       });
     }
 
-    // Registro para tu panel
+    // Guardado en Firestore para tu panel
     try{
+      await ensureFirestore();
+      const db = firebase.firestore();
       const fields = formToObject(form);
       await db.collection(type === 'reserva' ? 'reservas' : 'candidaturas').add({
-        uid: user.uid || null,
-        email: (user.email||''),
+        uid,
+        email: getStoredEmail() || '',
         fields,
         files: urls,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         estado: 'pendiente'
       });
-    }catch(_){}
+    }catch(_){ /* opcional */ }
 
-    return { urls, id: batchId, uid: user.uid };
+    return { urls, id: batchId, uid };
   }
 
   function populateHiddenUrls(form, urls){
-    // Mapea cv → cvUrl, titulo → tituloUrl (si existen)
     if (urls.cv && urls.cv[0]) { const el = q('tpl-cvUrl'); if (el) el.value = urls.cv[0]; }
     if (urls.titulo && urls.titulo[0]) { const el = q('tpl-tituloUrl'); if (el) el.value = urls.titulo[0]; }
-    // Además, añade campos extras por si el template los quiere
     Object.keys(urls).forEach(field=>{
       urls[field].forEach((u, idx)=>{
         const hid = document.createElement('input');
@@ -296,22 +307,80 @@
       });
     });
   }
-
   function disableFileInputs(form, flag){
     form.querySelectorAll('input[type="file"]').forEach(inp=>{
       if (flag){
         inp.dataset._tplPrevDisabled = inp.disabled ? '1' : '';
-        inp.disabled = true; // al estar disabled, EmailJS no los adjunta
+        inp.disabled = true; // al estar disabled, EmailJS no adjunta
       } else {
         if (inp.dataset._tplPrevDisabled === '') inp.disabled = false;
       }
     });
   }
-  /* ===== FIN BLOQUE NUEVO (Storage + Firestore) ===== */
+
+  /* =========================
+     PATCH VALIDACIONES (CP + TEL) — global (candidaturas)
+     ========================= */
+  (function patchValidationHintsGlobal(){
+    // Candidaturas
+    const cp = q('tpl-cp');
+    if (cp){
+      cp.setAttribute('pattern', '^[0-9]{5}$');
+      cp.setAttribute('inputmode', 'numeric');
+      cp.setAttribute('maxlength', '5');
+      if (!cp.getAttribute('title')) cp.setAttribute('title','Introduce 5 dígitos (España)');
+      cp.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,5); });
+    }
+    const tel = q('tpl-telefono');
+    if (tel){
+      tel.setAttribute('pattern', '(\\+34\\s?)?([0-9]{3}\\s?){3}');
+      tel.setAttribute('inputmode', 'tel');
+      if (!tel.getAttribute('title')) tel.setAttribute('title','Ej.: 600123456 o +34 600123456');
+      tel.addEventListener('input', function(){
+        this.value = this.value.replace(/[^0-9+ ]/g,'').replace(/\s{2,}/g,' ');
+      });
+      tel.addEventListener('blur', function(){ this.value = this.value.trim(); });
+    }
+  })();
+
+  /* PATCH específico para RESERVAS (CP) — mantiene el patrón “como antes” */
+  function patchReservasCP(){
+    const f = q('tpl-form-reservas'); if (!f) return;
+    const cpInput =
+      f.querySelector('#tpl-cp') ||
+      f.querySelector('[name="cp"], [name="codigoPostal"], [name*="postal" i], [id*="cp" i]');
+    if (!cpInput) return;
+    cpInput.setAttribute('pattern', '^[0-9]{5}$');   // anclado
+    cpInput.setAttribute('inputmode', 'numeric');
+    cpInput.setAttribute('maxlength', '5');
+    if (!cpInput.getAttribute('title')) cpInput.setAttribute('title','Introduce 5 dígitos (España)');
+    cpInput.addEventListener('input', function(){
+      this.value = this.value.replace(/\D/g,'').slice(0,5);
+    });
+  }
+
+  /* TPL: INICIO BLOQUE NUEVO — Sanitizado CP Reservas ANTES de validar (fix definitivo) */
+  function sanitizeReservasCP(form){
+    if (!form) return;
+    // Solo para Reservas
+    if (detectType(form) !== 'reserva') return;
+    const cp =
+      form.querySelector('#tpl-cp') ||
+      form.querySelector('[name="cp"], [name="codigoPostal"], [name*="postal" i], [id*="cp" i]');
+    if (!cp) return;
+    // Normaliza y asegura patrón correcto
+    cp.value = String(cp.value||'').replace(/\D/g,'').slice(0,5);
+    cp.setAttribute('pattern', '^[0-9]{5}$');
+    cp.setCustomValidity('');
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ========= Lógica genérica para formularios EmailJS =========
   async function handleEmailSend(form, templateId, sendingLabel, successLabel){
     const submitBtn = form.querySelector('button[type="submit"], .cta-button');
+
+    /* 🔧 FIX: si es Reservas, sanitiza CP ANTES de validar */
+    sanitizeReservasCP(form);  /* ←————— TPL: NUEVO */
 
     // Validación nativa
     if (typeof form.reportValidity === 'function' && !form.reportValidity()){
@@ -341,39 +410,35 @@
     setStatus('Preparando envío…', false);
     showOverlay(sendingLabel, false);
 
-    // ====== TPL: NUEVO — Subir primero a Firebase y luego enviar EmailJS sin adjuntos ======
+    // ====== Cloudinary (si está configurado) → EmailJS sin adjuntos ======
     let uploaded = null;
     try{
       if (files.length){
-        uploaded = await uploadFilesToFirebase(form, detectType(form), (p)=>{/* opcional: podrías actualizar overlay */});
-        if (uploaded && uploaded.urls) {
+        uploaded = await uploadFilesToCloudinary(form, detectType(form), (p)=>{/* opcional progreso */});
+        if (uploaded && uploaded.urls){
           populateHiddenUrls(form, uploaded.urls);
-          disableFileInputs(form, true); // para que EmailJS no adjunte (evita el error de envío)
+          disableFileInputs(form, true);
         }
       }
     }catch(errUp){
-      console.error('Subida Storage falló:', errUp);
-      setStatus('No se pudieron subir los archivos. '+(errUp.message||''), false);
-      hideOverlay();
-      if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
-      return;
+      console.warn('Cloudinary falló, sigo con EmailJS adjuntos:', errUp);
+      // Si falla Cloudinary, seguimos con EmailJS con adjuntos (sin romper tu flujo)
     }
-    // ====== FIN NUEVO ======
 
     try{
       const emailjs = await ensureEmailJS();
       try{ emailjs.init(EMAILJS_PUBLIC_KEY); }catch(_){}
 
-      // Envío del formulario (ya sin adjuntos, pero con URLs ocultas)
+      // Envío (si Cloudinary subió, irá sin adjuntos; si no, con adjuntos)
       await withTimeout(
         emailjs.sendForm(EMAILJS_SERVICE_ID, templateId, form),
         30000,
         'EmailJS'
       );
 
-      // Éxito → mensaje + botón Aceptar que te lleva al PERFIL/PANEL
       const okMsg = successLabel || (form.dataset.success || '¡Envío realizado con éxito! 🐾');
-      setStatus(okMsg + (files.length ? ' (archivos subidos y enlaces enviados).' : ''), true);
+      const extra = uploaded?.urls ? ' (archivos subidos y enlaces enviados).' : '';
+      setStatus(okMsg + extra, true);
       showOverlay(
         okMsg + (detectType(form)==='cuestionario'
           ? ' En cuanto esté aceptada podrás generar tu perfil; te llegará un correo para crear tu acceso.'
@@ -393,48 +458,6 @@
       if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
     }
   }
-
-  /* =========================
-     PATCH VALIDACIONES (CP + TEL)
-     ========================= */
-  (function patchValidationHintsGlobal(){
-    // Candidaturas (ya lo tenías)
-    const cp = q('tpl-cp');
-    if (cp){
-      cp.setAttribute('pattern', '[0-9]{5}');
-      cp.setAttribute('inputmode', 'numeric');
-      cp.setAttribute('maxlength', '5');
-      if (!cp.getAttribute('title')) cp.setAttribute('title','Introduce 5 dígitos (España)');
-      cp.addEventListener('input', function(){ this.value = this.value.replace(/\D/g,'').slice(0,5); });
-    }
-    const tel = q('tpl-telefono');
-    if (tel){
-      tel.setAttribute('pattern', '(\\+34\\s?)?([0-9]{3}\\s?){3}');
-      tel.setAttribute('inputmode', 'tel');
-      if (!tel.getAttribute('title')) tel.setAttribute('title','Ej.: 600123456 o +34 600123456');
-      tel.addEventListener('input', function(){
-        this.value = this.value.replace(/[^0-9+ ]/g,'').replace(/\s{2,}/g,' ');
-      });
-      tel.addEventListener('blur', function(){ this.value = this.value.trim(); });
-    }
-  })();
-
-  /* TPL: INICIO BLOQUE NUEVO — PATCH específico para RESERVAS (CP) */
-  function patchReservasCP(){
-    const f = q('tpl-form-reservas'); if (!f) return;
-    const cpInput =
-      f.querySelector('#tpl-cp') ||
-      f.querySelector('[name="cp"], [name="codigoPostal"], [name*="postal" i], [id*="cp" i]');
-    if (!cpInput) return;
-    cpInput.setAttribute('pattern', '[0-9]{5}');
-    cpInput.setAttribute('inputmode', 'numeric');
-    cpInput.setAttribute('maxlength', '5');
-    if (!cpInput.getAttribute('title')) cpInput.setAttribute('title','Introduce 5 dígitos (España)');
-    cpInput.addEventListener('input', function(){
-      this.value = this.value.replace(/\D/g,'').slice(0,5);
-    });
-  }
-  /* TPL: FIN BLOQUE NUEVO */
 
   // ========= Inicialización por página =========
   document.addEventListener('DOMContentLoaded', function(){
@@ -456,7 +479,7 @@
     // --- RESERVAS ---
     const formR = q('tpl-form-reservas');
     if (formR){
-      patchReservasCP(); // ← FIX: CP vuelve a validarse “como antes”
+      patchReservasCP(); // deja el patrón bien puesto “como antes”
       formR.addEventListener('submit', function(ev){
         ev.preventDefault();
         handleEmailSend(
