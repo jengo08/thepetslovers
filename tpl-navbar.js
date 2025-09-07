@@ -674,6 +674,11 @@
     ev.stopImmediatePropagation();
     ev.stopPropagation();
 
+    /* 👉 CAMBIO: respetar validación nativa del HTML antes de seguir */
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()){
+      return; // el navegador mostrará qué campo falla (CP/teléfono, etc.)
+    }
+
     const ds = form.dataset || {};
     const rawType = detectType(form);
     const type = normalizeType(ds.type ? ds.type.toLowerCase() : rawType);
