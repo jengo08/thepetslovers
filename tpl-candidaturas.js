@@ -96,6 +96,21 @@
     return 'perfil.html';
   }
 
+  /* TPL: INICIO BLOQUE NUEVO — Espera robusta hasta que la sesión sea visible (Firebase o navbar) */
+  async function waitUntilLogged({maxMs=12000, stepMs=150}={}){
+    const t0 = Date.now();
+    // Primer intento: dispara la rehidratación
+    try{ await ensureFirebaseAuth(); }catch(_){}
+    await waitForAuth(9000);
+
+    while (Date.now() - t0 < maxMs){
+      if (isLogged() || looksLoggedFromNavbar()) return true;
+      await new Promise(r=>setTimeout(r, stepMs));
+    }
+    return false;
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   // ========= Overlay (tarjeta modal) =========
   function ensureOverlay(){
     let ov = $('#tpl-overlay');
@@ -144,10 +159,8 @@
       return;
     }
 
-    /* TPL: FIX — Exigir sesión ANTES de enviar (con fallback al navbar) */
-    try{ await ensureFirebaseAuth(); }catch(_){}
-    await waitForAuth(9000);
-    const logged = isLogged() || looksLoggedFromNavbar();
+    /* TPL: FIX — Exigir sesión ANTES de enviar (con espera robusta que detecta Firebase o navbar) */
+    const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
     if (!logged){
       showOverlay('Inicia sesión para continuar. Te llevamos y volverás aquí automáticamente.', true);
       wireAcceptRedirect(resolveLoginUrl()); // → login con ?next
