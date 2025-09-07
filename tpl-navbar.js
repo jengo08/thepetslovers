@@ -879,3 +879,21 @@
 /* ===========================
    TPL: FIN BLOQUE NUEVO
    =========================== */
+/* TPL: INICIO BLOQUE NUEVO [Fix CP en Reservas desde navbar] */
+(function(){
+  function fixCp(){
+    var pc = document.getElementById('postalCode');
+    if (!pc) return;
+    // Fuerza validación HTML correcta: 5 dígitos
+    pc.setAttribute('type','text');        // evita problemas si era number
+    pc.setAttribute('pattern','[0-9]{5}');
+    pc.setAttribute('inputmode','numeric');
+    pc.setAttribute('maxlength','5');
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', fixCp);
+  } else {
+    fixCp();
+  }
+})();
+/* TPL: FIN BLOQUE NUEVO */
