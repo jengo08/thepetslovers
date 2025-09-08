@@ -121,6 +121,28 @@
     .tpl-badge.review{ background:#f0f6ff; border-color:#d6e7ff; color:#285f9a; }
     .tpl-soon{ position:absolute; right:12px; top:12px; font-weight:800; font-size:.85rem; }
     /* TPL: FIN BLOQUE NUEVO */
+
+    /* =========================
+       TPL: INICIO BLOQUE NUEVO [MODAL PERFIL PROPIETARIO]
+       ========================= */
+    .tpl-modal{position:fixed;inset:0;z-index:9999;display:none}
+    .tpl-modal[aria-hidden="false"]{display:block}
+    .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+    .tpl-modal__dialog{position:relative;max-width:640px;margin:6vh auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:#58425a}
+    .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
+    .tpl-modal__close:hover{background:#e9e9e9}
+    .tpl-form{display:grid;gap:12px}
+    @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
+    .tpl-form .full{grid-column:1 / -1}
+    .tpl-input,.tpl-select,.tpl-textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit}
+    .tpl-submit{background:#339496;color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .tpl-submit:hover{background:#2a7e80}
+    .tpl-help{font-size:.9rem;color:#555}
+    /* =========================
+       TPL: FIN BLOQUE NUEVO
+       ========================= */
   </style>
 </head>
 <body>
@@ -143,9 +165,7 @@
       <div>
         <strong>Perfil incompleto.</strong> Para poder reservar, completa tus datos y añade al menos una mascota.
         <div style="margin-top:6px;">
-          <!-- TPL: INICIO BLOQUE NUEVO [CTA → nuevo formulario propietario] -->
-          <a id="completar" class="cta-button link" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html">Completar perfil</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
+          <a id="completar" class="cta-button link" href="#editar-perfil">Completar perfil</a>
           <a class="cta-button link" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
         </div>
       </div>
@@ -181,13 +201,11 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions" id="tpl-actions-perfil">
-          <!-- TPL: INICIO BLOQUE NUEVO [CTA → nuevo formulario propietario] -->
-          <a class="cta-button" id="tpl-btn-perfil" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html">Rellenar / Editar perfil</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
+          <a class="cta-button" id="tpl-btn-perfil" href="#editar-perfil">Rellenar / Editar perfil</a>
         </div>
 
         <!-- TPL: INICIO BLOQUE NUEVO [enlace pequeño editar cuando perfil completo] -->
-        <a id="tpl-link-editar" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
+        <a id="tpl-link-editar" href="#editar-perfil" class="tpl-edit-small tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-pen-to-square"></i> Editar perfil
         </a>
         <!-- TPL: FIN BLOQUE NUEVO -->
@@ -211,7 +229,9 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
+          <!-- TPL: INICIO BLOQUE NUEVO [Solo "Añadir mascota"] -->
           <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
 
@@ -235,6 +255,51 @@
     </section>
   </main>
 
+  <!-- TPL: INICIO BLOQUE NUEVO [MODAL PERFIL PROPIETARIO: igual filosofía que perfil-mascotas] -->
+  <div id="tpl-modal-perfil" class="tpl-modal" aria-hidden="true">
+    <div class="tpl-modal__backdrop" data-close></div>
+    <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tpl-modal-perfil-title">
+      <div class="tpl-modal__header">
+        <h3 class="tpl-modal__title" id="tpl-modal-perfil-title">Tu perfil de propietario</h3>
+        <button class="tpl-modal__close" type="button" aria-label="Cerrar" data-close>✕</button>
+      </div>
+      <form id="tpl-form-perfil" class="tpl-form" novalidate>
+        <div class="full">
+          <p class="tpl-help" style="margin:0">Estos datos se usan para asignarte el cuidador adecuado y coordinar las reservas.</p>
+        </div>
+        <div class="full">
+          <label for="pf-nombre">Nombre y apellidos</label>
+          <input class="tpl-input" id="pf-nombre" name="nombre" type="text" required autocomplete="name" />
+        </div>
+        <div>
+          <label for="pf-telefono">Teléfono</label>
+          <input class="tpl-input" id="pf-telefono" name="telefono" type="tel" required inputmode="tel" placeholder="+34 ..." />
+        </div>
+        <div>
+          <label for="pf-email">Email</label>
+          <input class="tpl-input" id="pf-email" name="email" type="email" required autocomplete="email" />
+        </div>
+        <div class="full">
+          <label for="pf-direccion">Dirección</label>
+          <input class="tpl-input" id="pf-direccion" name="direccion" type="text" placeholder="Calle, nº, localidad" />
+        </div>
+        <div>
+          <label for="pf-cp">Código postal</label>
+          <input class="tpl-input" id="pf-cp" name="cp" type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required />
+        </div>
+        <div class="full">
+          <label for="pf-preferencias">Preferencias / notas</label>
+          <textarea class="tpl-textarea" id="pf-preferencias" name="preferencias" rows="3" placeholder="Hábitos, pautas, horarios preferidos…"></textarea>
+        </div>
+        <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button type="submit" class="tpl-submit">Guardar</button>
+          <span class="tpl-help">Podrás editarlo cuando quieras.</span>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
@@ -248,9 +313,7 @@
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
       projectId: "thepetslovers-c1111",
-      /* TPL: INICIO BLOQUE NUEVO [FIX storageBucket correcto] */
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      /* TPL: FIN BLOQUE NUEVO */
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
       messagingSenderId: "415914577533",
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
@@ -258,17 +321,17 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI condiciones] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI condiciones + MODAL PERFIL] -->
   <script>
     (function(){
-      // ✅ Init seguro (evita “app already exists”)
+      // ✅ Init seguro
       if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
       const auth = firebase.auth();
       const db   = firebase.firestore();
 
       const LS_PROFILE_KEY = 'tpl-profile';
       const LS_PETS_KEY    = 'tpl-pets';
-      const LS_RES_KEY     = 'tpl-reservas'; // fallback local si existiera
+      const LS_RES_KEY     = 'tpl-reservas';
 
       // Refs UI
       const bannerInc   = document.getElementById('tpl-banner-incompleto');
@@ -278,6 +341,7 @@
       const statusCliente = document.getElementById('tpl-cliente-status');
       const actionsPerfil = document.getElementById('tpl-actions-perfil');
       const linkEditar    = document.getElementById('tpl-link-editar');
+      const btnPerfil     = document.getElementById('tpl-btn-perfil');
 
       const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
       const mascotasView  = document.getElementById('tpl-mascotas-view');
@@ -294,6 +358,12 @@
       const btnIrReserva  = document.getElementById('tpl-btn-ir-reserva');
       const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
 
+      // Modal Perfil propietario
+      const modalPerfil = document.getElementById('tpl-modal-perfil');
+      const formPerfil  = document.getElementById('tpl-form-perfil');
+      const closeEls    = modalPerfil.querySelectorAll('[data-close]');
+
+      // Mapeo de servicios (fallback genérico)
       const SERVICE_LABELS = {
         "guarderia-dia": "Guardería de día",
         "visitas": "Visitas a domicilio (gatos)",
@@ -305,12 +375,35 @@
         "exoticos": "Exóticos"
       };
 
+      function openPerfilModal(prefill){
+        try {
+          formPerfil.reset();
+          if (prefill){
+            formPerfil.nombre.value       = prefill.nombre || '';
+            formPerfil.telefono.value     = prefill.telefono || '';
+            formPerfil.email.value        = prefill.email || '';
+            formPerfil.direccion.value    = prefill.direccion || '';
+            formPerfil.cp.value           = prefill.cp || '';
+            formPerfil.preferencias.value = prefill.preferencias || '';
+          }
+          modalPerfil.setAttribute('aria-hidden','false');
+          document.documentElement.style.overflow = 'hidden';
+          setTimeout(()=> formPerfil.nombre.focus(), 0);
+        } catch(e){}
+      }
+      function closePerfilModal(){
+        modalPerfil.setAttribute('aria-hidden','true');
+        document.documentElement.style.overflow = '';
+      }
+      closeEls.forEach(el => el.addEventListener('click', (e)=>{ e.preventDefault(); closePerfilModal(); }));
+      modalPerfil.addEventListener('click', (e)=>{ if (e.target.matches('[data-close]')) closePerfilModal(); });
+      document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && modalPerfil.getAttribute('aria-hidden') === 'false') closePerfilModal(); });
+
       function updateBadge(profile){
         const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
         statusCliente.classList.toggle('tpl-hidden', !complete);
         statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
 
-        // CTA grande vs enlace pequeño
         if (complete) {
           if (actionsPerfil) actionsPerfil.classList.add('tpl-hidden');
           if (linkEditar) {
@@ -393,8 +486,6 @@
         }catch(_){}
 
         bannerInc.hidden = complete;
-
-        const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
         if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
 
         function guardClick(e){
@@ -402,7 +493,6 @@
           bannerInc.hidden = false;
           bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
         }
-        const btnIrReserva = document.getElementById('tpl-btn-ir-reserva');
         if (btnIrReserva){
           btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
           if (!complete){
@@ -438,10 +528,6 @@
       }
 
       function renderReservations(reservas){
-        const reservasList  = document.getElementById('tpl-reservas-list');
-        const reservasView  = document.getElementById('tpl-reservas-view');
-        const reservasEmpty = document.getElementById('tpl-reservas-empty');
-
         reservasList.innerHTML = '';
         if (!reservas || reservas.length===0){
           reservasView.classList.add('tpl-hidden');
@@ -490,39 +576,22 @@
 
         // ----- Perfil
         const profile = await getProfile(uid);
-        const emptyCliente  = document.getElementById('tpl-cliente-empty');
-        const viewCliente   = document.getElementById('tpl-cliente-view');
-
-        const v = {
-          nombre:     document.getElementById('tpl-view-nombre'),
-          telefono:   document.getElementById('tpl-view-telefono'),
-          email:      document.getElementById('tpl-view-email'),
-          direccion:  document.getElementById('tpl-view-direccion'),
-          cp:         document.getElementById('tpl-view-cp'),
-          pref:       document.getElementById('tpl-view-pref')
-        };
+        updateBadge(profile);
         if (profile && profile.nombre) {
-          v.nombre.textContent    = profile.nombre || '—';
-          v.telefono.textContent  = profile.telefono || '—';
-          v.email.textContent     = profile.email || '—';
-          v.direccion.textContent = profile.direccion || '—';
-          v.cp.textContent        = profile.cp || '—';
-          v.pref.textContent      = profile.preferencias || '—';
+          document.getElementById('tpl-view-nombre').textContent    = profile.nombre || '—';
+          document.getElementById('tpl-view-telefono').textContent  = profile.telefono || '—';
+          document.getElementById('tpl-view-email').textContent     = profile.email || '—';
+          document.getElementById('tpl-view-direccion').textContent = profile.direccion || '—';
+          document.getElementById('tpl-view-cp').textContent        = profile.cp || '—';
+          document.getElementById('tpl-view-pref').textContent      = profile.preferencias || '—';
           emptyCliente.classList.add('tpl-hidden');
           viewCliente.classList.remove('tpl-hidden');
         } else {
           viewCliente.classList.add('tpl-hidden');
           emptyCliente.classList.remove('tpl-hidden');
         }
-        updateBadge(profile);
 
         // ----- Mascotas
-        const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
-        const mascotasView  = document.getElementById('tpl-mascotas-view');
-        const mascotasList  = document.getElementById('tpl-mascotas-list');
-        const chipMascotas  = document.getElementById('tpl-chip-mascotas');
-        const cntMascotas   = document.getElementById('tpl-count-mascotas');
-
         const pets = await getPets(uid);
         mascotasList.innerHTML = '';
         const count = pets ? pets.length : 0;
@@ -614,10 +683,61 @@
         // ----- Reservas
         const reservas = await getReservations(uid);
         renderReservations(reservas);
+
+        // Auto-abrir modal de perfil si falta (obligatorio para reservar)
+        if (!hasProfile) {
+          openPerfilModal(null);
+        }
       }
 
+      // Guardado de perfil propietario (Firestore)
+      formPerfil.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        if (typeof formPerfil.reportValidity === 'function' && !formPerfil.reportValidity()) return;
+
+        const u = auth.currentUser;
+        if (!u || u.isAnonymous) { alert('Inicia sesión para guardar tu perfil.'); return; }
+
+        const data = {
+          nombre: formPerfil.nombre.value.trim(),
+          telefono: formPerfil.telefono.value.trim(),
+          email: formPerfil.email.value.trim() || (u.email || ''),
+          direccion: formPerfil.direccion.value.trim(),
+          cp: formPerfil.cp.value.trim(),
+          preferencias: formPerfil.preferencias.value.trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try{
+          await db.collection('users').doc(u.uid).collection('private').doc('profile').set(data, { merge:true });
+          // cache local opcional (por si lo usas en algún otro sitio)
+          try{ localStorage.setItem('tpl-profile', JSON.stringify(data)); }catch(_){}
+          closePerfilModal();
+          // refrescar vista
+          render(u.uid);
+        }catch(err){
+          console.error('No se pudo guardar el perfil:', err);
+          alert('No se pudo guardar el perfil. Inténtalo de nuevo.');
+        }
+      });
+
+      // Botones para abrir modal de edición
+      function hookEditLinks(prefill){
+        if (btnPerfil){
+          btnPerfil.addEventListener('click', function(e){ e.preventDefault(); openPerfilModal(prefill); });
+        }
+        if (linkEditar){
+          linkEditar.addEventListener('click', function(e){ e.preventDefault(); openPerfilModal(prefill); });
+        }
+        const completar = document.getElementById('completar');
+        if (completar){
+          completar.addEventListener('click', function(e){ e.preventDefault(); openPerfilModal(prefill); });
+        }
+      }
+
+      // ✅ Logout
       async function doLogout(){
-        try { await auth.signOut(); } catch(e) {}
+        try { await auth.signOut(); } catch(e) { /* silencioso */ }
         try {
           localStorage.removeItem('tplAuth');
           localStorage.removeItem('tplEmail');
@@ -628,14 +748,20 @@
         if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(()=>{}); }
         location.href = 'index.html';
       }
-      document.getElementById('tpl-logout-btn')?.addEventListener('click', doLogout);
+      if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
 
+      // Guardia de sesión
       auth.onAuthStateChanged(async (u) => {
         if (u && !u.isAnonymous) {
           try{
             localStorage.setItem('tplAuth','1');
             if (u.email) localStorage.setItem('tplEmail', String(u.email));
           }catch(e){}
+          // Pre-llenar email desde auth si no hay perfil aún
+          try{
+            document.getElementById('pf-email').value = u.email || '';
+          }catch(_){}
+          hookEditLinks(null);
           await render(u.uid);
         } else {
           location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
