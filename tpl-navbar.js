@@ -559,7 +559,7 @@
           success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
           cta: 'Volver al inicio',
           redirect: 'index.html',
-          templateId: TEMPLATE_CANDIDATATURAS_REGISTROS
+          templateId: TEMPLATE_CANDIDATURAS_REGISTROS // TPL: FIX del identificador (antes estaba mal escrito)
         };
       case 'perfil':
         return {
