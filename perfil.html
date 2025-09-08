@@ -1,54 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mi perfil · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <!-- TPL: INICIO BLOQUE NUEVO [Iconos footer visibles en esta página] -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <style>
-    :root{ --tpl-primary:#339496; --tpl-ink:#58425a; }
-
-    /* Layout base */
     .tpl-profile{ max-width:980px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05);}
+
+    /* TPL: INICIO BLOQUE NUEVO [barra acciones superiores] */
+    .tpl-profile-top{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px;
+    }
+    .tpl-profile-actions{ display:flex; align-items:center; gap:8px; }
+    .tpl-btn-ghost{
+      background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:8px 14px; font-weight:700; cursor:pointer;
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
     .tpl-sub{ color:#666; margin-bottom:18px; }
 
-    /* Cards */
-    .tpl-cards{ display:grid; gap:14px; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); align-items:start; }
+    /* TPL: INICIO BLOQUE NUEVO [Grid 2 columnas + card amplia] */
+    .tpl-cards{
+      display:grid; gap:14px;
+      grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+      align-items:start;
+    }
     .tpl-card{ border:1px solid #eee; border-radius:12px; padding:16px; position:relative; background:#fff; }
     .tpl-card h2{ font-size:18px; margin:0 0 10px; color:#58425a; }
-    .tpl-card-wide{ grid-column:1 / -1; }
+    .tpl-card-wide{ grid-column:1 / -1; } /* Reservas a todo el ancho */
+    /* TPL: FIN BLOQUE NUEVO */
 
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .cta-button{ background:#339496; color:#fff; padding:10px 16px; border-radius:999px; border:none; cursor:pointer; font-weight:700; text-align:center; }
-    a.cta-button{ display:inline-block; }
     .link{ background:#fff; color:#339496; border:2px solid #339496; }
 
-    /* Vistas */
+    /* TPL: INICIO BLOQUE NUEVO [vistas compactas + badges + anti overflow] */
     .tpl-view{ background:#fafafa; border:1px solid #eee; border-radius:10px; padding:12px; }
-    .tpl-view dl{ margin:0; display:grid; grid-template-columns: 170px 1fr; row-gap:6px; column-gap:10px; }
+    .tpl-view dl{
+      margin:0; display:grid; grid-template-columns: 170px 1fr; row-gap:6px; column-gap:10px;
+    }
     .tpl-view dt{ font-weight:700; color:#58425a; }
-    .tpl-view dd{ margin:0; overflow-wrap:anywhere; color:#333; }
+    .tpl-view dd{
+      margin:0; overflow-wrap:anywhere; word-break:break-word; color:#333;
+    }
+    @media (max-width:480px){
+      .tpl-view dl{ grid-template-columns: 130px 1fr; }
+    }
     .tpl-empty{ color:#666; font-style:italic; }
     .tpl-status{ position:absolute; top:12px; right:12px; font-weight:700; font-size:.9rem; display:flex; align-items:center; gap:6px; color:#2a7e80; }
     .tpl-status i{ font-size:1rem; }
     .tpl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
     .tpl-hidden{ display:none !important; }
+    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Lista de mascotas */
-    .tpl-pets{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px; }
-    .tpl-pet{ position:relative; display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #eee; border-radius:12px; background:#fff; }
-    .tpl-avatar{ width:56px; height:56px; border-radius:50%; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a; }
+    /* TPL: INICIO BLOQUE NUEVO [Editar perfil pequeño] */
+    .tpl-edit-small{
+      position:absolute; right:12px; bottom:12px;
+      font-size:.9rem; font-weight:700; color:#339496; text-decoration:none;
+    }
+    .tpl-edit-small i{ margin-right:6px; }
+    .tpl-edit-small:focus, .tpl-edit-small:hover{ text-decoration:underline; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [lista de mascotas con avatar y popover] */
+    .tpl-pets{
+      display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px;
+    }
+    .tpl-pet{
+      position:relative; display:flex; align-items:center; gap:10px;
+      padding:10px; border:1px solid #eee; border-radius:12px; background:#fff;
+    }
+    .tpl-avatar{
+      width:56px; height:56px; border-radius:50%; flex:0 0 56px; overflow:hidden; border:2px solid #e8f2f2; background:#eaf5f5; display:flex; align-items:center; justify-content:center; font-weight:700; color:#58425a;
+    }
     .tpl-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
     .tpl-pet-name{ font-weight:700; color:#58425a; line-height:1.2 }
     .tpl-pet-secondary{ font-size:.9rem; color:#666 }
+
     .tpl-pet-actions{ margin-left:auto; display:flex; gap:6px }
     .tpl-btn-sm{ padding:6px 10px; border-radius:999px; font-weight:700; border:none; cursor:pointer; }
     .tpl-btn-outline{ background:#fff; color:#339496; border:2px solid #339496; }
 
-    /* Reservas */
+    .tpl-popover{
+      position:absolute; left:10px; right:10px; top:calc(100% + 8px);
+      background:#fff; border:1px solid #eee; border-radius:12px; padding:12px; box-shadow:0 8px 24px rgba(0,0,0,.08);
+      opacity:0; pointer-events:none; transform:translateY(-4px); transition:opacity .15s ease, transform .15s ease;
+      z-index:3;
+    }
+    .tpl-pet:hover .tpl-popover, .tpl-pet:focus-within .tpl-popover{ opacity:1; pointer-events:auto; transform:translateY(0); }
+    .tpl-popover dl{ margin:0; display:grid; grid-template-columns:120px 1fr; row-gap:6px; column-gap:8px; }
+    .tpl-popover dt{ font-weight:700; color:#58425a }
+    .tpl-popover .tpl-notas{ margin-top:6px; font-size:.95rem; color:#444 }
+    @media (hover:none){
+      .tpl-popover{ position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; margin-top:8px; }
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Banner bloqueo reservas + Reservas list] */
+    .tpl-banner-warning{
+      display:flex; gap:10px; align-items:flex-start; margin:10px 0 14px;
+      padding:10px 12px; border:1px dashed #339496; border-radius:12px; background:#f0fbfb; color:#2a7e80;
+    }
+    .tpl-banner-warning i{ margin-top:2px; }
+
     .tpl-reservas{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); }
     .tpl-reserva{ border:1px solid #eee; border-radius:12px; padding:12px; background:#fff; position:relative; }
     .tpl-reserva h3{ margin:0 0 6px; font-size:1rem; color:#58425a; }
@@ -60,65 +119,85 @@
     .tpl-badge.done{ background:#eef0ff; border-color:#d8ddff; color:#2833a7; }
     .tpl-badge.review{ background:#f0f6ff; border-color:#d6e7ff; color:#285f9a; }
     .tpl-soon{ position:absolute; right:12px; top:12px; font-weight:800; font-size:.85rem; }
+    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Banner bloqueo reservas */
-    .tpl-banner-warning{ display:flex; gap:10px; align-items:flex-start; margin:10px 0 14px; padding:10px 12px; border:1px dashed #339496; border-radius:12px; background:#f0fbfb; color:#2a7e80; }
-    .tpl-banner-warning i{ margin-top:2px; }
+    /* TPL: INICIO BLOQUE NUEVO [Modales perfil (owner + pet)] */
+    .tpl-modal{position:fixed;inset:0;z-index:9999;display:none}
+    .tpl-modal[aria-hidden="false"]{display:block}
+    .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+    .tpl-modal__dialog{position:relative;max-width:760px;margin:5vh auto;background:#fff;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+    .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .tpl-modal__title{font-size:1.15rem;font-weight:700;margin:0;color:#58425a}
+    .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
+    .tpl-modal__close:hover{background:#e9e9e9}
 
-    /* MODALES (propietario + mascota inline) */
-    .tpl-modal{ position:fixed; inset:0; z-index:9999; display:none; }
-    .tpl-modal[aria-hidden="false"]{ display:block; }
-    .tpl-modal__backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.45); }
-    .tpl-modal__dialog{ position:relative; max-width:760px; margin:5vh auto; background:#fff; border-radius:14px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.2) }
-    .tpl-modal__header{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
-    .tpl-modal__title{ font-size:1.1rem; font-weight:700; margin:0; color:#58425a }
-    .tpl-modal__close{ appearance:none; border:none; background:#f3f3f3; border-radius:8px; padding:8px 10px; cursor:pointer }
-    .tpl-modal__close:hover{ background:#e9e9e9 }
-    .tpl-form{ display:grid; gap:12px }
-    @media (min-width:760px){ .tpl-form--2col{ grid-template-columns:1fr 1fr } .col-span-2{ grid-column: span 2 } }
+    .tpl-form{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media (min-width:860px){ .tpl-form{ grid-template-columns:1fr 1fr } .col-span-2{ grid-column:1 / -1 } }
     .tpl-field{ display:flex; flex-direction:column; gap:6px }
     .tpl-field label{ font-weight:700; color:#58425a }
-    .tpl-input,.tpl-textarea,.tpl-select{ width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font:inherit }
-    .tpl-input:focus,.tpl-textarea:focus,.tpl-select:focus{ border-color:var(--tpl-primary); box-shadow:0 0 0 3px rgba(51,148,150,.18) }
-    .tpl-submit{ background:#339496; color:#fff; border:none; border-radius:10px; padding:12px 16px; font-weight:700; cursor:pointer }
-    .tpl-btn-outline{ background:#fff; color:#339496; border:2px solid #339496; border-radius:10px; padding:12px 16px; font-weight:700; cursor:pointer }
+    .tpl-field input, .tpl-field textarea, .tpl-field select{
+      width:100%; padding:10px; border:1px solid #ddd; border-radius:10px; font:inherit;
+    }
+    .tpl-field input:focus, .tpl-field textarea:focus, .tpl-field select:focus{
+      border-color:#339496; box-shadow:0 0 0 3px rgba(51,148,150,.18)
+    }
+    .tpl-actions .cta-button{ display:inline-flex; align-items:center; gap:8px }
+    .tpl-inline{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+    .tpl-note{ color:#666; font-size:.9rem }
+    /* TPL: FIN BLOQUE NUEVO */
 
-    /* Foto mini en modal mascota */
-    .tpl-photo{ width:120px; height:120px; object-fit:cover; border-radius:12px; border:1px solid #eee; background:#fafafa }
+    /* TPL: INICIO BLOQUE NUEVO [Foto en modal mascota] */
+    .tpl-photo-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start}
+    .tpl-photo{width:120px;height:120px;border-radius:12px;object-fit:cover;border:1px solid #eee;background:#fafafa}
+    @media (max-width:600px){ .tpl-photo-row{grid-template-columns:1fr} .tpl-photo{width:100%;height:180px} }
+    .is-hidden{ display:none !important; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
-  <!-- Navbar unificada -->
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
 
   <main class="tpl-profile" aria-labelledby="t">
-    <h1 id="t" style="margin:0 0 6px">Mi perfil</h1>
+    <!-- TPL: INICIO BLOQUE NUEVO [barra superior con logout discreto] -->
+    <div class="tpl-profile-top">
+      <h1 id="t" style="margin:0">Mi perfil</h1>
+      <div class="tpl-profile-actions">
+        <button type="button" class="tpl-btn-ghost" id="tpl-logout-btn" aria-label="Cerrar sesión">Cerrar sesión</button>
+      </div>
+    </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- Banner “Perfil incompleto” -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Banner “Perfil incompleto”] -->
     <section id="tpl-banner-incompleto" class="tpl-banner-warning" hidden>
       <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
       <div>
         <strong>Perfil incompleto.</strong> Para poder reservar, completa tus datos y añade al menos una mascota.
         <div style="margin-top:6px;">
-          <button id="btn-open-owner" class="cta-button link" type="button">Completar perfil</button>
-          <button id="btn-open-pet" class="cta-button link" type="button">Añadir mascota</button>
+          <!-- Enlaces antiguos: los interceptaremos para abrir modal -->
+          <a id="completar" class="cta-button link" href="registro.html?next=perfil.html">Completar perfil</a>
+          <a class="cta-button link" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
         </div>
       </div>
     </section>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <p class="tpl-sub">Gestiona tus datos y los de tus mascotas.</p>
+    <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
 
     <section class="tpl-cards">
-      <!-- PROPIETARIO -->
+
+      <!-- DATOS DE CLIENTE (Card grande) -->
       <article class="tpl-card" id="tpl-card-cliente" aria-labelledby="h-cliente">
+        <!-- TPL: INICIO BLOQUE NUEVO [Badge perfil completo] -->
         <div id="tpl-cliente-status" class="tpl-status tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-circle-check"></i> Perfil completo
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <h2 id="h-cliente">Datos de cliente</h2>
         <p id="tpl-cliente-empty" class="tpl-empty">Aún no has creado tu perfil. Usa el botón para rellenarlo.</p>
 
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista solo lectura de datos] -->
         <div id="tpl-cliente-view" class="tpl-view tpl-hidden" aria-live="polite">
           <dl>
             <dt>Nombre</dt><dd id="tpl-view-nombre">—</dd>
@@ -129,537 +208,862 @@
             <dt>Preferencias</dt><dd id="tpl-view-pref">—</dd>
           </dl>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions" id="tpl-actions-perfil">
-          <button id="btn-open-owner-2" class="cta-button" type="button">Rellenar / Editar perfil</button>
+          <!-- Interceptamos este enlace para abrir modal propietario -->
+          <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
         </div>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [enlace pequeño editar cuando perfil completo] -->
+        <a id="tpl-link-editar" href="registro.html?next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
+          <i class="fa-solid fa-pen-to-square"></i> Editar perfil
+        </a>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </article>
 
-      <!-- MASCOTAS -->
+      <!-- MASCOTAS (Card grande) -->
       <article class="tpl-card" id="tpl-card-mascotas" aria-labelledby="h-mascotas">
         <h2 id="h-mascotas">Mis mascotas</h2>
+        <!-- TPL: INICIO BLOQUE NUEVO [Chip conteo] -->
         <div id="tpl-chip-mascotas" class="tpl-chip tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-paw"></i> <span id="tpl-count-mascotas">0</span>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <p id="tpl-mascotas-empty" class="tpl-empty">Aún no has añadido mascotas.</p>
 
+        <!-- TPL: INICIO BLOQUE NUEVO [Grid con tarjetas + hover + foto automática] -->
         <div id="tpl-mascotas-view" class="tpl-view tpl-hidden" aria-live="polite">
           <div id="tpl-mascotas-list" class="tpl-pets"></div>
         </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
-          <button id="btn-open-pet-2" class="cta-button link" type="button">Añadir mascota</button>
+          <!-- Interceptamos este enlace para abrir modal mascota -->
+          <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
         </div>
       </article>
 
-      <!-- RESERVAS -->
+      <!-- RESERVAS (al final, ancho completo) -->
       <article class="tpl-card tpl-card-wide" aria-labelledby="h-reservas">
         <h2 id="h-reservas">Reservas</h2>
         <p>Cuando tu perfil esté completo podrás reservar.</p>
 
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista reservas + estados + proximidad] -->
         <div id="tpl-reservas-view" class="tpl-view tpl-hidden" aria-live="polite">
           <div id="tpl-reservas-list" class="tpl-reservas"></div>
         </div>
         <p id="tpl-reservas-empty" class="tpl-empty tpl-hidden">Aún no tienes reservas.</p>
+        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
           <a class="cta-button" id="tpl-btn-ir-reserva" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
+
     </section>
   </main>
 
-  <!-- Footer unificado -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modales Inline: Propietario + Mascota] -->
+  <!-- Modal Propietario -->
+  <div id="tpl-owner-modal" class="tpl-modal" aria-hidden="true">
+    <div class="tpl-modal__backdrop" data-close-owner></div>
+    <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tpl-owner-title">
+      <div class="tpl-modal__header">
+        <h3 id="tpl-owner-title" class="tpl-modal__title">Perfil del propietario</h3>
+        <button class="tpl-modal__close" type="button" data-close-owner aria-label="Cerrar">✕</button>
+      </div>
+      <form id="tpl-owner-form" class="tpl-form" novalidate>
+        <div class="tpl-field"><label for="o_nombre">Nombre *</label><input id="o_nombre" name="nombre" required></div>
+        <div class="tpl-field"><label for="o_telefono">Teléfono *</label><input id="o_telefono" name="telefono" inputmode="tel" required></div>
+        <div class="tpl-field"><label for="o_email">Email</label><input id="o_email" name="email" type="email" readonly></div>
+        <div class="tpl-field col-span-2"><label for="o_direccion">Dirección</label><input id="o_direccion" name="direccion"></div>
+        <div class="tpl-field"><label for="o_cp">Código postal *</label><input id="o_cp" name="cp" pattern="[0-9]{5}" inputmode="numeric" maxlength="5" required></div>
+        <div class="tpl-field col-span-2"><label for="o_pref">Preferencias / notas</label><textarea id="o_pref" name="preferencias" rows="3"></textarea></div>
+
+        <div class="tpl-actions col-span-2">
+          <button type="submit" class="cta-button"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+          <button type="button" class="cta-button link" data-close-owner>Cancelar</button>
+          <span id="o_msg" class="tpl-note" aria-live="polite" style="display:none;color:#2a7e80"><i class="fa-solid fa-circle-check"></i> Guardado</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Mascota -->
+  <div id="tpl-pet-modal" class="tpl-modal" aria-hidden="true">
+    <div class="tpl-modal__backdrop" data-close-pet></div>
+    <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tpl-pet-title">
+      <div class="tpl-modal__header">
+        <h3 id="tpl-pet-title" class="tpl-modal__title">Mascota</h3>
+        <button class="tpl-modal__close" type="button" data-close-pet aria-label="Cerrar">✕</button>
+      </div>
+      <form id="tpl-pet-form" class="tpl-form" novalidate>
+        <!-- Foto -->
+        <div class="tpl-field col-span-2">
+          <label for="p_foto">Foto</label>
+          <div class="tpl-photo-row">
+            <img id="p_preview" class="tpl-photo" alt="Previsualización" src="">
+            <div class="tpl-inline">
+              <input id="p_foto" type="file" accept="image/*">
+              <button id="p_cambiar" type="button" class="cta-button link is-hidden">Cambiar foto</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tpl-field"><label for="p_nombre">Nombre *</label><input id="p_nombre" required></div>
+        <div class="tpl-field">
+          <label for="p_micro">Nº microchip</label>
+          <div class="tpl-inline">
+            <input id="p_micro" placeholder="15 dígitos" pattern="^[0-9]{15}$">
+            <label class="tpl-inline"><input type="checkbox" id="p_nochip"> No tiene</label>
+          </div>
+        </div>
+
+        <div class="tpl-field">
+          <label for="p_especie">Especie *</label>
+          <select id="p_especie" required>
+            <option value="">Elige…</option>
+            <option>Perro</option><option>Gato</option><option>Exótico</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="tpl-field">
+          <label id="p_label_raza" for="p_raza">Raza / especie *</label>
+          <input id="p_raza" required placeholder="Escribe o elige…">
+        </div>
+
+        <div class="tpl-field"><label for="p_edad">Edad (años) *</label><input id="p_edad" type="number" min="0" step="1" required></div>
+        <div class="tpl-field"><label for="p_peso">Peso (kg) *</label><input id="p_peso" type="number" min="0" step="0.1" required></div>
+
+        <div class="tpl-field">
+          <label for="p_sexo">Sexo *</label>
+          <select id="p_sexo" required><option value="">Elige…</option><option>Macho</option><option>Hembra</option></select>
+        </div>
+        <div class="tpl-field">
+          <label for="p_ester">¿Esterilizado/a? *</label>
+          <select id="p_ester" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
+        </div>
+
+        <div class="tpl-field col-span-2"><label for="p_pat">¿Patología o tratamiento? *</label><textarea id="p_pat" rows="3" required></textarea></div>
+        <div class="tpl-field"><label for="p_via">Vía/dosis/horario</label><textarea id="p_via" rows="2"></textarea></div>
+        <div class="tpl-field"><label for="p_comidas">Horario de comidas</label><textarea id="p_comidas" rows="2"></textarea></div>
+
+        <div class="tpl-field">
+          <label for="p_vac">¿Vacunas al día? *</label>
+          <select id="p_vac" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
+        </div>
+        <div class="tpl-field col-span-2 is-hidden" id="p_wrap_faltan">
+          <label for="p_faltan">¿Qué faltan? *</label>
+          <textarea id="p_faltan" rows="2"></textarea>
+        </div>
+
+        <div class="tpl-field col-span-2"><label for="p_comp">Comportamiento con animales/personas *</label><textarea id="p_comp" rows="3" required></textarea></div>
+
+        <div class="tpl-field"><label for="p_segvet">Seguro veterinario</label>
+          <select id="p_segvet"><option value="">Elige…</option><option>Sí</option><option>No</option></select>
+        </div>
+        <div class="col-span-2 is-hidden" id="p_wrap_seg" style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
+          <div class="tpl-field"><label for="p_aseg">Aseguradora *</label><input id="p_aseg"></div>
+          <div class="tpl-field"><label for="p_pol">Nº de póliza *</label><input id="p_pol"></div>
+        </div>
+
+        <div class="tpl-field"><label for="p_segRC">Seguro de RC</label>
+          <select id="p_segRC"><option value="">Elige…</option><option>Sí</option><option>No</option></select>
+        </div>
+
+        <div class="tpl-field col-span-2"><label for="p_notas">Comentarios</label><textarea id="p_notas" rows="3"></textarea></div>
+
+        <div class="tpl-actions col-span-2">
+          <button type="submit" class="cta-button"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+          <button type="button" class="cta-button link" data-close-pet>Cancelar</button>
+
+          <!-- Abrir en página completa (por si la conservas durante transición) -->
+          <a id="p_fullpage" class="cta-button link" href="perfil-mascotas.html?mode=new" style="margin-left:auto">Abrir en página completa</a>
+
+          <button type="button" id="p_delete" class="cta-button" style="display:none;background:#fff;color:#b00020;border:2px solid #b00020">Eliminar</button>
+          <span id="p_msg" class="tpl-note" aria-live="polite" style="display:none;color:#2a7e80"><i class="fa-solid fa-circle-check"></i> Guardado</span>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- ====== MODAL PERFIL PROPIETARIO ====== -->
-  <div id="modal-owner" class="tpl-modal" aria-hidden="true">
-    <div class="tpl-modal__backdrop" data-close></div>
-    <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="owner-title">
-      <div class="tpl-modal__header">
-        <h3 id="owner-title" class="tpl-modal__title">Perfil de propietario</h3>
-        <button class="tpl-modal__close" type="button" data-close>✕</button>
-      </div>
-      <form id="form-owner" class="tpl-form tpl-form--2col" novalidate>
-        <div class="tpl-field"><label for="o_nombre">Nombre completo *</label><input id="o_nombre" class="tpl-input" required></div>
-        <div class="tpl-field"><label for="o_telefono">Teléfono *</label><input id="o_telefono" class="tpl-input" inputmode="tel" required></div>
-        <div class="tpl-field col-span-2"><label for="o_email">Email *</label><input id="o_email" class="tpl-input" type="email" required></div>
-        <div class="tpl-field col-span-2"><label for="o_direccion">Dirección</label><input id="o_direccion" class="tpl-input"></div>
-        <div class="tpl-field"><label for="o_cp">Código postal *</label><input id="o_cp" class="tpl-input" pattern="[0-9]{5}" inputmode="numeric" maxlength="5" required></div>
-        <div class="tpl-field col-span-2"><label for="o_pref">Preferencias</label><textarea id="o_pref" class="tpl-textarea" rows="3" placeholder="Comunicación, horarios, etc."></textarea></div>
-        <div class="tpl-actions col-span-2">
-          <button class="tpl-submit" type="submit">Guardar</button>
-          <button class="tpl-btn-outline" type="button" data-close>Cancelar</button>
-          <span id="o_msg" style="align-self:center;color:#2a7e80;display:none"><i class="fa-solid fa-circle-check"></i> Guardado</span>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ====== MODAL MASCOTA (ALTA/EDICIÓN RÁPIDA) ====== -->
-  <div id="modal-pet" class="tpl-modal" aria-hidden="true">
-    <div class="tpl-modal__backdrop" data-close></div>
-    <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="pet-title">
-      <div class="tpl-modal__header">
-        <h3 id="pet-title" class="tpl-modal__title">Mascota</h3>
-        <button class="tpl-modal__close" type="button" data-close>✕</button>
-      </div>
-      <form id="form-pet" class="tpl-form tpl-form--2col" novalidate>
-        <input type="hidden" id="p_id">
-        <div class="tpl-field"><label for="p_nombre">Nombre *</label><input id="p_nombre" class="tpl-input" required></div>
-        <div class="tpl-field"><label for="p_especie">Especie *</label>
-          <select id="p_especie" class="tpl-select" required>
-            <option value="">Elige…</option><option>Perro</option><option>Gato</option><option>Exótico</option><option>Otro</option>
-          </select>
-        </div>
-        <div class="tpl-field"><label id="p_label_raza" for="p_raza">Raza / especie *</label><input id="p_raza" class="tpl-input" required placeholder="Escribe aquí…"></div>
-        <div class="tpl-field"><label for="p_sexo">Sexo *</label>
-          <select id="p_sexo" class="tpl-select" required><option value="">Elige…</option><option>Macho</option><option>Hembra</option></select>
-        </div>
-        <div class="tpl-field"><label for="p_edad">Edad (años) *</label><input id="p_edad" class="tpl-input" type="number" min="0" step="1" required></div>
-        <div class="tpl-field"><label for="p_peso">Peso (kg) *</label><input id="p_peso" class="tpl-input" type="number" min="0" step="0.1" required></div>
-        <div class="tpl-field"><label for="p_esterilizado">¿Esterilizado/a? *</label>
-          <select id="p_esterilizado" class="tpl-select" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-        <div class="tpl-field col-span-2"><label for="p_patologias">Patología / medicación (breve)</label><textarea id="p_patologias" class="tpl-textarea" rows="2"></textarea></div>
-        <div class="tpl-field"><label for="p_vacunas">¿Vacunas al día? *</label>
-          <select id="p_vacunas" class="tpl-select" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-        <div class="tpl-field col-span-2"><label for="p_comportamiento">Comportamiento</label><textarea id="p_comportamiento" class="tpl-textarea" rows="2" placeholder="Sociable, tímido, reactivo…"></textarea></div>
-        <div class="tpl-field col-span-2"><label for="p_comentarios">Comentarios</label><textarea id="p_comentarios" class="tpl-textarea" rows="2"></textarea></div>
-
-        <div class="tpl-field">
-          <label for="p_foto">Foto</label>
-          <input id="p_foto" type="file" accept="image/*" class="tpl-input">
-        </div>
-        <div class="tpl-field">
-          <img id="p_preview" class="tpl-photo" alt="">
-        </div>
-
-        <div class="tpl-actions col-span-2">
-          <button class="tpl-submit" type="submit">Guardar</button>
-          <button class="tpl-btn-outline" type="button" data-close>Cancelar</button>
-          <button id="p_delete" class="tpl-btn-outline" type="button" style="margin-left:auto;display:none;color:#b00020;border-color:#b00020">Eliminar</button>
-          <span id="p_msg" style="align-self:center;color:#2a7e80;display:none"><i class="fa-solid fa-circle-check"></i> Guardado</span>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Firebase compat + config -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat + tu configuración] -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
   <script>
+    // Tu proyecto Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
       projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
       messagingSenderId: "415914577533",
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Lógica perfil: lecturas, modales y guardas -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lectura Firestore + render + logout + UI + Modales inline] -->
   <script>
-  (function(){
-    // Init Firebase seguro
-    if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-    const st   = firebase.storage();
+    (function(){
+      // ✅ Init seguro
+      if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
+      const auth = firebase.auth();
+      const db   = firebase.firestore();
+      const st   = firebase.storage();
 
-    // ===== util =====
-    const byId = (id)=>document.getElementById(id);
-    const qs   = (sel,root=document)=>root.querySelector(sel);
-    const show = (el)=>{ el && (el.style.display='block'); };
-    const hide = (el)=>{ el && (el.style.display='none'); };
-    const showFlex = (el)=>{ el && (el.style.display='flex'); };
-    const truncate = (s,n)=> (String(s||'').length>n ? String(s).slice(0,n)+'…' : (s||''));
+      let CURRENT_UID = null;
 
-    // ===== refs UI =====
-    const bannerInc   = byId('tpl-banner-incompleto');
+      const LS_PROFILE_KEY = 'tpl-profile';
+      const LS_PETS_KEY    = 'tpl-pets';
+      const LS_RES_KEY     = 'tpl-reservas';
 
-    const emptyCliente  = byId('tpl-cliente-empty');
-    const viewCliente   = byId('tpl-cliente-view');
-    const statusCliente = byId('tpl-cliente-status');
-    const actionsPerfil = byId('tpl-actions-perfil');
+      // --------- Refs UI base ----------
+      const bannerInc   = document.getElementById('tpl-banner-incompleto');
 
-    const mascotasEmpty = byId('tpl-mascotas-empty');
-    const mascotasView  = byId('tpl-mascotas-view');
-    const mascotasList  = byId('tpl-mascotas-list');
-    const chipMascotas  = byId('tpl-chip-mascotas');
-    const cntMascotas   = byId('tpl-count-mascotas');
+      const emptyCliente  = document.getElementById('tpl-cliente-empty');
+      const viewCliente   = document.getElementById('tpl-cliente-view');
+      const statusCliente = document.getElementById('tpl-cliente-status');
+      const actionsPerfil = document.getElementById('tpl-actions-perfil');
+      const linkEditar    = document.getElementById('tpl-link-editar');
 
-    const reservasView  = byId('tpl-reservas-view');
-    const reservasList  = byId('tpl-reservas-list');
-    const reservasEmpty = byId('tpl-reservas-empty');
-    const btnIrReserva  = byId('tpl-btn-ir-reserva');
-    const pHintReserva  = qs("article[aria-labelledby='h-reservas'] p");
+      const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
+      const mascotasView  = document.getElementById('tpl-mascotas-view');
+      const mascotasList  = document.getElementById('tpl-mascotas-list');
+      const chipMascotas  = document.getElementById('tpl-chip-mascotas');
+      const cntMascotas   = document.getElementById('tpl-count-mascotas');
 
-    // Modales
-    const modalOwner = byId('modal-owner');
-    const formOwner  = byId('form-owner');
-    const o_msg      = byId('o_msg');
+      const logoutBtn     = document.getElementById('tpl-logout-btn');
 
-    const modalPet   = byId('modal-pet');
-    const formPet    = byId('form-pet');
-    const p_msg      = byId('p_msg');
-    const p_delete   = byId('p_delete');
-    const p_foto     = byId('p_foto');
-    const p_preview  = byId('p_preview');
+      const reservasView  = document.getElementById('tpl-reservas-view');
+      const reservasList  = document.getElementById('tpl-reservas-list');
+      const reservasEmpty = document.getElementById('tpl-reservas-empty');
+      const btnIrReserva  = document.getElementById('tpl-btn-ir-reserva');
+      const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
 
-    // ===== helpers =====
-    function openModal(modal){ modal.setAttribute('aria-hidden','false'); document.documentElement.style.overflow='hidden'; }
-    function closeModal(modal){ modal.setAttribute('aria-hidden','true'); document.documentElement.style.overflow=''; }
-    document.addEventListener('click', (e)=>{ if (e.target.matches('[data-close]')) closeModal(e.target.closest('.tpl-modal')); });
-    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ [modalOwner, modalPet].forEach(m=>m.getAttribute('aria-hidden')==='false' && closeModal(m)); }});
-    [modalOwner, modalPet].forEach(m=> m.addEventListener('click', (e)=>{ if (e.target.classList.contains('tpl-modal__backdrop')) closeModal(m);} ));
+      const SERVICE_LABELS = {
+        "guarderia-dia": "Guardería de día",
+        "visitas": "Visitas a domicilio (gatos)",
+        "alojamiento": "Alojamiento nocturno",
+        "paseos": "Paseos",
+        "transporte": "Transporte",
+        "bodas": "Bodas",
+        "postoperatorio": "Postoperatorio",
+        "exoticos": "Exóticos"
+      };
 
-    function getInitials(name){ if(!name) return '—'; const parts = String(name).trim().split(/\s+/).slice(0,2); return parts.map(p=>p[0]?.toUpperCase()||'').join('')||'—'; }
+      function updateBadge(profile){
+        const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
+        statusCliente.classList.toggle('tpl-hidden', !complete);
+        statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
 
-    function statusBadge(status){
-      const s = String(status || '').toLowerCase();
-      if (s==='aceptada'||s==='aprobada') return '<span class="tpl-badge ok"><i class="fa-solid fa-check"></i> Aceptada</span>';
-      if (s==='en_revision'||s==='en-revision'||s==='revision') return '<span class="tpl-badge review"><i class="fa-solid fa-hourglass-half"></i> En revisión</span>';
-      if (s==='enviada'||s==='pendiente') return '<span class="tpl-badge pending"><i class="fa-regular fa-paper-plane"></i> Enviada</span>';
-      if (s==='completada'||s==='finalizada') return '<span class="tpl-badge done"><i class="fa-regular fa-circle-check"></i> Completada</span>';
-      if (s==='cancelada') return '<span class="tpl-badge canceled"><i class="fa-regular fa-circle-xmark"></i> Cancelada</span>';
-      return '<span class="tpl-badge"><i class="fa-regular fa-circle-question"></i> —</span>';
-    }
-
-    // ===== datos =====
-    async function getProfile(uid){
-      // fuente oficial
-      try{
-        const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
-        if (doc.exists) return doc.data();
-      }catch(_){}
-      // fallback legacy
-      try{
-        const doc2 = await db.collection('users').doc(uid).get();
-        if (doc2.exists && doc2.data()?.profile) return doc2.data().profile;
-      }catch(_){}
-      return null;
-    }
-    async function saveProfile(uid, data){
-      await db.collection('users').doc(uid).collection('private').doc('profile').set({
-        ...data,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge:true });
-    }
-
-    async function getPets(uid){
-      const snap = await db.collection('users').doc(uid).collection('pets').get();
-      return snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    }
-    async function getPet(uid, id){
-      const d = await db.collection('users').doc(uid).collection('pets').doc(id).get();
-      return d.exists ? { id:d.id, ...d.data() } : null;
-    }
-    async function savePet(uid, data, id){
-      if (id){
-        await db.collection('users').doc(uid).collection('pets').doc(id).set({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
-        return id;
-      } else {
-        const ref = await db.collection('users').doc(uid).collection('pets').add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        return ref.id;
-      }
-    }
-    async function deletePet(uid, id){
-      if (!id) return;
-      await db.collection('users').doc(uid).collection('pets').doc(id).delete();
-      // borra fotos
-      try{
-        const dirRef = st.ref().child(`users/${uid}/pets/${id}`);
-        const list = await dirRef.listAll();
-        await Promise.all(list.items.map(i=>i.delete()));
-      }catch(_){}
-    }
-    async function uploadPetPhoto(uid, petId, file){
-      const safe = (file.name||'photo.jpg').replace(/[^a-zA-Z0-9._-]/g,'_');
-      const ref = st.ref().child(`users/${uid}/pets/${petId}/${Date.now()}_${safe}`);
-      await ref.put(file, { contentType: file.type || 'image/jpeg' });
-      return await ref.getDownloadURL();
-    }
-
-    function ensureReservationAccess(hasProfile, hasPets){
-      const complete = !!(hasProfile && hasPets);
-      try{ window.__TPL_PROFILE_COMPLETE__ = complete; localStorage.setItem('tplProfileComplete', complete?'1':'0'); }catch(_){}
-      bannerInc.hidden = complete;
-      if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
-      function guardClick(e){ e.preventDefault(); bannerInc.hidden=false; bannerInc.scrollIntoView({behavior:'smooth', block:'start'}); }
-      if (btnIrReserva){
-        btnIrReserva.setAttribute('aria-disabled', complete?'false':'true');
-        if (!complete){
-          btnIrReserva.addEventListener('click', guardClick);
-          btnIrReserva.setAttribute('title','Completa tu perfil y añade una mascota para continuar');
-          btnIrReserva.setAttribute('href','#');
+        if (complete) {
+          actionsPerfil && actionsPerfil.classList.add('tpl-hidden');
+          if (linkEditar){
+            linkEditar.classList.remove('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','false');
+          }
         } else {
-          btnIrReserva.replaceWith(btnIrReserva.cloneNode(true));
-          const fresh = byId('tpl-btn-ir-reserva'); if (fresh){ fresh.setAttribute('href','reserva.html'); fresh.removeAttribute('aria-disabled'); fresh.removeAttribute('title'); }
+          actionsPerfil && actionsPerfil.classList.remove('tpl-hidden');
+          if (linkEditar){
+            linkEditar.classList.add('tpl-hidden');
+            linkEditar.setAttribute('aria-hidden','true');
+          }
         }
       }
-    }
 
-    // ===== render =====
-    function updateOwnerBadge(profile){
-      const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
-      statusCliente.classList.toggle('tpl-hidden', !complete);
-      statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
-      if (complete) {
-        actionsPerfil.classList.add('tpl-hidden');
-      } else {
-        actionsPerfil.classList.remove('tpl-hidden');
+      async function getProfile(uid){
+        if (uid) {
+          const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+          return doc.exists ? doc.data() : null;
+        }
+        try { return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); } catch(e){ return null; }
       }
-    }
-    function renderOwner(profile){
-      updateOwnerBadge(profile);
-      if (profile && profile.nombre){
-        byId('tpl-view-nombre').textContent    = profile.nombre || '—';
-        byId('tpl-view-telefono').textContent  = profile.telefono || '—';
-        byId('tpl-view-email').textContent     = profile.email || '—';
-        byId('tpl-view-direccion').textContent = profile.direccion || '—';
-        byId('tpl-view-cp').textContent        = profile.cp || '—';
-        byId('tpl-view-pref').textContent      = profile.preferencias || '—';
-        emptyCliente.classList.add('tpl-hidden');
-        viewCliente.classList.remove('tpl-hidden');
-      } else {
-        viewCliente.classList.add('tpl-hidden');
-        emptyCliente.classList.remove('tpl-hidden');
+
+      async function getPets(uid){
+        if (uid) {
+          const snap = await db.collection('users').doc(uid).collection('pets').get();
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        try { return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); } catch(e){ return []; }
       }
-    }
-    function renderPets(pets){
-      mascotasList.innerHTML = '';
-      const count = pets ? pets.length : 0;
-      if (count>0){
-        mascotasEmpty.classList.add('tpl-hidden');
-        mascotasView.classList.remove('tpl-hidden');
-        chipMascotas.classList.remove('tpl-hidden'); chipMascotas.setAttribute('aria-hidden','false');
-        cntMascotas.textContent = String(count);
-        pets.forEach(p=>{
-          const card = document.createElement('div'); card.className='tpl-pet';
-          const avatar = document.createElement('div'); avatar.className='tpl-avatar';
-          if (p.fotoUrl){ const img=document.createElement('img'); img.src=p.fotoUrl; img.alt=`Foto de ${p.nombre||'mascota'}`; avatar.appendChild(img); } else { avatar.textContent=getInitials(p.nombre); }
-          const box = document.createElement('div');
-          const name = document.createElement('div'); name.className='tpl-pet-name'; name.textContent=p.nombre||'—';
-          const sec  = document.createElement('div'); sec.className='tpl-pet-secondary'; sec.textContent=p.especie||'—';
-          box.appendChild(name); box.appendChild(sec);
-          const actions = document.createElement('div'); actions.className='tpl-pet-actions';
-          const edit = document.createElement('button'); edit.className='tpl-btn-sm tpl-btn-outline'; edit.textContent='Editar';
-          edit.addEventListener('click', ()=> openPetModal(p));
-          actions.appendChild(edit);
-          card.appendChild(avatar); card.appendChild(box); card.appendChild(actions);
-          mascotasList.appendChild(card);
+
+      function petEditHref(p, idx, isFirebase){
+        return (isFirebase && p.id)
+          ? ('perfil-mascotas.html?id=' + encodeURIComponent(p.id))
+          : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
+      }
+
+      function toDate(any){
+        if (!any) return null;
+        if (any.toDate) { try { return any.toDate(); } catch(_){} }
+        if (typeof any === 'number') return new Date(any);
+        const d = new Date(String(any));
+        return isNaN(d) ? null : d;
+      }
+
+      function statusBadge(status){
+        const s = String(status || '').toLowerCase();
+        if (s==='aceptada' || s==='aprobada') return '<span class="tpl-badge ok"><i class="fa-solid fa-check"></i> Aceptada</span>';
+        if (s==='en_revision' || s==='en-revision' || s==='revision') return '<span class="tpl-badge review"><i class="fa-solid fa-hourglass-half"></i> En revisión</span>';
+        if (s==='enviada' || s==='pendiente') return '<span class="tpl-badge pending"><i class="fa-regular fa-paper-plane"></i> Enviada</span>';
+        if (s==='completada' || s==='finalizada') return '<span class="tpl-badge done"><i class="fa-regular fa-circle-check"></i> Completada</span>';
+        if (s==='cancelada') return '<span class="tpl-badge canceled"><i class="fa-regular fa-circle-xmark"></i> Cancelada</span>';
+        return '<span class="tpl-badge"><i class="fa-regular fa-circle-question"></i> —</span>';
+      }
+
+      function ensureReservationAccess(hasProfile, hasPets){
+        const complete = !!(hasProfile && hasPets);
+        try{
+          window.__TPL_PROFILE_COMPLETE__ = complete;
+          localStorage.setItem('tplProfileComplete', complete ? '1' : '0');
+        }catch(_){}
+        bannerInc.hidden = complete;
+        if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
+
+        function guardClick(e){
+          e.preventDefault();
+          bannerInc.hidden = false;
+          bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+        if (btnIrReserva){
+          btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
+          if (!complete){
+            btnIrReserva.addEventListener('click', guardClick);
+            btnIrReserva.setAttribute('title','Completa tu perfil y añade una mascota para continuar');
+            btnIrReserva.setAttribute('href', '#completar');
+          } else {
+            btnIrReserva.replaceWith(btnIrReserva.cloneNode(true));
+            const fresh = document.getElementById('tpl-btn-ir-reserva');
+            if (fresh){ fresh.setAttribute('href','reserva.html'); fresh.removeAttribute('aria-disabled'); fresh.removeAttribute('title'); }
+          }
+        }
+      }
+
+      async function getReservations(uid){
+        try{
+          const snap = await db.collection('users').doc(uid).collection('reservas').get();
+          if (!snap.empty) return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+        }catch(_){}
+        try{
+          const snap2 = await db.collection('reservas').where('ownerUid','==', uid).get();
+          if (!snap2.empty) return snap2.docs.map(d => ({ id:d.id, ...d.data() }));
+        }catch(_){}
+        try{ return JSON.parse(localStorage.getItem(LS_RES_KEY) || '[]'); }catch(_){ return []; }
+      }
+
+      function renderReservations(reservas){
+        reservasList.innerHTML = '';
+        if (!reservas || reservas.length===0){
+          reservasView.classList.add('tpl-hidden');
+          reservasEmpty.classList.remove('tpl-hidden');
+          return;
+        }
+        reservasEmpty.classList.add('tpl-hidden');
+        reservasView.classList.remove('tpl-hidden');
+
+        reservas.sort((a,b)=>{
+          const da = toDate(a.fechaInicio || a.startAt || a.startDate || a.inicio) || new Date(8640000000000000);
+          const dbb = toDate(b.fechaInicio || b.startAt || b.startDate || b.inicio) || new Date(8640000000000000);
+          return da - dbb;
         });
-      } else {
-        mascotasView.classList.add('tpl-hidden');
-        mascotasEmpty.classList.remove('tpl-hidden');
-        chipMascotas.classList.add('tpl-hidden'); chipMascotas.setAttribute('aria-hidden','true');
-        cntMascotas.textContent = '0';
+
+        reservas.forEach(r=>{
+          const start = toDate(r.fechaInicio || r.startAt || r.startDate || r.inicio);
+          const end   = toDate(r.fechaFin || r.endAt || r.endDate || r.fin);
+          const servicio = SERVICE_LABELS[r.servicio] || r.servicio || 'Servicio';
+          const estado   = r.estado || r.status || 'enviada';
+          const pets     = Array.isArray(r.mascotas) ? r.mascotas : (r.mascotaNombre ? [r.mascotaNombre] : []);
+          const caret    = r.cuidadorNombre || r.cuidador || '';
+          const addr     = r.direccion || r.address || '';
+          const price    = r.precio || r.price || '';
+
+          const el = document.createElement('div');
+          el.className = 'tpl-reserva';
+          el.innerHTML = `
+            <h3>${servicio}</h3>
+            <div class="row"><i class="fa-regular fa-calendar"></i> ${start ? start.toLocaleDateString('es-ES') : '—'} ${end ? ' · ' + end.toLocaleDateString('es-ES') : ''}</div>
+            <div class="row"><i class="fa-solid fa-paw"></i> ${pets.length ? pets.join(', ') : '—'}</div>
+            ${caret ? `<div class="row"><i class="fa-regular fa-user"></i> ${caret}</div>` : ''}
+            ${addr ? `<div class="row"><i class="fa-regular fa-map"></i> ${addr}</div>` : ''}
+            ${price ? `<div class="row"><i class="fa-solid fa-euro-sign"></i> ${price}</div>` : ''}
+            <div class="row">${statusBadge(estado)}</div>
+          `;
+          reservasList.appendChild(el);
+        });
       }
-    }
-    function renderReservations(res){
-      reservasList.innerHTML = '';
-      if (!res || res.length===0){
-        reservasView.classList.add('tpl-hidden');
-        reservasEmpty.classList.remove('tpl-hidden');
-        return;
-      }
-      reservasEmpty.classList.add('tpl-hidden');
-      reservasView.classList.remove('tpl-hidden');
-      res.sort((a,b)=> (a.startAt?.toDate?.()||new Date(8640000000000000)) - (b.startAt?.toDate?.()||new Date(8640000000000000)));
-      res.forEach(r=>{
-        const el = document.createElement('div'); el.className='tpl-reserva';
-        const start = (r.startAt && r.startAt.toDate) ? r.startAt.toDate() : null;
-        const end   = (r.endAt && r.endAt.toDate) ? r.endAt.toDate() : null;
-        el.innerHTML = `
-          <h3>${r.servicio || 'Servicio'}</h3>
-          <div class="row"><i class="fa-regular fa-calendar"></i> ${start ? start.toLocaleDateString('es-ES') : '—'} ${end ? ' · '+end.toLocaleDateString('es-ES') : ''}</div>
-          <div class="row"><i class="fa-solid fa-paw"></i> ${Array.isArray(r.mascotas)? r.mascotas.join(', ') : (r.mascotaNombre||'—')}</div>
-          ${r.direccion? `<div class="row"><i class="fa-regular fa-map"></i> ${truncate(r.direccion,48)}</div>` : ''}
-          <div class="row">${statusBadge(r.estado||r.status||'enviada')}</div>`;
-        reservasList.appendChild(el);
-      });
-    }
 
-    // ===== flujo principal =====
-    async function refreshAll(uid){
-      const profile = await getProfile(uid);
-      renderOwner(profile);
+      async function render(uid){
+        const isFirebase = !!uid;
 
-      const pets = await getPets(uid);
-      renderPets(pets);
-
-      // acceso a reserva
-      const hasProfile = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
-      const hasPets    = pets.length > 0;
-      ensureReservationAccess(hasProfile, hasPets);
-
-      // reservas (si tienes colección; si no, se quedará vacío sin romper)
-      try{
-        const snap = await db.collection('users').doc(uid).collection('reservas').get();
-        const list = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-        renderReservations(list);
-      }catch(_){ renderReservations([]); }
-    }
-
-    // ===== Owner modal logic =====
-    function openOwnerModal(prefill){
-      formOwner.reset(); o_msg.style.display='none';
-      if (prefill){
-        byId('o_nombre').value = prefill.nombre || '';
-        byId('o_telefono').value = prefill.telefono || '';
-        byId('o_email').value = prefill.email || '';
-        byId('o_direccion').value = prefill.direccion || '';
-        byId('o_cp').value = prefill.cp || '';
-        byId('o_pref').value = prefill.preferencias || '';
-      }
-      openModal(modalOwner);
-    }
-    modalOwner.addEventListener('click', (e)=>{ if (e.target.dataset.close!==undefined) closeModal(modalOwner); });
-
-    formOwner.addEventListener('submit', async (e)=>{
-      e.preventDefault(); o_msg.style.display='none';
-      if (!formOwner.reportValidity()) return;
-      const u = auth.currentUser; if (!u) return;
-      const data = {
-        nombre: byId('o_nombre').value.trim(),
-        telefono: byId('o_telefono').value.trim(),
-        email: byId('o_email').value.trim(),
-        direccion: byId('o_direccion').value.trim(),
-        cp: byId('o_cp').value.trim(),
-        preferencias: byId('o_pref').value.trim()
-      };
-      try{
-        await saveProfile(u.uid, data);
-        o_msg.style.display='inline';
-        await refreshAll(u.uid);
-        setTimeout(()=> closeModal(modalOwner), 350);
-      }catch(err){ alert('No se pudo guardar el perfil: ' + (err?.message||err)); }
-    });
-
-    // botones abrir owner
-    ['btn-open-owner','btn-open-owner-2'].forEach(id=>{
-      const b = byId(id);
-      if (b) b.addEventListener('click', async ()=>{
-        const u = auth.currentUser; if (!u) return;
-        const pre = await getProfile(u.uid);
-        openOwnerModal(pre||null);
-      });
-    });
-
-    // ===== Pet modal logic =====
-    let CURRENT_PET_ID = null;
-    function setupPetForm(p){
-      byId('p_id').value = p?.id || '';
-      byId('p_nombre').value = p?.nombre || '';
-      byId('p_especie').value = p?.especie || '';
-      byId('p_raza').value = p?.especie==='Exótico' ? (p?.tipoExotico||'') : (p?.raza||'');
-      byId('p_sexo').value = p?.sexo || '';
-      byId('p_edad').value = (p?.edad ?? '');
-      byId('p_peso').value = (p?.peso ?? '');
-      byId('p_esterilizado').value = p?.esterilizado || '';
-      byId('p_patologias').value = p?.patologias || '';
-      byId('p_vacunas').value = p?.vacunas || '';
-      byId('p_comportamiento').value = p?.comportamiento || '';
-      byId('p_comentarios').value = p?.comentarios || '';
-      p_preview.src = p?.fotoUrl || '';
-      p_delete.style.display = p?.id ? 'inline-flex' : 'none';
-      adjustRazaLabel();
-      p_msg.style.display='none';
-      p_foto.value = '';
-    }
-    function adjustRazaLabel(){
-      const lbl = byId('p_label_raza');
-      if (byId('p_especie').value === 'Exótico'){ lbl.textContent = 'Tipo de exótico *'; }
-      else { lbl.textContent = 'Raza / especie *'; }
-    }
-    byId('p_especie').addEventListener('change', adjustRazaLabel);
-
-    function openPetModal(p){ setupPetForm(p||null); CURRENT_PET_ID = p?.id || null; openModal(modalPet); }
-    document.getElementById('btn-open-pet').addEventListener('click', ()=> openPetModal(null));
-    document.getElementById('btn-open-pet-2').addEventListener('click', ()=> openPetModal(null));
-
-    p_foto.addEventListener('change', ()=>{
-      const f = p_foto.files?.[0]; if (!f) return; const r = new FileReader();
-      r.onload = e=>{ p_preview.src = e.target.result; }; r.readAsDataURL(f);
-    });
-
-    formPet.addEventListener('submit', async (e)=>{
-      e.preventDefault(); p_msg.style.display='none';
-      if (!formPet.reportValidity()) return;
-      const u = auth.currentUser; if (!u) return;
-      const isEx = byId('p_especie').value==='Exótico';
-      const data = {
-        nombre: byId('p_nombre').value.trim(),
-        especie: byId('p_especie').value,
-        raza: isEx ? '' : byId('p_raza').value.trim(),
-        tipoExotico: isEx ? byId('p_raza').value.trim() : '',
-        sexo: byId('p_sexo').value,
-        edad: Number(byId('p_edad').value || 0),
-        peso: Number(byId('p_peso').value || 0),
-        esterilizado: byId('p_esterilizado').value,
-        patologias: byId('p_patologias').value.trim(),
-        vacunas: byId('p_vacunas').value,
-        comportamiento: byId('p_comportamiento').value.trim(),
-        comentarios: byId('p_comentarios').value.trim()
-      };
-      try{
-        const id = await savePet(u.uid, data, CURRENT_PET_ID);
-        // subir foto si hay
-        const f = p_foto.files?.[0];
-        if (f){
-          const url = await uploadPetPhoto(u.uid, id, f);
-          await savePet(u.uid, { fotoUrl: url }, id);
+        const profile = await getProfile(uid);
+        updateBadge(profile);
+        if (profile && profile.nombre) {
+          document.getElementById('tpl-view-nombre').textContent    = profile.nombre || '—';
+          document.getElementById('tpl-view-telefono').textContent  = profile.telefono || '—';
+          document.getElementById('tpl-view-email').textContent     = profile.email || '—';
+          document.getElementById('tpl-view-direccion').textContent = profile.direccion || '—';
+          document.getElementById('tpl-view-cp').textContent        = profile.cp || '—';
+          document.getElementById('tpl-view-pref').textContent      = profile.preferencias || '—';
+          emptyCliente.classList.add('tpl-hidden');
+          viewCliente.classList.remove('tpl-hidden');
+        } else {
+          viewCliente.classList.add('tpl-hidden');
+          emptyCliente.classList.remove('tpl-hidden');
         }
-        p_msg.style.display='inline';
-        await refreshAll(u.uid);
-        setTimeout(()=> closeModal(modalPet), 350);
-      }catch(err){ alert('No se pudo guardar la mascota: ' + (err?.message||err)); }
-    });
 
-    p_delete.addEventListener('click', async ()=>{
-      if (!confirm('¿Eliminar esta mascota?')) return;
-      const u = auth.currentUser; if (!u || !CURRENT_PET_ID) return;
-      try{
-        await deletePet(u.uid, CURRENT_PET_ID);
-        await refreshAll(u.uid);
-        closeModal(modalPet);
-      }catch(err){ alert('No se pudo eliminar: ' + (err?.message||err)); }
-    });
+        const pets = await getPets(uid);
+        mascotasList.innerHTML = '';
+        const count = pets ? pets.length : 0;
 
-    // ===== auth guard + primera carga =====
-    auth.onAuthStateChanged(async (u)=>{
-      if (!u || u.isAnonymous){
-        location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
-        return;
+        if (count > 0) {
+          mascotasEmpty.classList.add('tpl-hidden');
+          mascotasView.classList.remove('tpl-hidden');
+          chipMascotas.classList.remove('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','false');
+          cntMascotas.textContent = String(count);
+
+          pets.forEach((p, idx) => {
+            const especie = p.especie || '—';
+            const card   = document.createElement('div');
+            card.className = 'tpl-pet';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'tpl-avatar';
+            if (p.fotoUrl){
+              const img = document.createElement('img');
+              img.src = p.fotoUrl; img.alt = `Foto de ${p.nombre || 'mascota'}`;
+              avatar.appendChild(img);
+            } else {
+              const initials = (p.nombre||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || '—';
+              avatar.textContent = initials;
+            }
+
+            const textBox = document.createElement('div');
+            const nameEl = document.createElement('div'); nameEl.className='tpl-pet-name'; nameEl.textContent=p.nombre||'—';
+            const secEl  = document.createElement('div'); secEl.className='tpl-pet-secondary'; secEl.textContent=especie;
+            textBox.appendChild(nameEl); textBox.appendChild(secEl);
+
+            const actions = document.createElement('div'); actions.className='tpl-pet-actions';
+            const edit = document.createElement('a');
+            edit.textContent = 'Editar';
+            edit.className = 'tpl-btn-sm tpl-btn-outline';
+            edit.setAttribute('href', petEditHref(p, idx, isFirebase));
+            actions.appendChild(edit);
+
+            const pop = document.createElement('div');
+            pop.className = 'tpl-popover'; pop.setAttribute('role','dialog');
+            pop.innerHTML = `
+              <dl>
+                <dt>Especie</dt><dd>${especie || '—'}</dd>
+                <dt>Edad</dt><dd>${(p.edad ?? '—')}</dd>
+                <dt>Peso</dt><dd>${(p.peso ?? '—')}</dd>
+                <dt>Sexo</dt><dd>${p.sexo || '—'}</dd>
+                <dt>Esterilizado</dt><dd>${(p.esterilizado ?? '—')}</dd>
+              </dl>
+              ${p.comentarios ? `<div class="tpl-notas"><strong>Notas:</strong> ${p.comentarios}</div>` : ''}
+            `;
+
+            card.appendChild(avatar);
+            card.appendChild(textBox);
+            card.appendChild(actions);
+            card.appendChild(pop);
+            mascotasList.appendChild(card);
+          });
+        } else {
+          mascotasView.classList.add('tpl-hidden');
+          mascotasEmpty.classList.remove('tpl-hidden');
+          chipMascotas.classList.add('tpl-hidden');
+          chipMascotas.setAttribute('aria-hidden','true');
+          cntMascotas.textContent = '0';
+        }
+
+        const hasProfile = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
+        const hasPets    = count > 0;
+        ensureReservationAccess(hasProfile, hasPets);
+
+        const reservas = await getReservations(uid);
+        renderReservations(reservas);
       }
-      // prellenar email del owner con el del login si no hay perfil
-      try{
-        const p = await getProfile(u.uid);
-        renderOwner(p);
-        if (!p || !p.email){ byId('o_email').value = u.email || ''; }
-      }catch(_){}
-      await refreshAll(u.uid);
-    });
-  })();
-  </script>
 
-  <!-- Antibloqueo menor -->
+      // ---------- LOGOUT ----------
+      async function doLogout(){
+        try { await auth.signOut(); } catch(e) {}
+        try {
+          localStorage.removeItem('tplAuth');
+          localStorage.removeItem('tplEmail');
+          localStorage.removeItem(LS_PROFILE_KEY);
+          localStorage.removeItem(LS_PETS_KEY);
+          localStorage.removeItem('tplProfileComplete');
+        } catch(e) {}
+        if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(()=>{}); }
+        location.href = 'index.html';
+      }
+      logoutBtn && logoutBtn.addEventListener('click', doLogout);
+
+      // ---------- MODAL OWNER ----------
+      const ownerModal = document.getElementById('tpl-owner-modal');
+      const ownerForm  = document.getElementById('tpl-owner-form');
+      const oMsg       = document.getElementById('o_msg');
+
+      function openOwnerModal(pre){
+        ownerModal.setAttribute('aria-hidden','false');
+        document.documentElement.style.overflow='hidden';
+        ownerForm.reset(); oMsg.style.display='none';
+        ownerForm.o_nombre.value = pre?.nombre || '';
+        ownerForm.o_telefono.value = pre?.telefono || '';
+        ownerForm.o_email.value = (auth.currentUser && auth.currentUser.email) || pre?.email || '';
+        ownerForm.o_direccion.value = pre?.direccion || '';
+        ownerForm.o_cp.value = pre?.cp || '';
+        ownerForm.o_pref.value = pre?.preferencias || '';
+        setTimeout(()=> ownerForm.o_nombre.focus(), 0);
+      }
+      function closeOwnerModal(){
+        ownerModal.setAttribute('aria-hidden','true');
+        document.documentElement.style.overflow='';
+      }
+      ownerModal.addEventListener('click', (e)=>{ if (e.target.matches('[data-close-owner]')) closeOwnerModal(); });
+      ownerForm.querySelector('[data-close-owner]')?.addEventListener('click', closeOwnerModal);
+
+      ownerForm.addEventListener('submit', async (e)=>{
+        e.preventDefault(); oMsg.style.display='none';
+        if (!ownerForm.reportValidity()) return;
+        const data = {
+          nombre: ownerForm.o_nombre.value.trim(),
+          telefono: ownerForm.o_telefono.value.trim(),
+          email: ownerForm.o_email.value.trim(),
+          direccion: ownerForm.o_direccion.value.trim(),
+          cp: ownerForm.o_cp.value.trim(),
+          preferencias: ownerForm.o_pref.value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+        try{
+          await db.collection('users').doc(CURRENT_UID).collection('private').doc('profile').set(data, {merge:true});
+          oMsg.style.display='inline-flex';
+          await render(CURRENT_UID);
+          setTimeout(closeOwnerModal, 400);
+        }catch(err){
+          alert('No se pudo guardar el perfil: ' + (err?.message || err));
+        }
+      });
+
+      // ---------- MODAL PET ----------
+      const petModal = document.getElementById('tpl-pet-modal');
+      const petForm  = document.getElementById('tpl-pet-form');
+      const pMsg     = document.getElementById('p_msg');
+      const pDel     = document.getElementById('p_delete');
+      const pFull    = document.getElementById('p_fullpage');
+
+      const pFoto    = document.getElementById('p_foto');
+      const pCambiar = document.getElementById('p_cambiar');
+      const pPrev    = document.getElementById('p_preview');
+
+      const wrapFaltan = document.getElementById('p_wrap_faltan');
+      const pFaltan    = document.getElementById('p_faltan');
+      const pVac       = document.getElementById('p_vac');
+
+      const wrapSeg    = document.getElementById('p_wrap_seg');
+      const pSegVet    = document.getElementById('p_segvet');
+      const pAseg      = document.getElementById('p_aseg');
+      const pPol       = document.getElementById('p_pol');
+
+      const pEspecie   = document.getElementById('p_especie');
+      const pRaza      = document.getElementById('p_raza');
+      const pLabelRaza = document.getElementById('p_label_raza');
+
+      const pNoChip    = document.getElementById('p_nochip');
+      const pMicro     = document.getElementById('p_micro');
+
+      let CURRENT_PET_ID = null;
+      let petPhotoFile = null;
+      let petFotoUrl = '';
+      let petPhotoDataUrl = '';
+
+      function toggleOwnerLinkInterceptions(){
+        // Intercepta enlaces antiguos dentro de la página
+        document.addEventListener('click', function(e){
+          const a = e.target.closest('a'); if (!a) return;
+          const href = a.getAttribute('href') || '';
+          if (/^registro\.html/i.test(href)){
+            e.preventDefault(); openOwnerFromStorageOrEmpty();
+          }
+          if (/^perfil-mascotas\.html/i.test(href)){
+            e.preventDefault();
+            const url = new URL(href, location.href);
+            const id  = url.searchParams.get('id');
+            const mode= url.searchParams.get('mode');
+            openPetFromIdOrNew(id, mode);
+          }
+        });
+      }
+
+      function openPetModal(p){
+        petModal.setAttribute('aria-hidden','false');
+        document.documentElement.style.overflow='hidden';
+        petForm.reset(); pMsg.style.display='none';
+        CURRENT_PET_ID = p?.id || null;
+        petFotoUrl = p?.fotoUrl || ''; petPhotoFile=null; petPhotoDataUrl='';
+        pPrev.src = petFotoUrl || ''; setPhotoUI(!!(petFotoUrl));
+
+        // Básicos
+        petForm.querySelector('#p_nombre').value = p?.nombre || '';
+        pMicro.value   = p?.microchip || '';
+        pNoChip.checked = !p?.microchip;
+        toggleMicrochip();
+
+        pEspecie.value = p?.especie || '';
+        toggleEspecie();
+        if ((p?.especie||'') === 'Exótico'){
+          pRaza.value = p?.tipoExotico || '';
+        } else {
+          pRaza.value = p?.raza || '';
+        }
+
+        petForm.querySelector('#p_edad').value = p?.edad ?? '';
+        petForm.querySelector('#p_peso').value = p?.peso ?? '';
+        petForm.querySelector('#p_sexo').value = p?.sexo || '';
+        petForm.querySelector('#p_ester').value = p?.esterilizado || '';
+        petForm.querySelector('#p_pat').value  = p?.patologias || '';
+        petForm.querySelector('#p_via').value  = p?.via || '';
+        petForm.querySelector('#p_comidas').value = p?.comidas || '';
+        pVac.value = p?.vacunas || '';
+        toggleVacunas();
+        pFaltan.value = p?.faltan || '';
+        petForm.querySelector('#p_comp').value = p?.comportamiento || '';
+        pSegVet.value = p?.seguroVet || '';
+        toggleSegVet();
+        pAseg.value = p?.aseguradora || '';
+        pPol.value  = p?.poliza || '';
+        petForm.querySelector('#p_segRC').value = p?.seguroRC || '';
+        petForm.querySelector('#p_notas').value = p?.comentarios || '';
+
+        // Acciones extra
+        pDel.style.display = CURRENT_PET_ID ? 'inline-flex' : 'none';
+        pFull.href = CURRENT_PET_ID ? ('perfil-mascotas.html?id='+encodeURIComponent(CURRENT_PET_ID)) : 'perfil-mascotas.html?mode=new';
+
+        setTimeout(()=> document.getElementById('p_nombre').focus(), 0);
+      }
+      function closePetModal(){
+        petModal.setAttribute('aria-hidden','true');
+        document.documentElement.style.overflow='';
+      }
+      petModal.addEventListener('click', (e)=>{ if (e.target.matches('[data-close-pet]')) closePetModal(); });
+      petForm.querySelector('[data-close-pet]')?.addEventListener('click', closePetModal);
+
+      function openOwnerFromStorageOrEmpty(){
+        getProfile(CURRENT_UID).then(p=> openOwnerModal(p||null));
+      }
+      function openPetFromIdOrNew(id, mode){
+        if (id){
+          db.collection('users').doc(CURRENT_UID).collection('pets').doc(id).get()
+            .then(d=> openPetModal(d.exists ? ({id:d.id, ...d.data()}) : null));
+        } else {
+          openPetModal(null);
+        }
+      }
+
+      // Foto
+      function setPhotoUI(hasPhoto){
+        if (hasPhoto){
+          pFoto.classList.add('is-hidden');
+          pCambiar.classList.remove('is-hidden');
+        } else {
+          pFoto.classList.remove('is-hidden');
+          pCambiar.classList.add('is-hidden');
+        }
+      }
+      pFoto.addEventListener('change', async ()=>{
+        const f = pFoto.files?.[0]; if (!f) return;
+        petPhotoFile = f;
+        try{
+          const reader = new FileReader();
+          reader.onload = e => { pPrev.src = e.target.result; petPhotoDataUrl = e.target.result; setPhotoUI(true); };
+          reader.readAsDataURL(f);
+        }catch(_){}
+      });
+      pCambiar.addEventListener('click', ()=> pFoto.click());
+
+      function toggleMicrochip(){
+        if (pNoChip.checked){
+          pMicro.required=false; pMicro.value=''; pMicro.disabled=true;
+        } else {
+          pMicro.required=true; pMicro.disabled=false;
+        }
+      }
+      pNoChip.addEventListener('change', toggleMicrochip);
+
+      function toggleVacunas(){
+        if (pVac.value === 'No'){
+          wrapFaltan.classList.remove('is-hidden'); pFaltan.required = true;
+        } else {
+          wrapFaltan.classList.add('is-hidden'); pFaltan.required = false; pFaltan.value='';
+        }
+      }
+      pVac.addEventListener('change', toggleVacunas);
+
+      function toggleEspecie(){
+        if (pEspecie.value === 'Exótico'){
+          pRaza.placeholder = 'Ej.: Ave, Reptil, Pequeño mamífero…';
+          pLabelRaza.innerHTML = 'Tipo de exótico *';
+          pRaza.required = true;
+        } else if (pEspecie.value){
+          pLabelRaza.innerHTML = 'Raza / especie *';
+          pRaza.placeholder = 'Escribe o elige…';
+          pRaza.required = true;
+        } else {
+          pLabelRaza.innerHTML = 'Raza / especie';
+          pRaza.required = false;
+        }
+      }
+      pEspecie.addEventListener('change', toggleEspecie);
+
+      function toggleSegVet(){
+        if (pSegVet.value === 'Sí'){
+          wrapSeg.classList.remove('is-hidden'); pAseg.required = true; pPol.required = true;
+        } else {
+          wrapSeg.classList.add('is-hidden'); pAseg.required = false; pPol.required = false; pAseg.value=''; pPol.value='';
+        }
+      }
+      pSegVet.addEventListener('change', toggleSegVet);
+
+      async function uploadPetPhoto(uid, petId, file){
+        if (!file || !uid || !petId) return '';
+        const safe = (file.name || 'photo.jpg').replace(/[^a-zA-Z0-9._-]/g,'_');
+        const ref = st.ref().child(`users/${uid}/pets/${petId}/${Date.now()}_${safe}`);
+        await ref.put(file, {contentType: file.type || 'image/jpeg'});
+        return await ref.getDownloadURL();
+      }
+
+      petForm.addEventListener('submit', async (e)=>{
+        e.preventDefault(); pMsg.style.display='none';
+        if (pVac.value==='No' && !pFaltan.value.trim()){ pFaltan.reportValidity(); return; }
+        if (!petForm.reportValidity()) return;
+
+        const isExotico = (pEspecie.value === 'Exótico');
+        const data = {
+          nombre: document.getElementById('p_nombre').value.trim(),
+          microchip: pNoChip.checked ? '' : pMicro.value.trim(),
+          especie: pEspecie.value,
+          raza: isExotico ? '' : pRaza.value.trim(),
+          tipoExotico: isExotico ? pRaza.value.trim() : '',
+          edad: Number(document.getElementById('p_edad').value || 0),
+          peso: Number(document.getElementById('p_peso').value || 0),
+          sexo: document.getElementById('p_sexo').value,
+          esterilizado: document.getElementById('p_ester').value,
+          patologias: document.getElementById('p_pat').value.trim(),
+          via: document.getElementById('p_via').value.trim(),
+          comidas: document.getElementById('p_comidas').value.trim(),
+          vacunas: pVac.value,
+          faltan: (pVac.value==='No') ? pFaltan.value.trim() : '',
+          comportamiento: document.getElementById('p_comp').value.trim(),
+          seguroVet: pSegVet.value,
+          aseguradora: (pSegVet.value==='Sí') ? pAseg.value.trim() : '',
+          poliza: (pSegVet.value==='Sí') ? pPol.value.trim() : '',
+          seguroRC: document.getElementById('p_segRC').value,
+          comentarios: document.getElementById('p_notas').value.trim(),
+          updatedAt: new Date().toISOString()
+        };
+
+        try{
+          let petId = CURRENT_PET_ID;
+          if (!petId){
+            const ref = await db.collection('users').doc(CURRENT_UID).collection('pets').add(data);
+            petId = ref.id; CURRENT_PET_ID = petId;
+          } else {
+            await db.collection('users').doc(CURRENT_UID).collection('pets').doc(petId).set(data, {merge:true});
+          }
+
+          if (petPhotoFile){
+            const url = await uploadPetPhoto(CURRENT_UID, petId, petPhotoFile);
+            await db.collection('users').doc(CURRENT_UID).collection('pets').doc(petId).set({ fotoUrl: url }, {merge:true});
+          }
+
+          pMsg.style.display='inline-flex';
+          await render(CURRENT_UID);
+          setTimeout(closePetModal, 400);
+        }catch(err){
+          alert('No se pudo guardar la mascota: ' + (err?.message || err));
+        }
+      });
+
+      pDel.addEventListener('click', async ()=>{
+        if (!CURRENT_PET_ID) return;
+        if (!confirm('¿Eliminar esta mascota?')) return;
+        try{
+          await db.collection('users').doc(CURRENT_UID).collection('pets').doc(CURRENT_PET_ID).delete();
+          // eliminar fotos
+          try{
+            const dirRef = st.ref().child(`users/${CURRENT_UID}/pets/${CURRENT_PET_ID}`);
+            const list = await dirRef.listAll();
+            await Promise.all(list.items.map(i => i.delete()));
+          }catch(_){}
+          await render(CURRENT_UID);
+          closePetModal();
+        }catch(err){
+          alert('No se pudo eliminar: ' + (err?.message || err));
+        }
+      });
+
+      // ---------- Interceptar enlaces antiguos (registro / perfil-mascotas) ----------
+      toggleOwnerLinkInterceptions();
+
+      // ---------- Abrir desde botones visibles ----------
+      document.getElementById('tpl-btn-perfil')?.addEventListener('click', (e)=>{ e.preventDefault(); openOwnerFromStorageOrEmpty(); });
+      document.getElementById('tpl-btn-mascota-nueva')?.addEventListener('click', (e)=>{ e.preventDefault(); openPetModal(null); });
+
+      // ---------- Deep links ----------
+      function handleDeepLinks(){
+        try{
+          const qs = new URLSearchParams(location.search);
+          const owner = qs.get('owner');
+          const pet   = qs.get('pet');
+          if (owner === 'edit'){ openOwnerFromStorageOrEmpty(); }
+          if (pet === 'new'){ openPetModal(null); }
+          else if (pet){ openPetFromIdOrNew(pet); }
+        }catch(_){}
+      }
+
+      // ---------- Auth guard ----------
+      auth.onAuthStateChanged(async (u)=>{
+        if (u && !u.isAnonymous){
+          CURRENT_UID = u.uid;
+          try{
+            localStorage.setItem('tplAuth','1');
+            if (u.email) localStorage.setItem('tplEmail', String(u.email));
+          }catch(_){}
+          await render(CURRENT_UID);
+          handleDeepLinks();
+        } else {
+          location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
+        }
+      });
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo runtime seguro] -->
   <script>
     (function(){
       try{
         document.documentElement.classList.remove('tpl-auth-boot');
         var ov = document.getElementById('tpl-form-overlay');
         if (ov) ov.classList.remove('show');
+        window.addEventListener('load', function(){
+          document.documentElement.classList.remove('tpl-auth-boot');
+          var ov2 = document.getElementById('tpl-form-overlay');
+          if (ov2) ov2.classList.remove('show');
+        });
       }catch(_){}
     })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
