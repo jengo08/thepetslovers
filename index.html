@@ -290,17 +290,22 @@
           document.documentElement.classList.remove('tpl-auth-boot');
           var ov = document.getElementById('tpl-form-overlay');
           if (ov) ov.classList.remove('show');
+          // TPL: Además ocultamos cookie overlay si algún CSS lo dejase tapando
+          var cov = document.getElementById('cookie-modal-overlay');
+          if (cov){ cov.hidden = true; cov.style.display = 'none'; }
           window.addEventListener('load', function(){
             document.documentElement.classList.remove('tpl-auth-boot');
             var ov2 = document.getElementById('tpl-form-overlay');
             if (ov2) ov2.classList.remove('show');
+            var cov2 = document.getElementById('cookie-modal-overlay');
+            if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; }
           });
         }catch(_){}
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Cookie modal: 1ª vez, accesible y no bloquea] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Cookie modal: mantener oculto (no auto-mostrar)] -->
     <script>
       (function(){
         var LS_KEY = 'tplCookieConsent';
@@ -310,12 +315,12 @@
         function hide(){ overlay.hidden = true; overlay.style.display = 'none'; }
         function show(){ overlay.hidden = false; overlay.style.display = 'flex'; }
 
-        // Mostrar solo si no tenemos decisión previa
-        var val = null;
-        try{ val = localStorage.getItem(LS_KEY); }catch(_){}
-        if (!val) show();
+        // TPL: DESACTIVADO auto-mostrar para evitar bloqueo en primera carga
+        // var val = null;
+        // try{ val = localStorage.getItem(LS_KEY); }catch(_){}
+        // if (!val) show();
 
-        // Botones
+        // Botones (por si alguna vez lo activas manualmente)
         var btnAccept = document.getElementById('accept-cookies');
         var btnDeny   = document.getElementById('deny-cookies');
         if (btnAccept) btnAccept.addEventListener('click', function(){
@@ -327,7 +332,7 @@
           hide();
         });
 
-        // Cerrar con ESC o clic fuera
+        // Cerrar con ESC o clic fuera (si llegara a abrirse)
         overlay.addEventListener('click', function(e){ if (e.target === overlay) hide(); });
         document.addEventListener('keydown', function onEsc(e){
           if (e.key === 'Escape'){ hide(); document.removeEventListener('keydown', onEsc); }
@@ -343,9 +348,14 @@
           document.documentElement.classList.remove('tpl-auth-boot');
           var ov = document.getElementById('tpl-form-overlay');
           if (ov) ov.style.display = 'none';
+          var cov = document.getElementById('cookie-modal-overlay');
+          if (cov) { cov.hidden = true; cov.style.display = 'none'; }
           document.querySelectorAll('a,button').forEach(function(el){
             if (!el.style.pointerEvents) el.style.pointerEvents = 'auto';
           });
+          document.body && document.body.removeAttribute('inert');
+          document.documentElement.style.overflow = '';
+          document.body && (document.body.style.overflow = '');
         }catch(_){}
       })();
     </script>
