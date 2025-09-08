@@ -97,14 +97,9 @@
             <img id="preview" class="tpl-photo" alt="Previsualización de la mascota" src="" />
             <div>
               <div class="tpl-photo-actions">
-                <!-- TPL: INICIO BLOQUE NUEVO [Input sin texto de ayuda ni aria-describedby] -->
                 <input id="foto" name="foto" type="file" accept="image/*">
-                <!-- TPL: FIN BLOQUE NUEVO -->
                 <button id="btnCambiarFoto" type="button" class="cta-button link is-hidden">Cambiar foto</button>
               </div>
-              <!-- TPL: INICIO BLOQUE NUEVO [Eliminado texto de ayuda de foto] -->
-              <!-- (texto eliminado a petición de Jenny) -->
-              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </div>
         </div>
@@ -115,16 +110,14 @@
           <input id="nombre" name="nombre" type="text" required>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Microchip sin texto de ayuda “15 dígitos”] -->
+        <!-- Microchip -->
         <div class="tpl-field">
           <label for="microchip"><i class="fa-solid fa-barcode"></i> Nº de microchip <span id="microchipReq">*</span></label>
           <div class="tpl-inline">
-            <!-- Quitamos aria-describedby y el <small> con la ayuda -->
             <input id="microchip" name="microchip" type="text" placeholder="15 dígitos" pattern="^[0-9]{15}$">
             <label class="tpl-inline" style="gap:6px"><input type="checkbox" id="noChip"> No tiene</label>
           </div>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-field">
           <label for="especie"><i class="fa-solid fa-dog"></i> Especie *</label>
@@ -137,13 +130,10 @@
           </select>
         </div>
 
-        <!-- Raza / especie (se convierte en Tipo de exótico si especie = Exótico) -->
+        <!-- Raza / especie (o Tipo de exótico) -->
         <div class="tpl-field">
-          <!-- TPL: INICIO BLOQUE NUEVO [Etiqueta con id para cambiar texto dinámicamente] -->
           <label id="label-raza" for="raza"><i class="fa-solid fa-dna"></i> Raza / especie *</label>
-          <!-- TPL: FIN BLOQUE NUEVO -->
           <input id="raza" name="raza" type="text" list="datalist-perro" required placeholder="Escribe o elige de la lista">
-          <!-- TPL: INICIO BLOQUE NUEVO [Datalists razas] -->
           <datalist id="datalist-perro">
             <option value="Labrador Retriever"><option value="Golden Retriever"><option value="Pastor Alemán">
             <option value="Bulldog Francés"><option value="Bulldog Inglés"><option value="Caniche / Poodle">
@@ -156,16 +146,7 @@
             <option value="Bengalí"><option value="British Shorthair"><option value="Sphynx"><option value="Ragdoll">
             <option value="Noruego de Bosque"><option value="Mestizo">
           </datalist>
-          <!-- TPL: FIN BLOQUE NUEVO -->
-
-          <!-- TPL: INICIO BLOQUE NUEVO [Eliminado texto de ayuda “Autocompletar…”] -->
-          <!-- (texto eliminado a petición de Jenny) -->
-          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
-
-        <!-- TPL: INICIO BLOQUE ELIMINADO [Tipo exótico como bloque aparte] -->
-        <!-- (El bloque #wrap-exotico se elimina para no crear un desplegable abajo) -->
-        <!-- TPL: FIN BLOQUE ELIMINADO -->
 
         <div class="tpl-field">
           <label for="edad"><i class="fa-regular fa-calendar"></i> Edad aproximada (años) *</label>
@@ -235,12 +216,11 @@
           </select>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Faltan vacunas] -->
+        <!-- Faltan vacunas -->
         <div id="wrap-faltan" class="tpl-field col-span-2 is-hidden">
           <label for="faltan"><i class="fa-regular fa-clipboard"></i> ¿Qué vacunas/desparasitaciones faltan? *</label>
           <textarea id="faltan" name="faltan" rows="2" placeholder="Ej.: Rabia 2025, trivalente pendiente, interna Q2 2025"></textarea>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-field col-span-2">
           <label for="comportamiento"><i class="fa-solid fa-comments"></i> Comportamiento con animales/personas *</label>
@@ -257,7 +237,7 @@
           </select>
         </div>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Detalles seguro vet] -->
+        <!-- Detalles seguro vet -->
         <div id="wrap-seguro" class="col-span-2 is-hidden" style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
           <div class="tpl-field">
             <label for="aseguradora"><i class="fa-solid fa-building-shield"></i> Aseguradora *</label>
@@ -268,7 +248,6 @@
             <input id="poliza" name="poliza" type="text" placeholder="Identificador de póliza">
           </div>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-field">
           <label for="seguroRC"><i class="fa-solid fa-scale-balanced"></i> ¿Tiene seguro de responsabilidad civil?</label>
@@ -312,14 +291,14 @@
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
       projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      storageBucket: "thepetslovers-c1111.appspot.com", /* ← válido para Storage */
       messagingSenderId: "415914577533",
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
 
     (function(){
-      const app = firebase.initializeApp(firebaseConfig);
+      if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
       const auth = firebase.auth();
       const db   = firebase.firestore();
       const st   = firebase.storage();
@@ -465,6 +444,22 @@
       }
       // TPL: FIN BLOQUE NUEVO
 
+      // TPL: INICIO BLOQUE NUEVO [Seguro vet condicional — ¡FALTABA!]
+      function toggleSeguroVet(){
+        if (seguroVet.value === 'Sí'){
+          showEl(wrapSeguro);
+          aseguradora.required = true;
+          poliza.required = true;
+        } else {
+          hideEl(wrapSeguro);
+          aseguradora.required = false;
+          poliza.required = false;
+          aseguradora.value = '';
+          poliza.value = '';
+        }
+      }
+      // TPL: FIN BLOQUE NUEVO
+
       // Banner inteligente
       function updateBanner(){
         badges.innerHTML = '';
@@ -545,9 +540,7 @@
       }
       async function deletePet(uid){
         if (uid && PET_ID){
-          // borrar doc
           await db.collection('users').doc(uid).collection('pets').doc(PET_ID).delete();
-          // borrar fotos de Storage bajo la carpeta de la mascota
           try{
             const dirRef = st.ref().child(`users/${uid}/pets/${PET_ID}`);
             const list = await dirRef.listAll();
@@ -576,13 +569,11 @@
         especie.value              = p.especie || '';
         toggleEspecie();
 
-        // TPL: INICIO BLOQUE NUEVO [Relleno de raza/tipoExotico en un solo campo]
         if ((p.especie||'') === 'Exótico') {
           raza.value = p.tipoExotico || '';
         } else {
           raza.value = p.raza || '';
         }
-        // TPL: FIN BLOQUE NUEVO
 
         form.edad.value            = p.edad ?? '';
         form.peso.value            = p.peso ?? '';
@@ -627,13 +618,18 @@
         });
       });
 
+      // Guardia de sesión + carga
       auth.onAuthStateChanged(async (u)=>{
         const uid = u?.uid || null;
+        if (!u || u.isAnonymous){
+          const next = encodeURIComponent(location.pathname + location.search);
+          location.href = 'iniciar-sesion.html?next=' + next;
+          return;
+        }
         if (!MODE_NEW){
           const p = await getPet(uid);
           fill(p);
         } else {
-          // Estado inicial de condicionales
           toggleMicrochipRequired();
           toggleVacunas();
           toggleSeguroVet();
@@ -656,10 +652,8 @@
         }
         if (!form.checkValidity()){ form.reportValidity(); return; }
 
-        // TPL: INICIO BLOQUE NUEVO [Construir raza/tipoExotico en base a especie]
         const isExotico = (especie.value === 'Exótico');
         const valorRazaOExotico = raza.value.trim();
-        // TPL: FIN BLOQUE NUEVO
 
         const data = {
           fotoDataUrl   : photoDataUrl || '',
@@ -669,10 +663,8 @@
           microchip     : noChip.checked ? '' : microchip.value.trim(),
           especie       : especie.value,
 
-          // TPL: INICIO BLOQUE NUEVO [Asignación correcta]
           raza          : isExotico ? '' : valorRazaOExotico,
           tipoExotico   : isExotico ? valorRazaOExotico : '',
-          // TPL: FIN BLOQUE NUEVO
 
           edad          : Number(form.edad.value || 0),
           peso          : Number(form.peso.value || 0),
