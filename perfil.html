@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
@@ -143,7 +143,9 @@
       <div>
         <strong>Perfil incompleto.</strong> Para poder reservar, completa tus datos y añade al menos una mascota.
         <div style="margin-top:6px;">
-          <a id="completar" class="cta-button link" href="registro.html?next=perfil.html">Completar perfil</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [CTA → nuevo formulario propietario] -->
+          <a id="completar" class="cta-button link" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html">Completar perfil</a>
+          <!-- TPL: FIN BLOQUE NUEVO -->
           <a class="cta-button link" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
         </div>
       </div>
@@ -179,11 +181,13 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions" id="tpl-actions-perfil">
-          <a class="cta-button" id="tpl-btn-perfil" href="registro.html?next=perfil.html">Rellenar / Editar perfil</a>
+          <!-- TPL: INICIO BLOQUE NUEVO [CTA → nuevo formulario propietario] -->
+          <a class="cta-button" id="tpl-btn-perfil" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html">Rellenar / Editar perfil</a>
+          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
 
         <!-- TPL: INICIO BLOQUE NUEVO [enlace pequeño editar cuando perfil completo] -->
-        <a id="tpl-link-editar" href="registro.html?next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
+        <a id="tpl-link-editar" href="tpl-perfil-propietario.html?mode=edit&next=perfil.html" class="tpl-edit-small tpl-hidden" aria-hidden="true">
           <i class="fa-solid fa-pen-to-square"></i> Editar perfil
         </a>
         <!-- TPL: FIN BLOQUE NUEVO -->
@@ -207,9 +211,7 @@
         <!-- TPL: FIN BLOQUE NUEVO -->
 
         <div class="tpl-actions">
-          <!-- TPL: INICIO BLOQUE NUEVO [Solo "Añadir mascota"] -->
           <a class="cta-button link" id="tpl-btn-mascota-nueva" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
         </div>
       </article>
 
@@ -246,7 +248,9 @@
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
       projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      /* TPL: INICIO BLOQUE NUEVO [FIX storageBucket correcto] */
+      storageBucket: "thepetslovers-c1111.appspot.com",
+      /* TPL: FIN BLOQUE NUEVO */
       messagingSenderId: "415914577533",
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
@@ -290,7 +294,6 @@
       const btnIrReserva  = document.getElementById('tpl-btn-ir-reserva');
       const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
 
-      // Mapeo de servicios (fallback genérico)
       const SERVICE_LABELS = {
         "guarderia-dia": "Guardería de día",
         "visitas": "Visitas a domicilio (gatos)",
@@ -345,7 +348,6 @@
           : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx));
       }
 
-      // Helpers
       function getInitials(name){
         if(!name) return '—';
         const parts = String(name).trim().split(/\s+/).slice(0,2);
@@ -361,10 +363,6 @@
         const s = String(any);
         const d = new Date(s);
         return isNaN(d) ? null : d;
-      }
-      function daysDiff(from, to){
-        const ms = to.setHours(0,0,0,0) - from.setHours(0,0,0,0);
-        return Math.round(ms / 86400000);
       }
       function soonBadge(start){
         if (!start) return '';
@@ -385,28 +383,26 @@
         if (s==='completada' || s==='finalizada') return '<span class="tpl-badge done"><i class="fa-regular fa-circle-check"></i> Completada</span>';
         if (s==='cancelada') return '<span class="tpl-badge canceled"><i class="fa-regular fa-circle-xmark"></i> Cancelada</span>';
         return '<span class="tpl-badge"><i class="fa-regular fa-circle-question"></i> —</span>';
-        }
+      }
 
       function ensureReservationAccess(hasProfile, hasPets){
         const complete = !!(hasProfile && hasPets);
-        // bandera global para otros scripts
         try{
           window.__TPL_PROFILE_COMPLETE__ = complete;
           localStorage.setItem('tplProfileComplete', complete ? '1' : '0');
         }catch(_){}
 
-        // Banner
         bannerInc.hidden = complete;
 
-        // Hint inicial del párrafo original
+        const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
         if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
 
-        // Botón reservar: si incompleto, evita navegación y enfoca banner
         function guardClick(e){
           e.preventDefault();
           bannerInc.hidden = false;
           bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
         }
+        const btnIrReserva = document.getElementById('tpl-btn-ir-reserva');
         if (btnIrReserva){
           btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
           if (!complete){
@@ -414,7 +410,7 @@
             btnIrReserva.setAttribute('title','Completa tu perfil y añade una mascota para continuar');
             btnIrReserva.setAttribute('href', '#completar');
           } else {
-            btnIrReserva.replaceWith(btnIrReserva.cloneNode(true)); // quita listeners
+            btnIrReserva.replaceWith(btnIrReserva.cloneNode(true));
             const freshBtn = document.getElementById('tpl-btn-ir-reserva');
             if (freshBtn) {
               freshBtn.setAttribute('href','reserva.html');
@@ -426,25 +422,26 @@
       }
 
       async function getReservations(uid){
-        // 1) subcolección personal
         try{
           const snap = await db.collection('users').doc(uid).collection('reservas').get();
           if (!snap.empty){
             return snap.docs.map(d => ({ id:d.id, ...d.data() }));
           }
         }catch(_){}
-        // 2) colección global por ownerUid
         try{
           const snap2 = await db.collection('reservas').where('ownerUid','==', uid).get();
           if (!snap2.empty){
             return snap2.docs.map(d => ({ id:d.id, ...d.data() }));
           }
         }catch(_){}
-        // 3) fallback local
         try{ return JSON.parse(localStorage.getItem(LS_RES_KEY) || '[]'); }catch(_){ return []; }
       }
 
       function renderReservations(reservas){
+        const reservasList  = document.getElementById('tpl-reservas-list');
+        const reservasView  = document.getElementById('tpl-reservas-view');
+        const reservasEmpty = document.getElementById('tpl-reservas-empty');
+
         reservasList.innerHTML = '';
         if (!reservas || reservas.length===0){
           reservasView.classList.add('tpl-hidden');
@@ -454,7 +451,6 @@
         reservasEmpty.classList.add('tpl-hidden');
         reservasView.classList.remove('tpl-hidden');
 
-        // Orden por fecha de inicio ascendente
         reservas.sort((a,b)=>{
           const da = toDate(a.fechaInicio || a.startAt || a.startDate || a.inicio) || new Date(8640000000000000);
           const dbb = toDate(b.fechaInicio || b.startAt || b.startDate || b.inicio) || new Date(8640000000000000);
@@ -494,22 +490,39 @@
 
         // ----- Perfil
         const profile = await getProfile(uid);
-        updateBadge(profile);
+        const emptyCliente  = document.getElementById('tpl-cliente-empty');
+        const viewCliente   = document.getElementById('tpl-cliente-view');
+
+        const v = {
+          nombre:     document.getElementById('tpl-view-nombre'),
+          telefono:   document.getElementById('tpl-view-telefono'),
+          email:      document.getElementById('tpl-view-email'),
+          direccion:  document.getElementById('tpl-view-direccion'),
+          cp:         document.getElementById('tpl-view-cp'),
+          pref:       document.getElementById('tpl-view-pref')
+        };
         if (profile && profile.nombre) {
-          document.getElementById('tpl-view-nombre').textContent    = profile.nombre || '—';
-          document.getElementById('tpl-view-telefono').textContent  = profile.telefono || '—';
-          document.getElementById('tpl-view-email').textContent     = profile.email || '—';
-          document.getElementById('tpl-view-direccion').textContent = profile.direccion || '—';
-          document.getElementById('tpl-view-cp').textContent        = profile.cp || '—';
-          document.getElementById('tpl-view-pref').textContent      = profile.preferencias || '—';
+          v.nombre.textContent    = profile.nombre || '—';
+          v.telefono.textContent  = profile.telefono || '—';
+          v.email.textContent     = profile.email || '—';
+          v.direccion.textContent = profile.direccion || '—';
+          v.cp.textContent        = profile.cp || '—';
+          v.pref.textContent      = profile.preferencias || '—';
           emptyCliente.classList.add('tpl-hidden');
           viewCliente.classList.remove('tpl-hidden');
         } else {
           viewCliente.classList.add('tpl-hidden');
           emptyCliente.classList.remove('tpl-hidden');
         }
+        updateBadge(profile);
 
         // ----- Mascotas
+        const mascotasEmpty = document.getElementById('tpl-mascotas-empty');
+        const mascotasView  = document.getElementById('tpl-mascotas-view');
+        const mascotasList  = document.getElementById('tpl-mascotas-list');
+        const chipMascotas  = document.getElementById('tpl-chip-mascotas');
+        const cntMascotas   = document.getElementById('tpl-count-mascotas');
+
         const pets = await getPets(uid);
         mascotasList.innerHTML = '';
         const count = pets ? pets.length : 0;
@@ -532,7 +545,6 @@
             const card   = document.createElement('div');
             card.className = 'tpl-pet';
 
-            // Avatar: fotoUrl si existe; si no, iniciales
             const avatar = document.createElement('div');
             avatar.className = 'tpl-avatar';
             if (p.fotoUrl){
@@ -564,7 +576,6 @@
             edit.setAttribute('href', petEditHref(p, idx, isFirebase));
             actions.appendChild(edit);
 
-            // Popover con detalles
             const pop = document.createElement('div');
             pop.className = 'tpl-popover';
             pop.setAttribute('role','dialog');
@@ -605,9 +616,8 @@
         renderReservations(reservas);
       }
 
-      // ✅ Logout silencioso + limpieza para que la navbar vuelva a “Iniciar sesión”
       async function doLogout(){
-        try { await auth.signOut(); } catch(e) { /* silencioso */ }
+        try { await auth.signOut(); } catch(e) {}
         try {
           localStorage.removeItem('tplAuth');
           localStorage.removeItem('tplEmail');
@@ -615,13 +625,11 @@
           localStorage.removeItem(LS_PETS_KEY);
           localStorage.removeItem('tplProfileComplete');
         } catch(e) {}
-        // Limpia caches del SW si existiera (silencioso)
         if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(()=>{}); }
         location.href = 'index.html';
       }
-      if (logoutBtn) logoutBtn.addEventListener('click', doLogout);
+      document.getElementById('tpl-logout-btn')?.addEventListener('click', doLogout);
 
-      // 🔐 Guardia: si no hay sesión, envía a login
       auth.onAuthStateChanged(async (u) => {
         if (u && !u.isAnonymous) {
           try{
