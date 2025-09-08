@@ -101,6 +101,26 @@
       .tpl-popover{ position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; margin-top:8px; }
     }
     /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Banner bloqueo reservas + Reservas list] */
+    .tpl-banner-warning{
+      display:flex; gap:10px; align-items:flex-start; margin:10px 0 14px;
+      padding:10px 12px; border:1px dashed #339496; border-radius:12px; background:#f0fbfb; color:#2a7e80;
+    }
+    .tpl-banner-warning i{ margin-top:2px; }
+
+    .tpl-reservas{ display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); }
+    .tpl-reserva{ border:1px solid #eee; border-radius:12px; padding:12px; background:#fff; position:relative; }
+    .tpl-reserva h3{ margin:0 0 6px; font-size:1rem; color:#58425a; }
+    .tpl-reserva .row{ display:flex; gap:10px; align-items:center; font-size:.95rem; color:#333; margin:4px 0; }
+    .tpl-badge{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-weight:700; font-size:.85rem; border:1px solid #eee; background:#fafafa; color:#58425a; }
+    .tpl-badge.ok{ background:#e9fbf4; border-color:#bfe7d3; color:#1f7a5a; }
+    .tpl-badge.pending{ background:#fff8e6; border-color:#ffe4a3; color:#906500; }
+    .tpl-badge.canceled{ background:#ffeaea; border-color:#ffcccc; color:#9a1f1f; }
+    .tpl-badge.done{ background:#eef0ff; border-color:#d8ddff; color:#2833a7; }
+    .tpl-badge.review{ background:#f0f6ff; border-color:#d6e7ff; color:#285f9a; }
+    .tpl-soon{ position:absolute; right:12px; top:12px; font-weight:800; font-size:.85rem; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
 </head>
 <body>
@@ -115,6 +135,19 @@
         <button type="button" class="tpl-btn-ghost" id="tpl-logout-btn" aria-label="Cerrar sesión">Cerrar sesión</button>
       </div>
     </div>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Banner “Perfil incompleto”] -->
+    <section id="tpl-banner-incompleto" class="tpl-banner-warning" hidden>
+      <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+      <div>
+        <strong>Perfil incompleto.</strong> Para poder reservar, completa tus datos y añade al menos una mascota.
+        <div style="margin-top:6px;">
+          <a id="completar" class="cta-button link" href="registro.html?next=perfil.html">Completar perfil</a>
+          <a class="cta-button link" href="perfil-mascotas.html?mode=new">Añadir mascota</a>
+        </div>
+      </div>
+    </section>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
     <p class="tpl-sub">Gestiona tus datos y los de tus mascotas. <strong>Profesionales del sector veterinario</strong> a tu lado.</p>
@@ -184,8 +217,16 @@
       <article class="tpl-card tpl-card-wide" aria-labelledby="h-reservas">
         <h2 id="h-reservas">Reservas</h2>
         <p>Cuando tu perfil esté completo podrás reservar.</p>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Vista reservas + estados + proximidad] -->
+        <div id="tpl-reservas-view" class="tpl-view tpl-hidden" aria-live="polite">
+          <div id="tpl-reservas-list" class="tpl-reservas"></div>
+        </div>
+        <p id="tpl-reservas-empty" class="tpl-empty tpl-hidden">Aún no tienes reservas.</p>
+        <!-- TPL: FIN BLOQUE NUEVO -->
+
         <div class="tpl-actions">
-          <a class="cta-button" href="reserva.html">Ir a reservar</a>
+          <a class="cta-button" id="tpl-btn-ir-reserva" href="reserva.html">Ir a reservar</a>
         </div>
       </article>
 
@@ -223,8 +264,11 @@
 
       const LS_PROFILE_KEY = 'tpl-profile';
       const LS_PETS_KEY    = 'tpl-pets';
+      const LS_RES_KEY     = 'tpl-reservas'; // fallback local si existiera
 
       // Refs UI
+      const bannerInc   = document.getElementById('tpl-banner-incompleto');
+
       const emptyCliente  = document.getElementById('tpl-cliente-empty');
       const viewCliente   = document.getElementById('tpl-cliente-view');
       const statusCliente = document.getElementById('tpl-cliente-status');
@@ -238,6 +282,25 @@
       const cntMascotas   = document.getElementById('tpl-count-mascotas');
 
       const logoutBtn     = document.getElementById('tpl-logout-btn');
+
+      // Reservas
+      const reservasView  = document.getElementById('tpl-reservas-view');
+      const reservasList  = document.getElementById('tpl-reservas-list');
+      const reservasEmpty = document.getElementById('tpl-reservas-empty');
+      const btnIrReserva  = document.getElementById('tpl-btn-ir-reserva');
+      const pHintReserva  = document.querySelector("article[aria-labelledby='h-reservas'] p");
+
+      // Mapeo de servicios (fallback genérico)
+      const SERVICE_LABELS = {
+        "guarderia-dia": "Guardería de día",
+        "visitas": "Visitas a domicilio (gatos)",
+        "alojamiento": "Alojamiento nocturno",
+        "paseos": "Paseos",
+        "transporte": "Transporte",
+        "bodas": "Bodas",
+        "postoperatorio": "Postoperatorio",
+        "exoticos": "Exóticos"
+      };
 
       function updateBadge(profile){
         const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
@@ -290,6 +353,140 @@
       }
       function fmt(val, fallback='—'){
         return (val===0 || !!val) ? String(val) : fallback;
+      }
+      function toDate(any){
+        if (!any) return null;
+        if (any.toDate) { try { return any.toDate(); } catch(_){} }
+        if (typeof any === 'number') return new Date(any);
+        const s = String(any);
+        const d = new Date(s);
+        return isNaN(d) ? null : d;
+      }
+      function daysDiff(from, to){
+        const ms = to.setHours(0,0,0,0) - from.setHours(0,0,0,0);
+        return Math.round(ms / 86400000);
+      }
+      function soonBadge(start){
+        if (!start) return '';
+        const now = new Date();
+        const d = (toDate(start) || null);
+        if (!d) return '';
+        const diffHr = Math.round((d - now) / 3600000);
+        if (diffHr <= 0 && diffHr > -24) return '<span class="tpl-badge done">¡Hoy!</span>';
+        if (diffHr > 0 && diffHr <= 24) return '<span class="tpl-badge ok tpl-soon">Mañana</span>';
+        if (diffHr > 24 && diffHr <= 48) return '<span class="tpl-badge review tpl-soon">En 2 días</span>';
+        return '';
+      }
+      function statusBadge(status){
+        const s = String(status || '').toLowerCase();
+        if (s==='aceptada' || s==='aprobada') return '<span class="tpl-badge ok"><i class="fa-solid fa-check"></i> Aceptada</span>';
+        if (s==='en_revision' || s==='en-revision' || s==='revision') return '<span class="tpl-badge review"><i class="fa-solid fa-hourglass-half"></i> En revisión</span>';
+        if (s==='enviada' || s==='pendiente') return '<span class="tpl-badge pending"><i class="fa-regular fa-paper-plane"></i> Enviada</span>';
+        if (s==='completada' || s==='finalizada') return '<span class="tpl-badge done"><i class="fa-regular fa-circle-check"></i> Completada</span>';
+        if (s==='cancelada') return '<span class="tpl-badge canceled"><i class="fa-regular fa-circle-xmark"></i> Cancelada</span>';
+        return '<span class="tpl-badge"><i class="fa-regular fa-circle-question"></i> —</span>';
+        }
+
+      function ensureReservationAccess(hasProfile, hasPets){
+        const complete = !!(hasProfile && hasPets);
+        // bandera global para otros scripts
+        try{
+          window.__TPL_PROFILE_COMPLETE__ = complete;
+          localStorage.setItem('tplProfileComplete', complete ? '1' : '0');
+        }catch(_){}
+
+        // Banner
+        bannerInc.hidden = complete;
+
+        // Hint inicial del párrafo original
+        if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
+
+        // Botón reservar: si incompleto, evita navegación y enfoca banner
+        function guardClick(e){
+          e.preventDefault();
+          bannerInc.hidden = false;
+          bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+        if (btnIrReserva){
+          btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
+          if (!complete){
+            btnIrReserva.addEventListener('click', guardClick);
+            btnIrReserva.setAttribute('title','Completa tu perfil y añade una mascota para continuar');
+            btnIrReserva.setAttribute('href', '#completar');
+          } else {
+            btnIrReserva.replaceWith(btnIrReserva.cloneNode(true)); // quita listeners
+            const freshBtn = document.getElementById('tpl-btn-ir-reserva');
+            if (freshBtn) {
+              freshBtn.setAttribute('href','reserva.html');
+              freshBtn.removeAttribute('aria-disabled');
+              freshBtn.removeAttribute('title');
+            }
+          }
+        }
+      }
+
+      async function getReservations(uid){
+        // 1) subcolección personal
+        try{
+          const snap = await db.collection('users').doc(uid).collection('reservas').get();
+          if (!snap.empty){
+            return snap.docs.map(d => ({ id:d.id, ...d.data() }));
+          }
+        }catch(_){}
+        // 2) colección global por ownerUid
+        try{
+          const snap2 = await db.collection('reservas').where('ownerUid','==', uid).get();
+          if (!snap2.empty){
+            return snap2.docs.map(d => ({ id:d.id, ...d.data() }));
+          }
+        }catch(_){}
+        // 3) fallback local
+        try{ return JSON.parse(localStorage.getItem(LS_RES_KEY) || '[]'); }catch(_){ return []; }
+      }
+
+      function renderReservations(reservas){
+        reservasList.innerHTML = '';
+        if (!reservas || reservas.length===0){
+          reservasView.classList.add('tpl-hidden');
+          reservasEmpty.classList.remove('tpl-hidden');
+          return;
+        }
+        reservasEmpty.classList.add('tpl-hidden');
+        reservasView.classList.remove('tpl-hidden');
+
+        // Orden por fecha de inicio ascendente
+        reservas.sort((a,b)=>{
+          const da = toDate(a.fechaInicio || a.startAt || a.startDate || a.inicio) || new Date(8640000000000000);
+          const dbb = toDate(b.fechaInicio || b.startAt || b.startDate || b.inicio) || new Date(8640000000000000);
+          return da - dbb;
+        });
+
+        reservas.forEach(r=>{
+          const start = toDate(r.fechaInicio || r.startAt || r.startDate || r.inicio);
+          const end   = toDate(r.fechaFin || r.endAt || r.endDate || r.fin);
+          const servicio = SERVICE_LABELS[r.servicio] || r.servicio || 'Servicio';
+          const estado = r.estado || r.status || 'enviada';
+          const pets   = Array.isArray(r.mascotas) ? r.mascotas : (r.mascotaNombre ? [r.mascotaNombre] : []);
+          const caret  = r.cuidadorNombre || r.cuidador || '';
+          const addr   = r.direccion || r.address || '';
+          const price  = r.precio || r.price || '';
+
+          const soon   = soonBadge(start);
+
+          const el = document.createElement('div');
+          el.className = 'tpl-reserva';
+          el.innerHTML = `
+            ${soon || ''}
+            <h3>${servicio}</h3>
+            <div class="row"><i class="fa-regular fa-calendar"></i> ${start ? start.toLocaleDateString('es-ES') : '—'} ${end ? ' · ' + end.toLocaleDateString('es-ES') : ''}</div>
+            <div class="row"><i class="fa-solid fa-paw"></i> ${pets.length ? pets.join(', ') : '—'}</div>
+            ${caret ? `<div class="row"><i class="fa-regular fa-user"></i> ${caret}</div>` : ''}
+            ${addr ? `<div class="row"><i class="fa-regular fa-map"></i> ${addr}</div>` : ''}
+            ${price ? `<div class="row"><i class="fa-solid fa-euro-sign"></i> ${price}</div>` : ''}
+            <div class="row">${statusBadge(estado)}</div>
+          `;
+          reservasList.appendChild(el);
+        });
       }
 
       async function render(uid){
@@ -397,6 +594,15 @@
           chipMascotas.setAttribute('aria-hidden','true');
           cntMascotas.textContent = '0';
         }
+
+        // 🔐 Bloqueo reservas si falta algo
+        const hasProfile = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
+        const hasPets    = count > 0;
+        ensureReservationAccess(hasProfile, hasPets);
+
+        // ----- Reservas
+        const reservas = await getReservations(uid);
+        renderReservations(reservas);
       }
 
       // ✅ Logout silencioso + limpieza para que la navbar vuelva a “Iniciar sesión”
@@ -407,6 +613,7 @@
           localStorage.removeItem('tplEmail');
           localStorage.removeItem(LS_PROFILE_KEY);
           localStorage.removeItem(LS_PETS_KEY);
+          localStorage.removeItem('tplProfileComplete');
         } catch(e) {}
         // Limpia caches del SW si existiera (silencioso)
         if ('caches' in window) { caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(()=>{}); }
