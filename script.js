@@ -1,4 +1,23 @@
 /* ===========================
+   TPL: INICIO BLOQUE NUEVO [Airbag anti-doble-carga y registro de errores]
+   =========================== */
+(function(){
+  if (window.__TPL_SCRIPT_MAIN_RUNNING__) return;
+  window.__TPL_SCRIPT_MAIN_RUNNING__ = true;
+
+  try {
+    window.addEventListener('error', function(e){
+      console.warn('TPL: error global capturado:', e.message);
+    });
+    window.addEventListener('unhandledrejection', function(e){
+      console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason);
+    });
+  } catch(_) {}
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
+
+/* ===========================
    TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + Formspree + Firebase Firestore]
    =========================== */
 (function () {
@@ -31,14 +50,14 @@
       .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
       .tpl-modal__dialog{position:relative;max-width:640px;margin:5vh auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
       .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-      .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:var(--color-texto, #333)}
+      .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:#58425a}
       .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
       .tpl-modal__close:hover{background:#e9e9e9}
       .tpl-form{display:grid;gap:12px}
       @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
       .tpl-form .full{grid-column:1 / -1}
       .tpl-input,.tpl-select,.tpl-textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit}
-      .tpl-submit{background:var(--color-principal,#339496);color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
+      .tpl-submit{background:#339496;color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
       .tpl-submit:hover{background:#2a7e80}
       .tpl-help{font-size:.9rem;color:#555}
     `;
@@ -168,11 +187,11 @@
     roundTimeToNextQuarter();
     els.modal.setAttribute('aria-hidden','false');
     setTimeout(()=> els.servicioSelect.focus(), 0);
-    document.documentElement.style.overflow = 'hidden'; // bloquear fondo
+    document.documentElement.style.overflow = 'hidden'; // bloquear fondo mientras el modal está abierto
   }
   function closeModal() {
     els.modal.setAttribute('aria-hidden','true');
-    document.documentElement.style.overflow = '';
+    document.documentElement.style.overflow = ''; // desbloquear fondo al cerrar
   }
 
   // --- Cierre del modal ---
@@ -276,7 +295,7 @@
   // ============================================
   //  CARGA DEL MÓDULO FIREBASE (solo si hace falta)
   //  - Inyectamos un <script type="module"> que escucha el evento 'tpl:reserva'
-  //  - Reutiliza la app existente (getApps), o usa window.__TPL_FIREBASE_CONFIG
+  //  - Reutiliza la app existente (getApps), o usa window.__TPL_FIREBASE_CONFIG / TPL_FIREBASE_CONFIG
   // ============================================
   let firebaseModuleInjected = false;
   async function ensureFirebaseModuleReady() {
@@ -289,17 +308,10 @@
       import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
       import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-      // Reusar app si ya existe (por tus reservas). Si no, inicializar con window.__TPL_FIREBASE_CONFIG
-      let app;
-      if (getApps().length) {
-        app = getApp();
-      } else {
-        const cfg = window.__TPL_FIREBASE_CONFIG;
-        if (!cfg) {
-          throw new Error("No hay app Firebase ni __TPL_FIREBASE_CONFIG definido.");
-        }
-        app = initializeApp(cfg);
-      }
+      // Reusar app si ya existe. Si no, inicializar con la config disponible.
+      const cfg = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG;
+      let app = getApps().length ? getApp() : (cfg ? initializeApp(cfg) : null);
+      if (!app) throw new Error("No hay app Firebase ni configuración disponible.");
       const db = getFirestore(app);
 
       // Escuchar el evento del modal para guardar en Firestore
@@ -338,35 +350,25 @@
    TPL: FIN BLOQUE NUEVO
    =========================== */
 
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Airbag JS mínimo para evitar pantalla en blanco]
-   =========================== */
-(function(){
-  try {
-    window.addEventListener('error', function(e){
-      console.warn('TPL: error global capturado:', e.message);
-    });
-    window.addEventListener('unhandledrejection', function(e){
-      console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason);
-    });
-  } catch(_) {}
-})();
- /* TPL: FIN BLOQUE NUEVO */
 
 /* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google + (Facebook/Microsoft opcional)]
+   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google (fallback sin tocar navbar)]
    =========================================================== */
 (function(){
-  // Tu configuración (global para otros módulos)
-  window.__TPL_FIREBASE_CONFIG = {
-    apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-    authDomain: "thepetslovers-c1111.firebaseapp.com",
-    projectId: "thepetslovers-c1111",
-    storageBucket: "thepetslovers-c1111.firebasestorage.app",
-    messagingSenderId: "415914577533",
-    appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-    measurementId: "G-FXPD69KXBG"
-  };
+  // ⚠️ No sobrescribimos si ya existe config global.
+  /* TPL: INICIO BLOQUE NUEVO */
+  if (!window.__TPL_FIREBASE_CONFIG) {
+    window.__TPL_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.firebasestorage.app",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // Inyectamos un módulo para el SDK modular (sin build)
   const mod = document.createElement('script');
@@ -376,19 +378,14 @@
     import {
       getAuth, onAuthStateChanged,
       signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
-      GoogleAuthProvider, FacebookAuthProvider, OAuthProvider,
-      signInWithPopup, signInWithRedirect, signOut
+      GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
-    const cfg  = window.__TPL_FIREBASE_CONFIG;
+    const cfg  = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG;
     const app  = getApps().length ? getApp() : initializeApp(cfg);
     const auth = getAuth(app);
 
-    // Proveedores
     const providerGoogle = new GoogleAuthProvider();
-    const providerFacebook = new FacebookAuthProvider();
-    const providerMicrosoft = new OAuthProvider('microsoft.com');
-
     const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     const useRedirect = (isIOS && isSafari);
@@ -398,12 +395,6 @@
                          : signInWithPopup(auth, providerGoogle);
     }
 
-    async function providerSignIn(p){
-      return useRedirect ? signInWithRedirect(auth, p)
-                         : signInWithPopup(auth, p);
-    }
-
-    // API pública
     const subs = [];
     onAuthStateChanged(auth, (user)=>{ subs.forEach(fn=>fn(user||null)); syncAuthNodes(user); });
 
@@ -416,10 +407,8 @@
       emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
       emailReset(email){ return sendPasswordResetEmail(auth, email); },
 
-      // Sociales
+      // Social
       google(){ return googleSignIn(); },
-      facebook(){ return providerSignIn(providerFacebook); },
-      microsoft(){ return providerSignIn(providerMicrosoft); },
 
       // Salir
       signOut(){ return signOut(auth); },
@@ -451,6 +440,11 @@
         const form = host.querySelector('.tpl-login-form');
         const msg  = host.querySelector('.tpl-login-msg');
 
+        function nextUrl(){
+          const qs = new URLSearchParams(location.search);
+          return qs.get('next') || qs.get('redirect') || 'perfil.html';
+        }
+
         form.addEventListener('submit', async (e)=>{
           e.preventDefault();
           const email = form.email.value.trim();
@@ -459,8 +453,7 @@
           try{
             await window.tplAuth.emailSignIn(email, pass);
             msg.textContent = '¡Listo!';
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
+            location.href = nextUrl();
           }catch(err){ msg.textContent = normalizaError(err); }
         });
 
@@ -471,8 +464,7 @@
           try{
             await window.tplAuth.emailSignUp(email, pass);
             msg.textContent = 'Cuenta creada.';
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
+            location.href = nextUrl();
           }catch(err){ msg.textContent = normalizaError(err); }
         };
 
@@ -490,8 +482,7 @@
           msg.textContent = 'Conectando con Google…';
           try{
             await window.tplAuth.google();
-            const back = new URLSearchParams(location.search).get('redirect');
-            if (back) location.href = back; else location.reload();
+            location.href = nextUrl();
           }catch(err){ msg.textContent = normalizaError(err); }
         };
 
@@ -508,21 +499,18 @@
       }
     };
 
-    // === ÚNICO CAMBIO: Navbar muestra "Mi perfil" con sesión, "Iniciar sesión" sin sesión ===
+    // === IMPORTANTÍSIMO: no tocar el navbar si existe #tpl-login-link (lo gestiona tpl-navbar.js)
     function syncAuthNodes(user){
-      document.querySelectorAll('[data-auth-visible]').forEach(el=>{
-        const mode = el.getAttribute('data-auth-visible');
-        el.style.display = (mode==='in' && user) || (mode==='out' && !user) ? '' : 'none';
-      });
+      if (document.getElementById('tpl-login-link')) return; // ✋ lo maneja tpl-navbar.js
       const btn = document.querySelector('.login-button');
       if (btn){
         if (user){
           btn.textContent = 'Mi perfil';
-          btn.setAttribute('href', 'mi-perfil.html');
+          btn.setAttribute('href', 'perfil.html');
           btn.onclick = null;
         } else {
           btn.textContent = 'Iniciar sesión';
-          btn.setAttribute('href', 'login.html');
+          btn.setAttribute('href', 'iniciar-sesion.html?next=perfil.html');
           btn.onclick = null;
         }
       }
@@ -535,6 +523,7 @@
 /* ===========================================================
    TPL: FIN BLOQUE NUEVO
    =========================================================== */
+
 
 /* ===========================================================
    TPL: INICIO BLOQUE NUEVO [Estilos mínimos del login inline]
