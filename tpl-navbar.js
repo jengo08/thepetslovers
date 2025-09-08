@@ -1,3 +1,15 @@
+/* TPL: INICIO BLOQUE NUEVO [Guard HOME sin redirecciones] */
+(function(){
+  // Si estamos en HOME o en modo seguro, otros scripts pueden leer esta señal para NO redirigir.
+  const ON_HOME = (window.__TPL_ON_HOME__ === true) ||
+                  /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+  const SAFE = window.__TPL_SAFE_MODE__ === true;
+  if (ON_HOME || SAFE) {
+    window.__TPL_NAVBAR_NO_REDIRECTS__ = true;
+  }
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
 /* TPL Navbar — estable, idempotente y sin bucles */
 (function(){
   if (window.__TPL_NAVBAR_RUNNING__) return;
@@ -886,6 +898,7 @@
 /* ===========================
    TPL: FIN BLOQUE NUEVO
    =========================== */
+
 /* TPL: INICIO BLOQUE NUEVO [Fix CP en Reservas desde navbar] */
 (function(){
   function fixCp(){
