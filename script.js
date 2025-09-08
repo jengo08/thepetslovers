@@ -216,7 +216,6 @@
     // 2) Enviar a Formspree (correo)
     try {
       const fd = new FormData();
-      // Campos “bonitos” para el email
       fd.append('Servicio', labelFromKey(payload.servicio));
       fd.append('Fecha', payload.fecha || '');
       fd.append('Hora', payload.hora || '');
@@ -228,7 +227,6 @@
         fd.append('Duración (min)', payload.visitas_duracion || '');
         fd.append('Visitas diarias', payload.visitas_diarias || '');
       }
-      // Marca interna
       fd.append('_subject', 'Nueva reserva rápida — The Pets Lovers');
       fd.append('_template', 'table');
 
@@ -250,14 +248,12 @@
   document.addEventListener('click', function(e){
     const a = e.target.closest('a'); if (!a) return;
 
-    // 1) Hash clásico
     if (a.getAttribute('href') === '#reserva-rapida') {
       e.preventDefault();
       openModal('guarderia-dia');
       return;
     }
 
-    // 2) Links a reserva.html (con o sin ?servicio=)
     const href = a.getAttribute('href') || '';
     if (href.startsWith('reserva.html')) {
       e.preventDefault();
@@ -294,8 +290,7 @@
 
   // ============================================
   //  CARGA DEL MÓDULO FIREBASE (solo si hace falta)
-  //  - Inyectamos un <script type="module"> que escucha el evento 'tpl:reserva'
-  //  - Reutiliza la app existente (getApps), o usa window.__TPL_FIREBASE_CONFIG / TPL_FIREBASE_CONFIG
+  //  - Reutiliza app existente o usa window.__TPL_FIREBASE_CONFIG / TPL_FIREBASE_CONFIG
   // ============================================
   let firebaseModuleInjected = false;
   async function ensureFirebaseModuleReady() {
@@ -308,13 +303,11 @@
       import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
       import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-      // Reusar app si ya existe. Si no, inicializar con la config disponible.
       const cfg = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG;
       let app = getApps().length ? getApp() : (cfg ? initializeApp(cfg) : null);
       if (!app) throw new Error("No hay app Firebase ni configuración disponible.");
       const db = getFirestore(app);
 
-      // Escuchar el evento del modal para guardar en Firestore
       window.addEventListener('tpl:reserva', async (ev) => {
         try {
           const d = ev.detail || {};
@@ -355,8 +348,6 @@
    TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google (fallback sin tocar navbar)]
    =========================================================== */
 (function(){
-  // ⚠️ No sobrescribimos si ya existe config global.
-  /* TPL: INICIO BLOQUE NUEVO */
   if (!window.__TPL_FIREBASE_CONFIG) {
     window.__TPL_FIREBASE_CONFIG = {
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
@@ -368,9 +359,7 @@
       measurementId: "G-FXPD69KXBG"
     };
   }
-  /* TPL: FIN BLOQUE NUEVO */
 
-  // Inyectamos un módulo para el SDK modular (sin build)
   const mod = document.createElement('script');
   mod.type = 'module';
   mod.textContent = `
@@ -401,19 +390,11 @@
     window.tplAuth = {
       onChange(cb){ if(typeof cb==='function') subs.push(cb); },
       getUser(){ return auth.currentUser || null; },
-
-      // Email/Password
       emailSignIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
       emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
       emailReset(email){ return sendPasswordResetEmail(auth, email); },
-
-      // Social
       google(){ return googleSignIn(); },
-
-      // Salir
       signOut(){ return signOut(auth); },
-
-      // Render compacto reutilizable (inline)
       renderInlineLogin(host, { title='Accede a tu cuenta' } = {}){
         if(!host) return;
         host.innerHTML = \`
@@ -499,9 +480,9 @@
       }
     };
 
-    // === IMPORTANTÍSIMO: no tocar el navbar si existe #tpl-login-link (lo gestiona tpl-navbar.js)
+    // ❗ IMPORTANTÍSIMO: no tocar el navbar si existe #tpl-login-link (lo gestiona tpl-navbar.js)
     function syncAuthNodes(user){
-      if (document.getElementById('tpl-login-link')) return; // ✋ lo maneja tpl-navbar.js
+      if (document.getElementById('tpl-login-link')) return;
       const btn = document.querySelector('.login-button');
       if (btn){
         if (user){
@@ -515,7 +496,6 @@
         }
       }
     }
-    // Llamada inicial
     syncAuthNodes(auth.currentUser);
   `;
   document.head.appendChild(mod);
@@ -549,6 +529,62 @@
   .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:6px}
   `;
   document.head.appendChild(s);
+})();
+/* ===========================================================
+   TPL: FIN BLOQUE NUEVO
+   =========================================================== */
+
+
+/* ===========================================================
+   TPL: INICIO BLOQUE NUEVO [DESBLOQUEO FORZADO SOLO EN HOME (index)]
+   =========================================================== */
+(function hardUnblockHome(){
+  // Solo actúa en home
+  var isHome = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+  if (!isHome) return;
+
+  function unlock(){
+    try{
+      // Quitar clases/estados que suelen bloquear
+      document.documentElement.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
+      document.documentElement.style.overflow = '';
+      if (document.body) {
+        document.body.style.pointerEvents = 'auto';
+        document.body.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
+      }
+
+      // Ocultar overlays genéricos si quedaron enganchados (NO toca el modal de reservas)
+      ['tpl-form-overlay','tpl-auth-overlay','auth-overlay','form-overlay'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el){
+          el.classList.remove('show');
+          el.hidden = true;
+          el.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('.tpl-auth-overlay,.safe-mode-overlay,[data-overlay],.overlay,.modal-backdrop').forEach(function(el){
+        if (!el.closest('#tpl-modal-reserva')) { // respeta nuestro modal si está abierto
+          el.classList.remove('show');
+          el.hidden = true;
+          el.style.display = 'none';
+        }
+      });
+
+      // Asegura clics
+      document.querySelectorAll('a,button').forEach(function(el){
+        if (!el.style.pointerEvents || el.style.pointerEvents === 'none') {
+          el.style.pointerEvents = 'auto';
+        }
+      });
+    }catch(_){}
+  }
+
+  // Ejecuta varias veces por si otros scripts tardan
+  unlock();
+  window.addEventListener('load', unlock);
+  setTimeout(unlock, 400);
+  setTimeout(unlock, 1200);
+  setTimeout(unlock, 2500);
 })();
 /* ===========================================================
    TPL: FIN BLOQUE NUEVO
