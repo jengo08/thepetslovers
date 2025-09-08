@@ -10,36 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro + apagar overlays + señal HOME] -->
-    <script>
-      (function(){
-        const qp = new URLSearchParams(location.search);
-        const safeParam = qp.get('safe');
-        const ls = localStorage;
-        const SAFE = (safeParam === '1') || ls.getItem('tplSafeMode') === '1';
-        if (SAFE) { window.__TPL_SAFE_MODE__ = true; }
-
-        // Señal global: estamos en HOME
-        window.__TPL_ON_HOME__ = true;
-
-        // Congela redirecciones 3s si estamos en modo seguro para evitar bucles
-        if (SAFE) {
-          try{
-            const loc = window.location;
-            const a = loc.assign.bind(loc), r = loc.replace.bind(loc);
-            loc.assign = function(){}; loc.replace = function(){};
-            setTimeout(()=>{ loc.assign = a; loc.replace = r; }, 3000);
-          }catch(_){}
-        }
-      })();
-    </script>
-    <style id="tpl-unblock-css">
-      /* Oculta overlays/modales que puedan bloquear clics */
-      #tpl-form-overlay, .tpl-overlay, .modal-backdrop, [data-tpl-overlay] { display:none !important; }
-      html, body { overflow:auto !important; }
-    </style>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
     <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page] -->
     <meta name="description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en toda España.">
     <meta property="og:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
@@ -79,30 +49,16 @@
         appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
         measurementId: "G-FXPD69KXBG"
       };
+      // Señal silenciosa para otros scripts: estamos en HOME (no muestra nada en pantalla)
+      window.__TPL_ON_HOME__ = true;
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Shim compatibilidad __TPL_FIREBASE_CONFIG + defaults navbar] -->
-    <script>
-      // Compat: algunos scripts esperan __TPL_FIREBASE_CONFIG
-      window.__TPL_FIREBASE_CONFIG = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG || null;
-
-      // Defaults suaves por si el navbar los usa y aún no existen
-      window.TPL_PANEL_URL   = window.TPL_PANEL_URL   || 'tpl-candidaturas-admin.html';
-      window.TPL_PROFILE_URL = window.TPL_PROFILE_URL || 'perfil.html';
-      window.TPL_ADMIN_EMAILS = window.TPL_ADMIN_EMAILS || ['4b.jenny.gomez@gmail.com'];
-    </script>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
+    <!-- TPL: INICIO BLOQUE NUEVO [DESACTIVADO: Modo seguro + HUD] -->
     <!--
-      Nota: aquí ya NO cargamos los SDKs de Firebase ni el control de sesión.
-      `tpl-navbar.js` se encarga de:
-        • cargar Firebase SDK si falta,
-        • inicializar con window.TPL_FIREBASE_CONFIG / window.__TPL_FIREBASE_CONFIG,
-        • (opcional) cargar tpl-auth.js (login/logout/visibilidad).
+    BLOQUE DESACTIVADO A PETICIÓN: no queremos “modo seguro” visible ni HUD.
+    (Se mantiene comentado por trazabilidad)
     -->
-    <!-- TPL: INICIO BLOQUE NUEVO [Limpieza: eliminado duplicado de tpl-navbar.js en <head>] -->
-    <!-- (Se mantiene una sola carga al final del <body>) -->
     <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
@@ -121,9 +77,7 @@
             <li><a href="index.html#contactanos">Contáctanos</a></li>
             <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
           </ul>
-          <!-- TPL: INICIO BLOQUE NUEVO [Fix enlace login en fallback sin JS] -->
           <a class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>
-          <!-- TPL: FIN BLOQUE NUEVO -->
         </nav>
       </noscript>
     </div>
@@ -132,7 +86,6 @@
     <header class="hero-section">
         <div class="hero-content">
             <h1>The Pets Lovers</h1>
-            <!-- Texto original se mantiene tal cual -->
             <p>Cuidamos de tu mascota con profesionales del sector veterinario.</p>
             <a href="#servicios" class="cta-button">Reserva un servicio</a>
         </div>
@@ -165,7 +118,7 @@
     <section id="servicios" class="services-section">
         <div class="container">
             <h2>Nuestros Servicios</h2>
-        <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
             <div class="services-grid">
                 <div class="service-card">
                     <div class="service-icon"><i class="fa-solid fa-house"></i></div>
@@ -239,15 +192,15 @@
     <section id="hazte-cuidador" class="become-sitter-section">
         <div class="container">
             <h2>¿Te apasionan los animales?</h2>
-        <p class="subtitle">Únete a nuestra red de cuidadores y trabaja haciendo lo que más te gusta.</p>
+            <p class="subtitle">Únete a nuestra red de cuidadores y trabaja haciendo lo que más te gusta.</p>
             <a href="#" class="cta-button">Conviértete en cuidador</a>
         </div>
     </section>
 
-    <!-- Modal de cookies: solo aparece la primera vez -->
-    <div id="cookie-modal-overlay" class="cookie-modal-overlay">
-        <div class="cookie-modal-content">
-            <p>Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. 
+    <!-- Modal de cookies -->
+    <div id="cookie-modal-overlay" class="cookie-modal-overlay" hidden>
+        <div class="cookie-modal-content" role="dialog" aria-modal="true" aria-labelledby="cookie-title">
+            <p id="cookie-title">Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. 
                <a href="cookies.html">Política de cookies</a>
             </p>
             <div class="cookie-buttons">
@@ -330,16 +283,13 @@
     <script src="tpl-auth.js" defer></script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo runtime seguro] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo: limpiar estados que pudieran tapar la página] -->
     <script>
       (function(){
         try{
-          // Quita cualquier clase de arranque que pudiera dejar la página sin clics
           document.documentElement.classList.remove('tpl-auth-boot');
-          // Asegura que el overlay de formularios no quede mostrado por error
           var ov = document.getElementById('tpl-form-overlay');
           if (ov) ov.classList.remove('show');
-          // Repite al final de carga por si algún script tarda
           window.addEventListener('load', function(){
             document.documentElement.classList.remove('tpl-auth-boot');
             var ov2 = document.getElementById('tpl-form-overlay');
@@ -350,68 +300,55 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [HUD de diagnóstico rápido] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Cookie modal: 1ª vez, accesible y no bloquea] -->
     <script>
-    (function(){
-      const ls = localStorage;
+      (function(){
+        var LS_KEY = 'tplCookieConsent';
+        var overlay = document.getElementById('cookie-modal-overlay');
+        if (!overlay) return;
 
-      // Contenedor HUD
-      const bar = document.createElement('div');
-      bar.id = 'tpl-hud';
-      bar.style.cssText = 'position:fixed;left:10px;bottom:10px;right:10px;z-index:99999;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.1);padding:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:600 14px/1.2 Poppins,system-ui;';
-      bar.innerHTML = `
-        <span style="color:#58425a">HUD</span>
-        <span id="tpl-hud-status" style="color:#339496"></span>
-        <button id="tpl-hud-safe-on"  style="margin-left:auto;border:2px solid #339496;background:#fff;color:#339496;border-radius:999px;padding:6px 10px;font-weight:700;cursor:pointer">Modo seguro</button>
-        <button id="tpl-hud-safe-off" style="border:none;background:#339496;color:#fff;border-radius:999px;padding:6px 10px;font-weight:700;cursor:pointer">Salir modo seguro</button>
-        <button id="tpl-hud-clear"    style="border:2px solid #ccc;background:#fff;color:#333;border-radius:999px;padding:6px 10px;font-weight:700;cursor:pointer">Limpiar cache</button>
-        <pre id="tpl-hud-log" style="width:100%;max-height:140px;overflow:auto;margin:8px 0 0;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:8px;font:12px/1.35 ui-monospace,Consolas"></pre>
-      `;
-      document.body.appendChild(bar);
+        function hide(){ overlay.hidden = true; overlay.style.display = 'none'; }
+        function show(){ overlay.hidden = false; overlay.style.display = 'flex'; }
 
-      const logEl = document.getElementById('tpl-hud-log');
-      const stEl  = document.getElementById('tpl-hud-status');
+        // Mostrar solo si no tenemos decisión previa
+        var val = null;
+        try{ val = localStorage.getItem(LS_KEY); }catch(_){}
+        if (!val) show();
 
-      function log(line){ logEl.textContent += (line+'\n'); }
+        // Botones
+        var btnAccept = document.getElementById('accept-cookies');
+        var btnDeny   = document.getElementById('deny-cookies');
+        if (btnAccept) btnAccept.addEventListener('click', function(){
+          try{ localStorage.setItem(LS_KEY, 'accept'); }catch(_){}
+          hide();
+        });
+        if (btnDeny) btnDeny.addEventListener('click', function(){
+          try{ localStorage.setItem(LS_KEY, 'deny'); }catch(_){}
+          hide();
+        });
 
-      // Estado inicial
-      const safe = window.__TPL_SAFE_MODE__ === true;
-      stEl.textContent = safe ? '· SAFE ON' : '· SAFE OFF';
-
-      // Botones
-      document.getElementById('tpl-hud-safe-on').onclick = ()=>{ ls.setItem('tplSafeMode','1'); location.search = '?safe=1'; };
-      document.getElementById('tpl-hud-safe-off').onclick = ()=>{ ls.removeItem('tplSafeMode'); location.href = location.pathname; };
-      document.getElementById('tpl-hud-clear').onclick = async ()=>{
-        try{ await caches.keys().then(keys=>keys.forEach(k=>caches.delete(k))); }catch(_){}
-        ['tplAuth','tplEmail','tplProfileComplete','tpl_profile_url_cache'].forEach(k=>{ try{ls.removeItem(k);}catch(_){} });
-        location.reload();
-      };
-
-      // Captura errores JS
-      window.addEventListener('error', (e)=> log('JS error: ' + (e?.message || e)));
-      window.addEventListener('unhandledrejection', (e)=> log('Promise rejection: ' + (e?.reason?.message || e?.reason || e)));
-
-      // Informe rápido
-      (function report(){
-        log('Ruta: ' + location.pathname + location.search);
-        log('SAFE_MODE: ' + (safe ? 'ON' : 'OFF'));
-        log('Email cache: ' + (ls.getItem('tplEmail') || '—'));
-        log('Auth flag: ' + (ls.getItem('tplAuth') || '—'));
-        log('ProfileComplete: ' + (ls.getItem('tplProfileComplete') || '—'));
+        // Cerrar con ESC o clic fuera
+        overlay.addEventListener('click', function(e){ if (e.target === overlay) hide(); });
+        document.addEventListener('keydown', function onEsc(e){
+          if (e.key === 'Escape'){ hide(); document.removeEventListener('keydown', onEsc); }
+        });
       })();
-    })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- TPL: INICIO BLOQUE NUEVO [Último salvavidas: asegura clics] -->
     <script>
-      // Desbloquea la página si algún overlay quedó pillado
-      document.documentElement.classList.remove('tpl-auth-boot');
-      var ov = document.getElementById('tpl-form-overlay');
-      if (ov) ov.style.display = 'none';
-      // Asegura que los botones sean clicables
-      document.querySelectorAll('a,button').forEach(function(el){
-        el.style.pointerEvents = el.style.pointerEvents || 'auto';
-      });
+      (function(){
+        try{
+          document.documentElement.classList.remove('tpl-auth-boot');
+          var ov = document.getElementById('tpl-form-overlay');
+          if (ov) ov.style.display = 'none';
+          document.querySelectorAll('a,button').forEach(function(el){
+            if (!el.style.pointerEvents) el.style.pointerEvents = 'auto';
+          });
+        }catch(_){}
+      })();
     </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
