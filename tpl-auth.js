@@ -6,7 +6,15 @@
   'use strict';
 
   // ===== AJUSTES =====
-  var ADMIN_EMAILS = ['gestion@thepetslovers.es']; // admin oficial
+  // TPL: INICIO BLOQUE NUEVO [Admin emails — admite override global]
+  function normEmail(s){
+    return String(s||'').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // quita acentos
+  }
+  var ADMIN_EMAILS = (window.TPL_ADMIN_EMAILS && Array.isArray(window.TPL_ADMIN_EMAILS) ? window.TPL_ADMIN_EMAILS : ['gestion@thepetslovers.es'])
+    .map(normEmail);
+  // TPL: FIN BLOQUE NUEVO
+
   var URLS = {
     PROFILE: 'perfil.html',
     ADMIN_PANEL: 'tpl-candidaturas-admin.html',
@@ -18,13 +26,25 @@
   function findLoginButtons(){
     return Array.prototype.slice.call(document.querySelectorAll('a.login-button'));
   }
+
+  // TPL: INICIO BLOQUE NUEVO [Calcular next por defecto]
+  function defaultNext(){
+    // Por defecto, al perfil tras iniciar sesión
+    return URLS.PROFILE;
+  }
+  // TPL: FIN BLOQUE NUEVO
+
   function setButtonState(state){
     var btns = findLoginButtons();
     for(var i=0;i<btns.length;i++){
       var btn = btns[i];
       if(state === 'guest'){
         btn.textContent = 'Iniciar sesión';
-        btn.setAttribute('href', URLS.LOGIN);
+        // TPL: INICIO BLOQUE NUEVO [Añadir ?next=...]
+        var next = defaultNext();
+        var sep  = URLS.LOGIN.indexOf('?') >= 0 ? '&' : '?';
+        btn.setAttribute('href', URLS.LOGIN + sep + 'next=' + encodeURIComponent(next));
+        // TPL: FIN BLOQUE NUEVO
         btn.classList.add('tpl-guest');
         btn.classList.remove('tpl-logged');
       } else if(state === 'user'){
@@ -40,6 +60,7 @@
       }
     }
   }
+
   function attachObserver(getCurrentState){
     try{
       var obs = new MutationObserver(function(){ setButtonState(getCurrentState()); });
@@ -61,6 +82,12 @@
 
   // --- Logout (global) ---
   function performLogout(){
+    try{
+      document.documentElement.classList.remove('tpl-auth-boot');
+      var ov = document.getElementById('tpl-form-overlay');
+      if (ov) ov.classList.remove('show');
+    }catch(_){}
+
     if (!(window.firebase && firebase.auth)) {
       setButtonState('guest');
       window.location.href = URLS.INDEX;
@@ -100,8 +127,14 @@
         firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
           .then(function(){ return firebase.auth().signInWithPopup(provider); })
           .then(function(){
-            var to = new URLSearchParams(location.search).get('next') || btn.getAttribute('data-success-redirect');
-            if (to) location.href = to;
+            // TPL: INICIO BLOQUE NUEVO [Redirección inteligente post-login]
+            var u = (firebase.auth && firebase.auth().currentUser) || null;
+            var isAdmin = (u && !u.isAnonymous && ADMIN_EMAILS.indexOf(normEmail(u.email||'')) >= 0);
+            var qs = new URLSearchParams(location.search);
+            var hinted = btn.getAttribute('data-success-redirect');
+            var target = isAdmin ? URLS.ADMIN_PANEL : (qs.get('next') || hinted || URLS.PROFILE);
+            location.href = target;
+            // TPL: FIN BLOQUE NUEVO
           })
           .catch(function(err){ console.error('Google login error:', err); });
       });
@@ -111,7 +144,7 @@
   // --- Estado → 'guest' | 'user' | 'admin'
   function stateFromUser(user){
     if(!user || user.isAnonymous) return 'guest'; // SIN anónimo
-    var email = (user.email || '').toLowerCase();
+    var email = normEmail(user.email || '');
     return ADMIN_EMAILS.indexOf(email) >= 0 ? 'admin' : 'user';
   }
 
@@ -136,6 +169,14 @@
 
   // --- INIT ---
   function init(){
+    // TPL: INICIO BLOQUE NUEVO [Antibloqueo rápido]
+    try{
+      document.documentElement.classList.remove('tpl-auth-boot');
+      var ov = document.getElementById('tpl-form-overlay');
+      if (ov){ ov.classList.remove('show'); ov.style.display='none'; }
+    }catch(_){}
+    // TPL: FIN BLOQUE NUEVO
+
     wireLogout();
     wireGoogleLogin();
     setButtonState('guest'); // estado por defecto rápido
@@ -144,7 +185,9 @@
       try{
         if (!(window.firebase && firebase.initializeApp)) { setButtonState('guest'); return; }
         if (!firebase.apps || !firebase.apps.length){
+          // TPL: INICIO BLOQUE NUEVO [Compat múltiples nombres de config]
           var cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
+          // TPL: FIN BLOQUE NUEVO
           if (cfg) firebase.initializeApp(cfg);
         }
       }catch(e){ console.warn('[TPL auth] init app warn:', e); }
@@ -158,6 +201,10 @@
       // Pintar según sesión
       try{
         firebase.auth().onAuthStateChanged(function(user){
+          // TPL: INICIO BLOQUE NUEVO [Expose + antibloqueo]
+          window.__TPL_AUTH_STATE__ = { rawUser: user, state: stateFromUser(user) };
+          try{ document.documentElement.classList.remove('tpl-auth-boot'); }catch(_){}
+          // TPL: FIN BLOQUE NUEVO
           applyAuthVisibility(user);
           setButtonState(stateFromUser(user));
 
@@ -174,6 +221,16 @@
         setButtonState('guest');
       }
     });
+
+    // TPL: INICIO BLOQUE NUEVO [Antibloqueo en load por si algo tarda]
+    window.addEventListener('load', function(){
+      try{
+        document.documentElement.classList.remove('tpl-auth-boot');
+        var ov = document.getElementById('tpl-form-overlay');
+        if (ov){ ov.classList.remove('show'); ov.style.display='none'; }
+      }catch(_){}
+    });
+    // TPL: FIN BLOQUE NUEVO
   }
 
   if (document.readyState === 'loading'){
