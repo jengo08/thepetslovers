@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de registro] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de registro + perfil] -->
   <style>
     :root { --tpl-primary:#339496; --tpl-ink:#58425a; }
     .auth-wrap{ max-width:560px; margin:120px auto 64px; padding:0 16px; }
@@ -19,8 +19,11 @@
     .auth-sub{ margin:0 0 14px; color:#666; }
     .auth-form{ display:grid; gap:10px; }
     .auth-form label{ font-size:.92rem; color:var(--tpl-ink); }
-    .auth-form input{ border:1px solid #ddd; border-radius:10px; padding:11px 12px; font-size:1rem; width:100%; }
+    .auth-form input, .auth-form textarea, .auth-form select{
+      border:1px solid #ddd; border-radius:10px; padding:11px 12px; font-size:1rem; width:100%;
+    }
     .btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:11px 16px; cursor:pointer; font-weight:700; width:100%; }
+    .btn[disabled]{ opacity:.7; cursor:not-allowed; }
     .btn-google{ display:flex; align-items:center; justify-content:center; gap:8px; border:1px solid #ddd; border-radius:999px; padding:11px 16px; background:#fff; cursor:pointer; font-weight:700; width:100%; color:var(--tpl-primary); }
     .row-actions{ display:grid; gap:10px; margin-top:10px; }
     .link{ background:none; border:none; color:#339496; text-decoration:underline; cursor:pointer; padding:6px 0; font-weight:600; }
@@ -28,6 +31,13 @@
     .sep::before{ content:""; position:absolute; left:0; right:0; top:50%; height:1px; background:#eee; }
     .sep span{ background:#fff; padding:0 8px; position:relative; z-index:1; }
     .auth-msg{ min-height:1.2em; color:var(--tpl-ink); text-align:center; margin-top:6px; }
+
+    /* TPL: INICIO BLOQUE NUEVO [Tarjeta perfil propietario] */
+    .profile-card{ margin-top:16px; }
+    .row-2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media (max-width:560px){ .row-2{ grid-template-columns:1fr; } }
+    .hint{ color:#666; font-size:.9rem; margin-top:6px; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -38,7 +48,8 @@
   <script src="tpl-navbar.js" defer></script>
 
   <main class="auth-wrap container">
-    <section class="auth-card" aria-label="Registro">
+    <!-- ========= Tarjeta REGISTRO ========= -->
+    <section id="card-signup" class="auth-card" aria-label="Registro">
       <h1 class="auth-title">Regístrate</h1>
       <p class="auth-sub">Crea tu cuenta con tu correo. Podrás completar tu perfil y el de tu mascota más tarde.</p>
 
@@ -62,6 +73,52 @@
         <a class="link" href="iniciar-sesion.html">¿Ya tienes cuenta? Inicia sesión</a>
       </div>
     </section>
+
+    <!-- ========= Tarjeta PERFIL (solo visible si se fuerza edición o hay sesión) ========= -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Perfil del propietario] -->
+    <section id="card-profile" class="auth-card profile-card" aria-label="Perfil del propietario" hidden>
+      <h2 class="auth-title">Perfil del propietario</h2>
+      <p class="auth-sub">Completa estos datos para poder realizar reservas.</p>
+
+      <form id="formProfile" class="auth-form" novalidate>
+        <div class="row-2">
+          <div>
+            <label for="pNombre">Nombre y apellidos</label>
+            <input id="pNombre" name="nombre" type="text" required autocomplete="name" />
+          </div>
+          <div>
+            <label for="pTelefono">Teléfono</label>
+            <input id="pTelefono" name="telefono" type="tel" required autocomplete="tel" />
+          </div>
+        </div>
+
+        <div>
+          <label for="pEmail">Email</label>
+          <input id="pEmail" name="email" type="email" required autocomplete="email" disabled />
+        </div>
+
+        <div>
+          <label for="pDireccion">Dirección</label>
+          <input id="pDireccion" name="direccion" type="text" autocomplete="street-address" />
+        </div>
+
+        <div class="row-2">
+          <div>
+            <label for="pCP">Código postal</label>
+            <input id="pCP" name="cp" type="text" inputmode="numeric" pattern="[0-9]{4,5}" required />
+          </div>
+          <div>
+            <label for="pPref">Preferencias / notas</label>
+            <input id="pPref" name="preferencias" type="text" />
+          </div>
+        </div>
+
+        <button id="btnSaveProfile" class="btn" type="submit">Guardar perfil</button>
+        <p id="msgProfile" class="auth-msg" aria-live="polite"></p>
+        <p class="hint">* Todos nuestros cuidadores son <strong>auxiliares veterinarios titulados</strong>.</p>
+      </form>
+    </section>
+    <!-- TPL: FIN BLOQUE NUEVO -->
   </main>
 
   <!-- Footer centralizado -->
@@ -71,6 +128,9 @@
   <!-- Firebase compat SDKs + init (tu mismo proyecto) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <!-- TPL: INICIO BLOQUE NUEVO [Firestore para guardar perfil] -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
   <script>
     /* TPL: INICIO BLOQUE NUEVO [Init seguro Firebase] */
     (function(){
@@ -91,13 +151,17 @@
     /* TPL: FIN BLOQUE NUEVO */
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica registro + Google + redirección inmediata + sync navbar] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica registro + Google + redirección + edición perfil] -->
   <script>
     (function(){
       const AUTH_FLAG = 'tplAuth';
       const PROFILE_URL_LS = 'tpl_profile_url_cache';
       const params = new URLSearchParams(location.search);
       const NEXT = params.get('next'); // opcional
+      // 👉 Fuerza modo edición de perfil si next=perfil.html, o ?edit=profile / ?profile=1
+      const FORCE_PROFILE = /perfil\.html$/i.test(String(NEXT||'')) ||
+                            params.get('edit') === 'profile' ||
+                            params.get('profile') === '1';
 
       // 👉 Admin → Panel (mismo criterio que navbar)
       const PANEL_URL = 'tpl-candidaturas-admin.html';
@@ -110,12 +174,47 @@
         return ADMIN_SET.has(norm);
       }
 
+      // ====== Refs ======
       const $ = (s, p=document)=>p.querySelector(s);
-      const form = $('#formSignup');
-      const email = $('#email');
-      const pass  = $('#password');
-      const btnGoogle = $('#btnGoogle');
-      const msg = $('#msg');
+      const cardSignup  = $('#card-signup');
+      const form        = $('#formSignup');
+      const email       = $('#email');
+      const pass        = $('#password');
+      const btnGoogle   = $('#btnGoogle');
+      const msg         = $('#msg');
+
+      // Perfil
+      const cardProfile = $('#card-profile');
+      const formProfile = $('#formProfile');
+      const pNombre = $('#pNombre');
+      const pTelefono = $('#pTelefono');
+      const pEmail = $('#pEmail');
+      const pDireccion = $('#pDireccion');
+      const pCP = $('#pCP');
+      const pPref = $('#pPref');
+      const msgProfile = $('#msgProfile');
+      const btnSaveProfile = $('#btnSaveProfile');
+
+      // ====== Utils ======
+      function show(el){ if(el){ el.hidden=false; el.style.display=''; } }
+      function hide(el){ if(el){ el.hidden=true; el.style.display='none'; } }
+      function showMsg(t){ msg.textContent = t || ''; }
+      function showMsgProfile(t){ msgProfile.textContent = t || ''; }
+      function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
+      function db(){ return (typeof firebase!=='undefined' && firebase.firestore) ? firebase.firestore() : null; }
+
+      // 🔄 Sincroniza flags para que la navbar cambie en TODAS las páginas
+      function syncNavbarFlags(u){
+        try{
+          if (u) {
+            localStorage.setItem(AUTH_FLAG,'1');
+            if (u.email) localStorage.setItem('tplEmail', String(u.email));
+          } else {
+            localStorage.removeItem(AUTH_FLAG);
+            localStorage.removeItem('tplEmail');
+          }
+        }catch(e){}
+      }
 
       // Resuelve el archivo de perfil existente (mi-perfil.html / mi-cuenta.html / perfil.html)
       async function resolveProfileUrl(){
@@ -128,13 +227,13 @@
             if (r && r.ok){ try{ localStorage.setItem(PROFILE_URL_LS, p); }catch(e){} return p; }
           }catch(e){}
         }
-        return 'mi-perfil.html';
+        return 'perfil.html';
       }
 
       // Decide destino por usuario
       async function nextUrlFor(user){
         if (user && isAdminEmail(user.email)) return PANEL_URL;
-        if (NEXT) return NEXT;
+        if (NEXT && !FORCE_PROFILE) return NEXT;
         return await resolveProfileUrl();
       }
 
@@ -148,33 +247,90 @@
         location.href = await resolveProfileUrl();
       }
 
-      function showMsg(t){ msg.textContent = t || ''; }
-      function auth(){ return (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null; }
-
-      // 🔄 Sincroniza flags para que el botón del navbar cambie en TODAS las páginas
-      function syncNavbarFlags(u){
+      // ====== PERFIL: carga/guarda ======
+      async function loadProfile(uid){
         try{
-          if (u) {
-            localStorage.setItem(AUTH_FLAG,'1');
-            if (u.email) localStorage.setItem('tplEmail', String(u.email));
-          } else {
-            localStorage.removeItem(AUTH_FLAG);
-            localStorage.removeItem('tplEmail');
-          }
-        }catch(e){}
+          const ref = db().collection('users').doc(uid).collection('private').doc('profile');
+          const snap = await ref.get();
+          return snap.exists ? snap.data() : null;
+        }catch(e){ return null; }
       }
 
-      // 🚪 Si ya hay sesión activa, salta registro y ve al destino
+      async function saveProfile(uid, data){
+        const now = new Date();
+        const ref = db().collection('users').doc(uid).collection('private').doc('profile');
+        await ref.set({ ...data, updatedAt: now, source: 'registro.html' }, { merge:true });
+
+        // (Opcional) Mirror a owners para el recuento admin: cambia a true si lo quieres activo
+        const MIRROR_OWNERS = false; // <-- ponlo a true si quieres crear/actualizar owners/{uid}
+        if (MIRROR_OWNERS){
+          const oref = db().collection('owners').doc(uid);
+          await oref.set({
+            nombre: data.nombre || '',
+            email: data.email || '',
+            telefono: data.telefono || '',
+            cp: data.cp || '',
+            createdAt: now,
+            updatedAt: now
+          }, { merge:true });
+        }
+      }
+
+      function prefillProfile(u, profile){
+        try{
+          pEmail.value = u?.email || profile?.email || '';
+          if (profile){
+            if (profile.nombre)    pNombre.value    = profile.nombre;
+            if (profile.telefono)  pTelefono.value  = profile.telefono;
+            if (profile.direccion) pDireccion.value = profile.direccion;
+            if (profile.cp)        pCP.value        = profile.cp;
+            if (profile.preferencias) pPref.value   = profile.preferencias;
+          }
+        }catch(_){}
+      }
+
+      function validateProfile(){
+        if (!pNombre.value.trim()) return 'El nombre es obligatorio.';
+        if (!pTelefono.value.trim()) return 'El teléfono es obligatorio.';
+        if (!pCP.value.trim()) return 'El código postal es obligatorio.';
+        return '';
+      }
+
+      function enterProfileMode(){
+        hide(cardSignup);
+        show(cardProfile);
+        try{ document.title = 'Perfil del propietario · The Pets Lovers'; }catch(_){}
+        setTimeout(()=>{ cardProfile.scrollIntoView({behavior:'smooth', block:'start'}); }, 50);
+      }
+
+      function profileCompletedFlag(){
+        try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
+      }
+
+      // ====== Eventos ======
+      // 🚪 Si ya hay sesión activa: solo redirige si NO vienes a editar perfil.
       document.addEventListener('DOMContentLoaded', async function(){
         const a = auth();
         const u = a && a.currentUser;
         const flag = localStorage.getItem(AUTH_FLAG)==='1';
-        if (u || flag){
+
+        if ((u || flag) && !FORCE_PROFILE){
           await safeGo(await nextUrlFor(u));
+        }
+
+        // Si venimos a editar perfil, mostramos la tarjeta perfil cuando el user esté listo
+        if (FORCE_PROFILE && a){
+          a.onAuthStateChanged(async (user)=>{
+            if (user && !user.isAnonymous){
+              syncNavbarFlags(user);
+              enterProfileMode();
+              prefillProfile(user, await loadProfile(user.uid));
+            }
+          });
         }
       });
 
-      // 🧾 Registro email/contraseña (sin esperas: redirige inmediato al terminar)
+      // 🧾 Registro email/contraseña
       form.addEventListener('submit', async function(e){
         e.preventDefault();
         const a = auth();
@@ -185,7 +341,15 @@
           const cred = await a.createUserWithEmailAndPassword(em, pw);
           const u = cred && cred.user;
           syncNavbarFlags(u);
-          await safeGo(await nextUrlFor(u));
+
+          if (FORCE_PROFILE){
+            // Cambiamos a modo perfil, sin redirigir
+            enterProfileMode();
+            prefillProfile(u, null);
+            showMsg('Cuenta creada. Completa tu perfil para continuar.');
+          }else{
+            await safeGo(await nextUrlFor(u));
+          }
         }catch(err){
           let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
           if (/auth\/email-already-in-use/.test(m)) m = 'Ese email ya está registrado. Inicia sesión.';
@@ -208,7 +372,14 @@
           else { res = await a.signInWithPopup(provider); }
           const u = (res && res.user) || (a && a.currentUser);
           syncNavbarFlags(u);
-          await safeGo(await nextUrlFor(u));
+
+          if (FORCE_PROFILE){
+            enterProfileMode();
+            prefillProfile(u, await loadProfile(u.uid));
+            showMsg('Sesión iniciada. Completa tu perfil para continuar.');
+          }else{
+            await safeGo(await nextUrlFor(u));
+          }
         }catch(err){
           let m = (err && err.message) || 'No se pudo continuar con Google.';
           if (/popup-closed-by-user/i.test(m)) m = 'Has cerrado la ventana de Google.';
@@ -223,7 +394,13 @@
           const res = await a.getRedirectResult();
           if (res && res.user){
             syncNavbarFlags(res.user);
-            await safeGo(await nextUrlFor(res.user));
+            if (FORCE_PROFILE){
+              enterProfileMode();
+              prefillProfile(res.user, await loadProfile(res.user.uid));
+              showMsg('Sesión iniciada. Completa tu perfil para continuar.');
+            }else{
+              await safeGo(await nextUrlFor(res.user));
+            }
           }
         }catch(e){}
       })();
@@ -232,9 +409,50 @@
       try{
         const a = auth();
         if (a) {
-          a.onAuthStateChanged(function(user){ syncNavbarFlags(user); });
+          a.onAuthStateChanged(function(user){
+            syncNavbarFlags(user);
+            // Si estamos en modo perfil y aún no hemos precargado, hacemos prefill
+            if (user && FORCE_PROFILE && cardProfile.hidden){
+              enterProfileMode();
+              loadProfile(user.uid).then(p => prefillProfile(user, p));
+            }
+          });
         }
       }catch(e){}
+
+      // 📝 Guardar perfil propietario
+      formProfile.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const a = auth();
+        const u = a && a.currentUser;
+        if (!u){ showMsgProfile('Inicia sesión para guardar tu perfil.'); return; }
+        const err = validateProfile();
+        if (err){ showMsgProfile(err); return; }
+
+        const data = {
+          nombre: pNombre.value.trim(),
+          telefono: pTelefono.value.trim(),
+          email: u.email || pEmail.value.trim(),
+          direccion: pDireccion.value.trim(),
+          cp: pCP.value.trim(),
+          preferencias: pPref.value.trim()
+        };
+
+        try{
+          btnSaveProfile.disabled = true;
+          await saveProfile(u.uid, data);
+          showMsgProfile('Perfil guardado correctamente.');
+          profileCompletedFlag();
+
+          // Redirección amigable (por defecto a perfil.html)
+          const go = await nextUrlFor(u); // si venías con next, lo respeta (salvo FORCE_PROFILE)
+          setTimeout(()=>{ location.href = go; }, 700);
+        }catch(err){
+          showMsgProfile('No se pudo guardar el perfil. Inténtalo de nuevo.');
+        }finally{
+          btnSaveProfile.disabled = false;
+        }
+      });
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
