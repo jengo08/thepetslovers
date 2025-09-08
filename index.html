@@ -52,11 +52,23 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- TPL: INICIO BLOQUE NUEVO [Shim compatibilidad __TPL_FIREBASE_CONFIG + defaults navbar] -->
+    <script>
+      // Compat: algunos scripts esperan __TPL_FIREBASE_CONFIG
+      window.__TPL_FIREBASE_CONFIG = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG || null;
+
+      // (Opcional) Defaults suaves por si el navbar los usa y aún no existen:
+      window.TPL_PANEL_URL   = window.TPL_PANEL_URL   || 'tpl-candidaturas-admin.html';
+      window.TPL_PROFILE_URL = window.TPL_PROFILE_URL || 'perfil.html';
+      window.TPL_ADMIN_EMAILS = window.TPL_ADMIN_EMAILS || ['4b.jenny.gomez@gmail.com'];
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <!--
       Nota: aquí ya NO cargamos los SDKs de Firebase ni el control de sesión.
       `tpl-navbar.js` se encarga de:
         • cargar Firebase SDK si falta,
-        • inicializar con window.TPL_FIREBASE_CONFIG,
+        • inicializar con window.TPL_FIREBASE_CONFIG / window.__TPL_FIREBASE_CONFIG,
         • (opcional) cargar tpl-auth.js (login/logout/visibilidad).
     -->
     <!-- TPL: INICIO BLOQUE NUEVO [Limpieza: eliminado duplicado de tpl-navbar.js en <head>] -->
@@ -319,4 +331,3 @@
 </script>
 </body>
 </html>
-
