@@ -1,681 +1,919 @@
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Airbag anti-doble-carga y registro de errores]
-   =========================== */
+/* TPL: INICIO BLOQUE NUEVO [Guard HOME sin redirecciones] */
 (function(){
-  if (window.__TPL_SCRIPT_MAIN_RUNNING__) return;
-  window.__TPL_SCRIPT_MAIN_RUNNING__ = true;
-
-  try {
-    window.addEventListener('error', function(e){
-      console.warn('TPL: error global capturado:', e.message);
-    });
-    window.addEventListener('unhandledrejection', function(e){
-      console.warn('TPL: promesa rechazada:', (e.reason && e.reason.message) || e.reason);
-    });
-  } catch(_) {}
+  // Si estamos en HOME o en modo seguro, otros scripts pueden leer esta señal para NO redirigir.
+  const ON_HOME = (window.__TPL_ON_HOME__ === true) ||
+                  /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+  const SAFE = window.__TPL_SAFE_MODE__ === true;
+  if (ON_HOME || SAFE) {
+    window.__TPL_NAVBAR_NO_REDIRECTS__ = true;
+  }
 })();
 /* TPL: FIN BLOQUE NUEVO */
 
-
-/* ===========================
-   TPL: INICIO BLOQUE NUEVO [Modal de reservas inline + Formspree + Firebase Firestore]
-   =========================== */
-(function () {
-  'use strict';
-
-  // -------- AJUSTA AQUÍ TU ENDPOINT DE FORMSPREE --------
-  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mpwjjoyq';
-  // ------------------------------------------------------
-
-  // --- Mapeo de servicios (clave -> etiqueta visible) ---
-  const SERVICE_LABELS = {
-    "guarderia-dia": "Guardería de día",
-    "visitas": "Visitas a domicilio (gatos)",
-    "alojamiento": "Alojamiento nocturno",
-    "paseos": "Paseos",
-    "transporte": "Transporte",
-    "bodas": "Bodas",
-    "postoperatorio": "Postoperatorio",
-    "exoticos": "Exóticos"
-  };
-
-  // --- CSS mínimo del modal (no toca tu CSS global) ---
-  const CSS_ID = 'tpl-modal-styles';
-  if (!document.getElementById(CSS_ID)) {
-    const style = document.createElement('style');
-    style.id = CSS_ID;
-    style.textContent = `
-      .tpl-modal{position:fixed;inset:0;z-index:9999;display:none}
-      .tpl-modal[aria-hidden="false"]{display:block}
-      .tpl-modal__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-      .tpl-modal__dialog{position:relative;max-width:640px;margin:5vh auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
-      .tpl-modal__header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-      .tpl-modal__title{font-size:1.1rem;font-weight:700;margin:0;color:#58425a}
-      .tpl-modal__close{appearance:none;border:none;background:#f3f3f3;border-radius:8px;padding:8px 10px;cursor:pointer}
-      .tpl-modal__close:hover{background:#e9e9e9}
-      .tpl-form{display:grid;gap:12px}
-      @media (min-width:760px){.tpl-form{grid-template-columns:1fr 1fr}}
-      .tpl-form .full{grid-column:1 / -1}
-      .tpl-input,.tpl-select,.tpl-textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font:inherit}
-      .tpl-submit{background:#339496;color:#fff;border:none;border-radius:8px;padding:12px 16px;font-weight:700;cursor:pointer}
-      .tpl-submit:hover{background:#2a7e80}
-      .tpl-help{font-size:.9rem;color:#555}
-    `;
-    document.head.appendChild(style);
-  }
-
-  // --- Crear modal una sola vez ---
-  let modal = document.getElementById('tpl-modal-reserva');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.className = 'tpl-modal';
-    modal.id = 'tpl-modal-reserva';
-    modal.setAttribute('aria-hidden', 'true');
-    modal.innerHTML = `
-      <div class="tpl-modal__backdrop" data-close></div>
-      <div class="tpl-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tpl-modal-title">
-        <div class="tpl-modal__header">
-          <h3 class="tpl-modal__title" id="tpl-modal-title">Reserva rápida</h3>
-          <button class="tpl-modal__close" type="button" aria-label="Cerrar" data-close>✕</button>
-        </div>
-        <form id="tpl-reserva-form" class="tpl-form" action="#" method="post" novalidate>
-          <input type="hidden" id="tpl-servicio" name="servicio" value="">
-          <div class="full">
-            <label for="tpl-servicio-select">Servicio</label>
-            <select id="tpl-servicio-select" class="tpl-select" required>
-              <option value="" disabled selected>Selecciona un servicio</option>
-              ${Object.entries(SERVICE_LABELS).map(([k,v]) => `<option value="${k}">${v}</option>`).join('')}
-            </select>
-          </div>
-
-          <!-- SOLO para VISITAS GATOS -->
-          <div id="tpl-visitas-block" class="full" style="display:none">
-            <div class="tpl-form">
-              <div>
-                <label for="tpl-visitas-duracion">Duración de la visita (gatos)</label>
-                <select id="tpl-visitas-duracion" name="visitas_duracion" class="tpl-select">
-                  <option value="60">60 minutos</option>
-                  <option value="90">90 minutos</option>
-                </select>
-              </div>
-              <div>
-                <label for="tpl-visitas-diarias">Visitas diarias</label>
-                <select id="tpl-visitas-diarias" name="visitas_diarias" class="tpl-select">
-                  <option value="1">1 visita al día</option>
-                  <option value="2">2 visitas al día</option>
-                </select>
-                <small class="tpl-help">La 2ª visita del día es de medicación y se tarifica como tal.</small>
-              </div>
-            </div>
-          </div>
-          <!-- FIN SOLO VISITAS GATOS -->
-
-          <div>
-            <label for="tpl-fecha">Fecha</label>
-            <input type="date" id="tpl-fecha" name="fecha" class="tpl-input" required>
-          </div>
-          <div>
-            <label for="tpl-hora">Hora estimada</label>
-            <input type="time" id="tpl-hora" name="hora" class="tpl-input" required>
-          </div>
-          <div>
-            <label for="tpl-nombre">Tu nombre</label>
-            <input type="text" id="tpl-nombre" name="nombre" class="tpl-input" placeholder="Nombre y apellidos" required>
-          </div>
-          <div>
-            <label for="tpl-telefono">Teléfono</label>
-            <input type="tel" id="tpl-telefono" name="telefono" class="tpl-input" inputmode="tel" placeholder="+34 ..." required>
-          </div>
-          <div class="full">
-            <label for="tpl-direccion">Dirección (si aplica)</label>
-            <input type="text" id="tpl-direccion" name="direccion" class="tpl-input" placeholder="Calle, nº, localidad">
-          </div>
-          <div class="full">
-            <label for="tpl-notas">Notas</label>
-            <textarea id="tpl-notas" name="notas" class="tpl-textarea" rows="3" placeholder="Hábitos, medicación, pautas del adiestrador..."></textarea>
-          </div>
-          <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button type="submit" class="tpl-submit">Enviar solicitud</button>
-            <span class="tpl-help">Al enviar, te contactaremos para confirmar disponibilidad y el/la cuidador/a más adecuado/a.</span>
-          </div>
-        </form>
-      </div>
-    `;
-    document.body.appendChild(modal);
-  }
-
-  // --- Referencias ---
-  const els = {
-    modal,
-    closeBtn: modal.querySelector('.tpl-modal__close'),
-    form: modal.querySelector('#tpl-reserva-form'),
-    servicioHidden: modal.querySelector('#tpl-servicio'),
-    servicioSelect: modal.querySelector('#tpl-servicio-select'),
-    fecha: modal.querySelector('#tpl-fecha'),
-    hora: modal.querySelector('#tpl-hora'),
-    title: modal.querySelector('#tpl-modal-title'),
-    visitasBlock: modal.querySelector('#tpl-visitas-block')
-  };
-
-  // --- Utilidades fecha/hora ---
-  function setMinDateToday() {
-    const t = new Date();
-    els.fecha.min = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
-  }
-  function roundTimeToNextQuarter() {
-    const d = new Date();
-    d.setMinutes(d.getMinutes() + (15 - (d.getMinutes()%15))%15, 0, 0);
-    els.hora.value = d.toTimeString().slice(0,5);
-  }
-
-  // --- Helpers ---
-  function labelFromKey(key) { return SERVICE_LABELS[key] || key || 'Servicio'; }
-  function syncVisitFields() {
-    const isVisitas = (els.servicioSelect.value === 'visitas');
-    if (els.visitasBlock) els.visitasBlock.style.display = isVisitas ? 'block' : 'none';
-  }
-  function preselectService(key) {
-    if (!key) return;
-    els.servicioHidden.value = key;
-    els.servicioSelect.value = key;
-    els.title.textContent = `Reserva rápida — ${labelFromKey(key)}`;
-    syncVisitFields();
-  }
-  function openModal(key) {
-    preselectService(key);
-    setMinDateToday();
-    roundTimeToNextQuarter();
-    els.modal.setAttribute('aria-hidden','false');
-    setTimeout(()=> els.servicioSelect.focus(), 0);
-    document.documentElement.style.overflow = 'hidden'; // bloquear fondo mientras el modal está abierto
-  }
-  function closeModal() {
-    els.modal.setAttribute('aria-hidden','true');
-    document.documentElement.style.overflow = ''; // desbloquear fondo al cerrar
-  }
-
-  // --- Cierre del modal ---
-  modal.addEventListener('click', (e)=> { if (e.target.matches('[data-close]')) closeModal(); });
-  els.closeBtn.addEventListener('click', closeModal);
-  document.addEventListener('keydown', (e)=> { if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal(); });
-  els.servicioSelect.addEventListener('change', syncVisitFields);
-
-  // --- Envío a Formspree + Firebase ---
-  els.form.addEventListener('submit', async (e)=> {
-    e.preventDefault();
-
-    const payload = Object.fromEntries(new FormData(els.form).entries());
-    // 1) Guardar en Firebase Firestore (si está disponible o si tenemos config)
-    try {
-      await ensureFirebaseModuleReady();
-      window.dispatchEvent(new CustomEvent('tpl:reserva', { detail: payload }));
-    } catch (err) {
-      console.warn('TPL: Firebase no disponible, continuamos solo con Formspree.', err);
-    }
-
-    // 2) Enviar a Formspree (correo)
-    try {
-      const fd = new FormData();
-      fd.append('Servicio', labelFromKey(payload.servicio));
-      fd.append('Fecha', payload.fecha || '');
-      fd.append('Hora', payload.hora || '');
-      fd.append('Nombre', payload.nombre || '');
-      fd.append('Teléfono', payload.telefono || '');
-      fd.append('Dirección', payload.direccion || '');
-      fd.append('Notas', payload.notas || '');
-      if (payload.servicio === 'visitas') {
-        fd.append('Duración (min)', payload.visitas_duracion || '');
-        fd.append('Visitas diarias', payload.visitas_diarias || '');
-      }
-      fd.append('_subject', 'Nueva reserva rápida — The Pets Lovers');
-      fd.append('_template', 'table');
-
-      await fetch(FORMSPREE_ENDPOINT, { method: 'POST', body: fd, mode: 'cors' });
-      alert('¡Gracias! Hemos recibido tu solicitud. Te contactaremos para confirmar.');
-      closeModal();
-      els.form.reset();
-      syncVisitFields();
-    } catch (err) {
-      console.error('TPL: Error enviando a Formspree:', err);
-      alert('Tu solicitud no pudo enviarse por email. Inténtalo de nuevo en unos minutos o contáctanos por WhatsApp.');
-    }
-  });
-
-  // --- API global para abrir desde botones: onclick="abrirReserva('guarderia-dia')" ---
-  window.abrirReserva = function(key){ openModal(key); };
-
-  // --- Interceptor de enlaces relevantes ---
-  document.addEventListener('click', function(e){
-    const a = e.target.closest('a'); if (!a) return;
-
-    if (a.getAttribute('href') === '#reserva-rapida') {
-      e.preventDefault();
-      openModal('guarderia-dia');
-      return;
-    }
-
-    const href = a.getAttribute('href') || '';
-    if (href.startsWith('reserva.html')) {
-      e.preventDefault();
-      const params = new URLSearchParams((href.split('?')[1]||''));
-      const key = params.get('servicio') || guessServiceFromContext(a) || 'guarderia-dia';
-      openModal(key);
-    }
-  });
-
-  // --- Deducción del servicio por contexto de tarjeta (fallback) ---
-  function guessServiceFromContext(anchor) {
-    const card = anchor.closest('.service-card');
-    const h3 = card ? card.querySelector('h3') : null;
-    const txt = (h3 ? h3.textContent : '').toLowerCase();
-    if (txt.includes('guardería')) return 'guarderia-dia';
-    if (txt.includes('visitas')) return 'visitas';
-    if (txt.includes('alojamiento')) return 'alojamiento';
-    if (txt.includes('paseos')) return 'paseos';
-    if (txt.includes('transporte')) return 'transporte';
-    if (txt.includes('bodas')) return 'bodas';
-    if (txt.includes('post')) return 'postoperatorio';
-    if (txt.includes('exót') || txt.includes('exot')) return 'exoticos';
-    return '';
-  }
-
-  // --- Auto-abrir si la URL actual trae ?servicio= ---
-  (function autoOpenFromQuery(){
-    try {
-      const params = new URLSearchParams(location.search);
-      const key = params.get('servicio');
-      if (key) openModal(key);
-    } catch(e){}
-  })();
-
-  // ============================================
-  //  CARGA DEL MÓDULO FIREBASE (solo si hace falta)
-  //  - Reutiliza app existente o usa window.__TPL_FIREBASE_CONFIG / TPL_FIREBASE_CONFIG
-  // ============================================
-  let firebaseModuleInjected = false;
-  async function ensureFirebaseModuleReady() {
-    if (firebaseModuleInjected) return;
-    firebaseModuleInjected = true;
-
-    const mod = document.createElement('script');
-    mod.type = 'module';
-    mod.textContent = `
-      import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-      import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
-      const cfg = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG;
-      let app = getApps().length ? getApp() : (cfg ? initializeApp(cfg) : null);
-      if (!app) throw new Error("No hay app Firebase ni configuración disponible.");
-      const db = getFirestore(app);
-
-      window.addEventListener('tpl:reserva', async (ev) => {
-        try {
-          const d = ev.detail || {};
-          const labelFromKey = (key)=>({
-            "guarderia-dia":"Guardería de día",
-            "visitas":"Visitas a domicilio (gatos)",
-            "alojamiento":"Alojamiento nocturno",
-            "paseos":"Paseos",
-            "transporte":"Transporte",
-            "bodas":"Bodas",
-            "postoperatorio":"Postoperatorio",
-            "exoticos":"Exóticos"
-          }[key]||key||'Servicio');
-
-          await addDoc(collection(db, "reservas_rapidas"), {
-            ...d,
-            servicio_label: labelFromKey(d.servicio),
-            createdAt: serverTimestamp(),
-            userAgent: navigator.userAgent || '',
-            page: location.href
-          });
-          console.log('TPL(Firebase): reserva guardada en Firestore');
-        } catch (err) {
-          console.warn('TPL(Firebase): no se pudo guardar la reserva:', err?.message || err);
-        }
-      });
-    `;
-    document.head.appendChild(mod);
-  }
-
-})();
-/* ===========================
-   TPL: FIN BLOQUE NUEVO
-   =========================== */
-
-
-/* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Firebase Auth solo Email + Google (fallback sin tocar navbar)]
-   =========================================================== */
+/* TPL Navbar — estable, idempotente y sin bucles */
 (function(){
-  if (!window.__TPL_FIREBASE_CONFIG) {
-    window.__TPL_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      /* TPL: INICIO BLOQUE NUEVO [FIX storageBucket correcto] */
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      /* TPL: FIN BLOQUE NUEVO */
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
+  if (window.__TPL_NAVBAR_RUNNING__) return;
+  window.__TPL_NAVBAR_RUNNING__ = true;
+
+  // ========= CONFIG =========
+  /* TPL: INICIO BLOQUE NUEVO [Config dinámica: admite overrides globales y asegura admin oficial] */
+  // Si en alguna página has definido window.TPL_ADMIN_EMAILS, lo respetamos.
+  // Aseguramos que 'gestion@thepetslovers.es' SIEMPRE esté incluido.
+  var ADMIN_EMAILS = Array.isArray(window.TPL_ADMIN_EMAILS) ? window.TPL_ADMIN_EMAILS.slice() : [];
+  if (ADMIN_EMAILS.indexOf('gestion@thepetslovers.es') === -1) ADMIN_EMAILS.push('gestion@thepetslovers.es');
+
+  // URLs: admiten override global
+  var PANEL_URL    = window.TPL_PANEL_URL   || 'tpl-candidaturas-admin.html';   // tu panel
+  var PROFILE_URL  = window.TPL_PROFILE_URL || 'perfil.html';                   // para usuarios
+  /* TPL: FIN BLOQUE NUEVO */
+
+  // ========= HELPERS =========
+  function normEmail(s){
+    return String(s||'').trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  }
+  var ADMIN_SET = new Set(ADMIN_EMAILS.map(normEmail));
+  function isAdminEmail(email){ return ADMIN_SET.has(normEmail(email)); }
+  var IS_HOME = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+
+  function htmlNavbar(){
+    return [
+      '<nav class="navbar">',
+        '<div class="logo">',
+          '<a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>',
+        '</div>',
+        '<a href="index.html" class="home-button">Inicio</a>',
+        '<ul class="nav-links">',
+          '<li><a href="como-funciona.html">Cómo funciona</a></li>',
+          '<li><a href="servicios.html">Servicios</a></li>',
+          '<li><a href="trabaja-con-nosotros.html">Conviértete en cuidador</a></li>',
+          '<li><a href="ayuda.html">¿Necesitas ayuda?</a></li>',
+        '</ul>',
+        '<a id="tpl-login-link" class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>',
+      '</nav>'
+    ].join('');
   }
 
-  const mod = document.createElement('script');
-  mod.type = 'module';
-  mod.textContent = `
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged,
-      signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail,
-      GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-
-    const cfg  = window.__TPL_FIREBASE_CONFIG || window.TPL_FIREBASE_CONFIG;
-    const app  = getApps().length ? getApp() : initializeApp(cfg);
-    const auth = getAuth(app);
-
-    const providerGoogle = new GoogleAuthProvider();
-    const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    const useRedirect = (isIOS && isSafari);
-
-    async function googleSignIn(){
-      return useRedirect ? signInWithRedirect(auth, providerGoogle)
-                         : signInWithPopup(auth, providerGoogle);
+  function injectNavbarOnce(){
+    var host = document.getElementById('tpl-navbar');
+    var html = htmlNavbar();
+    if (host){
+      if (host.innerHTML.trim() !== html) host.innerHTML = html;
+    } else {
+      var wrap = document.createElement('div');
+      wrap.id = 'tpl-navbar';
+      wrap.innerHTML = html;
+      document.body.insertBefore(wrap, document.body.firstChild);
     }
+  }
 
-    const subs = [];
-    onAuthStateChanged(auth, (user)=>{ subs.forEach(fn=>fn(user||null)); syncAuthNodes(user); });
+  function setBtn(text, href){
+    var a = document.getElementById('tpl-login-link');
+    if (!a) return;
+    if (a.textContent.trim() !== text) a.textContent = text;
+    if (a.getAttribute('href') !== href) a.setAttribute('href', href);
+  }
+  function setDefaultBtn(){ setBtn('Iniciar sesión','iniciar-sesion.html?next='+encodeURIComponent(PROFILE_URL)); }
 
-    window.tplAuth = {
-      onChange(cb){ if(typeof cb==='function') subs.push(cb); },
-      getUser(){ return auth.currentUser || null; },
-      emailSignIn(email, pass){ return signInWithEmailAndPassword(auth, email, pass); },
-      emailSignUp(email, pass){ return createUserWithEmailAndPassword(auth, email, pass); },
-      emailReset(email){ return sendPasswordResetEmail(auth, email); },
-      google(){ return googleSignIn(); },
-      signOut(){ return signOut(auth); },
-      renderInlineLogin(host, { title='Accede a tu cuenta' } = {}){
-        if(!host) return;
-        host.innerHTML = \`
-          <div class="tpl-login-card">
-            <h3 class="tpl-login-title">\${title}</h3>
-            <div class="tpl-socials">
-              <button type="button" class="tpl-btn-social" data-provider="google" aria-label="Iniciar sesión con Google">
-                <i class="fa-brands fa-google"></i> Continuar con Google
-              </button>
-            </div>
-            <div class="tpl-sep"><span>o</span></div>
-            <form class="tpl-login-form" novalidate>
-              <label>Email</label>
-              <input type="email" name="email" required autocomplete="email" />
-              <label>Contraseña</label>
-              <input type="password" name="password" required autocomplete="current-password" />
-              <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <button type="button" class="tpl-btn-outline" data-action="signup">Crear cuenta</button>
-              <button type="button" class="tpl-link" data-action="reset">¿Has olvidado la contraseña?</button>
-              <p class="tpl-login-msg" aria-live="polite"></p>
-            </form>
-          </div>`;
-
-        const form = host.querySelector('.tpl-login-form');
-        const msg  = host.querySelector('.tpl-login-msg');
-
-        function nextUrl(){
-          const qs = new URLSearchParams(location.search);
-          return qs.get('next') || qs.get('redirect') || 'perfil.html';
-        }
-
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault();
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          msg.textContent = 'Accediendo…';
-          try{
-            await window.tplAuth.emailSignIn(email, pass);
-            msg.textContent = '¡Listo!';
-            location.href = nextUrl();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        });
-
-        form.querySelector('[data-action="signup"]').onclick = async ()=>{
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          msg.textContent = 'Creando cuenta…';
-          try{
-            await window.tplAuth.emailSignUp(email, pass);
-            msg.textContent = 'Cuenta creada.';
-            location.href = nextUrl();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        form.querySelector('[data-action="reset"]').onclick = async ()=>{
-          const email = form.email.value.trim();
-          if(!email){ msg.textContent = 'Escribe tu email para enviarte el enlace.'; return; }
-          msg.textContent = 'Enviando enlace…';
-          try{
-            await window.tplAuth.emailReset(email);
-            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        host.querySelector('.tpl-btn-social[data-provider="google"]').onclick = async ()=>{
-          msg.textContent = 'Conectando con Google…';
-          try{
-            await window.tplAuth.google();
-            location.href = nextUrl();
-          }catch(err){ msg.textContent = normalizaError(err); }
-        };
-
-        function normalizaError(err){
-          const m = (err && err.code) ? String(err.code) : String(err||'');
-          if (m.includes('auth/invalid-email')) return 'Email no válido.';
-          if (m.includes('auth/user-not-found')) return 'No existe ninguna cuenta con ese email.';
-          if (m.includes('auth/wrong-password')) return 'Contraseña incorrecta.';
-          if (m.includes('auth/email-already-in-use')) return 'Ese email ya está registrado.';
-          if (m.includes('auth/weak-password')) return 'La contraseña es demasiado débil.';
-          if (m.includes('auth/popup-closed-by-user')) return 'Se cerró la ventana antes de completar el acceso.';
-          return 'Ha ocurrido un error. Inténtalo de nuevo.';
-        }
-      }
-    };
-
-    // ❗ IMPORTANTÍSIMO: no tocar el navbar si existe #tpl-login-link (lo gestiona tpl-navbar.js)
-    function syncAuthNodes(user){
-      if (document.getElementById('tpl-login-link')) return;
-      const btn = document.querySelector('.login-button');
-      if (btn){
-        if (user){
-          btn.textContent = 'Mi perfil';
-          btn.setAttribute('href', 'perfil.html');
-          btn.onclick = null;
-        } else {
-          btn.textContent = 'Iniciar sesión';
-          btn.setAttribute('href', 'iniciar-sesion.html?next=perfil.html');
-          btn.onclick = null;
-        }
-      }
-    }
-    syncAuthNodes(auth.currentUser);
-  `;
-  document.head.appendChild(mod);
-})();
-/* ===========================================================
-   TPL: FIN BLOQUE NUEVO
-   =========================================================== */
-
-
-/* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [Estilos mínimos del login inline]
-   =========================================================== */
-(function(){
-  const CSS_ID='tpl-login-styles';
-  if(document.getElementById(CSS_ID)) return;
-  const s=document.createElement('style'); s.id=CSS_ID; s.textContent=`
-  .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:20px;background:#fff;max-width:460px;margin:20px auto;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-  .tpl-login-title{margin:0 0 10px;color:#58425a;font-weight:700;font-size:1.15rem;text-align:center}
-  .tpl-socials{display:grid;gap:10px;margin-bottom:10px}
-  .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600}
-  .tpl-btn-social i{font-size:1rem}
-  .tpl-sep{position:relative;text-align:center;margin:8px 0 10px;color:#999;font-size:.9rem}
-  .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
-  .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
-  .tpl-login-form{display:grid;gap:10px}
-  .tpl-login-form label{font-size:.9rem;color:#58425a}
-  .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
-  .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-  .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-  .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
-  .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:6px}
-  `;
-  document.head.appendChild(s);
-})();
-/* ===========================================================
-   TPL: FIN BLOQUE NUEVO
-   =========================================================== */
-
-
-/* ===========================================================
-   TPL: INICIO BLOQUE NUEVO [DESBLOQUEO FORZADO SOLO EN HOME (index)]
-   =========================================================== */
-(function hardUnblockHome(){
-  // Solo actúa en home
-  var isHome = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
-  if (!isHome) return;
-
-  function unlock(){
+  /* TPL: INICIO BLOQUE NUEVO [Puente ligero de sesión → localStorage + evento] */
+  function syncStorageFromUser(user){
     try{
-      // Quitar clases/estados que suelen bloquear
-      document.documentElement.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
-      document.documentElement.style.overflow = '';
-      if (document.body) {
-        document.body.style.pointerEvents = 'auto';
-        document.body.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
+      if (user && !user.isAnonymous && user.email){
+        localStorage.setItem('tpl_auth_email', user.email || '');
+        localStorage.setItem('tpl_auth_uid',   user.uid   || '');
+        document.body && document.body.setAttribute('data-auth','in');
+      } else {
+        localStorage.removeItem('tpl_auth_email');
+        localStorage.removeItem('tpl_auth_uid');
+        document.body && document.body.setAttribute('data-auth','out');
       }
-
-      // Ocultar overlays genéricos si quedaron enganchados (NO toca el modal de reservas)
-      ['tpl-form-overlay','tpl-auth-overlay','auth-overlay','form-overlay'].forEach(function(id){
-        var el = document.getElementById(id);
-        if (el){
-          el.classList.remove('show');
-          el.hidden = true;
-          el.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('.tpl-auth-overlay,.safe-mode-overlay,[data-overlay],.overlay,.modal-backdrop').forEach(function(el){
-        if (!el.closest('#tpl-modal-reserva')) { // respeta nuestro modal si está abierto
-          el.classList.remove('show');
-          el.hidden = true;
-          el.style.display = 'none';
-        }
-      });
-
-      // Asegura clics
-      document.querySelectorAll('a,button').forEach(function(el){
-        if (!el.style.pointerEvents || el.style.pointerEvents === 'none') {
-          el.style.pointerEvents = 'auto';
-        }
-      });
+      window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: (user && user.email) || null } }));
     }catch(_){}
   }
+  function getStoredEmail(){
+    try{ return localStorage.getItem('tpl_auth_email'); }catch(_){ return null; }
+  }
+  function renderFromStoredEmail(){
+    var e = getStoredEmail();
+    if (!e){ setDefaultBtn(); return; }
+    if (isAdminEmail(e)) setBtn('Mi panel', PANEL_URL);
+    else setBtn('Mi perfil', PROFILE_URL);
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
-  // Ejecuta varias veces por si otros scripts tardan
-  unlock();
-  window.addEventListener('load', unlock);
-  setTimeout(unlock, 400);
-  setTimeout(unlock, 1200);
-  setTimeout(unlock, 2500);
-})();
-/* ===========================================================
-   TPL: FIN BLOQUE NUEVO
-   =========================================================== */
-/* TPL: INICIO BLOQUE NUEVO [Banner de cookies a prueba de fallos] */
-(function cookieBannerSafe(){
-  try{
-    var wrap = document.getElementById('cookie-modal-overlay');
-    if (!wrap) return;
-
-    // Siempre empezamos oculto para evitar bloqueo si el CSS o JS principal falla
-    wrap.style.display = 'none';
-
-    var KEY = 'tplCookies';
-    var accepted = false;
-    try{ accepted = localStorage.getItem(KEY) === '1'; }catch(_){}
-
-    function close(){
-      try{ localStorage.setItem(KEY,'1'); }catch(_){}
-      wrap.style.display = 'none';
+  function updateBtn(user){
+    // Mantengo tu lógica original
+    if (!user || user.isAnonymous){
+      setDefaultBtn();
+      /* TPL: INICIO BLOQUE NUEVO [Sin sesión → limpiar storage] */
+      syncStorageFromUser(null);
+      /* TPL: FIN BLOQUE NUEVO */
+      return;
     }
+    /* TPL: INICIO BLOQUE NUEVO [Con sesión → sincronizar storage] */
+    syncStorageFromUser(user);
+    /* TPL: FIN BLOQUE NUEVO */
 
-    // Si no se aceptó antes, lo mostramos y conectamos botones (sin bloquear la página)
-    if (!accepted){
-      var btnAccept = document.getElementById('accept-cookies');
-      var btnDeny   = document.getElementById('deny-cookies');
-      // Modo barra no intrusiva en caso extremo (por si tu CSS del overlay tapa toda la pantalla)
-      wrap.style.display = 'block';
-      wrap.style.position = 'fixed';
-      wrap.style.inset = 'auto 0 0 0';
-      wrap.style.background = 'rgba(255,255,255,.98)';
-      wrap.style.zIndex = '9999';
+    var admin = isAdminEmail(user.email);
+    if (admin){ setBtn('Mi panel', PANEL_URL); }
+    else { setBtn('Mi perfil', PROFILE_URL); }
+  }
 
-      if (btnAccept) btnAccept.addEventListener('click', close);
-      if (btnDeny)   btnDeny.addEventListener('click', close);
+  function loadOnce(src){
+    return new Promise(function(res, rej){
+      var already = Array.prototype.some.call(document.scripts, function(s){ return s.src === src; });
+      if (already) return res();
+      var el = document.createElement('script');
+      el.src = src; el.defer = true;
+      el.onload = res; el.onerror = rej;
+      document.head.appendChild(el);
+    });
+  }
+
+  // ⬇️⬇️ FIX 1: solo retornar si TAMBIÉN existe firebase.auth
+  async function ensureFirebase(){
+    if (typeof firebase !== 'undefined' && firebase.app && firebase.auth) return;
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    // (opcional, se dejan por compatibilidad con el resto del archivo)
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
+  }
+
+  function initFirebase(){
+    if (typeof firebase === 'undefined') return null;
+    var cfg = window.TPL_FIREBASE_CONFIG || {
+      apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain:"thepetslovers-c1111.firebaseapp.com",
+      projectId:"thepetslovers-c1111",
+      storageBucket:"thepetslovers-c1111.appspot.com",
+      messagingSenderId:"415914577533",
+      appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId:"G-FXPD69KXBG"
+    };
+    if (firebase.apps.length === 0){
+      try{ firebase.initializeApp(cfg); }catch(_){}
     }
-  }catch(_){}
-})();
-/* TPL: FIN BLOQUE NUEVO */
+    return firebase.auth ? firebase.auth() : null;
+  }
 
-/* TPL: INICIO BLOQUE NUEVO [Desbloqueo fuerte en Home (index)] */
-(function hardUnblockHome(){
-  var isHome = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
-  if (!isHome) return;
+  function start(){
+    injectNavbarOnce();
+    setDefaultBtn();
 
-  function unlock(){
-    try{
-      // Quita clases/estados de bloqueo globales
-      document.documentElement.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
-      document.documentElement.style.overflow = '';
-      if (document.body){
-        document.body.style.pointerEvents = 'auto';
-        document.body.style.overflow = '';
-        document.body.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
-        document.body.removeAttribute('inert');
-      }
+    /* TPL: INICIO BLOQUE NUEVO [Pintado inmediato según localStorage] */
+    // Si vienes ya logueada de otra página, el botón cambia sin esperar a Firebase.
+    renderFromStoredEmail();
+    /* TPL: FIN BLOQUE NUEVO */
 
-      // Oculta overlays colgados (respetando tu modal de reservas si estuviera abierto)
-      ['cookie-modal-overlay','tpl-form-overlay','tpl-auth-overlay','auth-overlay','form-overlay']
-        .forEach(function(id){
-          var el = document.getElementById(id);
-          if (el && !el.closest('#tpl-modal-reserva')){
-            el.classList.remove('show');
-            el.hidden = true;
-            el.style.display = 'none';
+    (async function(){
+      try{
+        await ensureFirebase();
+        var auth = initFirebase();
+        if (!auth) return;
+
+        // Estado inicial
+        updateBtn(auth.currentUser);
+
+        // Cambios de sesión
+        auth.onAuthStateChanged(function(u){
+          updateBtn(u);
+          if (IS_HOME && u && u.email && isAdminEmail(u.email)){
+            setTimeout(function(){ setBtn('Mi panel', PANEL_URL); }, 300);
           }
         });
 
-      // Asegura clics
-      document.querySelectorAll('a,button').forEach(function(el){
-        if (!el.style.pointerEvents || el.style.pointerEvents === 'none') el.style.pointerEvents = 'auto';
-      });
-    }catch(_){}
+        // ⬇️⬇️ FIX 2: escuchar también cambios de token (casos de rehidratación lenta)
+        if (auth.onIdTokenChanged){
+          auth.onIdTokenChanged(function(u){ updateBtn(u); });
+        }
+
+        // Fallback tardío por si los scripts de Firebase tardan más en hidratar el usuario
+        setTimeout(function(){
+          if (!auth.currentUser) return;
+          var a = document.getElementById('tpl-login-link');
+          if (a && /iniciar sesión/i.test(a.textContent||'')){
+            updateBtn(auth.currentUser);
+          }
+        }, 1200);
+
+        /* TPL: INICIO BLOQUE NUEVO [Re-chequeo robusto + eventos de foco/visibilidad] */
+        (function(){
+          // Reintenta durante ~18s (60 intentos x 300ms) o hasta que vea usuario no anónimo
+          var tries = 0;
+          var iv = setInterval(function(){
+            tries++;
+            updateBtn(auth.currentUser);
+            if ((auth.currentUser && !auth.currentUser.isAnonymous) || tries > 60){
+              clearInterval(iv);
+            }
+          }, 300);
+
+          // Al volver a la pestaña o ganar foco tras login con redirect/popups, refrescar botón
+          window.addEventListener('visibilitychange', function(){
+            if (!document.hidden) updateBtn(auth.currentUser);
+          });
+          window.addEventListener('focus', function(){
+            updateBtn(auth.currentUser);
+          });
+        })();
+        /* TPL: FIN BLOQUE NUEVO */
+
+      }catch(_){}
+    })();
+
+    /* TPL: INICIO BLOQUE NUEVO [Escuchar cambios en localStorage desde otras páginas/pestañas] */
+    window.addEventListener('storage', function(ev){
+      if (!ev || (ev.key!=='tpl_auth_email' && ev.key!=='tpl_auth_uid')) return;
+      renderFromStoredEmail();
+    });
+    /* TPL: FIN BLOQUE NUEVO */
   }
 
-  // Ejecuta varias veces por si otros scripts tardan
-  unlock();
-  window.addEventListener('load', unlock);
-  setTimeout(unlock, 300);
-  setTimeout(unlock, 1200);
-  setTimeout(unlock, 2500);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
 
-  // (Opcional) Si usaste Service Worker en algún momento y hay versión vieja cacheada
-  try{
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs){
-        regs.forEach(function(r){ /* r.unregister(); */ /* ← déjalo comentado salvo que veas bloqueos recurrentes por cache */ });
+/* ===========================
+   TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + progreso + subida condicionada a Firebase]
+   =========================== */
+(function(){
+  'use strict';
+  if (window.__TPL_EMAILJS_BOOTSTRAPPED) return;
+  window.__TPL_EMAILJS_BOOTSTRAPPED = true;
+
+  // 🔑 EmailJS
+  const EMAILJS_PUBLIC_KEY = 'L2xAATfVuHJwj4EIV';
+  const EMAILJS_SERVICE_ID = 'service_odjqrfl';
+  const TEMPLATE_CANDIDATURAS_REGISTROS = 'template_32z2wj4';
+  const TEMPLATE_RESERVAS = 'template_rao5n0c';
+
+  const EMAILJS_URL = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+  const STYLE_ID = 'tpl-feedback-modal-css';
+
+  /* ===== UI (modales) ===== */
+  function injectStyles(){
+    if (document.getElementById(STYLE_ID)) return;
+    const css = `
+      .tpl-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999}
+      .tpl-modal{background:#fff;border-radius:14px;max-width:520px;width:92%;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:20px}
+      .tpl-modal h3{margin:0 0 6px;color:var(--tpl-ink,#58425a);font-size:1.25rem}
+      .tpl-modal p{margin:0 0 14px;color:#444}
+      .tpl-modal .tpl-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+      .tpl-btn{appearance:none;border:none;border-radius:999px;padding:10px 16px;font-weight:600;cursor:pointer}
+      .tpl-btn--primary{background:var(--tpl-primary,#339496);color:#fff}
+      .tpl-progress{display:flex;flex-direction:column;gap:8px}
+      .tpl-bar{width:100%;height:8px;background:#eee;border-radius:999px;overflow:hidden}
+      .tpl-bar > i{display:block;height:100%;width:0%}
+      .tpl-bar > i::after{content:'';display:block;height:100%;width:100%;background:var(--tpl-primary,#339496)}
+      .tpl-small{color:#666;font-size:.92rem}
+    `;
+    const style = document.createElement('style');
+    style.id = STYLE_ID;
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  function showModal({title='¡Listo!', message='Envío realizado correctamente.', ctaText='Aceptar', redirect}){
+    injectStyles();
+    const backdrop = document.createElement('div');
+    backdrop.className='tpl-modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="tpl-modal" role="dialog" aria-modal="true" aria-labelledby="tpl-modal-title">
+        <h3 id="tpl-modal-title">${title}</h3>
+        <p>${message}</p>
+        <div class="tpl-actions">
+          <button class="tpl-btn tpl-btn--primary">${ctaText}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    const btn = backdrop.querySelector('.tpl-btn');
+    const close = () => { backdrop.remove(); if (redirect) location.href = redirect; };
+    btn.addEventListener('click', close);
+    backdrop.addEventListener('click', e=>{ if(e.target===backdrop) close(); });
+    document.addEventListener('keydown', function esc(e){ if(e.key==='Escape'){ document.removeEventListener('keydown', esc); close(); }});
+    btn.focus();
+  }
+
+  // TPL: INICIO BLOQUE NUEVO [UI progreso de subida]
+  function beginUploadUI(totalFiles){
+    injectStyles();
+    const backdrop = document.createElement('div');
+    backdrop.className='tpl-modal-backdrop';
+    backdrop.id = 'tpl-upload-backdrop';
+    backdrop.innerHTML = `
+      <div class="tpl-modal" role="dialog" aria-modal="true" aria-live="polite">
+        <h3>Subiendo tus archivos…</h3>
+        <div class="tpl-progress">
+          <div class="tpl-bar"><i id="tpl-bar" style="width:0%"></i></div>
+          <div class="tpl-small" id="tpl-upload-msg">Preparando…</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    const bar = document.getElementById('tpl-bar');
+    const msg = document.getElementById('tpl-upload-msg');
+    return {
+      update({percent=0,fileIndex=0,total=totalFiles,fileName=''}){
+        const p = Math.max(0, Math.min(100, Math.round(percent)));
+        bar.style.width = p + '%';
+        msg.textContent = `(${fileIndex}/${total}) ${fileName} — ${p}%`;
+      },
+      done(){
+        const bd = document.getElementById('tpl-upload-backdrop');
+        if (bd) bd.remove();
+      },
+      error(text){
+        msg.textContent = text || 'No se pudo subir.';
+      }
+    };
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  /* ===== EmailJS ===== */
+  function loadEmailJS(publicKey){
+    return new Promise((resolve, reject)=>{
+      if (window.emailjs && window.emailjs.send){
+        try { if (publicKey) window.emailjs.init({ publicKey }); } catch(e){}
+        return resolve(window.emailjs);
+      }
+      const s = document.createElement('script');
+      s.src = EMAILJS_URL;
+      s.onload = () => { try{ if (publicKey) window.emailjs.init({ publicKey }); }catch(e){} resolve(window.emailjs); };
+      s.onerror = () => reject(new Error('No se pudo cargar EmailJS'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function buildHTMLFromForm(form){
+    const fd = new FormData(form);
+    const rows = [];
+    const seen = new Set();
+    fd.forEach((val, key)=>{
+      if (seen.has(key)) return; seen.add(key);
+      const els = form.querySelectorAll(`[name="${(window.CSS && CSS.escape)?CSS.escape(key):key}"]`);
+      let label = '';
+      if (els[0] && els[0].id){
+        const lab = form.querySelector(`label[for="${(window.CSS && CSS.escape)?CSS.escape(els[0].id):els[0].id}"]`);
+        if (lab) label = lab.textContent.trim();
+      }
+      const prettyKey = label || key.replace(/[_-]+/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+      const vals = [];
+      fd.getAll(key).forEach(v=>{
+        if (v instanceof File) { if (v.name) vals.push(`Archivo: ${v.name}`); }
+        else { vals.push(String(v).trim()); }
+      });
+      const prettyVal = vals.filter(Boolean).join(', ');
+      rows.push(`<tr><th align="left" style="padding:6px 8px;border-bottom:1px solid #eee">${prettyKey}</th><td style="padding:6px 8px;border-bottom:1px solid #eee">${prettyVal || '-'}</td></tr>`);
+    });
+    return `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,sans-serif;line-height:1.45;color:#222">
+        <p><strong>Nuevo envío desde The Pets Lovers</strong></p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:8px">${rows.join('')}</table>
+      </div>
+    `;
+  }
+
+  function formToObject(form){
+    const o = {};
+    const fd = new FormData(form);
+    fd.forEach((v,k)=>{
+      if (v instanceof File) return;
+      if (k in o){
+        if (Array.isArray(o[k])) o[k].push(String(v));
+        else o[k] = [o[k], String(v)];
+      } else {
+        o[k] = String(v);
+      }
+    });
+    return o;
+  }
+
+  /* ===== Auth helpers ===== */
+  function currentAuth(){
+    try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; }
+  }
+  function isLoggedNonAnonymous(){
+    const auth = currentAuth();
+    const u = auth && auth.currentUser;
+    return !!(u && !u.isAnonymous);
+  }
+
+  // TPL: INICIO BLOQUE NUEVO [esperar a auth listo]
+  async function waitForAuth(timeoutMs = 6000){
+    const auth = currentAuth();
+    if (!auth) return null;
+    if (auth.currentUser) return auth.currentUser;
+    return await new Promise((resolve)=>{
+      let done = false;
+      const to = setTimeout(()=>{ if(!done){ done = true; resolve(auth.currentUser || null); } }, timeoutMs);
+      auth.onAuthStateChanged(u => {
+        if (!done){ done = true; clearTimeout(to); resolve(u || null); }
+      });
+    });
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  /* ===== Loader Firebase local para este bloque ===== */
+  async function ensureFirebaseEmailLayer(){
+    if (typeof firebase !== 'undefined' && firebase.app) return;
+    async function load(src){ await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.defer=true; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    await load('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
+    if (!firebase.apps.length){
+      firebase.initializeApp({
+        apiKey:"AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain:"thepetslovers-c1111.firebaseapp.com",
+        projectId:"thepetslovers-c1111",
+        storageBucket:"thepetslovers-c1111.appspot.com",
+        messagingSenderId:"415914577533",
+        appId:"1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId:"G-FXPD69KXBG"
       });
     }
-  }catch(_){}
+  }
+
+  // TPL: INICIO BLOQUE NUEVO [Guardar doc en 'candidaturas' para el panel]
+  async function saveCandidaturaRecord(fields, filesMeta){
+    try{
+      await ensureFirebaseEmailLayer();
+      const db = firebase.firestore();
+
+      const byField = (fname)=> (filesMeta||[]).find(f => (f.field||'') === fname);
+      const cv   = byField('cv');
+      const tit  = byField('titulo');
+
+      const data = {
+        // Datos personales
+        nombre: fields.nombre||'',
+        ciudad: fields.ciudad||'',
+        cp: fields.cp||'',
+        telefono: fields.telefono||'',
+        email: fields._replyto || fields.email || '',
+        carnet: fields.carnet||'',
+        vehiculo: fields.vehiculo||'',
+        descripcionPersonal: fields.descripcionPersonal||'',
+
+        // Formación
+        atvTitulado: fields.atvTitulado||'',
+        otrasFormaciones: fields.otrasFormaciones||'',
+        experienciaLaboral: fields.experienciaLaboral||'',
+        funcionesHabituales: fields.funcionesHabituales||'',
+        links: fields.links||'',
+        descFormacion: fields.descFormacion||'',
+
+        // Experiencia
+        hasCuidado: fields.hasCuidado||'',
+        tiposAnimales: fields.tiposAnimales||'',
+        comunicacionPropietarios: fields.comunicacionPropietarios||'',
+        roturasGestion: fields.roturasGestion||'',
+        necesidadesEspeciales: fields.necesidadesEspeciales||'',
+        medicacion: fields.medicacion||'',
+
+        // Entorno
+        vivienda: fields.vivienda||'',
+        seguridadCasa: fields.seguridadCasa||'',
+        otrosAnimales: fields.otrosAnimales||'',
+        otrasPersonasCasa: fields.otrasPersonasCasa||'',
+        videovigilancia: fields.videovigilancia||'',
+        cuidarEnDomicilio: fields.cuidarEnDomicilio||'',
+        cuidarCasaPropietario: fields.cuidarCasaPropietario||'',
+        ofrecerPaseos: fields.ofrecerPaseos||'',
+        cachorrosSenior: fields.cachorrosSenior||'',
+
+        // Disponibilidad
+        disponibilidad: fields.disponibilidad||'',
+        tiempoLibre: fields.tiempoLibre||'',
+        finesFestivos: fields.finesFestivos||'',
+        zonasCobertura: fields.zonasCobertura||'',
+
+        // Archivos
+        cvUrl: cv ? cv.url : '',
+        tituloUrl: tit ? tit.url : '',
+
+        // Meta
+        estado: 'pendiente',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('candidaturas').add(data);
+    }catch(e){
+      console.warn('TPL: no se pudo guardar candidatura en panel:', e);
+    }
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  // ===== Util =====
+  function normalizeType(t){
+    if (!t) return 'generico';
+    t = String(t).toLowerCase();
+    if (t === 'candidatura') return 'cuestionario';
+    return t;
+  }
+
+  function shouldHandle(form){
+    /* TPL: FIX — No interceptar el formulario local del cuestionario,
+       ni ninguna forma si esta página contiene el cuestionario */
+    if (form && form.id === 'tpl-form-auxiliares') return false;        // <-- FIX
+    if (document.getElementById('tpl-form-auxiliares')) return false;   // <-- FIX
+
+    if (form.matches('[data-tpl-emailjs="false"]')) return false;
+    if (form.querySelector('input[type="password"], [type="password"]')) return false;
+    const path = (location.pathname || '').toLowerCase();
+    const txt  = (form.textContent || '').toLowerCase();
+    if (form.matches('[data-tpl-emailjs="true"]')) return true;
+
+    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario')) return true; // Candidaturas
+    if (path.includes('perfil') || path.includes('registro')) return true;                    // Perfil
+    if (path.includes('reserva')) return true;                                                // Reservas
+
+    if (txt.includes('enviar candidatura')) return true;
+    if (txt.includes('guardar') || txt.includes('crear perfil')) return true;
+    if (txt.includes('reservar')) return true;
+
+    return false;
+  }
+
+  function detectType(form){
+    const ds = form.dataset || {};
+    if (ds.type) return normalizeType(ds.type);
+    const path = (location.pathname || '').toLowerCase();
+    const txt  = (form.textContent || '').toLowerCase();
+    if (path.includes('trabaja-con-nosotros') || path.includes('cuestionario') || txt.includes('enviar candidatura')) return 'cuestionario';
+    if (path.includes('perfil') || path.includes('registro') || txt.includes('guardar') || txt.includes('crear perfil')) return 'perfil';
+    if (path.includes('reserva') || txt.includes('reservar')) return 'reserva';
+    return 'generico';
+  }
+
+  function defaultsFor(type){
+    switch(type){
+      case 'cuestionario':
+        return {
+          subject: '[TPL] Candidatura de auxiliar',
+          success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
+          cta: 'Volver al inicio',
+          redirect: 'index.html',
+          templateId: TEMPLATE_CANDIDATATURAS_REGISTROS
+        };
+      case 'perfil':
+        return {
+          subject: '[TPL] Registro: propietario + mascota',
+          success: 'Perfil creado correctamente. Ya puedes gestionar tus reservas.',
+          cta: 'Ir a mi perfil',
+          redirect: 'perfil.html',
+          templateId: TEMPLATE_CANDIDATURAS_REGISTROS
+        };
+      case 'reserva':
+        return {
+          subject: '[TPL] Nueva reserva',
+          success: 'Tu reserva ya está solicitada. Nos pondremos en contacto contigo lo antes posible para la visita gratuita.',
+          cta: 'Ir a mi perfil',
+          redirect: 'perfil.html',
+          templateId: TEMPLATE_RESERVAS
+        };
+      default:
+        return {
+          subject: '[TPL] Nuevo envío',
+          success: '¡Enviado! Gracias por tu confianza.',
+          cta: 'Aceptar',
+          redirect: 'index.html',
+          templateId: TEMPLATE_CANDIDATURAS_REGISTROS
+        };
+    }
+  }
+
+  function hasSelectedFiles(form){
+    let n = 0;
+    form.querySelectorAll('input[type="file"]').forEach(i=>{
+      n += (i.files ? i.files.length : 0);
+    });
+    return n > 0;
+  }
+
+  // TPL: INICIO BLOQUE NUEVO [mapa de errores de Storage]
+  function storageErrorMsg(err){
+    const code = err && (err.code || err.error || '').toString();
+    if (code.includes('unauthorized'))   return 'Permisos insuficientes en Storage. Revisa las reglas.';
+    if (code.includes('canceled'))       return 'La subida se canceló.';
+    if (code.includes('quota-exceeded')) return 'Se superó la cuota de Storage.';
+    if (code.includes('timeout'))        return 'La subida no progresa (timeout). Revisa reglas o conexión.';
+    return (err && err.message) || 'Ha ocurrido un error.';
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  // TPL: INICIO BLOQUE NUEVO [subida con progreso + watchdog + auth sólido + RUTA CON UID]
+  async function uploadAndSaveToFirebase(form, type, onProgress){
+    try{
+      await ensureFirebaseEmailLayer();
+    }catch(_){
+      return { error: 'firebase', message: 'No se pudo cargar Firebase en esta página.' };
+    }
+
+    // Espera real a que el usuario esté disponible
+    const user = await waitForAuth(6000);
+    if (!user || user.isAnonymous){
+      return { error: 'auth', message: 'Debes iniciar sesión para adjuntar archivos.' };
+    }
+
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    const id = `${type}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    const fields = formToObject(form);
+
+    // Preparar archivos seleccionados
+    const fileInputs = form.querySelectorAll('input[type="file"]');
+    const filesFlat = [];
+    fileInputs.forEach(input=>{
+      const field = input.name || 'archivo';
+      Array.from(input.files||[]).forEach(file=>{
+        filesFlat.push({ field, file });
+      });
+    });
+
+    if (!filesFlat.length){
+      // Si no hay archivos, aun así guardamos candidatura si aplica (sin URLs)
+      if (type === 'cuestionario'){
+        await saveCandidaturaRecord(fields, []);
+      }
+      return { id, files: [], fields };
+    }
+
+    const MAX_FILE = 10 * 1024 * 1024;  // 10MB
+    const MAX_TOTAL = 20 * 1024 * 1024; // 20MB
+    const totalSize = filesFlat.reduce((a,it)=> a + (it.file?.size||0), 0);
+    if (filesFlat.some(it=> it.file.size > MAX_FILE) || totalSize > MAX_TOTAL){
+      return { error: 'size', message: 'Cada archivo ≤ 10MB y el total ≤ 20MB.' };
+    }
+
+    const filesMeta = [];
+    let uploadedBytesSoFar = 0;
+
+    // Watchdog: cancela si un archivo no progresa en 25 s
+    const NO_PROGRESS_MS = 25000;
+
+    for (let i=0;i<filesFlat.length;i++){
+      const { field, file } = filesFlat[i];
+      const safeName = String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(0,120);
+
+      // ⚠️ RUTA NUEVA CON UID para cumplir reglas tipo tpl/{uid}/...
+      const path = `tpl/${user.uid}/${type}/${id}/${(field||'archivo')}__${safeName}`;
+      const ref = storage.ref().child(path);
+
+      await new Promise((resolve, reject)=>{
+        let lastBytes = 0;
+        let lastTick = Date.now();
+        const task = ref.put(file, { contentType: file.type || 'application/octet-stream' });
+
+        const tmr = setInterval(()=>{
+          if (Date.now() - lastTick > NO_PROGRESS_MS){
+            try { task.cancel(); } catch(e){}
+            clearInterval(tmr);
+            const err = Object.assign(new Error('timeout'), { code:'storage/timeout' });
+            reject(err);
+          }
+        }, 4000);
+
+        task.on('state_changed',
+          (snap)=>{
+            if (snap.bytesTransferred > lastBytes){
+              lastBytes = snap.bytesTransferred;
+              lastTick = Date.now();
+            }
+            if (onProgress){
+              const percent = ((uploadedBytesSoFar + snap.bytesTransferred) / totalSize) * 100;
+              onProgress({ percent, fileIndex: i+1, total: filesFlat.length, fileName: file.name });
+            }
+          },
+          (err)=>{
+            clearInterval(tmr);
+            reject(err);
+          },
+          async ()=>{
+            clearInterval(tmr);
+            try{
+              const url = await ref.getDownloadURL();
+              filesMeta.push({ field, name: file.name, size: file.size, contentType: file.type || '', path, url });
+              uploadedBytesSoFar += file.size;
+              if (onProgress){
+                const percent = (uploadedBytesSoFar / totalSize) * 100;
+                onProgress({ percent, fileIndex: i+1, total: filesFlat.length, fileName: file.name });
+              }
+              resolve();
+            }catch(e){ reject(e); }
+          }
+        );
+      });
+    }
+
+    // Registro histórico (opcional)
+    try{
+      await db.collection('tpl_submissions').doc(id).set({
+        type,
+        uid: user.uid || null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        page: location.href,
+        fields,
+        files: filesMeta,
+        status: 'enviado'
+      });
+    }catch(e){ /* opcional */ }
+
+    // Si es candidatura → crear registro para tu panel (con urls)
+    if (type === 'cuestionario'){
+      await saveCandidaturaRecord(fields, filesMeta);
+    }
+
+    return { id, files: filesMeta, fields };
+  }
+  // TPL: FIN BLOQUE NUEVO
+
+  function defaultsForType(type){
+    return defaultsFor(type);
+  }
+
+  /* TPL: INICIO FIX — detectar sesión por el botón del navbar si Firebase tarda */
+  function looksLoggedFromNavbar(){
+    var a = document.getElementById('tpl-login-link');
+    if (!a) return false;
+    var t = (a.textContent || '').toLowerCase();
+    return t.includes('mi perfil') || t.includes('mi panel');
+  }
+  /* TPL: FIN FIX */
+
+  /* TPL: INICIO FIX [helper para perfíl al finalizar] */
+  function getProfileHref(){
+    var a = document.getElementById('tpl-login-link');
+    if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
+    return 'perfil.html';
+  }
+  /* TPL: FIN FIX */
+
+  async function handleSubmit(ev){
+    const form = ev.currentTarget;
+    if (!shouldHandle(form)) return;
+
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    ev.stopPropagation();
+
+    /* 👉 CAMBIO: respetar validación nativa del HTML antes de seguir */
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()){
+      return; // el navegador mostrará qué campo falla (CP/teléfono, etc.)
+    }
+
+    const ds = form.dataset || {};
+    const rawType = detectType(form);
+    const type = normalizeType(ds.type ? ds.type.toLowerCase() : rawType);
+    const base = defaultsForType(type);
+    const cfg = Object.assign({}, base, {
+      subject: ds.subject || base.subject,
+      success: ds.success || base.success,
+      cta: ds.cta || base.cta,
+      redirect: ds.redirect || base.redirect,
+      serviceId: ds.serviceId || EMAILJS_SERVICE_ID,
+      templateId: ds.templateId || base.templateId,
+      publicKey: ds.publicKey || EMAILJS_PUBLIC_KEY
+    });
+
+    try{ await ensureFirebaseEmailLayer(); }catch(_){}
+    await waitForAuth(9000); // ⬅️ esperamos un poco más
+
+    // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE (con fallback visual del navbar)
+    const loggedIn = isLoggedNonAnonymous() || looksLoggedFromNavbar(); /* TPL: FIX aplicado */
+    if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
+      const next = location.pathname + location.search + location.hash;
+      showModal({
+        title:'Inicia sesión para continuar',
+        message:'Para enviar tu candidatura o solicitar una reserva, primero inicia sesión. Te llevamos y volverás aquí automáticamente.',
+        ctaText:'Iniciar sesión',
+        redirect: 'iniciar-sesion.html?next='+encodeURIComponent(next)
+      });
+      return;
+    }
+
+    const filesSelected = hasSelectedFiles(form);
+    if (filesSelected) {
+      form.setAttribute('enctype','multipart/form-data');
+      form.setAttribute('method','POST');
+      // Validación tamaño
+      let total = 0, oversize = false;
+      form.querySelectorAll('input[type="file"]').forEach(input=>{
+        Array.from(input.files||[]).forEach(f=>{
+          total += f.size; if (f.size > 10*1024*1024) oversize = true;
+        });
+      });
+      if (oversize || total > 20*1024*1024){
+        showModal({
+          title: 'Archivos demasiado pesados',
+          message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB.',
+          ctaText: 'Entendido'
+        });
+        return;
+      }
+    }
+
+    const submits = form.querySelectorAll('[type="submit"]');
+    submits.forEach(b=>{ b.disabled = true; b.dataset._oldText = b.textContent; b.textContent = 'Enviando…'; });
+
+    const html = buildHTMLFromForm(form);
+    const pageUrl = location.href;
+
+    const ui = filesSelected ? beginUploadUI(form.querySelectorAll('input[type="file"]').length) : null;
+
+    const fieldsForRecord = formToObject(form);
+
+    try{
+      if (filesSelected){
+        const up = await uploadAndSaveToFirebase(form, type, ui ? ui.update : null);
+        if (up && up.error){
+          ui && ui.error(storageErrorMsg(up));
+          showModal({ title:'No se pudo subir archivos', message: storageErrorMsg(up), ctaText:'Cerrar' });
+          return;
+        }
+      } else {
+        if (type === 'cuestionario'){
+          await saveCandidaturaRecord(fieldsForRecord, []);
+        }
+      }
+
+      ui && ui.done();
+
+      await loadEmailJS(cfg.publicKey);
+      await window.emailjs.send(cfg.serviceId, cfg.templateId, {
+        subject: cfg.subject,
+        message_html: html,
+        page_url: pageUrl
+      });
+
+      try { form.reset(); } catch(_){}
+
+      const successRedirect = (type === 'cuestionario' || type === 'reserva')
+        ? getProfileHref()
+        : (cfg.redirect || getProfileHref());
+
+      showModal({
+        title: '¡Listo!',
+        message: cfg.success,
+        ctaText: cfg.cta,
+        redirect: successRedirect
+      });
+
+    } catch(err){
+      console.error('TPL envío error:', err);
+      ui && ui.error('No se pudo subir.');
+      const msg = storageErrorMsg(err);
+      showModal({ title:'No se pudo enviar', message: msg, ctaText:'Cerrar' });
+    } finally {
+      ui && ui.done();
+      submits.forEach(b=>{ b.disabled = false; if (b.dataset._oldText) b.textContent = b.dataset._oldText; });
+    }
+  }
+
+  function attach(){
+    document.querySelectorAll('form').forEach(form=>{
+      if (form.__tplBound) return;
+      form.__tplBound = true;
+      // Importante: seguimos en captura, pero ahora shouldHandle() descarta el cuestionario local
+      form.addEventListener('submit', handleSubmit, { passive:false, capture:true });
+    });
+  }
+
+  function init(){
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', attach);
+    } else {
+      attach();
+    }
+    new MutationObserver(attach).observe(document.documentElement, { childList:true, subtree:true });
+  }
+  init();
+})();
+/* ===========================
+   TPL: FIN BLOQUE NUEVO
+   =========================== */
+
+/* TPL: INICIO BLOQUE NUEVO [Fix CP en Reservas desde navbar] */
+(function(){
+  function fixCp(){
+    var pc = document.getElementById('postalCode');
+    if (!pc) return;
+    // Fuerza validación HTML correcta: 5 dígitos
+    pc.setAttribute('type','text');        // evita problemas si era number
+    pc.setAttribute('pattern','[0-9]{5}');
+    pc.setAttribute('inputmode','numeric');
+    pc.setAttribute('maxlength','5');
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', fixCp);
+  } else {
+    fixCp();
+  }
 })();
 /* TPL: FIN BLOQUE NUEVO */
