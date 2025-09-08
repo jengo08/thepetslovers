@@ -589,3 +589,92 @@
 /* ===========================================================
    TPL: FIN BLOQUE NUEVO
    =========================================================== */
+/* TPL: INICIO BLOQUE NUEVO [Banner de cookies a prueba de fallos] */
+(function cookieBannerSafe(){
+  try{
+    var wrap = document.getElementById('cookie-modal-overlay');
+    if (!wrap) return;
+
+    // Siempre empezamos oculto para evitar bloqueo si el CSS o JS principal falla
+    wrap.style.display = 'none';
+
+    var KEY = 'tplCookies';
+    var accepted = false;
+    try{ accepted = localStorage.getItem(KEY) === '1'; }catch(_){}
+
+    function close(){
+      try{ localStorage.setItem(KEY,'1'); }catch(_){}
+      wrap.style.display = 'none';
+    }
+
+    // Si no se aceptó antes, lo mostramos y conectamos botones (sin bloquear la página)
+    if (!accepted){
+      var btnAccept = document.getElementById('accept-cookies');
+      var btnDeny   = document.getElementById('deny-cookies');
+      // Modo barra no intrusiva en caso extremo (por si tu CSS del overlay tapa toda la pantalla)
+      wrap.style.display = 'block';
+      wrap.style.position = 'fixed';
+      wrap.style.inset = 'auto 0 0 0';
+      wrap.style.background = 'rgba(255,255,255,.98)';
+      wrap.style.zIndex = '9999';
+
+      if (btnAccept) btnAccept.addEventListener('click', close);
+      if (btnDeny)   btnDeny.addEventListener('click', close);
+    }
+  }catch(_){}
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
+/* TPL: INICIO BLOQUE NUEVO [Desbloqueo fuerte en Home (index)] */
+(function hardUnblockHome(){
+  var isHome = /(\/|^)index\.html?$/.test(location.pathname) || location.pathname === '/';
+  if (!isHome) return;
+
+  function unlock(){
+    try{
+      // Quita clases/estados de bloqueo globales
+      document.documentElement.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
+      document.documentElement.style.overflow = '';
+      if (document.body){
+        document.body.style.pointerEvents = 'auto';
+        document.body.style.overflow = '';
+        document.body.classList.remove('tpl-auth-boot','tpl-safe-mode','tpl-overlay-open');
+        document.body.removeAttribute('inert');
+      }
+
+      // Oculta overlays colgados (respetando tu modal de reservas si estuviera abierto)
+      ['cookie-modal-overlay','tpl-form-overlay','tpl-auth-overlay','auth-overlay','form-overlay']
+        .forEach(function(id){
+          var el = document.getElementById(id);
+          if (el && !el.closest('#tpl-modal-reserva')){
+            el.classList.remove('show');
+            el.hidden = true;
+            el.style.display = 'none';
+          }
+        });
+
+      // Asegura clics
+      document.querySelectorAll('a,button').forEach(function(el){
+        if (!el.style.pointerEvents || el.style.pointerEvents === 'none') el.style.pointerEvents = 'auto';
+      });
+    }catch(_){}
+  }
+
+  // Ejecuta varias veces por si otros scripts tardan
+  unlock();
+  window.addEventListener('load', unlock);
+  setTimeout(unlock, 300);
+  setTimeout(unlock, 1200);
+  setTimeout(unlock, 2500);
+
+  // (Opcional) Si usaste Service Worker en algún momento y hay versión vieja cacheada
+  try{
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(r){ /* r.unregister(); */ /* ← déjalo comentado salvo que veas bloqueos recurrentes por cache */ });
+      });
+    }
+  }catch(_){}
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
