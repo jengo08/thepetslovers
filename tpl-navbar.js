@@ -4,9 +4,16 @@
   window.__TPL_NAVBAR_RUNNING__ = true;
 
   // ========= CONFIG =========
-  var ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];    // admin(s)
-  var PANEL_URL    = 'tpl-candidaturas-admin.html';   // tu panel
-  var PROFILE_URL  = 'perfil.html';                   // para usuarios
+  /* TPL: INICIO BLOQUE NUEVO [Config dinámica: admite overrides globales y asegura admin oficial] */
+  // Si en alguna página has definido window.TPL_ADMIN_EMAILS, lo respetamos.
+  // Aseguramos que 'gestion@thepetslovers.es' SIEMPRE esté incluido.
+  var ADMIN_EMAILS = Array.isArray(window.TPL_ADMIN_EMAILS) ? window.TPL_ADMIN_EMAILS.slice() : [];
+  if (ADMIN_EMAILS.indexOf('gestion@thepetslovers.es') === -1) ADMIN_EMAILS.push('gestion@thepetslovers.es');
+
+  // URLs: admiten override global
+  var PANEL_URL    = window.TPL_PANEL_URL   || 'tpl-candidaturas-admin.html';   // tu panel
+  var PROFILE_URL  = window.TPL_PROFILE_URL || 'perfil.html';                   // para usuarios
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ========= HELPERS =========
   function normEmail(s){
