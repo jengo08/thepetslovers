@@ -1,36 +1,26 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfil del propietario · The Pets Lovers</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilo mínimo coherente] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido] -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
+  <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilo mínimo de tarjeta] -->
   <style>
     .tpl-wrap{ max-width:760px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-    .tpl-title{ margin:0 0 8px; }
-    .tpl-sub{ color:#666; margin:0 0 18px; }
     .tpl-form{ display:grid; gap:12px; }
     @media (min-width:720px){ .tpl-grid-2{ grid-template-columns:1fr 1fr; gap:12px; } }
     .tpl-field{ display:flex; flex-direction:column; gap:6px; }
-    .tpl-field label{ font-weight:700; color:#58425a; }
-    .tpl-input, .tpl-textarea{
-      width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:10px; font:inherit;
-    }
+    .tpl-input, .tpl-textarea{ padding:10px 12px; border:1px solid #ddd; border-radius:10px; font:inherit; }
     .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
     .tpl-btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:10px 16px; font-weight:700; cursor:pointer; }
     .tpl-btn-ghost{ background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:10px 16px; font-weight:700; cursor:pointer; }
     .tpl-msg{ min-height:1.2em; color:#58425a; margin-top:6px; }
     .tpl-note{ background:#f8fdfd; border:1px dashed #339496; color:#2a7e80; padding:10px 12px; border-radius:12px; margin-bottom:14px; }
-    .tpl-badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
-    /* TPL: INICIO BLOQUE NUEVO [micro feedback accesible] */
-    .tpl-ok{ color:#2a7e80; font-weight:700 }
-    .tpl-err{ color:#9a1f1f; font-weight:700 }
-    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -38,50 +28,46 @@
   <div id="tpl-navbar"></div>
   <script src="tpl-navbar.js" defer></script>
 
-  <main class="tpl-wrap" aria-labelledby="t">
-    <h1 id="t" class="tpl-title">Perfil del propietario</h1>
-    <p class="tpl-sub">Rellena tus datos. <strong>Es obligatorio</strong> completar este perfil y tener al menos una mascota para poder reservar.</p>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Aviso sesión + email bloqueado] -->
+  <main class="tpl-wrap">
+    <h1 style="margin:0 0 8px">Perfil del propietario</h1>
     <p class="tpl-note"><i class="fa-regular fa-circle-user"></i> Debes estar identificado. El <strong>email</strong> se toma de tu sesión y no puede editarse aquí.</p>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <form id="f" class="tpl-form" novalidate>
       <div class="tpl-grid-2">
         <div class="tpl-field">
           <label for="nombre">Nombre y apellidos *</label>
-          <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Tu nombre completo" autocomplete="name">
+          <input class="tpl-input" id="nombre" name="nombre" required>
         </div>
         <div class="tpl-field">
           <label for="telefono">Teléfono *</label>
-          <input class="tpl-input" type="tel" id="telefono" name="telefono" required inputmode="tel" placeholder="+34 ..." autocomplete="tel">
+          <input class="tpl-input" id="telefono" name="telefono" required inputmode="tel">
         </div>
       </div>
 
       <div class="tpl-grid-2">
         <div class="tpl-field">
           <label for="email">Email (de tu sesión)</label>
-          <input class="tpl-input" type="email" id="email" name="email" readonly disabled>
+          <input class="tpl-input" id="email" name="email" type="email" readonly disabled>
           <input type="hidden" id="emailHidden" name="email">
         </div>
         <div class="tpl-field">
           <label for="cp">Código postal *</label>
-          <input class="tpl-input" type="text" id="cp" name="cp" required pattern="[0-9]{5}" inputmode="numeric" maxlength="5" placeholder="12345" autocomplete="postal-code">
+          <input class="tpl-input" id="cp" name="cp" required pattern="[0-9]{5}" inputmode="numeric" maxlength="5">
         </div>
       </div>
 
       <div class="tpl-field">
         <label for="direccion">Dirección</label>
-        <input class="tpl-input" type="text" id="direccion" name="direccion" placeholder="Calle, nº, localidad" autocomplete="street-address">
+        <input class="tpl-input" id="direccion" name="direccion">
       </div>
 
       <div class="tpl-field">
         <label for="preferencias">Preferencias / Notas</label>
-        <textarea class="tpl-textarea" id="preferencias" name="preferencias" rows="3" placeholder="P. ej. horarios, alergias, indicaciones..."></textarea>
+        <textarea class="tpl-textarea" id="preferencias" name="preferencias" rows="3"></textarea>
       </div>
 
       <div class="tpl-actions">
-        <button type="submit" class="tpl-btn" id="btnSave">Guardar</button>
+        <button type="submit" class="tpl-btn">Guardar</button>
         <a id="cancel" class="tpl-btn-ghost" href="perfil.html">Cancelar</a>
       </div>
       <p id="msg" class="tpl-msg" aria-live="polite"></p>
@@ -91,119 +77,119 @@
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica robusta (Firestore + fallback local)] -->
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
-  </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de formulario propietario (fix submit)] -->
-  <script>
-    (function(){
-      if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
-      const auth = firebase.auth();
-      const db   = firebase.firestore();
-
-      const form = document.getElementById('f');
-      const msg  = document.getElementById('msg');
-      const email = document.getElementById('email');
-      const emailHidden = document.getElementById('emailHidden');
-      const cancel = document.getElementById('cancel');
-      const btnSave = document.getElementById('btnSave');
-
-      function nextUrl(){
-        const qs = new URLSearchParams(location.search);
-        return qs.get('next') || 'perfil.html';
+  (async function(){
+    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar '+src)); document.head.appendChild(s); }); }
+    async function ensureFirebase(){
+      if (typeof firebase === 'undefined'){ await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js'); }
+      if (!('auth' in firebase))      { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js'); }
+      if (!('firestore' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'); }
+      if (!window.firebaseConfig){
+        window.firebaseConfig = {
+          apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+          authDomain: "thepetslovers-c1111.firebaseapp.com",
+          projectId: "thepetslovers-c1111",
+          storageBucket: "thepetslovers-c1111.appspot.com",
+          messagingSenderId: "415914577533",
+          appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+          measurementId: "G-FXPD69KXBG"
+        };
       }
-      cancel.setAttribute('href', nextUrl());
+    }
+    await ensureFirebase();
+    if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
 
-      function setMsg(t, kind){
-        msg.textContent = t || '';
-        msg.classList.remove('tpl-ok','tpl-err');
-        if (kind === 'ok') msg.classList.add('tpl-ok');
-        if (kind === 'err') msg.classList.add('tpl-err');
-      }
-      function lockForm(lock){ try{ form.setAttribute('aria-busy', lock ? 'true':'false'); btnSave.disabled = !!lock; }catch(_){} }
+    const form = document.getElementById('f');
+    const msg  = document.getElementById('msg');
+    const email= document.getElementById('email');
+    const emailHidden = document.getElementById('emailHidden');
+    const cancel = document.getElementById('cancel');
 
-      async function loadProfile(uid){
-        setMsg('Cargando…');
-        try{
-          const ref = db.collection('users').doc(uid).collection('private').doc('profile');
-          const snap = await ref.get();
-          if (snap.exists){
-            const p = snap.data() || {};
-            form.nombre.value       = p.nombre || '';
-            form.telefono.value     = p.telefono || '';
-            form.cp.value           = p.cp || '';
-            form.direccion.value    = p.direccion || '';
-            form.preferencias.value = p.preferencias || '';
-          }
-          setMsg('');
-        }catch(e){
-          console.error('Perfil propietario: load error', e);
-          setMsg('No se pudo cargar tu perfil. Puedes intentarlo de nuevo.', 'err');
-        }
-      }
+    const LS_PROFILE_KEY = 'tpl-profile';
+    function setMsg(t){ msg.textContent = t || ''; }
+    function qsp(name, fb){ const u = new URL(location.href); return u.searchParams.get(name)||fb; }
+    function nextUrl(){ return qsp('next','perfil.html'); }
+    cancel.setAttribute('href', nextUrl());
 
-      async function saveProfile(uid, data){
-        const ref = db.collection('users').doc(uid).collection('private').doc('profile');
-        await ref.set(Object.assign({}, data, {
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }), { merge:true });
-      }
-
-      auth.onAuthStateChanged(async (u)=>{
-        if (!u || u.isAnonymous){
-          location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(location.pathname + location.search);
-          return;
-        }
-        email.value = u.email || '';
-        emailHidden.value = u.email || '';
-        await loadProfile(u.uid);
-
-        // 🔧 FIX: quitamos { once:true } para permitir reintentos si la validación falla
-        form.addEventListener('submit', async (ev)=>{
-          ev.preventDefault();
-          if (typeof form.reportValidity === 'function' && !form.reportValidity()) return;
-
-          const data = {
-            nombre: form.nombre.value.trim(),
-            telefono: form.telefono.value.trim(),
-            email: emailHidden.value.trim(),
-            cp: form.cp.value.trim(),
-            direccion: form.direccion.value.trim(),
-            preferencias: form.preferencias.value.trim()
-          };
-
-          if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.', 'err'); return; }
-          if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.', 'err'); return; }
-
+    async function loadProfile(uid){
+      setMsg('Cargando…');
+      try{
+        const snap = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+        if (snap.exists){
+          const p = snap.data();
+          form.nombre.value       = p.nombre || '';
+          form.telefono.value     = p.telefono || '';
+          form.cp.value           = p.cp || '';
+          form.direccion.value    = p.direccion || '';
+          form.preferencias.value = p.preferencias || '';
+        } else {
+          // Fallback local
           try{
-            setMsg('Guardando…');
-            lockForm(true);
-            await saveProfile(u.uid, data);
-            setMsg('¡Perfil guardado!', 'ok');
-            try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
-            location.href = nextUrl();
-          }catch(e){
-            console.error('Perfil propietario: save error', e);
-            // Mensaje de error claro para diagnosticar
-            setMsg('No se pudo guardar. ' + (e?.message || e), 'err');
-            lockForm(false);
-          }
-        });
+            const p = JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null');
+            if (p){ form.nombre.value=p.nombre||''; form.telefono.value=p.telefono||''; form.cp.value=p.cp||''; form.direccion.value=p.direccion||''; form.preferencias.value=p.preferencias||''; }
+          }catch(_){}
+        }
+        setMsg('');
+      }catch(e){
+        // Fallback local si Firestore falla
+        try{
+          const p = JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null');
+          if (p){ form.nombre.value=p.nombre||''; form.telefono.value=p.telefono||''; form.cp.value=p.cp||''; form.direccion.value=p.direccion||''; form.preferencias.value=p.preferencias||''; }
+        }catch(_){}
+        setMsg('');
+      }
+    }
+
+    async function saveProfile(uid, data){
+      // Intento Firestore
+      try{
+        await db.collection('users').doc(uid).set({ email: data.email, updatedAt: new Date() }, {merge:true});
+        await db.collection('users').doc(uid).collection('private').doc('profile').set({
+          nombre:data.nombre, telefono:data.telefono, email:data.email, cp:data.cp, direccion:data.direccion, preferencias:data.preferencias, updatedAt:new Date().toISOString()
+        }, { merge:true });
+      }catch(e){
+        // Fallback local
+        localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(data));
+      }
+    }
+
+    auth.onAuthStateChanged(async (u)=>{
+      if (!u || u.isAnonymous){
+        location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(location.pathname + location.search);
+        return;
+      }
+      email.value = u.email || '';
+      emailHidden.value = u.email || '';
+      await loadProfile(u.uid);
+
+      form.addEventListener('submit', async (ev)=>{
+        ev.preventDefault();
+        if (!form.reportValidity()) return;
+        const data = {
+          nombre: form.nombre.value.trim(),
+          telefono: form.telefono.value.trim(),
+          email: emailHidden.value.trim(),
+          cp: form.cp.value.trim(),
+          direccion: form.direccion.value.trim(),
+          preferencias: form.preferencias.value.trim()
+        };
+        if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.'); return; }
+        if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.'); return; }
+        try{
+          setMsg('Guardando…');
+          await saveProfile(u.uid, data);
+          try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
+          setMsg('¡Perfil guardado!');
+          location.href = nextUrl();
+        }catch(e){
+          setMsg('No se pudo guardar.'); console.error(e);
+        }
       });
-    })();
+    });
+  })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
