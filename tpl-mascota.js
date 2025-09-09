@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Preview + Cambiar/Ajustar + Razas (JSON opcional) + Validaciones + Guardado local] */
+/* TPL: INICIO BLOQUE NUEVO [Preview + Cambiar/Ajustar (drag con dedo/flechas) + Razas JSON + Validaciones + Guardado local + Submit fiable] */
 (function(){
   'use strict';
 
@@ -11,9 +11,7 @@
     if (!j) return;
     if (Array.isArray(j.perro) && j.perro.length) DOG_BREEDS = j.perro;
     if (Array.isArray(j.gato)  && j.gato.length)  CAT_BREEDS = j.gato;
-    // Refrescar datalist si ya hay especie seleccionada
-    const especie = document.getElementById('especie');
-    if (especie && especie.value) updateBreedList();
+    if (document.readyState !== 'loading') updateBreedList(); // refrescar si ya cargó
   }).catch(()=>{});
 
   const $ = (sel, root=document) => root.querySelector(sel);
@@ -21,44 +19,31 @@
   const setOpts = (datalist, arr) => { datalist.innerHTML = arr.map(x=>`<option value="${escapeHtml(x)}"></option>`).join(''); };
   function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
-  // ===== Estado foto / crop =====
-  let originalImg = null;           // Image() cargada desde el file
-  let currentCroppedDataUrl = '';   // DataURL tras aplicar recorte manual
+  // ===== Foto / crop (drag con dedo o flechas) =====
+  let originalImg = null;
+  let cropState = { offX:0, offY:0, scale:1 }; // scale fijo para cubrir, solo movemos
+  let currentCroppedDataUrl = '';
 
-  // Reducir a DataURL cuadrado 256x256 (usado al guardar si no hay crop manual)
-  function resizeToDataURL(file, maxW=256, maxH=256, cb){
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const ratio = Math.min(maxW/img.width, maxH/img.height, 1);
-        const w = Math.round(img.width * ratio);
-        const h = Math.round(img.height * ratio);
-        const canvas = document.createElement('canvas');
-        canvas.width = 256; canvas.height = 256;
-        const ctx = canvas.getContext('2d');
-        // Ajuste simple centrado
-        const scale = Math.max(256/w, 256/h);
-        const dw = w*scale, dh = h*scale;
-        ctx.drawImage(img, (256-dw)/2, (256-dh)/2, dw, dh);
-        cb(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = reader.result;
-    };
-    reader.readAsDataURL(file);
+  function fitCoverScale(imgW, imgH, boxW, boxH){
+    return Math.max(boxW/imgW, boxH/imgH);
   }
 
-  function getPets(){
-    try{ return JSON.parse(sessionStorage.getItem('tpl.pets')||'[]'); }
-    catch(e){ return []; }
+  function drawToCanvas(ctx, img, offX, offY, scale, W, H){
+    const dw = img.width * scale, dh = img.height * scale;
+    // Limitar para que no aparezcan bordes vacíos
+    const minX = W - dw, maxX = 0;
+    const minY = H - dh, maxY = 0;
+    const x = Math.min(maxX, Math.max(minX, offX));
+    const y = Math.min(maxY, Math.max(minY, offY));
+    ctx.clearRect(0,0,W,H);
+    ctx.drawImage(img, x, y, dw, dh);
+    return {x,y};
   }
-  function savePets(arr){ sessionStorage.setItem('tpl.pets', JSON.stringify(arr||[])); }
 
-  // ===== Init =====
   document.addEventListener('DOMContentLoaded', () => {
     const form = byId('tpl-pet-form');
 
-    // Foto & UI
+    // ——— Foto & UI ———
     const avatarBox = byId('avatarBox');
     const preview = byId('preview');
     const fileInput = byId('foto');
@@ -67,7 +52,7 @@
     const btnChangePhoto = byId('btnChangePhoto');
     const btnAdjustPhoto = byId('btnAdjustPhoto');
 
-    // Campos clave
+    // ——— Campos clave ———
     const especie   = byId('especie');
     const labelRaza = byId('label-raza');
     const raza      = byId('raza');
@@ -76,9 +61,8 @@
     const microchip = byId('microchip');
     const microNo   = byId('microchip_no_tiene');
 
-    const isVisita  = byId('isVisita');
-    const rowCams   = byId('row-camaras');
     const camaras   = byId('camaras');
+    const fotosSel  = byId('fotos');
 
     const seguroVet     = byId('seguroVet');
     const seguroVetData = byId('seguroVetData');
@@ -86,26 +70,34 @@
     const seguroVetNum  = byId('seguroVetNum');
     const seguroRC      = byId('seguroRC');
 
-    // ====== PREVIEW: mostrar imagen y cambiar UI a “Cambiar/Ajustar” ======
-    fileInput.addEventListener('change', (e) => {
+    // ===== Preview al elegir archivo
+    fileInput.addEventListener('change', () => {
       const f = fileInput.files && fileInput.files[0];
-      if (!f){ preview.src = 'images/pet-placeholder.png'; avatarBox.classList.remove('has-image'); photoActions.style.display='none'; photoPickRow.style.display='block'; currentCroppedDataUrl=''; return; }
+      if (!f){
+        preview.src = 'images/pet-placeholder.png';
+        avatarBox.classList.remove('has-image');
+        photoActions.style.display='none';
+        photoPickRow.style.display='block';
+        currentCroppedDataUrl='';
+        originalImg=null;
+        return;
+      }
       const tmp = URL.createObjectURL(f);
       preview.src = tmp;
       avatarBox.classList.add('has-image');
-      // Prepara imagen original para el cropper
       originalImg = new Image();
       originalImg.onload = ()=> URL.revokeObjectURL(tmp);
       originalImg.src = tmp;
 
-      // UI: ocultar picker y mostrar acciones
+      // UI
       photoPickRow.style.display = 'none';
       photoActions.style.display = 'flex';
-    }, {capture:false}); // no capturamos global para no romper clicks
+      currentCroppedDataUrl='';
+    });
 
     btnChangePhoto.addEventListener('click', () => fileInput.click());
 
-    // ====== MICROCHIP: obligatorio o “No tiene” ======
+    // ===== Microchip obligatorio con "No tiene"
     function updateMicroState(){
       if (microNo.checked){
         microchip.value = '';
@@ -119,7 +111,7 @@
     microNo.addEventListener('change', updateMicroState);
     updateMicroState();
 
-    // ====== ESPECIE -> RAZAS/TIPOS ======
+    // ===== Especie -> razas/tipos
     function updateBreedList(){
       const v = especie.value;
       if (v === 'Perro'){ labelRaza.textContent = 'Raza *'; setOpts(breedList, DOG_BREEDS); }
@@ -130,17 +122,7 @@
     especie.addEventListener('change', updateBreedList);
     updateBreedList();
 
-    // ====== VISITA -> cámaras solo si es visita ======
-    function updateVisita(){
-      const on = !!isVisita.checked;
-      rowCams.hidden = !on;
-      camaras.required = on;
-      if (!on) camaras.value = '';
-    }
-    isVisita.addEventListener('change', updateVisita);
-    updateVisita();
-
-    // ====== SEGURO VETERINARIO: detalles solo si “Sí” ======
+    // ===== Seguro Vet: detalles solo si “Sí”
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
       seguroVetData.hidden = !yes;
@@ -150,86 +132,87 @@
     seguroVet.addEventListener('change', toggleSeguroVet);
     toggleSeguroVet();
 
-    // ====== CROP/ AJUSTAR ======
+    // ====== Cropper minimal (drag + flechas, sin zoom UI)
     const modal = byId('cropperModal');
     const cropCanvas = byId('cropCanvas');
     const ctx = cropCanvas.getContext('2d');
-    const zoomRange = byId('zoomRange');
-    const xRange = byId('xRange');
-    const yRange = byId('yRange');
     const btnCancelCrop = byId('btnCancelCrop');
     const btnApplyCrop = byId('btnApplyCrop');
+    let dragging=false, lastX=0, lastY=0;
 
     function openCropper(){
       if (!originalImg){ fileInput.click(); return; }
-      zoomRange.value = '1'; xRange.value = '0'; yRange.value = '0';
-      renderCrop();
+      const W = cropCanvas.width, H = cropCanvas.height;
+      cropState.scale = fitCoverScale(originalImg.width, originalImg.height, W, H);
+      cropState.offX = (W - originalImg.width * cropState.scale)/2;
+      cropState.offY = (H - originalImg.height * cropState.scale)/2;
+      drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, W, H);
       modal.style.display = 'flex'; modal.setAttribute('aria-hidden','false');
       document.body.style.overflow = 'hidden';
+      cropCanvas.focus();
     }
     function closeCropper(){
       modal.style.display = 'none'; modal.setAttribute('aria-hidden','true');
       document.body.style.overflow = '';
     }
-    function renderCrop(){
-      const W = cropCanvas.width, H = cropCanvas.height;
-      ctx.clearRect(0,0,W,H);
-      if (!originalImg) return;
-      const zoom = parseFloat(zoomRange.value||'1');
-      const offx = parseInt(xRange.value||'0',10);
-      const offy = parseInt(yRange.value||'0',10);
-
-      // Escala para que la imagen cubra el canvas y luego aplicamos zoom extra
-      const baseScale = Math.max(W/originalImg.width, H/originalImg.height);
-      const scale = baseScale * zoom;
-      const dw = originalImg.width * scale, dh = originalImg.height * scale;
-
-      const cx = (W - dw)/2 + (offx/100)*(W/2);
-      const cy = (H - dh)/2 + (offy/100)*(H/2);
-
-      ctx.drawImage(originalImg, cx, cy, dw, dh);
-
-      // Opcional: guía circular suave
-      ctx.strokeStyle = '#ddd'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(W/2, H/2, W/2-2, 0, Math.PI*2); ctx.stroke();
-    }
-
-    [zoomRange, xRange, yRange].forEach(el => el.addEventListener('input', renderCrop));
     btnAdjustPhoto.addEventListener('click', openCropper);
     btnCancelCrop.addEventListener('click', closeCropper);
-    btnApplyCrop.addEventListener('click', () => {
-      // Exportar recorte cuadrado 256x256
+
+    cropCanvas.addEventListener('pointerdown', (e)=>{
+      dragging=true; cropCanvas.setPointerCapture(e.pointerId);
+      lastX=e.clientX; lastY=e.clientY;
+    });
+    cropCanvas.addEventListener('pointermove', (e)=>{
+      if (!dragging || !originalImg) return;
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      cropState.offX += dx; cropState.offY += dy;
+      const W = cropCanvas.width, H = cropCanvas.height;
+      const p = drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, W, H);
+      cropState.offX = p.x; cropState.offY = p.y;
+    });
+    cropCanvas.addEventListener('pointerup', ()=>{ dragging=false; });
+    cropCanvas.addEventListener('pointercancel', ()=>{ dragging=false; });
+
+    // Flechas para microajuste
+    modal.addEventListener('keydown', (e)=>{
+      if (!originalImg) return;
+      let moved=false;
+      if (e.key==='ArrowLeft'){ cropState.offX -= 3; moved=true; }
+      if (e.key==='ArrowRight'){ cropState.offX += 3; moved=true; }
+      if (e.key==='ArrowUp'){ cropState.offY -= 3; moved=true; }
+      if (e.key==='ArrowDown'){ cropState.offY += 3; moved=true; }
+      if (moved){
+        e.preventDefault();
+        const W = cropCanvas.width, H = cropCanvas.height;
+        const p = drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, W, H);
+        cropState.offX = p.x; cropState.offY = p.y;
+      }
+      if (e.key==='Escape'){ closeCropper(); }
+    });
+
+    btnApplyCrop.addEventListener('click', ()=>{
+      if (!originalImg) return closeCropper();
       const out = document.createElement('canvas');
       out.width = 256; out.height = 256;
       const octx = out.getContext('2d');
-
-      // Re-hacer el mismo render en out (256x256)
-      const W=256, H=256;
-      const zoom = parseFloat(zoomRange.value||'1');
-      const offx = parseInt(xRange.value||'0',10);
-      const offy = parseInt(yRange.value||'0',10);
-      const baseScale = Math.max(W/originalImg.width, H/originalImg.height);
-      const scale = baseScale * zoom;
-      const dw = originalImg.width * scale, dh = originalImg.height * scale;
-      const cx = (W - dw)/2 + (offx/100)*(W/2);
-      const cy = (H - dh)/2 + (offy/100)*(H/2);
-      octx.drawImage(originalImg, cx, cy, dw, dh);
-
+      // Replicar dibujo en 256x256
+      const scale = cropState.scale * (256/320);
+      const ox = cropState.offX * (256/320);
+      const oy = cropState.offY * (256/320);
+      const p = drawToCanvas(octx, originalImg, ox, oy, scale, 256, 256);
       currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9);
       preview.src = currentCroppedDataUrl;
-      avatarBox.classList.add('has-image');
       closeCropper();
     });
 
-    // Cerrar modal con Escape
-    document.addEventListener('keydown', (e)=>{ if (e.key==='Escape' && modal.style.display==='flex') closeCropper(); });
-
-    // Evitar que overlays externos intercepten SOLO en nuestros elementos (sin romper nada global)
-    ['dragenter','dragover','drop'].forEach(evt=>avatarBox.addEventListener(evt, e=>{ e.preventDefault(); }, true));
-
-    // ====== SUBMIT (guardar local y volver a perfil) ======
-    form.addEventListener('submit', (ev) => {
+    // ====== Guardar (submit robusto)
+    // Captura primero (antes de scripts externos), prevenimos y gestionamos nosotros.
+    form.addEventListener('submit', onSubmit, {capture:true});
+    function onSubmit(ev){
       ev.preventDefault();
+      ev.stopPropagation();
+      ev.stopImmediatePropagation();
 
       // Validación: microchip obligatorio salvo “No tiene”
       if (!microNo.checked && !microchip.value.trim()){
@@ -237,8 +220,7 @@
         microchip.focus();
         return;
       }
-
-      // Validación básica global HTML5
+      // Validación HTML5 para el resto
       if (!form.reportValidity()) return;
 
       const fd = new FormData(form);
@@ -261,8 +243,7 @@
         comportamiento: (fd.get('comportamiento')||'').toString(),
 
         // Seguimiento y extras
-        isVisita: !!isVisita.checked,
-        camaras: isVisita.checked ? (fd.get('camaras')||'').toString() : '',
+        camaras: (fd.get('camaras')||'').toString(),
         fotos: (fd.get('fotos')||'').toString(),
 
         // Seguros
@@ -275,24 +256,44 @@
         foto: ''
       };
 
-      const files = fileInput.files;
-      const done = (dataUrl) => {
+      const f = fileInput.files && fileInput.files[0];
+
+      const finalize = (dataUrl) => {
         mascota.foto = currentCroppedDataUrl || dataUrl || 'images/pet-placeholder.png';
-        const arr = getPets(); arr.push(mascota); savePets(arr);
+        try{
+          const arr = JSON.parse(sessionStorage.getItem('tpl.pets')||'[]');
+          arr.push(mascota);
+          sessionStorage.setItem('tpl.pets', JSON.stringify(arr));
+        }catch(_){}
         location.assign('perfil.html');
       };
 
-      if (currentCroppedDataUrl){
-        done(currentCroppedDataUrl);
-      } else if (files && files[0]){
-        resizeToDataURL(files[0], 256, 256, done);
+      if (currentCroppedDataUrl){ finalize(currentCroppedDataUrl); }
+      else if (f){
+        // Reducción y centrado básico a 256x256 por si no hiciste “Ajustar”
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const out = document.createElement('canvas');
+            out.width = 256; out.height = 256;
+            const octx = out.getContext('2d');
+            const scale = fitCoverScale(img.width, img.height, 256, 256);
+            const dw = img.width*scale, dh = img.height*scale;
+            const x = (256 - dw)/2, y = (256 - dh)/2;
+            octx.drawImage(img, x, y, dw, dh);
+            finalize(out.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(f);
       } else {
-        done('');
+        finalize('');
       }
-    });
+    }
   });
 
-  // ===== Utils en scope superior para refrescar datalist tras JSON =====
+  // ===== Utilidad global para refrescar datalist tras cargar JSON =====
   function updateBreedList(){
     const especie = document.getElementById('especie');
     const labelRaza = document.getElementById('label-raza');
