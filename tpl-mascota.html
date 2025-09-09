@@ -299,6 +299,15 @@
             <button class="tpl-btn" id="saveBtn" type="button"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
+
+          <!-- TPL: INICIO BLOQUE NUEVO [Acción: EliminarMascota] -->
+          <div class="tpl-actions">
+            <a href="#" id="tpl-delete-pet" class="tpl-btn secondary" hidden>
+              <i class="fa-solid fa-trash-can"></i> EliminarMascota
+            </a>
+          </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
+
         </form>
       </div>
     </div>
@@ -322,5 +331,78 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
   <script src="tpl-mascota.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Script mínimo: borrar mascota por índice (?edit=idx)] -->
+  <script>
+    (function(){
+      function qsIndex(){
+        try{
+          var p = new URLSearchParams(location.search);
+          var n = parseInt(p.get('edit'), 10);
+          return Number.isFinite(n) && n >= 0 ? n : null;
+        }catch(_){ return null; }
+      }
+      function currentUid(){
+        try{
+          var explicit = localStorage.getItem('tpl.currentUser');
+          if (explicit) return explicit;
+          if (window.firebase && typeof firebase.auth === 'function'){
+            var u = firebase.auth().currentUser;
+            if (u && !u.isAnonymous && u.uid) return u.uid;
+          }
+        }catch(_){}
+        return 'default';
+      }
+      function readPets(uid){
+        try{
+          var k1 = 'tpl.udb.'+uid+'.pets';
+          var k2 = 'tpl.udb.'+uid+'.mascotas';
+          var v = localStorage.getItem(k1);
+          if (v) return { arr: JSON.parse(v)||[], key:'pets', k1, k2 };
+          var w = localStorage.getItem(k2);
+          if (w) return { arr: JSON.parse(w)||[], key:'mascotas', k1, k2 };
+          return { arr: [], key:'pets', k1, k2 };
+        }catch(_){ return { arr: [], key:'pets', k1:'', k2:'' }; }
+      }
+      function writePets(uid, arr, k1, k2){
+        try{
+          localStorage.setItem(k1, JSON.stringify(arr));
+          if (localStorage.getItem(k2) !== null){
+            localStorage.setItem(k2, JSON.stringify(arr)); // sincroniza alias si existe
+          }
+          localStorage.setItem('tpl.udb.lastChange', String(Date.now())); // pista para listeners
+        }catch(_){}
+      }
+      function showDeleteIfEditing(){
+        var idx = qsIndex();
+        var a = document.getElementById('tpl-delete-pet');
+        if (!a) return;
+        if (idx === null){ a.hidden = true; return; }
+        a.hidden = false;
+        a.addEventListener('click', function(e){
+          e.preventDefault();
+          if (!confirm('¿Seguro que quieres eliminar esta mascota? Esta acción no se puede deshacer.')){
+            return;
+          }
+          var uid = currentUid();
+          var { arr, k1, k2 } = readPets(uid);
+          if (!Array.isArray(arr) || idx < 0 || idx >= arr.length){
+            alert('No se encontró la mascota a eliminar.');
+            return;
+          }
+          arr.splice(idx, 1);
+          writePets(uid, arr, k1, k2);
+          // Vuelve al perfil (ahí ya no aparecerá)
+          location.assign('perfil.html');
+        }, { passive:false });
+      }
+      if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', showDeleteIfEditing);
+      } else {
+        showDeleteIfEditing();
+      }
+    })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
