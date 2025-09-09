@@ -1,27 +1,21 @@
-/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar/eliminar en base por usuario (localStorage)] */
+/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar/eliminar con confirmación overlay + UID robusto] */
 (function(){
   'use strict';
 
   // ====== Base por usuario (localStorage) ======
-  /* TPL: INICIO BLOQUE NUEVO [UID robusto: currentUser -> tpl_auth_uid -> Firebase UID -> default] */
   function getCurrentUserId(){
     var explicit = localStorage.getItem('tpl.currentUser');
     if (explicit) return explicit;
-
     var uidLS = localStorage.getItem('tpl_auth_uid');
     if (uidLS) return uidLS;
-
     try{
       if (window.firebase && typeof firebase.auth === 'function'){
         var u = firebase.auth().currentUser;
         if (u && !u.isAnonymous && u.uid) return u.uid;
       }
     }catch(_){}
-
     return 'default';
   }
-  /* TPL: FIN BLOQUE NUEVO */
-
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
@@ -30,11 +24,9 @@
   function udbSet(uid, key, value){
     try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
   }
-  /* TPL: INICIO BLOQUE NUEVO [Saber si existe clave] */
   function udbHas(uid, key){
     try { return localStorage.getItem(udbKey(uid,key)) !== null; } catch(_){ return false; }
   }
-  /* TPL: FIN BLOQUE NUEVO */
 
   // ===== Listas (carga JSON si existe) =====
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
@@ -119,6 +111,13 @@
 
     const saveBtn = byId('saveBtn');
 
+    // Botones/Modal eliminar
+    const deleteRow = byId('tpl-delete-row');
+    const deleteBtn = byId('tpl-delete');
+    const deleteModal = byId('deleteModal');
+    const btnCancelDelete = byId('btnCancelDelete');
+    const btnConfirmDelete = byId('btnConfirmDelete');
+
     // Icono por especie (si no hay foto)
     function updateSpeciesIcon(){
       const v = especie.value;
@@ -134,7 +133,7 @@
       const f = fileInput.files && fileInput.files[0];
       if (!f){
         preview.src = 'images/pet-placeholder.png';
-        avatarBox.classList.remove('has-image');   // sin imagen => solo huellita
+        avatarBox.classList.remove('has-image');
         photoActions.style.display='none';
         photoPickRow.style.display='block';
         currentCroppedDataUrl=''; originalImg=null; imageReady=false;
@@ -143,7 +142,7 @@
       }
       const tmp = URL.createObjectURL(f);
       preview.src = tmp;
-      avatarBox.classList.add('has-image');        // con imagen
+      avatarBox.classList.add('has-image');
       photoPickRow.style.display = 'none';
       photoActions.style.display = 'flex';
 
@@ -180,17 +179,6 @@
     }
     especie.addEventListener('change', updateBreedList);
     updateBreedList();
-
-    // ===== Seguro Vet: detalles SOLO si “Sí” =====
-    function toggleSeguroVet(){
-      const yes = (seguroVet.value === 'Sí');
-      seguroVetData.classList.toggle('is-hidden', !yes);
-      seguroVetData.hidden = !yes;
-      seguroVetComp.required = seguroVetNum.required = yes;
-      if (!yes){ seguroVetComp.value=''; seguroVetNum.value=''; }
-    }
-    seguroVet.addEventListener('change', toggleSeguroVet);
-    toggleSeguroVet();
 
     // ===== Cropper minimal (drag/flechas) =====
     const modal = byId('cropperModal');
@@ -230,9 +218,6 @@
     btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
     // ===== MODO EDICIÓN (lee de udb) =====
-    const deleteRow = byId('tpl-delete-row');
-    const deleteBtn = byId('tpl-delete');
-
     (function initEditMode(){
       const params = new URLSearchParams(location.search);
       const e = params.get('edit');
@@ -241,7 +226,6 @@
       if (Number.isNaN(idx) || idx < 0) return;
 
       const uid = getCurrentUserId();
-      // Leer pets (preferente). Si no existe clave 'pets', caer a alias antiguo 'mascotas'
       const hasPets = udbHas(uid, 'pets');
       const arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
       if (!Array.isArray(arr) || !arr[idx]) return;
@@ -252,8 +236,6 @@
       const h1 = document.querySelector('h1');
       if (h1) h1.textContent = 'Editar mascota';
       if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
-
-      // Mostrar opción de eliminar en modo edición
       if (deleteRow) deleteRow.style.display = 'flex';
 
       nombre.value = pet.nombre || '';
@@ -308,7 +290,7 @@
       }
     })();
 
-    // ===== Guardar (crear/actualizar) directamente en udb =====
+    // ===== Guardar (crear/actualizar) =====
     saveBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
@@ -352,7 +334,6 @@
         const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
         mascota.foto = baseFoto;
 
-        // Leer preferentemente 'pets'; si no existe, caer a 'mascotas'
         const hasPets = udbHas(uid, 'pets');
         let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
         if (!Array.isArray(arr)) arr = [];
@@ -363,11 +344,8 @@
           arr.push(mascota);          // crear
         }
 
-        // Escribir SIEMPRE en 'pets'
         udbSet(uid, 'pets', arr);
-        // Sincronizar alias antiguo SOLO si existe
         if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
-
         try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
         location.assign('perfil.html');
@@ -397,36 +375,61 @@
       }
     });
 
-    /* TPL: INICIO BLOQUE NUEVO [Eliminar mascota: usa UID robusto y escribe pets=[]] */
+    /* TPL: INICIO BLOQUE NUEVO [Eliminar mascota con overlay] */
+    function openDeleteModal(){
+      if (!deleteModal) return;
+      deleteModal.style.display = 'flex';
+      deleteModal.setAttribute('aria-hidden','false');
+      document.body.style.overflow = 'hidden';
+      // focus al botón "Eliminar"
+      if (btnConfirmDelete) btnConfirmDelete.focus();
+    }
+    function closeDeleteModal(){
+      if (!deleteModal) return;
+      deleteModal.style.display = 'none';
+      deleteModal.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+    }
+
     if (deleteBtn){
       deleteBtn.addEventListener('click', function(e){
         e.preventDefault();
         if (editIndex < 0) return; // solo en modo edición
-        if (!confirm('¿Seguro que deseas eliminar esta mascota?')) return;
-
+        openDeleteModal();
+      });
+    }
+    if (btnCancelDelete){
+      btnCancelDelete.addEventListener('click', function(){ closeDeleteModal(); });
+    }
+    if (deleteModal){
+      deleteModal.addEventListener('click', function(e){
+        if (e.target === deleteModal) closeDeleteModal(); // clic fuera cierra
+      });
+      deleteModal.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeDeleteModal();
+      });
+    }
+    if (btnConfirmDelete){
+      btnConfirmDelete.addEventListener('click', function(){
+        if (editIndex < 0) return;
         const uid = getCurrentUserId();
-
-        // Fuente preferente: 'pets'. Si no existe, caer a 'mascotas'
         const hasPets = udbHas(uid, 'pets');
         let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
         if (!Array.isArray(arr)) arr = [];
-
         if (arr[editIndex]) arr.splice(editIndex, 1);
 
-        // Escribir SIEMPRE en 'pets' (incluso si queda [])
         udbSet(uid, 'pets', arr);
-        // Sincronizar alias antiguo SOLO si existe
         if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
-
         try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
+        closeDeleteModal();
         location.assign('perfil.html');
       });
     }
     /* TPL: FIN BLOQUE NUEVO */
   });
 
-  // Refrescar datalist tras cargar JSON (fuera del DOMContentLoaded por el fetch inicial)
+  // Refrescar datalist tras cargar JSON
   function updateBreedList(){
     const especie = document.getElementById('especie');
     const labelRaza = document.getElementById('label-raza');
