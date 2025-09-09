@@ -1,11 +1,11 @@
 <script>
   (function(){
-    // ✅ Init seguro
+    // ✅ Init Firebase seguro
     if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
     const auth = firebase.auth();
     const db   = firebase.firestore();
 
-    /* TPL: INICIO BLOQUE NUEVO [Storage desactivado con guardia] */
+    /* TPL: INICIO BLOQUE NUEVO [Desactivar Storage: no subimos imágenes, evitamos errores] */
     let st = null;
     try { if (firebase.storage) { st = firebase.storage(); } } catch(_) { st = null; }
     /* TPL: FIN BLOQUE NUEVO */
@@ -70,21 +70,31 @@
       }
     }
 
+    /* TPL: INICIO BLOQUE NUEVO [Lecturas robustas con fallback] */
     async function getProfile(uid){
       if (uid) {
-        const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
-        return doc.exists ? doc.data() : null;
+        try{
+          const doc = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+          if (doc.exists) return doc.data();
+        }catch(e){
+          console.warn('TPL profile read error (Firestore):', e);
+        }
       }
       try { return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); } catch(e){ return null; }
     }
 
     async function getPets(uid){
       if (uid) {
-        const snap = await db.collection('users').doc(uid).collection('pets').get();
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        try{
+          const snap = await db.collection('users').doc(uid).collection('pets').get();
+          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }catch(e){
+          console.warn('TPL pets read error (Firestore):', e);
+        }
       }
       try { return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); } catch(e){ return []; }
     }
+    /* TPL: FIN BLOQUE NUEVO */
 
     function petEditHref(p, idx, isFirebase){
       return (isFirebase && p.id)
@@ -123,12 +133,10 @@
 
       function guardClick(e){
         e.preventDefault();
-        /* TPL: INICIO BLOQUE NUEVO [guardia banner] */
         if (bannerInc){
           bannerInc.hidden = false;
           bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
         }
-        /* TPL: FIN BLOQUE NUEVO */
       }
       if (btnIrReserva){
         btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
@@ -234,7 +242,7 @@
 
           const avatar = document.createElement('div');
           avatar.className = 'tpl-avatar';
-          /* TPL: INICIO BLOQUE NUEVO [usar fotoDataUrl si existe] */
+          /* TPL: INICIO BLOQUE NUEVO [foto local DataURL si existe] */
           const imgSrc = p.fotoDataUrl || p.fotoUrl || '';
           if (imgSrc){
             const img = document.createElement('img');
@@ -308,7 +316,7 @@
     }
     logoutBtn && logoutBtn.addEventListener('click', doLogout);
 
-    // ---------- MODAL OWNER ----------
+    // ---------- MODAL OWNER (Propietario) ----------
     const ownerModal = document.getElementById('tpl-owner-modal');
     const ownerForm  = document.getElementById('tpl-owner-form');
     const oMsg       = document.getElementById('o_msg');
@@ -344,6 +352,11 @@
       e.preventDefault(); oMsg.style.display='none';
       if (!ownerForm.reportValidity()) return;
 
+      /* TPL: INICIO BLOQUE NUEVO [garantizar UID en tiempo de envío] */
+      const uid = CURRENT_UID || (auth.currentUser && auth.currentUser.uid);
+      if (!uid){ alert('Vuelve a iniciar sesión para guardar tu perfil.'); return; }
+      /* TPL: FIN BLOQUE NUEVO */
+
       const data = {
         nombre:      ownerForm.querySelector('#o_nombre').value.trim(),
         telefono:    ownerForm.querySelector('#o_telefono').value.trim(),
@@ -355,17 +368,20 @@
       };
 
       try{
-        await db.collection('users').doc(CURRENT_UID).set({ email: data.email, updatedAt: new Date() }, {merge:true}); /* TPL: INICIO BLOQUE NUEVO */
-        await db.collection('users').doc(CURRENT_UID).collection('private').doc('profile').set(data, {merge:true});
+        /* TPL: INICIO BLOQUE NUEVO [sincronizar email al doc público del usuario] */
+        await db.collection('users').doc(uid).set({ email: data.email, updatedAt: new Date() }, {merge:true});
+        /* TPL: FIN BLOQUE NUEVO */
+        await db.collection('users').doc(uid).collection('private').doc('profile').set(data, {merge:true});
+        try { localStorage.setItem('tplProfileComplete','1'); } catch(_){}
         oMsg.style.display='inline-flex';
-        await render(CURRENT_UID);
+        await render(uid);
         setTimeout(closeOwnerModal, 400);
       }catch(err){
         alert('No se pudo guardar el perfil: ' + (err?.message || err));
       }
     });
 
-    // ---------- MODAL PET ----------
+    // ---------- MODAL PET (Mascota) ----------
     const petModal = document.getElementById('tpl-pet-modal');
     const petForm  = document.getElementById('tpl-pet-form');
     const pMsg     = document.getElementById('p_msg');
@@ -393,26 +409,7 @@
     const pMicro     = document.getElementById('p_micro');
 
     let CURRENT_PET_ID = null;
-    let petPhotoFile = null;         // ya no se sube
-    let petFotoUrl = '';             // no se usa
-    let petPhotoDataUrl = '';        // dataURL guardada
-
-    function toggleOwnerLinkInterceptions(){
-      document.addEventListener('click', function(e){
-        const a = e.target.closest('a'); if (!a) return;
-        const href = a.getAttribute('href') || '';
-        if (/^registro\.html/i.test(href)){
-          e.preventDefault(); openOwnerFromStorageOrEmpty();
-        }
-        if (/^perfil-mascotas\.html/i.test(href)){
-          e.preventDefault();
-          const url = new URL(href, location.href);
-          const id  = url.searchParams.get('id');
-          const mode= url.searchParams.get('mode');
-          openPetFromIdOrNew(id, mode);
-        }
-      });
-    }
+    let petPhotoDataUrl = '';  // DataURL guardada (sin subir)
 
     function openPetModal(p){
       petModal.setAttribute('aria-hidden','false');
@@ -420,12 +417,10 @@
       petForm.reset(); pMsg.style.display='none';
       CURRENT_PET_ID = p?.id || null;
 
-      /* TPL: INICIO BLOQUE NUEVO [usar DataURL y no subir] */
-      petFotoUrl = p?.fotoUrl || '';
+      /* TPL: INICIO BLOQUE NUEVO [usar DataURL; no subimos] */
       petPhotoDataUrl = p?.fotoDataUrl || '';
-      petPhotoFile = null;
-      pPrev.src = petPhotoDataUrl || petFotoUrl || '';
-      setPhotoUI( !!(petPhotoDataUrl || petFotoUrl) );
+      pPrev.src = petPhotoDataUrl || (p?.fotoUrl || '');
+      setPhotoUI( !!(petPhotoDataUrl || p?.fotoUrl) );
       /* TPL: FIN BLOQUE NUEVO */
 
       // Básicos
@@ -551,6 +546,9 @@
       if (pVac.value==='No' && !pFaltan.value.trim()){ pFaltan.reportValidity(); return; }
       if (!petForm.reportValidity()) return;
 
+      const uid = CURRENT_UID || (auth.currentUser && auth.currentUser.uid);
+      if (!uid){ alert('Vuelve a iniciar sesión para guardar la mascota.'); return; }
+
       const isExotico = (pEspecie.value === 'Exótico');
       const data = {
         /* TPL: INICIO BLOQUE NUEVO [guardar DataURL, sin Storage] */
@@ -584,18 +582,14 @@
       try{
         let petId = CURRENT_PET_ID;
         if (!petId){
-          const ref = await db.collection('users').doc(CURRENT_UID).collection('pets').add(data);
+          const ref = await db.collection('users').doc(uid).collection('pets').add(data);
           petId = ref.id; CURRENT_PET_ID = petId;
         } else {
-          await db.collection('users').doc(CURRENT_UID).collection('pets').doc(petId).set(data, {merge:true});
+          await db.collection('users').doc(uid).collection('pets').doc(petId).set(data, {merge:true});
         }
 
-        /* TPL: INICIO BLOQUE NUEVO [ya no subimos foto] */
-        // nada
-        /* TPL: FIN BLOQUE NUEVO */
-
         pMsg.style.display='inline-flex';
-        await render(CURRENT_UID);
+        await render(uid);
         setTimeout(closePetModal, 400);
       }catch(err){
         alert('No se pudo guardar la mascota: ' + (err?.message || err));
@@ -606,14 +600,17 @@
       if (!CURRENT_PET_ID) return;
       if (!confirm('¿Eliminar esta mascota?')) return;
       try{
-        await db.collection('users').doc(CURRENT_UID).collection('pets').doc(CURRENT_PET_ID).delete();
-        await render(CURRENT_UID);
+        const uid = CURRENT_UID || (auth.currentUser && auth.currentUser.uid);
+        if (!uid){ alert('Vuelve a iniciar sesión.'); return; }
+        await db.collection('users').doc(uid).collection('pets').doc(CURRENT_PET_ID).delete();
+        await render(uid);
         closePetModal();
       }catch(err){
         alert('No se pudo eliminar: ' + (err?.message || err));
       }
     });
 
+    // ---------- Interceptar enlaces antiguos (registro / perfil-mascotas) ----------
     function toggleOwnerLinkInterceptions(){
       document.addEventListener('click', function(e){
         const a = e.target.closest('a'); if (!a) return;
@@ -632,9 +629,11 @@
     }
     toggleOwnerLinkInterceptions();
 
+    // ---------- Botones visibles ----------
     document.getElementById('tpl-btn-perfil')?.addEventListener('click', (e)=>{ e.preventDefault(); openOwnerFromStorageOrEmpty(); });
     document.getElementById('tpl-btn-mascota-nueva')?.addEventListener('click', (e)=>{ e.preventDefault(); openPetModal(null); });
 
+    // ---------- Deep links ----------
     function handleDeepLinks(){
       try{
         const qs = new URLSearchParams(location.search);
@@ -646,6 +645,7 @@
       }catch(_){}
     }
 
+    // ---------- Cerrar modales con ESC ----------
     document.addEventListener('keydown', (e)=>{
       if (e.key === 'Escape'){
         if (ownerModal.getAttribute('aria-hidden') === 'false') closeOwnerModal();
@@ -653,6 +653,7 @@
       }
     });
 
+    // ---------- Auth guard + render ----------
     auth.onAuthStateChanged(async (u)=>{
       if (u && !u.isAnonymous){
         CURRENT_UID = u.uid;
@@ -666,5 +667,13 @@
         location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
       }
     });
+
+    /* TPL: INICIO BLOQUE NUEVO [guardia de errores visibles (opcional)] */
+    window.addEventListener('error', function(e){
+      try{
+        console.error('TPL runtime error:', e.error || e.message || e);
+      }catch(_){}
+    });
+    /* TPL: FIN BLOQUE NUEVO */
   })();
 </script>
