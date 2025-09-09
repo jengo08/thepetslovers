@@ -63,9 +63,11 @@
     <div class="tpl-wrap">
       <div class="tpl-card">
         <h1>Datos de propietario</h1>
-        <p class="lead">Guarda tus datos para que tu reserva se rellene sola.</p>
+        <p class="lead">Guarda tus datos para la reserva, para poder hacer tu reserva.</p>
 
-        <form class="tpl-form" id="tpl-owner-form" action="#" novalidate>
+        <!-- TPL: INICIO BLOQUE NUEVO [Opt-out de EmailJS/interceptores] -->
+        <form class="tpl-form" id="tpl-owner-form" action="#" novalidate data-tpl-emailjs="false">
+        <!-- TPL: FIN BLOQUE NUEVO -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="nombre">Nombre y apellidos <span aria-hidden="true">*</span></label>
@@ -120,8 +122,19 @@
             </div>
           </div>
 
+          <!-- TPL: INICIO BLOQUE NUEVO [Horario preferido] -->
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="contactoHorario">Horario preferido de contacto</label>
+              <input class="tpl-input" type="text" id="contactoHorario" name="contactoHorario" placeholder="Ej. 9:00–14:00 o tardes">
+            </div>
+          </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
+
           <div class="tpl-actions">
-            <button class="tpl-btn" id="saveOwner" type="button"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <!-- TPL: INICIO BLOQUE NUEVO [Submit nativo] -->
+            <button class="tpl-btn" id="saveOwner" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <!-- TPL: FIN BLOQUE NUEVO -->
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
