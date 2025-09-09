@@ -35,8 +35,7 @@
     .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
     .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
-    .tpl-avatar-hint{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
-    .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
+    /* Eliminado el texto dentro del círculo: solo huellita */
     .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
     .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
 
@@ -44,7 +43,7 @@
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
 
-    /* Modal cropper (drag/flechas) */
+    /* Modal cropper minimal (drag/flechas) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
     .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
@@ -53,7 +52,8 @@
     .crop-hint{ font-size:.9rem; color:var(--tpl-muted); }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
 
-    .is-hidden{ display:none !important; }
+    /* Accesibilidad: label visualmente oculto para la foto */
+    .sr-only{ position:absolute!important; width:1px; height:1px; clip:rect(1px,1px,1px,1px); overflow:hidden; white-space:nowrap; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -93,11 +93,12 @@
 
           <!-- Foto -->
           <div class="tpl-field">
-            <label for="foto">Foto de la mascota</label>
+            <!-- TPL: INICIO BLOQUE NUEVO [Label oculto: solo huellita visible] -->
+            <label for="foto" class="sr-only">Foto de la mascota</label>
+            <!-- TPL: FIN BLOQUE NUEVO -->
             <div class="tpl-avatar" id="avatarBox">
               <div class="tpl-avatar-inner">
                 <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
-                <div class="tpl-avatar-hint">Sube foto de tu mascota</div>
                 <div class="tpl-avatar-icon" id="avatarIcon" aria-hidden="true"><i class="fa-solid fa-paw"></i></div>
 
                 <div class="tpl-photo-controls">
@@ -228,6 +229,7 @@
           <!-- ========== Extras y seguimiento ========== -->
           <div class="tpl-section-title"><strong>📸 Extras y seguimiento</strong></div>
 
+          <!-- Cámaras -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="camaras">¿Tienes cámaras en casa? <span style="font-weight:400;">(para servicio a domicilio)</span></label>
@@ -236,6 +238,10 @@
                 <option>Sí</option><option>No</option>
               </select>
             </div>
+          </div>
+
+          <!-- Fotos y vídeos (debajo de cámaras) -->
+          <div class="tpl-row">
             <div class="tpl-field">
               <label for="fotos">¿Te gustaría recibir fotos y vídeos durante el servicio?</label>
               <select class="tpl-select" id="fotos" name="fotos">
@@ -245,6 +251,7 @@
             </div>
           </div>
 
+          <!-- Seguros (lado a lado) -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="seguroVet">¿Tienes contratado seguro veterinario para tu mascota?</label>
@@ -271,9 +278,7 @@
           </div>
 
           <div class="tpl-actions">
-            <!-- TPL: INICIO BLOQUE NUEVO [Botón sin submit nativo] -->
             <button class="tpl-btn" id="saveBtn" type="button"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
-            <!-- TPL: FIN BLOQUE NUEVO -->
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
