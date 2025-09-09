@@ -244,8 +244,7 @@
           </div>
 
           <div class="tpl-field">
-            <span class="sr-only" id="servicios-legend">Qué tipo de servicio estás buscando</span>
-            <label class="tpl-section-title" aria-labelledby="servicios-legend">¿Qué tipo de servicio estás buscando? <span aria-hidden="true">*</span></label>
+            <label>¿Qué tipo de servicio estás buscando? <span aria-hidden="true">*</span></label>
             <div style="display:grid; grid-template-columns:1fr; gap:6px;">
               <label><input type="checkbox" name="servicios" value="Visitas a domicilio" id="srv-visitas"> Visitas a domicilio</label>
               <label><input type="checkbox" name="servicios" value="Estancia en casa de cuidador"> Estancia en casa de cuidador</label>
@@ -262,16 +261,12 @@
             <div class="tpl-field">
               <label for="desde">Fechas aproximadas (desde) <span aria-hidden="true">*</span></label>
               <input class="tpl-input" type="date" id="desde" name="desde" required>
+              <div class="tpl-help">Formato: dd/mm/aaaa (tu dispositivo lo mostrará según su configuración).</div>
             </div>
             <div class="tpl-field">
               <label for="hasta">Fechas aproximadas (hasta) <span aria-hidden="true">*</span></label>
               <input class="tpl-input" type="date" id="hasta" name="hasta" required>
             </div>
-          </div>
-
-          <div class="tpl-field">
-            <label for="prioridad">¿Qué es lo más importante para ti al confiar el cuidado? <span aria-hidden="true">*</span></label>
-            <textarea id="prioridad" name="prioridad" class="tpl-textarea" required placeholder="Confianza, formación, seguimiento, etc."></textarea>
           </div>
 
           <!-- Condicional por “Visitas a domicilio” -->
@@ -317,13 +312,7 @@
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
-              <div id="seguroRCData" class="tpl-field" hidden style="margin-top:8px;">
-                <label>Detalles del seguro de RC</label>
-                <div class="tpl-row">
-                  <input class="tpl-input" type="text" id="seguroRCComp" placeholder="Compañía">
-                  <input class="tpl-input" type="text" id="seguroRCNum" placeholder="Nº de póliza">
-                </div>
-              </div>
+              <!-- Sin detalles: solo saber si lo tiene -->
             </div>
           </div>
 
