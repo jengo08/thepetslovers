@@ -1,315 +1,196 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil de mascota · The Pets Lovers</title>
+<!-- TPL: Config REST Navar/Codinary -->
+<script>
+  window.TPL_API = window.TPL_API || {
+    baseUrl: 'https://TU_BACKEND_NAVAR/api',  // ← CAMBIA ESTO
+    authHeaders: async () => {
+      const t = localStorage.getItem('tpl_api_token') || '';
+      return t ? { 'Authorization': 'Bearer ' + t } : {};
+    },
+    currentUserId: async () => {
+      const ls = localStorage.getItem('tpl_auth_uid');
+      if (ls) return ls;
+      try { return window.firebase?.auth?.().currentUser?.uid || null; } catch(_) { return null; }
+    },
+    endpoints: {
+      petGet:    (uid,id) => `/users/${uid}/pets/${id}`,
+      petList:   (uid)    => `/users/${uid}/pets`,
+      petCreate: (uid)    => `/users/${uid}/pets`,
+      petUpdate: (uid,id) => `/users/${uid}/pets/${id}`,
+      petDelete: (uid,id) => `/users/${uid}/pets/${id}`
+    }
+  };
+</script>
 
-  <!-- Respeta tus estilos y tipografías -->
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<!-- TPL: Lógica Mascota — REST-first, sin subidas ni overlays -->
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const qsp=(k,fb)=> new URL(location.href).searchParams.get(k)||fb;
+  const nextUrl = ()=> qsp('next','perfil.html');
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido para evitar 404] -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  // ===== refs del DOM (IDs tal como los tenías) =====
+  const form = $('tpl-form-mascota');
+  const ok   = $('tpl-msg-ok');
+  const err  = $('tpl-msg-err');
+  const btnDel = $('tpl-btn-eliminar');
 
-  <!-- ⚠️ No toco tu style.css. Solo estas utilidades para bloquear overlays de “enviando/subiendo” si algún script externo las inyecta -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Utilidades anti-overlay] -->
-  <style>
-    .is-hidden{display:none!important}
-    .tpl-upload, .tpl-upload-card, [data-tpl-upload], .upload, .uploader, .overlay, .loading {display:none!important;visibility:hidden!important}
-  </style>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-</head>
-<body>
+  const foto = $('foto'), preview = $('preview');
+  const noChip=$('noChip'), microchip=$('microchip');
+  const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
+  const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
+  const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
 
-  <div id="tpl-navbar"></div>
-  <script src="tpl-navbar.js" defer></script>
+  // Desactiva el capturador global (EmailJS) para este form
+  try { form.setAttribute('data-tpl-emailjs','false'); } catch(_){}
 
-  <main class="container page" aria-labelledby="t" style="padding-top:120px;">
-    <section class="tpl-card" role="region" aria-labelledby="t" style="max-width:980px;margin:0 auto 60px;background:#fff;border:1px solid #eee;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.06);overflow:hidden">
-      <div class="tpl-card-head" style="background:linear-gradient(135deg, rgba(51,148,150,.12), rgba(88,66,90,.08));padding:18px 18px 14px;border-bottom:1px solid #ececec">
-        <h1 id="t" style="margin:0;font-size:26px;color:#58425a"><i class="fa-solid fa-paw"></i> Perfil de tu mascota</h1>
-      </div>
+  // ===== toggles UI (como en tu versión buena) =====
+  function toggleMicrochip(){ if(noChip.checked){ microchip.value=''; microchip.disabled=true; } else { microchip.disabled=false; } }
+  function toggleEspecie(){
+    if (especie.value==='Exótico'){ raza.required=true; raza.placeholder='Ej.: Ave, Reptil, Pequeño mamífero…'; lblRaza.innerHTML='Tipo de exótico *'; }
+    else if (especie.value){ raza.required=true; raza.placeholder='Escribe o elige de la lista'; lblRaza.innerHTML='Raza / especie *'; }
+    else { raza.required=false; raza.placeholder='Escribe aquí…'; lblRaza.innerHTML='Raza / especie'; }
+  }
+  function toggleVacunas(){ if (vacunas.value==='No'){ wrapFaltan.classList.remove('is-hidden'); faltan.required=true; } else { wrapFaltan.classList.add('is-hidden'); faltan.required=false; faltan.value=''; } }
+  function toggleSeguro(){ if (seguroVet.value==='Sí'){ wrapSeguro.classList.remove('is-hidden'); aseguradora.required=true; poliza.required=true; } else { wrapSeguro.classList.add('is-hidden'); aseguradora.required=false; poliza.required=false; aseguradora.value=''; poliza.value=''; } }
 
-      <form id="f" class="tpl-form" novalidate style="padding:18px;display:grid;gap:14px;grid-template-columns:1fr">
-        <!-- Foto (solo preview local; NO se sube) -->
-        <div class="tpl-field col-span-2">
-          <label for="foto"><i class="fa-regular fa-image"></i> Foto (opcional)</label>
-          <div class="tpl-photo-row" style="display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:start">
-            <img id="preview" class="tpl-photo" alt="Previsualización" src="" style="width:120px;height:120px;border-radius:12px;object-fit:cover;border:1px solid #eee;background:#fafafa" />
-            <div>
-              <input id="foto" name="foto" type="file" accept="image/*" data-tpl-noupload="1">
-            </div>
-          </div>
-        </div>
+  noChip.addEventListener('change', toggleMicrochip);
+  especie.addEventListener('change', toggleEspecie);
+  vacunas.addEventListener('change', toggleVacunas);
+  seguroVet.addEventListener('change', toggleSeguro);
 
-        <!-- Datos básicos -->
-        <div class="tpl-field"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" required></div>
+  // ===== Foto: SOLO DataURL, nada de uploads =====
+  let fotoDataUrl = '';
+  foto.addEventListener('change', ()=>{
+    const f = foto.files?.[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = e => { fotoDataUrl = e.target.result; preview.src = fotoDataUrl; };
+    r.readAsDataURL(f);
+  });
 
-        <div class="tpl-field">
-          <label for="microchip">Nº de microchip</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input id="microchip" name="microchip" type="text" placeholder="15 dígitos" pattern="^[0-9]{15}$">
-            <label style="display:inline-flex;gap:6px;align-items:center"><input type="checkbox" id="noChip"> No tiene</label>
-          </div>
-        </div>
+  // ===== REST driver =====
+  const REST = {
+    ok: !!(window.TPL_API && window.TPL_API.baseUrl),
+    base: () => String(window.TPL_API.baseUrl).replace(/\/+$/,''),
+    headers: async () => ({ 'Content-Type':'application/json', ...(await window.TPL_API.authHeaders?.()||{}) }),
+    uid:     async () => await (window.TPL_API.currentUserId?.() || null),
+    url(name, uid, id){
+      const e = window.TPL_API.endpoints||{};
+      const path = typeof e[name]==='function' ? e[name](uid,id) : '';
+      return this.base() + path;
+    },
+    async getPet(id){
+      if (!this.ok || !id) return null;
+      const uid = await this.uid(); if (!uid) return null;
+      const res = await fetch(this.url('petGet', uid, id), { headers: await this.headers() });
+      return res.ok ? await res.json() : null;
+    },
+    async savePet(id, data){
+      if (!this.ok) throw new Error('REST no configurado');
+      const uid = await this.uid(); if (!uid) throw new Error('Debes iniciar sesión');
+      const m   = id ? 'PATCH' : 'POST';
+      const url = id ? this.url('petUpdate', uid, id) : this.url('petCreate', uid);
+      const res = await fetch(url, { method:m, headers: await this.headers(), body: JSON.stringify(data) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const j = await res.json().catch(()=> ({}));
+      return id || j.id || j._id || null;
+    },
+    async deletePet(id){
+      if (!this.ok || !id) return;
+      const uid = await this.uid(); if (!uid) return;
+      await fetch(this.url('petDelete', uid, id), { method:'DELETE', headers: await this.headers() }).catch(()=>{});
+    }
+  };
 
-        <div class="tpl-field"><label for="especie">Especie *</label>
-          <select id="especie" name="especie" required>
-            <option value="">Elige…</option><option>Perro</option><option>Gato</option><option>Exótico</option><option>Otro</option>
-          </select>
-        </div>
-
-        <div class="tpl-field">
-          <label id="label-raza" for="raza">Raza / especie *</label>
-          <input id="raza" name="raza" required placeholder="Escribe aquí…">
-        </div>
-
-        <div class="tpl-field"><label for="edad">Edad (años) *</label><input id="edad" name="edad" type="number" min="0" step="1" required></div>
-        <div class="tpl-field"><label for="peso">Peso (kg) *</label><input id="peso" name="peso" type="number" min="0" step="0.1" required></div>
-
-        <div class="tpl-field"><label for="sexo">Sexo *</label>
-          <select id="sexo" name="sexo" required><option value="">Elige…</option><option>Macho</option><option>Hembra</option></select>
-        </div>
-        <div class="tpl-field"><label for="esterilizado">¿Esterilizado/a? *</label>
-          <select id="esterilizado" name="esterilizado" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-
-        <div class="tpl-field col-span-2"><label for="patologias">¿Patología o tratamiento? *</label><textarea id="patologias" name="patologias" rows="3" required></textarea></div>
-        <div class="tpl-field"><label for="via">Vía/dosis/horario</label><textarea id="via" name="via" rows="2"></textarea></div>
-        <div class="tpl-field"><label for="comidas">Horario de comidas</label><textarea id="comidas" name="comidas" rows="2"></textarea></div>
-
-        <div class="tpl-field"><label for="vacunas">¿Vacunas al día? *</label>
-          <select id="vacunas" name="vacunas" required><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-
-        <div id="wrap-faltan" class="tpl-field col-span-2 is-hidden">
-          <label for="faltan">¿Qué faltan? *</label>
-          <textarea id="faltan" name="faltan" rows="2"></textarea>
-        </div>
-
-        <div class="tpl-field col-span-2"><label for="comportamiento">Comportamiento *</label><textarea id="comportamiento" name="comportamiento" rows="3" required></textarea></div>
-
-        <div class="tpl-field"><label for="seguroVet">¿Seguro veterinario?</label>
-          <select id="seguroVet" name="seguroVet"><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-
-        <div id="wrap-seguro" class="col-span-2 is-hidden" style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
-          <div class="tpl-field"><label for="aseguradora">Aseguradora *</label><input id="aseguradora" name="aseguradora"></div>
-          <div class="tpl-field"><label for="poliza">Nº de póliza *</label><input id="poliza" name="poliza"></div>
-        </div>
-
-        <div class="tpl-field"><label for="seguroRC">¿Seguro de RC?</label>
-          <select id="seguroRC" name="seguroRC"><option value="">Elige…</option><option>Sí</option><option>No</option></select>
-        </div>
-
-        <div class="tpl-field col-span-2"><label for="comentarios">Comentarios</label><textarea id="comentarios" name="comentarios" rows="3"></textarea></div>
-
-        <div class="tpl-actions col-span-2" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
-          <button id="btn-submit" type="submit" class="cta-button">Guardar</button>
-          <a class="cta-button link" id="btn-cancel" href="perfil.html">Cancelar</a>
-          <button type="button" id="btn-eliminar" class="cta-button" style="background:#fff;color:#b00020;border:2px solid #b00020;display:none">Eliminar</button>
-
-          <!-- Mensajes discretos (no overlays) -->
-          <span class="msg ok" id="msg-ok" style="display:none;color:#2a7e80"><i class="fa-solid fa-circle-check"></i> Guardado.</span>
-          <span class="msg err" id="msg-err" style="display:none;color:#b00020"></span>
-        </div>
-      </form>
-    </section>
-  </main>
-
-  <div id="tpl-footer"></div>
-  <script src="tpl-footer.js" defer></script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica SIN Firebase: preview, guardado local, anti “enviando…”, redirección garantizada] -->
-  <script>
-  (function(){
-    // ===== Anti overlays “enviando / subiendo” de scripts externos =====
-    window.__TPL_DISABLE_UPLOAD__ = true;
-    const KILL_TEXT = /(subiendo archivo|enviando|procesando|la subida no progresa|revisa reglas|conexi[oó]n|subiendo|cargando)/i;
-    const KILL_SEL  = '.tpl-upload, .tpl-upload-card, [data-tpl-upload], .upload, .uploader, .overlay, .loading';
-    function purgeUploads(root=document){
-      try{ root.querySelectorAll(KILL_SEL).forEach(n=> n.remove()); }catch(_){}
-      const all = (root.body || root).getElementsByTagName('*');
-      for (let i=0; i<all.length; i++){
-        const el = all[i];
-        try{
-          if (el && el.textContent && KILL_TEXT.test(el.textContent)){
-            const st = getComputedStyle(el);
-            if (st.position==='fixed' || st.position==='absolute' || (el.className+'').toLowerCase().includes('overlay')) el.remove();
-          }
-        }catch(_){}
+  // ===== Cargar si se edita =====
+  let PET_ID = qsp('id', null);
+  async function prefill(){
+    try{
+      if (PET_ID){
+        const p = await REST.getPet(PET_ID);
+        if (p){
+          if (p.fotoDataUrl){ fotoDataUrl = p.fotoDataUrl; preview.src = fotoDataUrl; }
+          $('nombre').value           = p.nombre || '';
+          microchip.value             = p.microchip || '';
+          noChip.checked              = !p.microchip;
+          especie.value               = p.especie || '';
+          raza.value = (p.especie==='Exótico') ? (p.tipoExotico||'') : (p.raza||'');
+          $('edad').value             = p.edad ?? '';
+          $('peso').value             = p.peso ?? '';
+          $('sexo').value             = p.sexo || '';
+          $('esterilizado').value     = p.esterilizado || '';
+          $('patologias').value       = p.patologias || '';
+          $('via').value              = p.via || '';
+          $('comidas').value          = p.comidas || '';
+          vacunas.value               = p.vacunas || '';
+          faltan.value                = p.faltan || '';
+          $('comportamiento').value   = p.comportamiento || '';
+          seguroVet.value             = p.seguroVet || '';
+          aseguradora.value           = p.aseguradora || '';
+          poliza.value                = p.poliza || '';
+          $('seguroRC').value         = p.seguroRC || '';
+          $('comentarios').value      = p.comentarios || '';
+          btnDel.style.display='inline-flex';
+        } else {
+          btnDel.style.display='none';
+        }
+      } else {
+        btnDel.style.display='none';
       }
-    }
-    purgeUploads();
-    new MutationObserver(()=> purgeUploads()).observe(document.documentElement, {subtree:true, childList:true});
-
-    // ===== Utilidades =====
-    const $=id=>document.getElementById(id);
-    const form=$('f'), ok=$('msg-ok'), err=$('msg-err');
-    const btnSubmit=$('btn-submit'), btnDel=$('btn-eliminar'), btnCancel=$('btn-cancel');
-    const foto=$('foto'), preview=$('preview');
-    const noChip=$('noChip'), microchip=$('microchip');
-    const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
-    const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
-    const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
-
-    const LS_PETS_KEY='tpl-pets';
-    let PET_IDX = null;        // Usaremos idx (local) si viene en la URL
-    let fotoDataUrl = '';      // DataURL para preview + guardado
-
-    function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name)||fb; }
-    function nextUrl(){ return qsp('next','perfil.html'); }
-    btnCancel.setAttribute('href', nextUrl());
-
-    // No tocar microchip si marcan "No tiene"
-    function toggleMicrochip(){ if(noChip.checked){ microchip.value=''; microchip.disabled=true; } else { microchip.disabled=false; } }
-    noChip.addEventListener('change', toggleMicrochip);
-
-    function toggleEspecie(){
-      if (especie.value==='Exótico'){ raza.required=true; raza.placeholder='Ej.: Ave, Reptil, Pequeño mamífero…'; lblRaza.innerHTML='Tipo de exótico *'; }
-      else if (especie.value){ raza.required=true; raza.placeholder='Raza / especie'; lblRaza.innerHTML='Raza / especie *'; }
-      else { raza.required=false; raza.placeholder='Escribe aquí…'; lblRaza.innerHTML='Raza / especie'; }
-    }
-    especie.addEventListener('change', toggleEspecie);
-
-    function toggleVacunas(){
-      if (vacunas.value==='No'){ wrapFaltan.classList.remove('is-hidden'); faltan.required=true; }
-      else { wrapFaltan.classList.add('is-hidden'); faltan.required=false; faltan.value=''; }
-    }
-    vacunas.addEventListener('change', toggleVacunas);
-
-    function toggleSeguro(){
-      if (seguroVet.value==='Sí'){ wrapSeguro.classList.remove('is-hidden'); aseguradora.required=true; poliza.required=true; }
-      else { wrapSeguro.classList.add('is-hidden'); aseguradora.required=false; poliza.required=false; aseguradora.value=''; poliza.value=''; }
-    }
-    seguroVet.addEventListener('change', toggleSeguro);
-
-    // Preview local de la foto (NO se sube)
-    foto.addEventListener('change', (e)=>{
-      const f = foto.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = ev => { fotoDataUrl = ev.target.result; preview.src = fotoDataUrl; };
-      r.readAsDataURL(f);
-      e.stopPropagation(); e.stopImmediatePropagation();
-    }, true);
-
-    // Carga si estamos editando (idx local)
-    function loadLocal(idx){
-      try{ const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]'); return list[Number(idx)]||null; }catch(_){ return null; }
-    }
-    function saveLocal(idx, data){
-      const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
-      if (idx==null){ list.push(data); PET_IDX=list.length-1; } else { list[Number(idx)]={...(list[Number(idx)]||{}), ...data}; }
-      localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
-    }
-    function delLocal(idx){
-      const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
-      list.splice(Number(idx),1);
-      localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
-    }
-
-    function fill(p){
-      if (!p) return;
-      if (p.fotoDataUrl){ fotoDataUrl=p.fotoDataUrl; preview.src=fotoDataUrl; }
-      $('nombre').value           = p.nombre || '';
-      microchip.value             = p.microchip || '';
-      noChip.checked              = !p.microchip; toggleMicrochip();
-      especie.value               = p.especie || ''; toggleEspecie();
-      if (p.especie==='Exótico'){ raza.value = p.tipoExotico || '' } else { raza.value = p.raza || '' }
-      $('edad').value             = p.edad ?? '';
-      $('peso').value             = p.peso ?? '';
-      $('sexo').value             = p.sexo || '';
-      $('esterilizado').value     = p.esterilizado || '';
-      $('patologias').value       = p.patologias || '';
-      $('via').value              = p.via || '';
-      $('comidas').value          = p.comidas || '';
-      vacunas.value               = p.vacunas || ''; toggleVacunas();
-      faltan.value                = p.faltan || '';
-      $('comportamiento').value   = p.comportamiento || '';
-      seguroVet.value             = p.seguroVet || ''; toggleSeguro();
-      aseguradora.value           = p.aseguradora || '';
-      poliza.value                = p.poliza || '';
-      $('seguroRC').value         = p.seguroRC || '';
-      $('comentarios').value      = p.comentarios || '';
-    }
-
-    // Inicializa edición si viene ?idx=...
-    PET_IDX = qsp('idx', null);
-    const pet = (PET_IDX!=null) ? loadLocal(PET_IDX) : null;
-    if (pet){ fill(pet); btnDel.style.display='inline-flex'; } else { btnDel.style.display='none'; }
+    }catch(_){ btnDel.style.display='none'; }
     toggleMicrochip(); toggleEspecie(); toggleVacunas(); toggleSeguro();
+  }
+  prefill();
 
-    // ===== Anti “se queda enviando”: capturo submit en captura y corto propagación =====
-    document.addEventListener('submit', (e)=>{
-      if (e.target === form){
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        handleSubmit();
-      }
-    }, true);
-    document.getElementById('btn-submit').addEventListener('click',(e)=>{
-      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-      handleSubmit();
-    }, true);
+  // ===== Guardar (sin overlays) =====
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault(); ok.style.display='none'; err.style.display='none';
+    if (vacunas.value==='No' && !faltan.value.trim()){ return faltan.reportValidity(); }
+    if (seguroVet.value==='Sí' && (!aseguradora.value.trim() || !poliza.value.trim())){ aseguradora.reportValidity(); poliza.reportValidity(); return; }
+    if (!form.checkValidity()){ form.reportValidity(); return; }
 
-    function handleSubmit(){
-      ok.style.display='none'; err.style.display='none';
+    const isExotico = (especie.value==='Exótico');
+    const data = {
+      fotoDataUrl: fotoDataUrl || undefined,
+      fotoUrl: '', // por claridad, siempre vacío
+      nombre: $('nombre').value.trim(),
+      microchip: noChip.checked ? '' : microchip.value.trim(),
+      especie: especie.value,
+      raza: isExotico ? '' : raza.value.trim(),
+      tipoExotico: isExotico ? raza.value.trim() : '',
+      edad: Number($('edad').value || 0),
+      peso: Number($('peso').value || 0),
+      sexo: $('sexo').value,
+      esterilizado: $('esterilizado').value,
+      patologias: $('patologias').value.trim(),
+      via: $('via').value.trim(),
+      comidas: $('comidas').value.trim(),
+      vacunas: vacunas.value,
+      faltan: (vacunas.value==='No') ? faltan.value.trim() : '',
+      comportamiento: $('comportamiento').value.trim(),
+      seguroVet: seguroVet.value,
+      aseguradora: (seguroVet.value==='Sí') ? aseguradora.value.trim() : '',
+      poliza: (seguroVet.value==='Sí') ? poliza.value.trim() : '',
+      seguroRC: $('seguroRC').value,
+      comentarios: $('comentarios').value.trim(),
+      updatedAt: new Date().toISOString()
+    };
 
-      if (vacunas.value==='No' && !faltan.value.trim()){ faltan.reportValidity(); return; }
-      if (seguroVet.value==='Sí' && (!aseguradora.value.trim() || !poliza.value.trim())){ aseguradora.reportValidity(); poliza.reportValidity(); return; }
-      if (!form.checkValidity()){ form.reportValidity(); return; }
-
-      const isExotico = (especie.value === 'Exótico');
-      const data = {
-        // Lo que espera perfil.html:
-        fotoDataUrl: fotoDataUrl || undefined, fotoUrl:'',
-        nombre: $('nombre').value.trim(),
-        microchip: noChip.checked ? '' : microchip.value.trim(),
-        especie: especie.value,
-        raza: isExotico ? '' : raza.value.trim(),
-        tipoExotico: isExotico ? raza.value.trim() : '',
-        edad: Number($('edad').value || 0),
-        peso: Number($('peso').value || 0),
-        sexo: $('sexo').value,
-        esterilizado: $('esterilizado').value,
-        patologias: $('patologias').value.trim(),
-        via: $('via').value.trim(),
-        comidas: $('comidas').value.trim(),
-        vacunas: vacunas.value,
-        faltan: (vacunas.value==='No') ? faltan.value.trim() : '',
-        comportamiento: $('comportamiento').value.trim(),
-        seguroVet: seguroVet.value,
-        aseguradora: (seguroVet.value==='Sí') ? aseguradora.value.trim() : '',
-        poliza: (seguroVet.value==='Sí') ? poliza.value.trim() : '',
-        seguroRC: $('seguroRC').value,
-        comentarios: $('comentarios').value.trim(),
-        updatedAt: new Date().toISOString()
-      };
-
-      // Guardado LOCAL inmediato (sin redes). Nada de “enviando…”
-      saveLocal(PET_IDX, data);
+    try{
+      PET_ID = await REST.savePet(PET_ID, data);
       ok.style.display='inline-flex';
-
-      // Redirección garantizada (inmediata) al perfil (o al next=...)
-      const dest = nextUrl();
-      // Por si algún script intenta bloquear, lanzamos múltiples rutas de salida:
-      setTimeout(()=>{ window.location.href = dest; }, 50);
-      setTimeout(()=>{ window.location.assign(dest); }, 150);
-      setTimeout(()=>{ window.location.replace(dest); }, 300);
+    }catch(e){
+      err.textContent = 'No se pudo guardar (REST): ' + (e.message||e);
+      err.style.display='inline-flex';
     }
+    setTimeout(()=> location.href = nextUrl(), 80);
+  });
 
-    // Eliminar
-    btnDel.addEventListener('click', ()=>{
-      if (!confirm('¿Eliminar esta mascota?')) return;
-      if (PET_IDX!=null){ delLocal(PET_IDX); }
-      const dest = nextUrl();
-      window.location.replace(dest);
-    });
-  })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-</body>
-</html>
+  // ===== Eliminar =====
+  btnDel.addEventListener('click', async ()=>{
+    if (!PET_ID) return;
+    if (!confirm('¿Eliminar esta mascota?')) return;
+    try{ await REST.deletePet(PET_ID); }catch(_){}
+    location.href = nextUrl();
+  });
+})();
+</script>
