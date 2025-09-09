@@ -63,7 +63,16 @@
       display:flex; gap:10px; align-items:center; padding:8px; border:1px solid var(--tpl-border); border-radius:12px;
       background:#fff;
     }
-    .tpl-pet-thumb { width:56px; height:56px; flex:0 0 56px; border-radius:10px; object-fit:cover; border:1px solid var(--tpl-border); }
+
+    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota] */
+    .tpl-pet-thumb {
+      width:56px; height:56px; flex:0 0 56px;
+      border-radius:50%;              /* <-- circular */
+      object-fit:cover;
+      border:2px solid var(--tpl-border);
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
     .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -196,8 +205,8 @@
 
   <!-- Scripts -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
-  <script src="tpl-navbar.js" defer></script> <!-- mismo patrón de ayuda/legales -->
-  <script src="tpl-footer.js" defer></script> <!-- inyección de footer -->
-  <script src="tpl-perfil.js" defer></script> <!-- lógica ligera de estado -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+  <script src="tpl-perfil.js" defer></script>
 </body>
 </html>
