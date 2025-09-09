@@ -3,10 +3,29 @@
   'use strict';
 
   // ====== Base por usuario (localStorage) ======
+  /* TPL: INICIO BLOQUE NUEVO [UID robusto: currentUser -> tpl_auth_uid -> Firebase UID -> default] */
   function getCurrentUserId(){
-    // Tu login debe setear esto: localStorage.setItem('tpl.currentUser', 'email@dominio.com')
-    return localStorage.getItem('tpl.currentUser') || 'default';
+    // 1) UID explícito si lo setea tu login antiguo
+    var explicit = localStorage.getItem('tpl.currentUser');
+    if (explicit) return explicit;
+
+    // 2) UID sincronizado por navbar/auth reciente
+    var uidLS = localStorage.getItem('tpl_auth_uid');
+    if (uidLS) return uidLS;
+
+    // 3) UID real de Firebase si está cargado
+    try{
+      if (window.firebase && typeof firebase.auth === 'function'){
+        var u = firebase.auth().currentUser;
+        if (u && !u.isAnonymous && u.uid) return u.uid;
+      }
+    }catch(_){}
+
+    // 4) Fallback
+    return 'default';
   }
+  /* TPL: FIN BLOQUE NUEVO */
+
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
@@ -15,6 +34,19 @@
   function udbSet(uid, key, value){
     try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
   }
+
+  /* TPL: INICIO BLOQUE NUEVO [Helpers compat: leer varias claves y saber si existe alias] */
+  function udbGetAny(uid, keys, fallback){
+    for (var i=0;i<keys.length;i++){
+      var v = udbGet(uid, keys[i], undefined);
+      if (v !== undefined && v !== null) return v;
+    }
+    return fallback;
+  }
+  function udbHas(uid, key){
+    try { return localStorage.getItem(udbKey(uid,key)) !== null; } catch(_){ return false; }
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ===== Listas (carga JSON si existe) =====
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
@@ -218,7 +250,9 @@
       if (Number.isNaN(idx) || idx < 0) return;
 
       const uid = getCurrentUserId();
-      const arr = udbGet(uid, 'pets', []);
+      /* TPL: INICIO BLOQUE NUEVO [Leer pets con compat a alias "mascotas"] */
+      const arr = udbGetAny(uid, ['pets','mascotas'], []);
+      /* TPL: FIN BLOQUE NUEVO */
       if (!Array.isArray(arr) || !arr[idx]) return;
 
       editIndex = idx;
@@ -324,13 +358,18 @@
         const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
         mascota.foto = baseFoto;
 
-        const arr = udbGet(uid, 'pets', []);
-        if (editIndex >= 0 && Array.isArray(arr) && arr[editIndex]){
+        /* TPL: INICIO BLOQUE NUEVO [Leer con compat y escribir sincronizando alias si existe] */
+        let arr = udbGetAny(uid, ['pets','mascotas'], []);
+        if (!Array.isArray(arr)) arr = [];
+        if (editIndex >= 0 && arr[editIndex]){
           arr[editIndex] = mascota;   // actualizar
         } else {
           arr.push(mascota);          // crear
         }
         udbSet(uid, 'pets', arr);
+        if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
+        try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
+        /* TPL: FIN BLOQUE NUEVO */
 
         location.assign('perfil.html');
       };
