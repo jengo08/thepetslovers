@@ -31,17 +31,27 @@
 
     .tpl-section-title{ margin:2px 0 2px; font-weight:700; color:var(--tpl-text); }
 
-    /* Avatar circular compacto */
-    .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
-    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
-
-    .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
-    /* TPL: INICIO BLOQUE NUEVO [Solo huellita si no hay imagen: ocultar preview sin foto] */
-    .tpl-avatar:not(.has-image) .tpl-avatar-thumb{ display:none; }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
+    /* ===== Avatar/Foto ===== */
+    .tpl-avatar{
+      border:1px dashed var(--tpl-border);
+      border-radius:14px; background:#fafafa; padding:12px;
+      display:flex; align-items:center; gap:14px; /* ← controles a la derecha */
+    }
+    /* TPL: INICIO BLOQUE NUEVO [Círculo con huellita sin textos superpuestos] */
+    .tpl-avatar-left{
+      position:relative; width:96px; height:96px; flex:0 0 96px;
+      border-radius:50%; border:2px solid var(--tpl-border);
+      background:#fff; display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+    }
+    .tpl-avatar-thumb{
+      width:100%; height:100%; object-fit:cover; border-radius:50%;
+      display:none; /* por defecto oculta hasta que haya imagen real */
+    }
+    .tpl-avatar.has-image .tpl-avatar-thumb{ display:block; }
+    .tpl-avatar-icon{ color:#9aa0a6; font-size:40px; line-height:1; }
     .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
+    /* TPL: FIN BLOQUE NUEVO */
 
     .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; }
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
@@ -56,10 +66,8 @@
     .crop-hint{ font-size:.9rem; color:var(--tpl-muted); }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
 
-    /* Asegurar que .is-hidden realmente oculta (por si estilos globales) */
-    /* TPL: INICIO BLOQUE NUEVO [is-hidden util] */
+    /* Utilidad para ocultar de forma robusta */
     .is-hidden{ display:none !important; }
-    /* TPL: FIN BLOQUE NUEVO */
 
     /* Accesibilidad: label visualmente oculto para la foto */
     .sr-only{ position:absolute!important; width:1px; height:1px; clip:rect(1px,1px,1px,1px); overflow:hidden; white-space:nowrap; }
@@ -101,25 +109,27 @@
           <div class="tpl-section-title"><strong>🐶 Datos de tu mascota</strong></div>
 
           <!-- Foto -->
+          <!-- TPL: INICIO BLOQUE NUEVO [Avatar limpio + controles a la derecha] -->
           <div class="tpl-field">
             <label for="foto" class="sr-only">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
-              <div class="tpl-avatar-inner">
-                <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
+              <div class="tpl-avatar-left">
+                <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="">
                 <div class="tpl-avatar-icon" id="avatarIcon" aria-hidden="true"><i class="fa-solid fa-paw"></i></div>
+              </div>
 
-                <div class="tpl-photo-controls">
-                  <div id="photoPickRow">
-                    <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
-                  </div>
-                  <div id="photoActions" class="tpl-photo-actions" aria-live="polite">
-                    <button type="button" class="tpl-btn secondary" id="btnChangePhoto"><i class="fa-solid fa-image"></i> Cambiar foto</button>
-                    <button type="button" class="tpl-btn" id="btnAdjustPhoto"><i class="fa-solid fa-crop"></i> Ajustar</button>
-                  </div>
+              <div class="tpl-photo-controls">
+                <div id="photoPickRow">
+                  <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
+                </div>
+                <div id="photoActions" class="tpl-photo-actions" aria-live="polite">
+                  <button type="button" class="tpl-btn secondary" id="btnChangePhoto"><i class="fa-solid fa-image"></i> Cambiar foto</button>
+                  <button type="button" class="tpl-btn" id="btnAdjustPhoto"><i class="fa-solid fa-crop"></i> Ajustar</button>
                 </div>
               </div>
             </div>
           </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <!-- Nombre + Microchip -->
           <div class="tpl-row">
@@ -267,7 +277,6 @@
                 <option>Sí</option><option>No</option>
               </select>
 
-              <!-- TPL: INICIO BLOQUE NUEVO [Detalles del seguro: visibles solo si “Sí”] -->
               <div id="seguroVetData" class="tpl-field is-hidden" hidden style="margin-top:8px;">
                 <label>Detalles del seguro veterinario</label>
                 <div class="tpl-row">
@@ -275,7 +284,6 @@
                   <input class="tpl-input" type="text" id="seguroVetNum" placeholder="Nº de póliza">
                 </div>
               </div>
-              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
 
             <div class="tpl-field">
