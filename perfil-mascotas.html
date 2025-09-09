@@ -6,10 +6,11 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: INICIO BLOQUE NUEVO [Favicon] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido (opcional, no afecta estilos)] -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
   <!-- TPL: FIN BLOQUE NUEVO -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilo mínimo de tarjeta] -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos del formulario, sin tocar tu style.css] -->
   <style>
     .page{ padding-top:120px }
     .tpl-card{ max-width: 980px; margin: 0 auto 60px; background:#fff; border:1px solid #eee; border-radius:16px; box-shadow:0 6px 24px rgba(0,0,0,.06); overflow:hidden; }
@@ -41,11 +42,11 @@
     <div class="tpl-card" role="region" aria-labelledby="t">
       <div class="tpl-card-head">
         <h1 id="t"><i class="fa-solid fa-paw"></i> Perfil de tu mascota</h1>
-        <p class="muted">La foto <strong>no se sube</strong>, se guarda en tu ficha como DataURL.</p>
+        <!-- (Se elimina la frase sobre DataURL) -->
       </div>
 
       <form id="f" class="tpl-form" novalidate>
-        <!-- Foto -->
+        <!-- Foto (solo preview local; NO se sube) -->
         <div class="tpl-field col-span-2">
           <label for="foto"><i class="fa-regular fa-image"></i> Foto (opcional)</label>
           <div class="tpl-photo-row">
@@ -56,7 +57,9 @@
           </div>
         </div>
 
+        <!-- Básicos -->
         <div class="tpl-field"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" required></div>
+
         <div class="tpl-field">
           <label for="microchip">Nº de microchip</label>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -130,14 +133,15 @@
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica (sin Storage, DataURL + Firestore o local)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase (solo Auth + Firestore) + lógica sin subir archivos] -->
   <script>
   (async function(){
-    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar '+src)); document.head.appendChild(s); }); }
+    // Carga segura de Firebase (sin Storage)
+    function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('No se pudo cargar '+src));document.head.appendChild(s);});}
     async function ensureFirebase(){
-      if (typeof firebase === 'undefined'){ await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js'); }
-      if (!('auth' in firebase))      { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js'); }
-      if (!('firestore' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'); }
+      if (typeof firebase==='undefined'){await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');}
+      if (!('auth' in firebase)){await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');}
+      if (!('firestore' in firebase)){await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');}
       if (!window.firebaseConfig){
         window.firebaseConfig = {
           apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
@@ -151,81 +155,69 @@
       }
     }
     await ensureFirebase();
-    if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
+    if (firebase.apps.length===0){ firebase.initializeApp(firebaseConfig); }
+    const auth=firebase.auth(); const db=firebase.firestore();
 
-    const $ = (id)=>document.getElementById(id);
-    const form = $('f');
-    const ok = $('msg-ok');
-    const err = $('msg-err');
-    const btnDel = $('btn-eliminar');
-    const btnCancel = $('btn-cancel');
+    const $=id=>document.getElementById(id);
+    const form=$('f'), ok=$('msg-ok'), err=$('msg-err');
+    const btnDel=$('btn-eliminar'), btnCancel=$('btn-cancel');
 
-    const foto = $('foto'); const preview = $('preview');
-    const noChip = $('noChip'); const microchip = $('microchip');
-    const especie = $('especie'); const raza = $('raza'); const lblRaza = $('label-raza');
-    const vacunas = $('vacunas'); const wrapFaltan = $('wrap-faltan'); const faltan = $('faltan');
-    const seguroVet = $('seguroVet'); const wrapSeguro = $('wrap-seguro'); const aseguradora=$('aseguradora'); const poliza=$('poliza');
+    const foto=$('foto'), preview=$('preview');
+    const noChip=$('noChip'), microchip=$('microchip');
+    const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
+    const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
+    const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
 
-    const LS_PETS_KEY = 'tpl-pets';
-    let PET_ID = null; // Firestore id
-    let PET_IDX = null; // local index
-    let fotoDataUrl = '';
+    const LS_PETS_KEY='tpl-pets';
+    let PET_ID=null, PET_IDX=null, fotoDataUrl='';
 
     function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name)||fb; }
     function nextUrl(){ return qsp('next','perfil.html'); }
-
     btnCancel.setAttribute('href', nextUrl());
 
-    function setPhotoUI(){ /* no toggle necesario */ }
+    // ★ Solo preview local: NO se sube, NO se muestra "subiendo archivo"
     foto && foto.addEventListener('change', ()=>{
-      const f = foto.files?.[0]; if(!f) return;
+      const f=foto.files?.[0]; if(!f) return;
       const reader = new FileReader();
-      reader.onload = e => { fotoDataUrl = e.target.result; preview.src = fotoDataUrl; setPhotoUI(); };
+      reader.onload = e => { fotoDataUrl = e.target.result; preview.src = fotoDataUrl; };
       reader.readAsDataURL(f);
     });
 
-    function toggleMicrochip(){ if (!noChip || !microchip) return; if (noChip.checked){ microchip.value=''; microchip.disabled=true; } else { microchip.disabled=false; } }
+    function toggleMicrochip(){ if (!noChip||!microchip) return; if(noChip.checked){microchip.value=''; microchip.disabled=true;} else {microchip.disabled=false;} }
     noChip && noChip.addEventListener('change', toggleMicrochip);
 
     function toggleEspecie(){
-      if (!especie || !raza) return;
-      if (especie.value === 'Exótico'){ raza.required=true; raza.placeholder='Ej.: Ave, Reptil, Pequeño mamífero…'; lblRaza.innerHTML='Tipo de exótico *'; }
+      if (!especie||!raza) return;
+      if (especie.value==='Exótico'){ raza.required=true; raza.placeholder='Ej.: Ave, Reptil, Pequeño mamífero…'; lblRaza.innerHTML='Tipo de exótico *'; }
       else if (especie.value){ raza.required=true; raza.placeholder='Raza / especie'; lblRaza.innerHTML='Raza / especie *'; }
       else { raza.required=false; raza.placeholder='Escribe aquí…'; lblRaza.innerHTML='Raza / especie'; }
     }
     especie && especie.addEventListener('change', toggleEspecie);
 
     function toggleVacunas(){
-      if (!vacunas || !wrapFaltan || !faltan) return;
-      if (vacunas.value === 'No'){ wrapFaltan.classList.remove('is-hidden'); faltan.required=true; }
+      if (!vacunas||!wrapFaltan||!faltan) return;
+      if (vacunas.value==='No'){ wrapFaltan.classList.remove('is-hidden'); faltan.required=true; }
       else { wrapFaltan.classList.add('is-hidden'); faltan.required=false; faltan.value=''; }
     }
     vacunas && vacunas.addEventListener('change', toggleVacunas);
 
     function toggleSeguro(){
-      if (!seguroVet || !wrapSeguro || !aseguradora || !poliza) return;
-      if (seguroVet.value === 'Sí'){ wrapSeguro.classList.remove('is-hidden'); aseguradora.required=true; poliza.required=true; }
+      if (!seguroVet||!wrapSeguro||!aseguradora||!poliza) return;
+      if (seguroVet.value==='Sí'){ wrapSeguro.classList.remove('is-hidden'); aseguradora.required=true; poliza.required=true; }
       else { wrapSeguro.classList.add('is-hidden'); aseguradora.required=false; poliza.required=false; aseguradora.value=''; poliza.value=''; }
     }
     seguroVet && seguroVet.addEventListener('change', toggleSeguro);
 
     function loadLocal(idx){
-      try{
-        const list = JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
-        return list[Number(idx)] || null;
-      }catch(_){ return null; }
+      try{ const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]'); return list[Number(idx)]||null; }catch(_){ return null; }
     }
     function saveLocal(idx, data){
-      const list = JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
-      if (idx==null){ list.push(data); PET_IDX = list.length-1; }
-      else { list[Number(idx)] = { ...(list[Number(idx)]||{}), ...data }; }
+      const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
+      if (idx==null){ list.push(data); PET_IDX=list.length-1; } else { list[Number(idx)]={...(list[Number(idx)]||{}), ...data}; }
       localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
     }
     function delLocal(idx){
-      const list = JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]');
-      list.splice(Number(idx),1);
+      const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]'); list.splice(Number(idx),1);
       localStorage.setItem(LS_PETS_KEY, JSON.stringify(list));
     }
 
@@ -233,38 +225,34 @@
       PET_ID = qsp('id', null);
       PET_IDX = qsp('idx', null);
       if (uid && PET_ID){
-        try{
-          const doc = await db.collection('users').doc(uid).collection('pets').doc(PET_ID).get();
-          return doc.exists ? { id:doc.id, ...doc.data() } : null;
-        }catch(_){ return null; }
+        try{ const doc=await db.collection('users').doc(uid).collection('pets').doc(PET_ID).get(); return doc.exists ? {id:doc.id, ...doc.data()} : null; }catch(_){ return null; }
       }
-      if (PET_IDX!=null) return loadLocal(PET_IDX);
+      if (PET_IDX!=null){ return loadLocal(PET_IDX); }
       return null;
     }
 
     async function savePet(uid, data){
-      if (uid){
-        if (!PET_ID){
-          const ref = await db.collection('users').doc(uid).collection('pets').add(data);
-          PET_ID = ref.id;
-        } else {
-          await db.collection('users').doc(uid).collection('pets').doc(PET_ID).set(data, {merge:true});
+      // Intentar Firestore; si falla por permisos, guardamos local sin mostrar ningún mensaje extra.
+      try{
+        if (uid){
+          if (!PET_ID){ const ref=await db.collection('users').doc(uid).collection('pets').add(data); PET_ID=ref.id; }
+          else { await db.collection('users').doc(uid).collection('pets').doc(PET_ID).set(data,{merge:true}); }
+          return;
         }
-      } else {
-        saveLocal(PET_IDX, data);
-      }
+      }catch(_){}
+      saveLocal(PET_IDX, data);
     }
+
     async function deletePet(uid){
-      if (uid && PET_ID){
-        await db.collection('users').doc(uid).collection('pets').doc(PET_ID).delete();
-      } else if (PET_IDX!=null){
-        delLocal(PET_IDX);
-      }
+      try{
+        if (uid && PET_ID){ await db.collection('users').doc(uid).collection('pets').doc(PET_ID).delete(); return; }
+      }catch(_){}
+      if (PET_IDX!=null){ delLocal(PET_IDX); }
     }
 
     function fill(p){
       if (!p) return;
-      if (p.fotoDataUrl){ fotoDataUrl = p.fotoDataUrl; preview.src = fotoDataUrl; }
+      if (p.fotoDataUrl){ fotoDataUrl=p.fotoDataUrl; preview.src=fotoDataUrl; }
       form.nombre.value         = p.nombre || '';
       microchip.value           = p.microchip || '';
       noChip.checked            = !p.microchip; toggleMicrochip();
@@ -300,7 +288,8 @@
         e.preventDefault(); ok.style.display='none'; err.style.display='none';
         if (vacunas.value==='No' && !faltan.value.trim()){ faltan.reportValidity(); return; }
         if (!form.reportValidity()){ form.reportValidity(); return; }
-        const isExotico = (especie.value === 'Exótico');
+
+        const isExotico=(especie.value==='Exótico');
         const data = {
           fotoDataUrl: fotoDataUrl || undefined, fotoUrl:'',
           nombre: form.nombre.value.trim(),
@@ -325,10 +314,11 @@
           comentarios: form.comentarios.value.trim(),
           updatedAt: new Date().toISOString()
         };
+
         try{
           await savePet(u.uid, data);
           ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href = nextUrl(); }, 400);
+          setTimeout(()=>{ location.href = nextUrl(); }, 350);
         }catch(e){
           err.textContent = 'No se pudo guardar: ' + (e?.message || e); err.style.display='inline-flex';
         }
@@ -340,7 +330,7 @@
         try{
           await deletePet(u.uid);
           ok.textContent='Eliminada correctamente.'; ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href = nextUrl(); }, 400);
+          setTimeout(()=>{ location.href = nextUrl(); }, 350);
         }catch(e){
           err.textContent='No se pudo eliminar: ' + (e?.message || e); err.style.display='inline-flex';
         }
