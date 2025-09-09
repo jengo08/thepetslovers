@@ -79,15 +79,16 @@
     }
     .tpl-pet-edit:focus{ outline:2px dashed var(--tpl-color); outline-offset:2px; border-radius:6px; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión fijo, siempre visible y por encima del footer] */
+    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión fijo y por encima de todo] */
     .tpl-logout{
-      position: fixed;
+      position: fixed !important; /* blindaje ante reglas globales */
       right: 16px;
       bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      z-index: 9999; /* por encima de todo */
+      z-index: 999999; /* por encima de footer/nav/overlays */
       background: var(--tpl-color); color: #fff; border: 1px solid var(--tpl-border);
       border-radius: 999px; padding: 10px 12px; font-weight: 600; text-decoration: none;
       box-shadow: 0 4px 16px rgba(0,0,0,.12);
+      pointer-events: auto;
     }
     .tpl-logout i{ margin-right:6px; }
     /* TPL: FIN BLOQUE NUEVO */
@@ -180,8 +181,31 @@
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Botón Cerrar sesión fijo] -->
-  <a href="index.html" id="tpl-logout" class="tpl-logout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+  <!-- TPL: INICIO BLOQUE NUEVO [Botón Cerrar sesión fijo + fallback inline] -->
+  <a
+    href="index.html"
+    id="tpl-logout"
+    class="tpl-logout"
+    style="position:fixed;right:16px;bottom:16px;z-index:999999"
+    onclick="return (window.__TPL_LOGOUT__ && window.__TPL_LOGOUT__());"
+    aria-label="Cerrar sesión"
+  ><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+
+  <script>
+    // Fallback inline: limpiar sesión sin tocar tus datos persistentes (tpl.udb)
+    window.__TPL_LOGOUT__ = function(){
+      try{ sessionStorage.clear(); }catch(_){}
+      try{
+        localStorage.removeItem('tpl.session');
+        localStorage.removeItem('tpl.auth');
+        localStorage.removeItem('tpl.currentUser');
+        localStorage.setItem('tpl.loggedOut', String(Date.now()));
+        setTimeout(()=>localStorage.removeItem('tpl.loggedOut'), 0);
+      }catch(_){}
+      location.assign('index.html');
+      return false; // impedir navegación por el <a> si ya redirigimos
+    };
+  </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
