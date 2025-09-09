@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Submit en captura + guardado local + seguro vet condicional + foto compacta y ajuste táctil] */
+/* TPL: INICIO BLOQUE NUEVO [Guardar por click sin submit nativo + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
 (function(){
   'use strict';
 
@@ -6,10 +6,11 @@
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
   let CAT_BREEDS = ["Mestizo","Europeo Común","Siamés","Persa","Maine Coon","Bengalí","Ragdoll","Sphynx","British Shorthair","Scottish Fold","Azul Ruso","Noruego de Bosque","Bosque de Siberia","Abisinio","Exótico de Pelo Corto"];
   const EXOTIC_TYPES = ["Pájaro","Conejo","Hurón","Hámster","Cobaya","Erizo","Iguana","Lagarto","Camaleón","Serpiente","Rana","Tortuga","Araña","Otro"];
+
   fetch('tpl-razas.json').then(r=>r.ok?r.json():null).then(j=>{
     if (!j) return;
-    if (Array.isArray(j.perro)) DOG_BREEDS = j.perro;
-    if (Array.isArray(j.gato))  CAT_BREEDS = j.gato;
+    if (Array.isArray(j.perro) && j.perro.length) DOG_BREEDS = j.perro;
+    if (Array.isArray(j.gato)  && j.gato.length)  CAT_BREEDS = j.gato;
     if (document.readyState !== 'loading') updateBreedList();
   }).catch(()=>{});
 
@@ -18,36 +19,23 @@
   const byId = (id) => document.getElementById(id);
   const setOpts = (datalist, arr) => { datalist.innerHTML = arr.map(x=>`<option value="${escapeHtml(x)}"></option>`).join(''); };
   function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-  function fitCoverScale(imgW, imgH, boxW, boxH){ return Math.max(boxW/imgW, boxH/imgH); }
 
   // ===== Estado foto / crop =====
-  let originalImg = null, imageReady = false, currentCroppedDataUrl = '';
+  let originalImg = null, imageReady = false;
   let cropState = { offX:0, offY:0, scale:1 };
+  let currentCroppedDataUrl = '';
 
+  function fitCoverScale(imgW, imgH, boxW, boxH){ return Math.max(boxW/imgW, boxH/imgH); }
   function drawToCanvas(ctx, img, offX, offY, scale, W, H){
     const dw = img.width * scale, dh = img.height * scale;
-    const minX = W - dw, maxX = 0, minY = H - dh, maxY = 0;
+    const minX = W - dw, maxX = 0;
+    const minY = H - dh, maxY = 0;
     const x = Math.min(maxX, Math.max(minX, offX));
     const y = Math.min(maxY, Math.max(minY, offY));
     ctx.clearRect(0,0,W,H);
     ctx.drawImage(img, x, y, dw, dh);
     return {x,y};
   }
-
-  // ===== Anti-overlay SUBMIT en captura: llamamos a nuestro manejador y frenamos el resto
-  document.addEventListener('submit', (e)=>{
-    if (e.target && e.target.id === 'tpl-pet-form'){
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      handleSubmit(e.target);
-    }
-  }, true);
-
-  // ===== Anti-overlay para el file input (captura) para que nadie dispare subidas
-  document.addEventListener('change', (e)=>{
-    if (e.target && e.target.id === 'foto'){ e.stopPropagation(); e.stopImmediatePropagation(); }
-  }, true);
 
   document.addEventListener('DOMContentLoaded', () => {
     const form = byId('tpl-pet-form');
@@ -65,10 +53,14 @@
     // Campos
     const especie   = byId('especie');
     const labelRaza = byId('label-raza');
+    const raza      = byId('raza');
     const breedList = byId('tpl-breed-list');
 
     const microchip = byId('microchip');
     const microNo   = byId('microchip_no_tiene');
+
+    const camaras   = byId('camaras');
+    const fotosSel  = byId('fotos');
 
     const seguroVet     = byId('seguroVet');
     const seguroVetData = byId('seguroVetData');
@@ -76,10 +68,9 @@
     const seguroVetNum  = byId('seguroVetNum');
     const seguroRC      = byId('seguroRC');
 
-    const camaras   = byId('camaras');
-    const fotosSel  = byId('fotos');
+    const saveBtn = byId('saveBtn');
 
-    // Icono por especie cuando no hay foto
+    // Icono por especie (si no hay foto)
     function updateSpeciesIcon(){
       const v = especie.value;
       let cls = 'fa-paw';
@@ -106,13 +97,14 @@
       avatarBox.classList.add('has-image');
       photoPickRow.style.display = 'none';
       photoActions.style.display = 'flex';
+
       originalImg = new Image();
       originalImg.onload = ()=>{ URL.revokeObjectURL(tmp); imageReady = true; };
       originalImg.src = tmp;
       currentCroppedDataUrl='';
-    }, {capture:false});
+    });
 
-    btnChange.addEventListener('click', () => fileInput.click());
+    btnChange.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); fileInput.click(); });
 
     // Microchip obligatorio salvo "No tiene"
     function updateMicroState(){
@@ -140,17 +132,18 @@
     especie.addEventListener('change', updateBreedList);
     updateBreedList();
 
-    // Seguro Vet: detalles SOLO si “Sí”
+    // Seguro Vet: detalles solo si “Sí” (robusto)
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
       seguroVetData.classList.toggle('is-hidden', !yes);
+      seguroVetData.hidden = !yes; // doble bloqueo contra CSS externos
       seguroVetComp.required = seguroVetNum.required = yes;
       if (!yes){ seguroVetComp.value=''; seguroVetNum.value=''; }
     }
     seguroVet.addEventListener('change', toggleSeguroVet);
     toggleSeguroVet();
 
-    // Cropper minimal (drag / flechas)
+    // ===== Cropper minimal (drag/flechas)
     const modal = byId('cropperModal');
     const cropCanvas = byId('cropCanvas');
     const ctx = cropCanvas.getContext('2d');
@@ -159,15 +152,17 @@
     let dragging=false, lastX=0, lastY=0;
 
     function openCropper(){
+      // Si aún no hay imagen lista, la generamos desde el preview actual
       if (!imageReady){
         const src = preview && preview.src;
-        if (!src || /pet-placeholder\.png$/i.test(src)) { fileInput.click(); return; }
+        if (!src || /pet-placeholder\.png$/i.test(src)){ fileInput.click(); return; }
         originalImg = new Image();
         originalImg.onload = ()=>{ imageReady=true; initAndDraw(); };
         originalImg.crossOrigin = 'anonymous';
         originalImg.src = src;
+      } else {
+        initAndDraw();
       }
-      initAndDraw();
       function initAndDraw(){
         const W = cropCanvas.width, H = cropCanvas.height;
         cropState.scale = fitCoverScale(originalImg.width, originalImg.height, W, H);
@@ -179,72 +174,100 @@
         cropCanvas.focus();
       }
     }
-    function closeCropper(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
-
-    btnAdjust.addEventListener('click', openCropper);
-    btnCancel.addEventListener('click', closeCropper);
-
-    cropCanvas.addEventListener('pointerdown', (e)=>{
-      if (!imageReady) return;
-      dragging=true; cropCanvas.setPointerCapture(e.pointerId);
-      lastX=e.clientX; lastY=e.clientY;
-    });
-    cropCanvas.addEventListener('pointermove', (e)=>{
-      if (!dragging || !imageReady) return;
-      const dx = e.clientX - lastX, dy = e.clientY - lastY;
-      lastX = e.clientX; lastY = e.clientY;
-      const W = cropCanvas.width, H = cropCanvas.height;
-      const p = drawToCanvas(ctx, originalImg, cropState.offX+dx, cropState.offY+dy, cropState.scale, W, H);
-      cropState.offX = p.x; cropState.offY = p.y;
-    });
+    byId('btnAdjustPhoto').addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); openCropper(); });
+    btnCancel.addEventListener('click', ()=>{ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; });
+    cropCanvas.addEventListener('pointerdown', (e)=>{ if (!imageReady) return; dragging=true; cropCanvas.setPointerCapture(e.pointerId); lastX=e.clientX; lastY=e.clientY; });
+    cropCanvas.addEventListener('pointermove', (e)=>{ if (!dragging || !imageReady) return; const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; const p=drawToCanvas(ctx, originalImg, cropState.offX+dx, cropState.offY+dy, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; });
     cropCanvas.addEventListener('pointerup', ()=>{ dragging=false; });
     cropCanvas.addEventListener('pointercancel', ()=>{ dragging=false; });
+    modal.addEventListener('keydown', (e)=>{ if (!imageReady) return; const step=3; let moved=false; if (e.key==='ArrowLeft'){cropState.offX-=step;moved=true;} if (e.key==='ArrowRight'){cropState.offX+=step;moved=true;} if (e.key==='ArrowUp'){cropState.offY-=step;moved=true;} if (e.key==='ArrowDown'){cropState.offY+=step;moved=true;} if (moved){ e.preventDefault(); const p=drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; } if (e.key==='Escape'){ btnCancel.click(); } });
+    btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
-    modal.addEventListener('keydown', (e)=>{
-      if (!imageReady) return;
-      const step = 3;
-      let moved=false;
-      if (e.key==='ArrowLeft'){ cropState.offX -= step; moved=true; }
-      if (e.key==='ArrowRight'){ cropState.offX += step; moved=true; }
-      if (e.key==='ArrowUp'){ cropState.offY -= step; moved=true; }
-      if (e.key==='ArrowDown'){ cropState.offY += step; moved=true; }
-      if (moved){
-        e.preventDefault();
-        const W = cropCanvas.width, H = cropCanvas.height;
-        const p = drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, W, H);
-        cropState.offX = p.x; cropState.offY = p.y;
+    // ===== Guardar por CLICK (sin submit nativo)
+    saveBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      // Validación microchip
+      if (!microNo.checked && !microchip.value.trim()){
+        alert('El microchip es obligatorio (o marca “No tiene”).');
+        microchip.focus();
+        return;
       }
-      if (e.key==='Escape'){ closeCropper(); }
-    });
+      // Validación HTML5
+      if (!form.reportValidity()) return;
 
-    btnApply.addEventListener('click', ()=>{
-      if (!imageReady) return closeCropper();
-      const out = document.createElement('canvas');
-      out.width = 256; out.height = 256;
-      const octx = out.getContext('2d');
-      const factor = 256/320;
-      drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256, 256);
-      currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9);
-      preview.src = currentCroppedDataUrl;
-      avatarBox.classList.add('has-image');
-      closeCropper();
-    });
+      const fd = new FormData(form);
+      const mascota = {
+        nombre: (fd.get('nombre')||'').toString().trim(),
+        microchip: microNo.checked ? 'No tiene' : (fd.get('microchip')||'').toString().trim(),
+        especie: (fd.get('especie')||'').toString(),
+        raza: (fd.get('raza')||'').toString().trim(),
+        edad: (fd.get('edad')||'').toString().trim(),
+        peso: (fd.get('peso')||'').toString().trim(),
+        esterilizado: (fd.get('esterilizado')||'').toString(),
+        vacunas: (fd.get('vacunas')||'').toString(),
+        salud: (fd.get('salud')||'').toString(),
+        tratamiento: (fd.get('tratamiento')||'').toString(),
+        comidas: (fd.get('comidas')||'').toString(),
+        salidas: (fd.get('salidas')||'').toString(),
+        tamano: (fd.get('tamano')||'').toString(),
+        clinica: (fd.get('clinica')||'').toString(),
+        hospitalPref: (fd.get('hospitalPref')||'').toString(),
+        comportamiento: (fd.get('comportamiento')||'').toString(),
+        camaras: (fd.get('camaras')||'').toString(),
+        fotos: (fd.get('fotos')||'').toString(),
+        seguroVet: (fd.get('seguroVet')||'').toString(),
+        seguroVetComp: (seguroVet.value==='Sí') ? (seguroVetComp.value||'') : '',
+        seguroVetNum: (seguroVet.value==='Sí') ? (seguroVetNum.value||'') : '',
+        seguroRC: (fd.get('seguroRC')||'').toString(),
+        foto: ''
+      };
 
-    // Por si algún script engancha el click del botón, forzamos nuestro flujo
-    byId('saveBtn').addEventListener('click', (ev)=>{
-      ev.preventDefault();
-      ev.stopPropagation();
-      handleSubmit(form);
-    }, true);
+      const file = fileInput.files && fileInput.files[0];
+      const finalize = (dataUrl) => {
+        mascota.foto = currentCroppedDataUrl || dataUrl || 'images/pet-placeholder.png';
+        try{
+          const arr = JSON.parse(sessionStorage.getItem('tpl.pets')||'[]');
+          arr.push(mascota);
+          sessionStorage.setItem('tpl.pets', JSON.stringify(arr));
+        }catch(_){}
+        location.assign('perfil.html');
+      };
+
+      if (currentCroppedDataUrl){ finalize(currentCroppedDataUrl); }
+      else if (file){
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const out = document.createElement('canvas');
+            out.width = 256; out.height = 256;
+            const octx = out.getContext('2d');
+            const scale = fitCoverScale(img.width, img.height, 256, 256);
+            const dw = img.width*scale, dh = img.height*scale;
+            const x = (256 - dw)/2, y = (256 - dh)/2;
+            octx.drawImage(img, x, y, dw, dh);
+            finalize(out.toDataURL('image/jpeg', 0.85));
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        finalize('');
+      }
+    });
   });
 
-  // ===== Lógica de guardado (reutilizable desde captura y desde botón) =====
-  function handleSubmit(form){
-    const byId = (id)=>document.getElementById(id);
-    const microNo   = byId('microchip_no_tiene');
-    const microchip = byId('microchip');
-    if (!microNo.checked && !microchip.value.trim()){
-      alert('El microchip es obligatorio (o marca “No tiene”).');
-      microchip.focus(); return;
-    }
-    if
+  // Refrescar datalist tras cargar JSON
+  function updateBreedList(){
+    const especie = document.getElementById('especie');
+    const labelRaza = document.getElementById('label-raza');
+    const breedList = document.getElementById('tpl-breed-list');
+    if (!especie || !labelRaza || !breedList) return;
+    const v = especie.value;
+    if (v === 'Perro'){ labelRaza.textContent = 'Raza *'; setOpts(breedList, DOG_BREEDS); }
+    else if (v === 'Gato'){ labelRaza.textContent = 'Raza *'; setOpts(breedList, CAT_BREEDS); }
+    else if (v === 'Exótico'){ labelRaza.textContent = 'Especie (exóticos) *'; setOpts(breedList, EXOTIC_TYPES); }
+    else { labelRaza.textContent = 'Raza / Tipo *'; setOpts(breedList, []); }
+  }
+})();
