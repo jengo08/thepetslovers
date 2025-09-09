@@ -1,384 +1,163 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mi perfil · The Pets Lovers</title>
+/* TPL: INICIO BLOQUE NUEVO [Perfil: estado owner + mascotas + logout real] */
+(function(){
+  'use strict';
 
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  // -------- Helpers DOM --------
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const show = (el, disp='') => { if (!el) return; el.style.display = disp; el.hidden = false; };
+  const hide = (el) => { if (!el) return; el.style.display = 'none'; el.hidden = true; };
+  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del perfil - seguros y aislados] -->
-  <style>
-    :root{
-      --tpl-color: var(--color-principal, #339496);
-      --tpl-text: var(--color-texto, #58425a);
-      --tpl-muted:#666; --tpl-border:#ececec; --tpl-bg:#fff; --tpl-chip:#f6fbfb;
-    }
-    .tpl-page { padding-top: 110px; }
-    .tpl-profile-wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
-    .tpl-page h1 { margin: 0 0 8px; }
-    .tpl-page p.lead { color: var(--tpl-muted); margin: 0 0 18px; }
+  // -------- Owner (placeholder básico) --------
+  function setOwnerIncomplete(){
+    setText('#tpl-owner-nombre', '—');
+    setText('#tpl-owner-telefono', '—');
+    setText('#tpl-owner-zona', '—');
+    setText('#tpl-owner-email', '—');
+    const status = $('#tpl-owner-status');
+    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Incompleto'; }
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = '';
+    if (edit) edit.style.display = 'none';
+  }
 
-    .tpl-grid {
-      display: grid; gap: 14px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 840px){ .tpl-grid { grid-template-columns: 1fr 1fr; } }
-    .tpl-card {
-      background: var(--tpl-bg); border:1px solid var(--tpl-border);
-      border-radius: 14px; padding: 14px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.04);
-    }
-    .tpl-card h2 { margin: 0 0 6px; display:flex; align-items:center; gap:10px; }
-    .tpl-pill {
-      display:inline-flex; align-items:center; gap:6px;
-      background: var(--tpl-chip); color: var(--tpl-text);
-      border:1px solid var(--tpl-border); border-radius:999px;
-      font-size:.85rem; padding:4px 10px;
-    }
-    .tpl-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    .tpl-btn {
-      display:inline-flex; align-items:center; gap:8px; justify-content:center;
-      border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border);
-      text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color);
-      transition: transform .06s ease, box-shadow .06s ease;
-    }
-    .tpl-btn.secondary { background:#fff; color:var(--tpl-text); }
-    .tpl-btn:active { transform: translateY(1px); }
+  // -------- Mascotas --------
+  function iconBySpecies(sp){
+    const v = (sp||'').toLowerCase();
+    if (v.includes('perro')) return 'fa-dog';
+    if (v.includes('gato'))  return 'fa-cat';
+    if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
+    return 'fa-paw';
+  }
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-    .tpl-dl { display:grid; grid-template-columns: 150px 1fr; row-gap:4px; column-gap:10px; margin-top:8px; }
-    .tpl-dl dt { color: var(--tpl-muted); }
-    .tpl-dl dd { margin:0; color: var(--tpl-text); }
+  function setPetsEmpty(){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    if (empty){ empty.style.display = 'flex'; empty.hidden = false; }
+    hide(list);
+    const st = $('#tpl-pets-status');
+    if (st) st.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
+  }
 
-    .tpl-empty {
-      border:1px dashed var(--tpl-border); border-radius:12px; padding:10px; color:var(--tpl-muted);
-      display:flex; align-items:center; gap:8px; background:#fafafa;
-    }
+  function renderPets(pets){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    const status = $('#tpl-pets-status');
 
-    /* Mascotas list */
-    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-    .tpl-pet-item {
-      display:flex; gap:10px; align-items:center; padding:8px; border:1px solid var(--tpl-border); border-radius:12px;
-      background:#fff;
-    }
+    if (!Array.isArray(pets) || pets.length===0){ setPetsEmpty(); return; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Avatar circular + icono fallback + meta] */
-    .tpl-pet-thumb {
-      width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;
-      object-fit:cover;
-      border:2px solid var(--tpl-border);
-      background:#fff;
-    }
-    .tpl-pet-icon {
-      width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      border:2px solid var(--tpl-border);
-      background:#fafafa; color:#9aa0a6; font-size:22px;
-    }
-    .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
-    .tpl-pet-name{ font-weight:700; color:#222; }
-    .tpl-pet-sub{ color:#666; font-size:.95rem; }
-    /* TPL: FIN BLOQUE NUEVO */
+    // Ocultar el vacío con doble control
+    if (empty){ empty.style.display='none'; empty.hidden = true; }
+    show(list, 'block');
+    list.innerHTML = '';
 
-    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión flotante + enlace Editar] */
-    .tpl-logout{
-      position: fixed; right: 16px; bottom: 16px; z-index: 50;
-      background: var(--tpl-color); color: #fff; border: 1px solid var(--tpl-border);
-      border-radius: 999px; padding: 10px 12px; font-weight: 600; text-decoration: none;
-      box-shadow: 0 4px 16px rgba(0,0,0,.08);
-    }
-    .tpl-logout i{ margin-right:6px; }
-    .tpl-pet-item{ position: relative; }
-    .tpl-pet-edit{
-      position:absolute; right:10px; bottom:8px; font-size:.9rem;
-      color: var(--tpl-text); text-decoration: underline;
-    }
-    .tpl-pet-edit:focus{ outline:2px dashed var(--tpl-color); outline-offset:2px; border-radius:6px; }
-    /* TPL: FIN BLOQUE NUEVO */
+    pets.forEach((p, idx) => {
+      const nombre  = escapeHtml(p?.nombre || 'Sin nombre');
+      const especie = escapeHtml(p?.especie || '');
+      const raza    = escapeHtml(p?.raza || p?.tipoExotico || '');
+      const edad    = escapeHtml(p?.edad || '');
+      const foto    = (p && typeof p.foto === 'string') ? p.foto : '';
 
-    .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
-  </style>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-</head>
-<body>
+      const item = document.createElement('div');
+      item.className = 'tpl-pet-item';
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <main class="container tpl-page">
-    <div class="tpl-profile-wrap" aria-live="polite">
-      <h1>Mi perfil</h1>
-      <p class="lead">Completa tu información de propietario y la de tu(s) mascota(s). Así la reserva se rellena sola.</p>
-
-      <section class="tpl-grid" id="tpl-profile-cards">
-        <!-- Card: Propietario -->
-        <article class="tpl-card" id="tpl-card-owner">
-          <h2><i class="fa-solid fa-user"></i> Propietario
-            <span class="tpl-pill" id="tpl-owner-status"><i class="fa-solid fa-circle-exclamation"></i> Incompleto</span>
-          </h2>
-          <dl class="tpl-dl">
-            <dt>Nombre</dt><dd id="tpl-owner-nombre">—</dd>
-            <dt>Teléfono</dt><dd id="tpl-owner-telefono">—</dd>
-            <dt>Zona</dt><dd id="tpl-owner-zona">—</dd>
-            <dt>Email</dt><dd id="tpl-owner-email">—</dd>
-          </dl>
-          <div class="tpl-actions">
-            <a class="tpl-btn" id="tpl-owner-fill" href="tpl-propietario.html"><i class="fa-solid fa-pen-to-square"></i> Rellenar</a>
-            <a class="tpl-btn secondary" id="tpl-owner-edit" href="tpl-propietario.html" style="display:none"><i class="fa-solid fa-pen"></i> Editar</a>
-          </div>
-        </article>
-
-        <!-- Card: Mascotas -->
-        <article class="tpl-card" id="tpl-card-pets">
-          <h2><i class="fa-solid fa-paw"></i> Mascotas
-            <span class="tpl-pill" id="tpl-pets-status"><i class="fa-solid fa-circle-exclamation"></i> Ninguna</span>
-          </h2>
-
-          <div class="tpl-empty" id="tpl-pets-empty">
-            <i class="fa-regular fa-face-smile"></i>
-            Aún no has añadido mascotas.
-          </div>
-
-          <div class="tpl-pet-list" id="tpl-pets-list" hidden>
-            <!-- Items de mascotas se renderizarán aquí -->
-          </div>
-
-          <div class="tpl-actions">
-            <a class="tpl-btn" id="tpl-pet-add" href="tpl-mascota.html"><i class="fa-solid fa-plus"></i> Añadir mascota</a>
-          </div>
-        </article>
-
-        <!-- Card: Reservas -->
-        <article class="tpl-card" id="tpl-card-bookings" style="grid-column: 1 / -1;">
-          <h2><i class="fa-solid fa-calendar-check"></i> Reservas
-            <span class="tpl-pill" id="tpl-bookings-status"><i class="fa-regular fa-circle"></i> Sin reservas</span>
-          </h2>
-
-          <div class="tpl-empty" id="tpl-bookings-empty">
-            <i class="fa-regular fa-calendar"></i>
-            Aquí verás tus reservas <em>enviadas / en revisión / aceptadas</em> cuando empecemos a conectarlo.
-          </div>
-
-          <div id="tpl-bookings-list" hidden>
-            <!-- Más adelante: listaremos las reservas del usuario -->
-          </div>
-
-          <div class="tpl-actions">
-            <a class="tpl-btn secondary" href="reserva.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ir a reservar</a>
-          </div>
-        </article>
-      </section>
-    </div>
-  </main>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Botón Cerrar sesión fijo] -->
-  <a href="index.html" id="tpl-logout" class="tpl-logout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- Scripts -->
-  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-  <script src="tpl-perfil.js" defer></script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage + link Editar + estado correcto] -->
-  <script>
-  (function(){
-    'use strict';
-    const $ = (s, r=document)=>r.querySelector(s);
-
-    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-    function iconBySpecies(sp){
-      const v = (sp||'').toLowerCase();
-      if (v.includes('perro')) return 'fa-dog';
-      if (v.includes('gato'))  return 'fa-cat';
-      if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
-      return 'fa-paw';
-    }
-
-    function renderPets(pets){
-      const empty = $('#tpl-pets-empty');
-      const list  = $('#tpl-pets-list');
-      const status = $('#tpl-pets-status');
-      if (!list) return;
-
-      if (!Array.isArray(pets) || pets.length===0){
-        if (empty) empty.hidden = false;
-        list.hidden = true;
-        if (status) status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
-        return;
+      if (foto){
+        const img = document.createElement('img');
+        img.className = 'tpl-pet-thumb';
+        img.src = foto;
+        img.alt = `Foto de ${nombre}`;
+        item.appendChild(img);
+      } else {
+        const ic = document.createElement('div');
+        ic.className = 'tpl-pet-icon';
+        ic.innerHTML = `<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`;
+        item.appendChild(ic);
       }
 
-      if (empty) empty.hidden = true;
-      list.hidden = false;
-      list.innerHTML = '';
+      const meta = document.createElement('div');
+      meta.className = 'tpl-pet-meta';
+      const nm = document.createElement('div');
+      nm.className = 'tpl-pet-name';
+      nm.textContent = nombre;
+      const sub = document.createElement('div');
+      sub.className = 'tpl-pet-sub';
+      const parts = [especie, raza, edad && ('Edad: ' + edad)].filter(Boolean);
+      sub.textContent = parts.join(' · ');
+      meta.appendChild(nm); meta.appendChild(sub);
+      item.appendChild(meta);
 
-      pets.forEach((p, idx) => {
-        const nombre   = escapeHtml(p?.nombre || 'Sin nombre');
-        const especie  = escapeHtml(p?.especie || '');
-        const raza     = escapeHtml(p?.raza || p?.tipoExotico || '');
-        const edad     = escapeHtml(p?.edad || '');
-        const foto     = (p && typeof p.foto === 'string') ? p.foto : '';
+      // Enlace Editar (abajo-dcha de la tarjeta)
+      const edit = document.createElement('a');
+      edit.href = `tpl-mascota.html?edit=${idx}`;
+      edit.className = 'tpl-pet-edit';
+      edit.textContent = 'Editar';
+      edit.setAttribute('aria-label', `Editar a ${nombre}`);
+      item.appendChild(edit);
 
-        const item = document.createElement('div');
-        item.className = 'tpl-pet-item';
-
-        if (foto){
-          const img = document.createElement('img');
-          img.className = 'tpl-pet-thumb';
-          img.src = foto;
-          img.alt = `Foto de ${nombre}`;
-          item.appendChild(img);
-        } else {
-          const ic = document.createElement('div');
-          ic.className = 'tpl-pet-icon';
-          ic.innerHTML = `<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`;
-          item.appendChild(ic);
-        }
-
-        const meta = document.createElement('div');
-        meta.className = 'tpl-pet-meta';
-        const nm = document.createElement('div');
-        nm.className = 'tpl-pet-name';
-        nm.textContent = nombre;
-
-        const sub = document.createElement('div');
-        sub.className = 'tpl-pet-sub';
-        const parts = [especie, raza, edad && ('Edad: ' + edad)].filter(Boolean);
-        sub.textContent = parts.join(' · ');
-
-        meta.appendChild(nm);
-        meta.appendChild(sub);
-        item.appendChild(meta);
-
-        // TPL: INICIO BLOQUE NUEVO [Enlace Editar por mascota]
-        const edit = document.createElement('a');
-        edit.href = `tpl-mascota.html?edit=${idx}`;
-        edit.className = 'tpl-pet-edit';
-        edit.textContent = 'Editar';
-        edit.setAttribute('aria-label', `Editar a ${nombre}`);
-        item.appendChild(edit);
-        // TPL: FIN BLOQUE NUEVO
-
-        list.appendChild(item);
-      });
-
-      if (status){
-        const n = pets.length;
-        status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
-      }
-    }
-
-    function ensureState(){
-      const empty = document.getElementById('tpl-pets-empty');
-      const list  = document.getElementById('tpl-pets-list');
-      const status= document.getElementById('tpl-pets-status');
-      if (!list) return;
-      const n = list.children.length;
-      if (n > 0){
-        if (empty) empty.hidden = true;
-        list.hidden = false;
-        if (status) status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
-      }
-    }
-
-    function loadAndRender(){
-      let saved = [];
-      try { saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); }
-      catch(e){ saved = []; }
-      renderPets(saved);
-      ensureState();
-    }
-
-    window.addEventListener('load', () => {
-      loadAndRender();
-      setTimeout(loadAndRender, 0);
-      const list = document.getElementById('tpl-pets-list');
-      if (list){
-        const mo = new MutationObserver(()=>ensureState());
-        mo.observe(list, {childList:true});
-      }
+      list.appendChild(item);
     });
 
-    // TPL: INICIO BLOQUE NUEVO [Cerrar sesión: limpiar y redirigir]
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const btn = document.getElementById('tpl-logout');
-      if (btn){
-        btn.addEventListener('click', (ev)=>{
-          ev.preventDefault();
-          try{
-            sessionStorage.removeItem('tpl.pets');
-            sessionStorage.removeItem('tpl.owner');
-          }catch(e){}
-          location.assign('index.html');
+    if (status){
+      const n = pets.length;
+      status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
+    }
+  }
+
+  function loadPetsAndRender(){
+    let saved = [];
+    try{ saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); } catch(_){}
+    renderPets(saved);
+  }
+
+  // -------- Logout "real" --------
+  function setupLogout(){
+    const btn = $('#tpl-logout');
+    if (!btn) return;
+    btn.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      try{
+        // Limpiar sessionStorage de la app
+        sessionStorage.removeItem('tpl.pets');
+        sessionStorage.removeItem('tpl.owner');
+        // Por si acaso, limpiar todo el sessionStorage
+        sessionStorage.clear();
+      }catch(_){}
+      try{
+        // Limpiar posibles tokens locales habituales
+        localStorage.removeItem('tpl.auth');
+        localStorage.removeItem('tpl.user');
+        localStorage.removeItem('tpl.session');
+      }catch(_){}
+      try{
+        // Intento de limpiar cookies del dominio
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        cookies.forEach(c=>{
+          const eq = c.indexOf('=');
+          const name = (eq>-1 ? c.substring(0,eq) : c).trim();
+          if (name){
+            document.cookie = `${name}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/;`;
+          }
         });
-      }
+      }catch(_){}
+      // Redirigir a inicio
+      location.assign('index.html');
     });
-    // TPL: FIN BLOQUE NUEVO
+  }
 
-    // Exponer por si hace falta refrescar desde fuera
-    window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__ || {}, { renderPets });
-  })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-</body>
-</html>
+  // -------- Inicio --------
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setOwnerIncomplete();
+    setPetsEmpty();         // estado base
+    loadPetsAndRender();    // si hay mascotas, ocultará el vacío
+
+    setupLogout();
+  });
+
+  // Safari bfcache: al volver desde tpl-mascota.html
+  window.addEventListener('pageshow', (e)=>{ if (e.persisted) loadPetsAndRender(); });
+
+  // Exponer por si se usa externamente
+  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { renderPets });
+})();
+ /* TPL: FIN BLOQUE NUEVO */
