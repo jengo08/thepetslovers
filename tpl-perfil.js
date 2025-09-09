@@ -1,14 +1,31 @@
-/* TPL: INICIO BLOQUE NUEVO [Perfil: estado owner + mascotas + logout real] */
+/* TPL: INICIO BLOQUE NUEVO [Perfil: estado owner + mascotas + logout real persistente por usuario] */
 (function(){
   'use strict';
 
-  // -------- Helpers DOM --------
+  // ---------- Helpers DOM ----------
   const $ = (sel, root=document) => root.querySelector(sel);
   const show = (el, disp='') => { if (!el) return; el.style.display = disp; el.hidden = false; };
   const hide = (el) => { if (!el) return; el.style.display = 'none'; el.hidden = true; };
   const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
+  const escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  // -------- Owner (placeholder básico) --------
+  // ---------- Mini “base de datos” por usuario (localStorage) ----------
+  // Guardamos por usuario en keys: tpl.udb.{uid}.owner y tpl.udb.{uid}.pets
+  function getCurrentUserId(){
+    // Tu login debería guardar aquí el email/ID del usuario:
+    // localStorage.setItem('tpl.currentUser', 'email@dominio.com');
+    return localStorage.getItem('tpl.currentUser') || 'default';
+  }
+  function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+  function udbGet(uid, key, fallback){
+    try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
+    catch(_){ return fallback; }
+  }
+  function udbSet(uid, key, value){
+    try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
+  }
+
+  // ---------- Owner (placeholder) ----------
   function setOwnerIncomplete(){
     setText('#tpl-owner-nombre', '—');
     setText('#tpl-owner-telefono', '—');
@@ -21,7 +38,29 @@
     if (edit) edit.style.display = 'none';
   }
 
-  // -------- Mascotas --------
+  function loadOwner(){
+    const uid = getCurrentUserId();
+    // 1) si viene de sessionStorage (ej. tras guardar desde formulario), sincronizamos
+    let ssOwner = null;
+    try { ssOwner = JSON.parse(sessionStorage.getItem('tpl.owner') || 'null'); } catch(_){}
+    if (ssOwner){ udbSet(uid, 'owner', ssOwner); }
+
+    const owner = udbGet(uid, 'owner', null);
+    if (!owner){ setOwnerIncomplete(); return; }
+
+    setText('#tpl-owner-nombre', owner.nombre || '—');
+    setText('#tpl-owner-telefono', owner.telefono || '—');
+    setText('#tpl-owner-zona', owner.zona || '—');
+    setText('#tpl-owner-email', owner.email || '—');
+
+    const status = $('#tpl-owner-status');
+    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completo'; }
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = 'none';
+    if (edit) edit.style.display = '';
+  }
+
+  // ---------- Mascotas ----------
   function iconBySpecies(sp){
     const v = (sp||'').toLowerCase();
     if (v.includes('perro')) return 'fa-dog';
@@ -29,7 +68,6 @@
     if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
     return 'fa-paw';
   }
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
   function setPetsEmpty(){
     const empty = $('#tpl-pets-empty');
@@ -47,8 +85,8 @@
 
     if (!Array.isArray(pets) || pets.length===0){ setPetsEmpty(); return; }
 
-    // Ocultar el vacío con doble control
-    if (empty){ empty.style.display='none'; empty.hidden = true; }
+    // Ocultar vacío con doble control robusto
+    if (empty){ empty.style.display = 'none'; empty.hidden = true; }
     show(list, 'block');
     list.innerHTML = '';
 
@@ -87,7 +125,7 @@
       meta.appendChild(nm); meta.appendChild(sub);
       item.appendChild(meta);
 
-      // Enlace Editar (abajo-dcha de la tarjeta)
+      // Enlace Editar
       const edit = document.createElement('a');
       edit.href = `tpl-mascota.html?edit=${idx}`;
       edit.className = 'tpl-pet-edit';
@@ -105,59 +143,64 @@
   }
 
   function loadPetsAndRender(){
-    let saved = [];
-    try{ saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); } catch(_){}
-    renderPets(saved);
+    const uid = getCurrentUserId();
+
+    // 1) Si venimos del formulario, copiar desde sessionStorage -> base usuario
+    let ssPets = [];
+    try { ssPets = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); } catch(_){}
+    if (Array.isArray(ssPets) && ssPets.length){
+      udbSet(uid, 'pets', ssPets);
+      // Limpio session para evitar duplicados al volver atrás/adelante
+      try { sessionStorage.removeItem('tpl.pets'); } catch(_){}
+    }
+
+    // 2) Mostrar lo del usuario
+    const pets = udbGet(uid, 'pets', []);
+    renderPets(pets);
   }
 
-  // -------- Logout "real" --------
+  // ---------- Cerrar sesión (real sin borrar perfil) ----------
   function setupLogout(){
     const btn = $('#tpl-logout');
     if (!btn) return;
     btn.addEventListener('click', (ev)=>{
       ev.preventDefault();
+
+      // 1) Limpiar sólo la sesión actual (no borramos la base de datos de usuario)
       try{
-        // Limpiar sessionStorage de la app
         sessionStorage.removeItem('tpl.pets');
         sessionStorage.removeItem('tpl.owner');
-        // Por si acaso, limpiar todo el sessionStorage
-        sessionStorage.clear();
+        sessionStorage.clear(); // por si hay más transitorios
       }catch(_){}
+
       try{
-        // Limpiar posibles tokens locales habituales
-        localStorage.removeItem('tpl.auth');
-        localStorage.removeItem('tpl.user');
-        localStorage.removeItem('tpl.session');
+        // “Cerrar sesión” para el front: quitamos el usuario actual y tokens
+        localStorage.removeItem('tpl.session');      // si tu navbar lo usa
+        localStorage.removeItem('tpl.auth');         // por si acaso
+        localStorage.removeItem('tpl.currentUser');  // muy importante
+        // Disparo un cambio para que otros scripts (nav) reaccionen
+        localStorage.setItem('tpl.loggedOut', String(Date.now()));
+        setTimeout(()=>localStorage.removeItem('tpl.loggedOut'), 0);
       }catch(_){}
-      try{
-        // Intento de limpiar cookies del dominio
-        const cookies = document.cookie ? document.cookie.split(';') : [];
-        cookies.forEach(c=>{
-          const eq = c.indexOf('=');
-          const name = (eq>-1 ? c.substring(0,eq) : c).trim();
-          if (name){
-            document.cookie = `${name}=; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/;`;
-          }
-        });
-      }catch(_){}
-      // Redirigir a inicio
+
+      // 2) Redirigir a home
       location.assign('index.html');
-    });
+    }, {passive:false});
   }
 
-  // -------- Inicio --------
+  // ---------- Inicio ----------
   document.addEventListener('DOMContentLoaded', ()=>{
-    setOwnerIncomplete();
+    setOwnerIncomplete();   // estado base
     setPetsEmpty();         // estado base
-    loadPetsAndRender();    // si hay mascotas, ocultará el vacío
-
+    loadOwner();            // carga owner por usuario o placeholder
+    loadPetsAndRender();    // carga mascotas por usuario u oculta vacío
     setupLogout();
   });
 
-  // Safari bfcache: al volver desde tpl-mascota.html
-  window.addEventListener('pageshow', (e)=>{ if (e.persisted) loadPetsAndRender(); });
+  // Al volver desde el formulario (bfcache Safari/Chrome)
+  window.addEventListener('pageshow', (e)=>{ if (e.persisted) { loadOwner(); loadPetsAndRender(); } });
 
-  // Exponer por si se usa externamente
-  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { renderPets });
+  // Exponer por si acaso
+  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender });
 })();
  /* TPL: FIN BLOQUE NUEVO */
