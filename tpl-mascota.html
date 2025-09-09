@@ -20,11 +20,11 @@
       background: var(--tpl-bg); border:1px solid var(--tpl-border);
       border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.04);
     }
-    .tpl-card h1 { margin:0 0 6px; }
-    .tpl-card p.lead { color: var(--tpl-muted); margin:0 0 16px; }
+    .tpl-card h1 { margin:0 0 4px; }
+    .tpl-card p.lead { color: var(--tpl-muted); margin:0 0 10px; }
 
-    form.tpl-form { display:grid; gap:18px; }
-    .tpl-row { display:grid; grid-template-columns:1fr; gap: 12px; }
+    form.tpl-form { display:grid; gap:12px; }          /* más juntito */
+    .tpl-row { display:grid; grid-template-columns:1fr; gap: 10px; }
     @media(min-width:840px){ .tpl-row { grid-template-columns: 1fr 1fr; } }
     .tpl-field { display:flex; flex-direction:column; gap:6px; }
     .tpl-field label { font-weight:600; color:var(--tpl-text); }
@@ -36,14 +36,14 @@
 
     /* Avatar circular + overlay de texto */
     .tpl-avatar {
-      position:relative; display:flex; align-items:center; gap:14px; padding:12px;
+      position:relative; display:flex; align-items:center; gap:12px; padding:10px;
       border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa;
     }
     .tpl-avatar-thumb{
       width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff;
     }
     .tpl-avatar-hint{
-      position:absolute; left:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center;
+      position:absolute; left:10px; width:96px; height:96px; display:flex; align-items:center; justify-content:center;
       text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none;
     }
     .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
@@ -56,9 +56,10 @@
     }
     .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
 
-    /* Agrupadores visuales */
-    .tpl-section-title{ margin:8px 0 4px; font-weight:700; color:var(--tpl-text); }
-    .tpl-sep{ height:1px; background:#f0f0f0; border:0; }
+    .tpl-section-title{ margin:4px 0 2px; font-weight:700; color:var(--tpl-text); }
+    .tpl-sep{ height:1px; background:#f0f0f0; border:0; margin:2px 0 6px; }
+
+    .tight { margin-top: -4px; } /* compactar bloques cercanos */
 
     .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
   </style>
@@ -94,51 +95,38 @@
     <div class="tpl-wrap">
       <div class="tpl-card">
         <h1>Nueva mascota</h1>
-        <p class="lead">Completa los datos. La foto se usa solo para mostrarla en tu perfil (vista temporal).</p>
+        <p class="lead">Completa los datos de tu mascota para agilizar tu reserva.</p>
 
         <form class="tpl-form" id="tpl-pet-form" novalidate>
-          <!-- ========== Datos de tu mascota ========== -->
+          <!-- ========== Datos de tu mascota (más compacto) ========== -->
           <div class="tpl-section-title">🐶 Datos de tu mascota</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
-          <!-- Foto -->
-          <div class="tpl-field">
-            <label for="foto">Foto de la mascota (opcional)</label>
+          <!-- Foto (sin “opcional” y sin texto de uso) -->
+          <div class="tpl-field tight">
+            <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
               <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
               <div class="tpl-avatar-hint">Sube foto de tu mascota</div>
-              <div style="margin-left:120px">
-                <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*" aria-describedby="foto-help">
-                <div class="tpl-help" id="foto-help">Se mostrará en tu perfil en formato circular. No se guarda en servidor.</div>
+              <div style="margin-left:116px">
+                <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
               </div>
             </div>
           </div>
 
-          <!-- Descripción (opcional) -->
-          <div class="tpl-field">
-            <label for="descripcion">Descripción (opcional)</label>
-            <textarea id="descripcion" name="descripcion" class="tpl-textarea" placeholder="Rasgos, gustos, miedos..."></textarea>
-          </div>
-
-          <!-- Nombre + Microchip -->
+          <!-- Nombre + Microchip (microchip sin checkbox, deja vacío si no tiene) -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="nombre">Nombre de tu mascota <span aria-hidden="true">*</span></label>
               <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Luna, Max...">
             </div>
             <div class="tpl-field">
-              <label for="microchip">Número de microchip <span aria-hidden="true">*</span></label>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input class="tpl-input" type="text" id="microchip" name="microchip" required placeholder="Ej. 9851230...">
-                <label style="display:flex;gap:6px;align-items:center;">
-                  <input type="checkbox" id="microchip_no_tiene"> <span>No tiene</span>
-                </label>
-              </div>
-              <div class="tpl-help">Si marcas “No tiene”, guardaremos ese estado.</div>
+              <label for="microchip">Número de microchip</label>
+              <input class="tpl-input" type="text" id="microchip" name="microchip" placeholder="Déjalo vacío si no tiene">
             </div>
           </div>
 
-          <!-- Especie y raza -->
+          <!-- Especie y Raza (sin textos extra) -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="especie">Especie <span aria-hidden="true">*</span></label>
@@ -154,7 +142,6 @@
               <label for="raza" id="label-raza">Raza <span aria-hidden="true">*</span></label>
               <input class="tpl-input" list="tpl-breed-list" id="raza" name="raza" required placeholder="Elige o escribe…">
               <datalist id="tpl-breed-list"></datalist>
-              <div class="tpl-help">Si eliges “Exótico”, aquí verás tipos: Pájaro, Conejo, Hurón, etc.</div>
             </div>
           </div>
 
@@ -187,7 +174,7 @@
             </div>
           </div>
 
-          <!-- Salud y rutinas -->
+          <!-- Salud y rutinas (sin campo “Descripción”) -->
           <div class="tpl-field">
             <label for="salud">¿Tiene alguna patología o tratamiento que debamos conocer? <span aria-hidden="true">*</span></label>
             <textarea id="salud" name="salud" class="tpl-textarea" required placeholder="Describir brevemente"></textarea>
@@ -234,66 +221,31 @@
             <textarea id="comportamiento" name="comportamiento" class="tpl-textarea" required placeholder="Sociable, nervioso, ladra a otros perros, etc."></textarea>
           </div>
 
-          <!-- ========== Servicios que te interesan ========== -->
-          <div class="tpl-section-title">🏡 Servicios que te interesan</div>
+          <!-- ========== Cámaras + Extras (compacto) ========== -->
+          <div class="tpl-section-title">📸 Extras y seguimiento</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
-          <div class="tpl-field">
-            <label for="descServicios">Descripción (opcional)</label>
-            <textarea id="descServicios" name="descServicios" class="tpl-textarea" placeholder="Indícanos requisitos o preferencias"></textarea>
-          </div>
-
-          <div class="tpl-field">
-            <label>¿Qué tipo de servicio estás buscando? <span aria-hidden="true">*</span></label>
-            <div style="display:grid; grid-template-columns:1fr; gap:6px;">
-              <label><input type="checkbox" name="servicios" value="Visitas a domicilio" id="srv-visitas"> Visitas a domicilio</label>
-              <label><input type="checkbox" name="servicios" value="Estancia en casa de cuidador"> Estancia en casa de cuidador</label>
-              <label><input type="checkbox" name="servicios" value="Paseos"> Paseos</label>
-              <label style="display:flex;gap:8px;align-items:center;">
-                <input type="checkbox" id="srv-otra" name="servicios" value="Otra"> Otra…
-                <input class="tpl-input" type="text" id="otra-detalle" name="otraDetalle" placeholder="Describe" style="flex:1" disabled>
-              </label>
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="camaras">¿Tienes cámaras en casa para seguimiento?</label>
+              <select class="tpl-select" id="camaras" name="camaras">
+                <option value="">Selecciona…</option>
+                <option>Sí</option><option>No</option>
+              </select>
             </div>
-            <div class="tpl-help">Marca al menos una opción.</div>
+            <div class="tpl-field">
+              <label for="fotos">¿Te gustaría recibir fotos y vídeos durante el servicio?</label>
+              <select class="tpl-select" id="fotos" name="fotos">
+                <option value="">Selecciona…</option>
+                <option>Sí</option><option>No</option><option>Me da igual</option>
+              </select>
+            </div>
           </div>
 
           <div class="tpl-row">
             <div class="tpl-field">
-              <label for="desde">Fechas aproximadas (desde) <span aria-hidden="true">*</span></label>
-              <input class="tpl-input" type="date" id="desde" name="desde" required>
-              <div class="tpl-help">Formato: dd/mm/aaaa (tu dispositivo lo mostrará según su configuración).</div>
-            </div>
-            <div class="tpl-field">
-              <label for="hasta">Fechas aproximadas (hasta) <span aria-hidden="true">*</span></label>
-              <input class="tpl-input" type="date" id="hasta" name="hasta" required>
-            </div>
-          </div>
-
-          <!-- Condicional por “Visitas a domicilio” -->
-          <div class="tpl-field" id="row-camaras" hidden>
-            <label for="camaras">¿Tienes cámaras en casa para seguimiento? (solo en visitas) <span aria-hidden="true">*</span></label>
-            <select class="tpl-select" id="camaras" name="camaras">
-              <option value="">Selecciona…</option>
-              <option>Sí</option><option>No</option>
-            </select>
-          </div>
-
-          <!-- ========== Extras opcionales ========== -->
-          <div class="tpl-section-title">📸 Extras opcionales</div>
-          <hr class="tpl-sep" aria-hidden="true"/>
-
-          <div class="tpl-field">
-            <label for="fotos">¿Te gustaría recibir fotos y vídeos durante el servicio? <span aria-hidden="true">*</span></label>
-            <select class="tpl-select" id="fotos" name="fotos" required>
-              <option value="">Selecciona…</option>
-              <option>Sí</option><option>No</option><option>Me da igual</option>
-            </select>
-          </div>
-
-          <div class="tpl-row">
-            <div class="tpl-field">
-              <label for="seguroVet">¿Tienes contratado seguro veterinario para tu mascota? <span aria-hidden="true">*</span></label>
-              <select class="tpl-select" id="seguroVet" name="seguroVet" required>
+              <label for="seguroVet">¿Tienes contratado seguro veterinario para tu mascota?</label>
+              <select class="tpl-select" id="seguroVet" name="seguroVet">
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
@@ -307,18 +259,13 @@
             </div>
 
             <div class="tpl-field">
-              <label for="seguroRC">¿Tienes seguro de responsabilidad civil para tu mascota? <span aria-hidden="true">*</span></label>
-              <select class="tpl-select" id="seguroRC" name="seguroRC" required>
+              <label for="seguroRC">¿Tienes seguro de responsabilidad civil para tu mascota?</label>
+              <select class="tpl-select" id="seguroRC" name="seguroRC">
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
               <!-- Sin detalles: solo saber si lo tiene -->
             </div>
-          </div>
-
-          <div class="tpl-field">
-            <label for="comentarios">¿Quieres dejarnos algún comentario o detalle importante?</label>
-            <textarea id="comentarios" name="comentarios" class="tpl-textarea" placeholder="Cualquier info adicional útil"></textarea>
           </div>
 
           <div class="tpl-actions">
