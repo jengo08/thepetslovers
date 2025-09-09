@@ -25,7 +25,6 @@
     .tpl-field label { font-weight:600; color:var(--tpl-text); }
     .tpl-input, .tpl-select, .tpl-textarea { border:1px solid var(--tpl-border); border-radius:10px; padding:10px 12px; font:inherit; color:#222; background:#fff; }
     .tpl-textarea { min-height: 96px; resize: vertical; }
-    .tpl-help { font-size:.9rem; color:var(--tpl-muted); }
     .tpl-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .tpl-btn { display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border); text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color); }
     .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
@@ -35,25 +34,27 @@
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
     .tpl-avatar-hint{ position:absolute; left:10px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
     .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
+
+    .tpl-section-title{ margin:4px 0 2px; font-weight:700; color:var(--tpl-text); } /* negrita */
+    .tpl-sep{ height:1px; background:#f0f0f0; border:0; margin:2px 0 6px; } /* muy pegado */
     .tight { margin-top:-4px; }
 
     /* Botonera foto (aparece tras elegir) */
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; margin-left:116px; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
 
-    /* Modal cropper ligero */
+    /* Modal cropper simple (drag + flechas, sin sliders) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
-    .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
+    .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); font-weight:700; }
     .crop-area{ display:flex; flex-direction:column; gap:10px; align-items:center; }
-    #cropCanvas{ width:320px; height:320px; background:#f3f3f3; border-radius:12px; border:1px solid #eee; }
-    .crop-controls{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
-    .crop-controls label{ font-weight:600; color:var(--tpl-text); font-size:.9rem; }
+    #cropCanvas{ width:320px; height:320px; background:#f3f3f3; border-radius:12px; border:1px solid #eee; touch-action:none; }
+    .crop-hint{ font-size:.9rem; color:#666; }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro navbar] -->
   <script>window.__TPL_SAFE_MODE__ = true;</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -84,11 +85,11 @@
         <p class="lead">Completa los datos de tu mascota para agilizar tu reserva.</p>
 
         <form class="tpl-form" id="tpl-pet-form" novalidate>
-          <!-- ========== Datos de tu mascota ========== -->
+          <!-- ========== Datos de tu mascota (negrita y pegado) ========== -->
           <div class="tpl-section-title">🐶 Datos de tu mascota</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
-          <!-- Foto (sin “opcional”) -->
+          <!-- Foto -->
           <div class="tpl-field tight">
             <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
@@ -106,7 +107,7 @@
             </div>
           </div>
 
-          <!-- Nombre + Microchip (microchip obligatorio con “No tiene”) -->
+          <!-- Nombre + Microchip -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="nombre">Nombre de tu mascota <span aria-hidden="true">*</span></label>
@@ -171,7 +172,7 @@
             </div>
           </div>
 
-          <!-- Salud y rutinas (sin campo Descripción) -->
+          <!-- Salud y rutinas -->
           <div class="tpl-field">
             <label for="salud">¿Tiene alguna patología o tratamiento que debamos conocer? <span aria-hidden="true">*</span></label>
             <textarea id="salud" name="salud" class="tpl-textarea" required placeholder="Describir brevemente"></textarea>
@@ -218,24 +219,18 @@
             <textarea id="comportamiento" name="comportamiento" class="tpl-textarea" required placeholder="Sociable, nervioso, ladra a otros perros, etc."></textarea>
           </div>
 
-          <!-- ========== Seguimiento y opciones ========== -->
+          <!-- ========== Extras y seguimiento ========== -->
           <div class="tpl-section-title">📸 Extras y seguimiento</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
           <div class="tpl-row">
             <div class="tpl-field">
-              <label><input type="checkbox" id="isVisita"> Este servicio es una visita a domicilio</label>
-            </div>
-            <div class="tpl-field" id="row-camaras" hidden>
-              <label for="camaras">¿Tienes cámaras en casa para seguimiento? <span aria-hidden="true">*</span></label>
+              <label for="camaras">¿Tienes cámaras en casa <span style="font-weight:400">(para servicio a domicilio)</span>?</label>
               <select class="tpl-select" id="camaras" name="camaras">
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
             </div>
-          </div>
-
-          <div class="tpl-row">
             <div class="tpl-field">
               <label for="fotos">¿Te gustaría recibir fotos y vídeos durante el servicio?</label>
               <select class="tpl-select" id="fotos" name="fotos">
@@ -243,7 +238,9 @@
                 <option>Sí</option><option>No</option><option>Me da igual</option>
               </select>
             </div>
+          </div>
 
+          <div class="tpl-row">
             <div class="tpl-field">
               <label for="seguroVet">¿Tienes contratado seguro veterinario para tu mascota?</label>
               <select class="tpl-select" id="seguroVet" name="seguroVet">
@@ -258,6 +255,14 @@
                 </div>
               </div>
             </div>
+
+            <div class="tpl-field">
+              <label for="seguroRC">¿Tienes seguro de responsabilidad civil para tu mascota?</label>
+              <select class="tpl-select" id="seguroRC" name="seguroRC">
+                <option value="">Selecciona…</option>
+                <option>Sí</option><option>No</option>
+              </select>
+            </div>
           </div>
 
           <div class="tpl-actions">
@@ -269,27 +274,14 @@
     </div>
   </main>
 
-  <!-- Modal de recorte -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper] -->
+  <!-- Modal de recorte (drag + flechas) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper simple] -->
   <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto">
     <div class="box">
       <h3><i class="fa-solid fa-crop"></i> Ajustar foto</h3>
       <div class="crop-area">
         <canvas id="cropCanvas" width="320" height="320"></canvas>
-        <div class="crop-controls">
-          <div>
-            <label for="zoomRange">Zoom</label>
-            <input type="range" id="zoomRange" min="1" max="3" step="0.01" value="1">
-          </div>
-          <div>
-            <label for="xRange">Desplazamiento X</label>
-            <input type="range" id="xRange" min="-100" max="100" step="1" value="0">
-          </div>
-          <div>
-            <label for="yRange">Desplazamiento Y</label>
-            <input type="range" id="yRange" min="-100" max="100" step="1" value="0">
-          </div>
-        </div>
+        <div class="crop-hint">Arrastra con el dedo/ratón o usa las flechas. Sin zoom: se adapta al círculo.</div>
         <div class="crop-actions">
           <button type="button" class="tpl-btn secondary" id="btnCancelCrop">Cancelar</button>
           <button type="button" class="tpl-btn" id="btnApplyCrop">Aplicar</button>
