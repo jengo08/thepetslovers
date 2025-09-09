@@ -1,196 +1,136 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Perfil del propietario · The Pets Lovers</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datos de Propietario · The Pets Lovers</title>
+
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido] -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
-  <!-- TPL: FIN BLOQUE NUEVO -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilo mínimo de tarjeta] -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del formulario de propietario] -->
   <style>
-    .tpl-wrap{ max-width:760px; margin:120px auto 60px; padding:20px; background:#fff; border:1px solid #eee; border-radius:12px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
-    .tpl-form{ display:grid; gap:12px; }
-    @media (min-width:720px){ .tpl-grid-2{ grid-template-columns:1fr 1fr; gap:12px; } }
-    .tpl-field{ display:flex; flex-direction:column; gap:6px; }
-    .tpl-input, .tpl-textarea{ padding:10px 12px; border:1px solid #ddd; border-radius:10px; font:inherit; }
-    .tpl-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
-    .tpl-btn{ background:#339496; color:#fff; border:none; border-radius:999px; padding:10px 16px; font-weight:700; cursor:pointer; }
-    .tpl-btn-ghost{ background:#fff; color:#339496; border:2px solid #339496; border-radius:999px; padding:10px 16px; font-weight:700; cursor:pointer; }
-    .tpl-msg{ min-height:1.2em; color:#58425a; margin-top:6px; }
-    .tpl-note{ background:#f8fdfd; border:1px dashed #339496; color:#2a7e80; padding:10px 12px; border-radius:12px; margin-bottom:14px; }
+    :root{ --tpl-color:#339496; --tpl-text:#58425a; --tpl-border:#ececec; --tpl-muted:#666; --tpl-bg:#fff; }
+    .tpl-page { padding-top: 110px; }
+    .tpl-wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
+    .tpl-card { background: var(--tpl-bg); border:1px solid var(--tpl-border); border-radius:14px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+    .tpl-card h1 { margin:0 0 4px; }
+    .tpl-card p.lead { color: var(--tpl-muted); margin:0 0 10px; }
+
+    form.tpl-form { display:grid; gap:12px; }
+    .tpl-row { display:grid; grid-template-columns:1fr; gap:10px; }
+    @media (min-width: 840px){ .tpl-row { grid-template-columns: 1fr 1fr; } }
+    .tpl-field { display:flex; flex-direction:column; gap:6px; }
+    .tpl-field label { font-weight:600; color:var(--tpl-text); }
+    .tpl-input, .tpl-select, .tpl-textarea {
+      border:1px solid var(--tpl-border); border-radius:10px; padding:10px 12px;
+      font:inherit; color:#222; background:#fff;
+    }
+    .tpl-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .tpl-btn { display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border); text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color); }
+    .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
+
+    .sr-only{ position:absolute!important; width:1px; height:1px; clip:rect(1px,1px,1px,1px); overflow:hidden; white-space:nowrap; }
   </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
+  <script>window.__TPL_SAFE_MODE__ = true;</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
-  <div id="tpl-navbar"></div>
-  <script src="tpl-navbar.js" defer></script>
 
-  <main class="tpl-wrap">
-    <h1 style="margin:0 0 8px">Perfil del propietario</h1>
-    <p class="tpl-note"><i class="fa-regular fa-circle-user"></i> Debes estar identificado. El <strong>email</strong> se toma de tu sesión y no puede editarse aquí.</p>
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <form id="f" class="tpl-form" novalidate>
-      <div class="tpl-grid-2">
-        <div class="tpl-field">
-          <label for="nombre">Nombre y apellidos *</label>
-          <input class="tpl-input" id="nombre" name="nombre" required>
-        </div>
-        <div class="tpl-field">
-          <label for="telefono">Teléfono *</label>
-          <input class="tpl-input" id="telefono" name="telefono" required inputmode="tel">
-        </div>
+  <main class="container tpl-page">
+    <div class="tpl-wrap">
+      <div class="tpl-card">
+        <h1>Datos de propietario</h1>
+        <p class="lead">Guarda tus datos para que tu reserva se rellene sola.</p>
+
+        <form class="tpl-form" id="tpl-owner-form" action="#" novalidate>
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="nombre">Nombre y apellidos <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Nombre y apellidos">
+            </div>
+            <div class="tpl-field">
+              <label for="dni">DNI/NIE <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="text" id="dni" name="dni" required placeholder="12345678Z">
+            </div>
+          </div>
+
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="direccion">Dirección</label>
+              <input class="tpl-input" type="text" id="direccion" name="direccion" placeholder="Calle, nº, piso...">
+            </div>
+            <div class="tpl-field">
+              <label for="cp">Código postal <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="text" id="cp" name="cp" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" required placeholder="28001">
+            </div>
+          </div>
+
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="provincia">Provincia <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="text" id="provincia" name="provincia" required placeholder="Madrid, Barcelona...">
+            </div>
+            <div class="tpl-field">
+              <label for="localidad">Localidad / Municipio <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="text" id="localidad" name="localidad" required placeholder="Pozuelo, Badalona...">
+            </div>
+          </div>
+
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="email">Correo electrónico <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="email" id="email" name="email" required placeholder="tu@correo.es">
+            </div>
+            <div class="tpl-field">
+              <label for="telefono">Teléfono <span aria-hidden="true">*</span></label>
+              <input class="tpl-input" type="tel" id="telefono" name="telefono" required placeholder="+34 6xx xx xx xx">
+            </div>
+          </div>
+
+          <div class="tpl-field">
+            <span class="sr-only" id="contacto-legend">Preferencia de contacto</span>
+            <label>¿Cómo prefieres que te contactemos?</label>
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+              <label><input type="radio" name="contacto" value="whatsapp" checked> WhatsApp</label>
+              <label><input type="radio" name="contacto" value="correo"> Correo</label>
+              <label><input type="radio" name="contacto" value="llamada"> Llamada</label>
+            </div>
+          </div>
+
+          <div class="tpl-actions">
+            <button class="tpl-btn" id="saveOwner" type="button"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
+          </div>
+        </form>
       </div>
-
-      <div class="tpl-grid-2">
-        <div class="tpl-field">
-          <label for="email">Email (de tu sesión)</label>
-          <input class="tpl-input" id="email" name="email" type="email" readonly disabled>
-          <input type="hidden" id="emailHidden" name="email">
-        </div>
-        <div class="tpl-field">
-          <label for="cp">Código postal *</label>
-          <input class="tpl-input" id="cp" name="cp" required pattern="[0-9]{5}" inputmode="numeric" maxlength="5">
-        </div>
-      </div>
-
-      <div class="tpl-field">
-        <label for="direccion">Dirección</label>
-        <input class="tpl-input" id="direccion" name="direccion">
-      </div>
-
-      <div class="tpl-field">
-        <label for="preferencias">Preferencias / Notas</label>
-        <textarea class="tpl-textarea" id="preferencias" name="preferencias" rows="3"></textarea>
-      </div>
-
-      <div class="tpl-actions">
-        <button type="submit" class="tpl-btn">Guardar</button>
-        <a id="cancel" class="tpl-btn-ghost" href="perfil.html">Cancelar</a>
-      </div>
-      <p id="msg" class="tpl-msg" aria-live="polite"></p>
-    </form>
+    </div>
   </main>
 
-  <div id="tpl-footer"></div>
+  <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase + lógica robusta (Firestore + fallback local)] -->
-  <script>
-  (async function(){
-    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.async=true; s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar '+src)); document.head.appendChild(s); }); }
-    async function ensureFirebase(){
-      if (typeof firebase === 'undefined'){ await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js'); }
-      if (!('auth' in firebase))      { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js'); }
-      if (!('firestore' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'); }
-      if (!window.firebaseConfig){
-        window.firebaseConfig = {
-          apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-          authDomain: "thepetslovers-c1111.firebaseapp.com",
-          projectId: "thepetslovers-c1111",
-          storageBucket: "thepetslovers-c1111.appspot.com",
-          messagingSenderId: "415914577533",
-          appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-          measurementId: "G-FXPD69KXBG"
-        };
-      }
-    }
-    await ensureFirebase();
-    if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-
-    const form = document.getElementById('f');
-    const msg  = document.getElementById('msg');
-    const email= document.getElementById('email');
-    const emailHidden = document.getElementById('emailHidden');
-    const cancel = document.getElementById('cancel');
-
-    const LS_PROFILE_KEY = 'tpl-profile';
-    function setMsg(t){ msg.textContent = t || ''; }
-    function qsp(name, fb){ const u = new URL(location.href); return u.searchParams.get(name)||fb; }
-    function nextUrl(){ return qsp('next','perfil.html'); }
-    cancel.setAttribute('href', nextUrl());
-
-    async function loadProfile(uid){
-      setMsg('Cargando…');
-      try{
-        const snap = await db.collection('users').doc(uid).collection('private').doc('profile').get();
-        if (snap.exists){
-          const p = snap.data();
-          form.nombre.value       = p.nombre || '';
-          form.telefono.value     = p.telefono || '';
-          form.cp.value           = p.cp || '';
-          form.direccion.value    = p.direccion || '';
-          form.preferencias.value = p.preferencias || '';
-        } else {
-          // Fallback local
-          try{
-            const p = JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null');
-            if (p){ form.nombre.value=p.nombre||''; form.telefono.value=p.telefono||''; form.cp.value=p.cp||''; form.direccion.value=p.direccion||''; form.preferencias.value=p.preferencias||''; }
-          }catch(_){}
-        }
-        setMsg('');
-      }catch(e){
-        // Fallback local si Firestore falla
-        try{
-          const p = JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null');
-          if (p){ form.nombre.value=p.nombre||''; form.telefono.value=p.telefono||''; form.cp.value=p.cp||''; form.direccion.value=p.direccion||''; form.preferencias.value=p.preferencias||''; }
-        }catch(_){}
-        setMsg('');
-      }
-    }
-
-    async function saveProfile(uid, data){
-      // Intento Firestore
-      try{
-        await db.collection('users').doc(uid).set({ email: data.email, updatedAt: new Date() }, {merge:true});
-        await db.collection('users').doc(uid).collection('private').doc('profile').set({
-          nombre:data.nombre, telefono:data.telefono, email:data.email, cp:data.cp, direccion:data.direccion, preferencias:data.preferencias, updatedAt:new Date().toISOString()
-        }, { merge:true });
-      }catch(e){
-        // Fallback local
-        localStorage.setItem(LS_PROFILE_KEY, JSON.stringify(data));
-      }
-    }
-
-    auth.onAuthStateChanged(async (u)=>{
-      if (!u || u.isAnonymous){
-        location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(location.pathname + location.search);
-        return;
-      }
-      email.value = u.email || '';
-      emailHidden.value = u.email || '';
-      await loadProfile(u.uid);
-
-      form.addEventListener('submit', async (ev)=>{
-        ev.preventDefault();
-        if (!form.reportValidity()) return;
-        const data = {
-          nombre: form.nombre.value.trim(),
-          telefono: form.telefono.value.trim(),
-          email: emailHidden.value.trim(),
-          cp: form.cp.value.trim(),
-          direccion: form.direccion.value.trim(),
-          preferencias: form.preferencias.value.trim()
-        };
-        if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.'); return; }
-        if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.'); return; }
-        try{
-          setMsg('Guardando…');
-          await saveProfile(u.uid, data);
-          try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
-          setMsg('¡Perfil guardado!');
-          location.href = nextUrl();
-        }catch(e){
-          setMsg('No se pudo guardar.'); console.error(e);
-        }
-      });
-    });
-  })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
+  <script src="tpl-propietario.js" defer></script>
 </body>
 </html>
