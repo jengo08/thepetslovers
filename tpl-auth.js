@@ -88,11 +88,29 @@
       if (ov) ov.classList.remove('show');
     }catch(_){}
 
-    if (!(window.firebase && firebase.auth)) {
+    /* TPL: INICIO BLOQUE NUEVO [Limpieza UI/localStorage antes/después de signOut] */
+    function clearUILocal(){
+      try{ sessionStorage.clear(); }catch(_){}
+      try{
+        localStorage.removeItem('tpl.session');
+        localStorage.removeItem('tpl.auth');
+        localStorage.removeItem('tpl.currentUser');
+        localStorage.removeItem('tpl_auth_email');
+        localStorage.removeItem('tpl_auth_uid');
+        localStorage.setItem('tpl.loggedOut', String(Date.now()));
+        setTimeout(()=>localStorage.removeItem('tpl.loggedOut'), 0);
+      }catch(_){}
+      try{ document.body && document.body.setAttribute('data-auth','out'); }catch(_){}
       setButtonState('guest');
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    if (!(window.firebase && firebase.auth)) {
+      clearUILocal();
       window.location.href = URLS.INDEX;
       return;
     }
+
     firebase.auth().signOut()
       .catch(function(err){ console.warn('[TPL auth] signOut:', err); })
       .then(function(){
@@ -103,16 +121,25 @@
         }
       })
       .finally(function(){
-        setButtonState('guest');
+        clearUILocal();
         window.location.href = URLS.INDEX; // SIEMPRE a inicio
       });
   }
+
   function wireLogout(){
     var btn = document.getElementById('tpl-logout');
     if (btn){
       btn.addEventListener('click', function(e){ e.preventDefault(); performLogout(); });
     }
     window.TPL_LOGOUT = performLogout; // API global
+
+    /* TPL: INICIO BLOQUE NUEVO [Alias compatible con perfil.html] */
+    // Si tu <a id="tpl-logout"... onclick="return (window.__TPL_LOGOUT__ && window.__TPL_LOGOUT__());">
+    // ya existe, no lo pisamos. Si no, lo exponemos aquí.
+    if (!window.__TPL_LOGOUT__) {
+      window.__TPL_LOGOUT__ = function(){ performLogout(); return false; };
+    }
+    /* TPL: FIN BLOQUE NUEVO */
   }
 
   // --- Login con Google (si tienes botones con esos selectores) ---
