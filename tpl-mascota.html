@@ -1,244 +1,110 @@
-<!-- TPL: Config REST Navar/Codinary -->
-<script>
-  window.TPL_API = window.TPL_API || {
-    baseUrl: 'https://TU_BACKEND_NAVAR/api',  // ← CAMBIA ESTO A TU API
-    authHeaders: async () => {
-      const t = localStorage.getItem('tpl_api_token') || '';
-      return t ? { 'Authorization': 'Bearer ' + t } : {};
-    },
-    currentUserId: async () => {
-      // El navbar guarda este UID
-      const ls = localStorage.getItem('tpl_auth_uid');
-      if (ls) return ls;
-      try { return window.firebase?.auth?.().currentUser?.uid || null; } catch(_) { return null; }
-    },
-    endpoints: {
-      petGet:    (uid,id) => `/users/${uid}/pets/${id}`,
-      petList:   (uid)    => `/users/${uid}/pets`,
-      petCreate: (uid)    => `/users/${uid}/pets`,
-      petUpdate: (uid,id) => `/users/${uid}/pets/${id}`,
-      petDelete: (uid,id) => `/users/${uid}/pets/${id}`
-    }
-  };
-</script>
-
-<!-- TPL: Lógica Mascota — REST-first, sin subidas ni overlays -->
-<script>
+/* TPL: INICIO BLOQUE NUEVO [Estado mínimo del perfil + lectura temporal de mascotas] */
 (function(){
   'use strict';
 
-  function onReady(fn){ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);} else {fn();} }
-  onReady(init);
+  // Helpers de DOM
+  const $ = (sel) => document.querySelector(sel);
+  const show = (el) => { if (el) el.hidden = false; };
+  const hide = (el) => { if (el) el.hidden = true; };
+  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
 
-  function init(){
-    const $ = (id)=> document.getElementById(id);
-    const qsp=(k,fb)=> new URL(location.href).searchParams.get(k)||fb;
-    const nextUrl = ()=> qsp('next','perfil.html');
+  document.addEventListener('DOMContentLoaded', () => {
+    // ------- OWNER -------
+    setOwnerIncomplete();
 
-    // ===== refs del DOM =====
-    const form = $('tpl-form-mascota'); if (!form) return;
-    form.setAttribute('data-tpl-emailjs','false'); // desactiva capturador global
+    // ------- PETS -------
+    setPetsEmpty();
 
-    const ok   = $('tpl-msg-ok');
-    const err  = $('tpl-msg-err');
-    const btnDel = $('tpl-btn-eliminar');
+    /* TPL: INICIO BLOQUE NUEVO [Cargar mascotas desde sessionStorage] */
+    try{
+      const saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]');
+      if (Array.isArray(saved) && saved.length){
+        renderPets(saved);
+      }
+    }catch(e){ /* noop */ }
+    /* TPL: FIN BLOQUE NUEVO */
 
-    const foto = $('foto'), preview = $('preview');
-    const noChip=$('noChip'), microchip=$('microchip');
-    const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
-    const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
-    const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
+    // ------- BOOKINGS -------
+    setBookingsEmpty();
+  });
 
-    // ===== toggles =====
-    function toggleMicrochip(){ if(noChip.checked){ microchip.value=''; microchip.disabled=true; } else { microchip.disabled=false; } }
-    function toggleEspecie(){
-      if (especie.value==='Exótico'){ raza.required=true; raza.placeholder='Ej.: Ave, Reptil, Pequeño mamífero…'; lblRaza.innerHTML='Tipo de exótico *'; }
-      else if (especie.value){ raza.required=true; raza.placeholder='Escribe o elige de la lista'; lblRaza.innerHTML='Raza / especie *'; }
-      else { raza.required=false; raza.placeholder='Escribe aquí…'; lblRaza.innerHTML='Raza / especie'; }
+  function setOwnerIncomplete(){
+    setText('#tpl-owner-nombre', '—');
+    setText('#tpl-owner-telefono', '—');
+    setText('#tpl-owner-zona', '—');
+    setText('#tpl-owner-email', '—');
+
+    const status = $('#tpl-owner-status');
+    if (status){
+      status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Incompleto';
     }
-    function toggleVacunas(){ if (vacunas.value==='No'){ wrapFaltan.classList.remove('is-hidden'); faltan.required=true; } else { wrapFaltan.classList.add('is-hidden'); faltan.required=false; faltan.value=''; } }
-    function toggleSeguro(){ if (seguroVet.value==='Sí'){ wrapSeguro.classList.remove('is-hidden'); aseguradora.required=true; poliza.required=true; } else { wrapSeguro.classList.add('is-hidden'); aseguradora.required=false; poliza.required=false; aseguradora.value=''; poliza.value=''; } }
-
-    noChip?.addEventListener('change', toggleMicrochip);
-    especie?.addEventListener('change', toggleEspecie);
-    vacunas?.addEventListener('change', toggleVacunas);
-    seguroVet?.addEventListener('change', toggleSeguro);
-
-    // ===== Foto: SOLO DataURL (sin subir) =====
-    let fotoDataUrl = '';
-    foto?.addEventListener('change', ()=>{
-      const f = foto.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = e => { fotoDataUrl = e.target.result; if (preview) preview.src = fotoDataUrl; };
-      r.readAsDataURL(f);
-    });
-
-    // ===== REST + fallback local =====
-    const REST = {
-      ok: !!(window.TPL_API && window.TPL_API.baseUrl),
-      base: () => String(window.TPL_API.baseUrl||'').replace(/\/+$/,''),
-      allowLocalFallback(){
-        // Fallback solo si NO has configurado la URL real
-        return !this.ok || /TU_BACKEND_NAVAR/i.test(this.base());
-      },
-      headers: async () => ({ 'Content-Type':'application/json', ...(await window.TPL_API.authHeaders?.()||{}) }),
-      uid:     async () => await (window.TPL_API.currentUserId?.() || null),
-      url(name, uid, id){
-        const e = window.TPL_API.endpoints||{};
-        const path = (typeof e[name]==='function') ? e[name](uid,id) : '';
-        return this.base() + path;
-      },
-      async getPet(id){
-        const uid = await this.uid(); if (this.allowLocalFallback() || !uid || !id) return LS.getPetById(id);
-        const res = await fetch(this.url('petGet', uid, id), { headers: await this.headers() }).catch(()=>null);
-        if (!res || !res.ok) return this.allowLocalFallback() ? LS.getPetById(id) : null;
-        return await res.json();
-      },
-      async savePet(id, data){
-        const uid = await this.uid();
-        if (!uid || this.allowLocalFallback()){
-          return LS.savePet(id, data);
-        }
-        const m   = id ? 'PATCH' : 'POST';
-        const url = id ? this.url('petUpdate', uid, id) : this.url('petCreate', uid);
-        const res = await fetch(url, { method:m, headers: await this.headers(), body: JSON.stringify(data) }).catch(()=>null);
-        if (!res || !res.ok){
-          if (this.allowLocalFallback()) return LS.savePet(id, data);
-          throw new Error('HTTP '+(res?res.status:'ERR'));
-        }
-        const j = await res.json().catch(()=> ({}));
-        return id || j.id || j._id || null;
-      },
-      async deletePet(id){
-        const uid = await this.uid();
-        if (!uid || this.allowLocalFallback()) return LS.deletePet(id);
-        await fetch(this.url('petDelete', uid, id), { method:'DELETE', headers: await this.headers() }).catch(()=>{});
-      }
-    };
-
-    // LocalStorage fallback (solo si no hay backend configurado)
-    const LS = {
-      KEY:'tpl-pets',
-      list(){
-        try{ return JSON.parse(localStorage.getItem(this.KEY)||'[]'); }catch(_){ return []; }
-      },
-      write(list){
-        try{ localStorage.setItem(this.KEY, JSON.stringify(list)); }catch(_){}
-      },
-      getPetById(id){
-        if (!id) return null;
-        const list = this.list();
-        return list.find(p => (p.id||p._id)===id) || null;
-      },
-      savePet(id, data){
-        const list = this.list();
-        if (id){
-          const i = list.findIndex(p => (p.id||p._id)===id);
-          if (i>=0) list[i] = { ...(list[i]||{}), ...data, id };
-          else list.push({ ...data, id });
-        } else {
-          id = 'ls_' + Math.random().toString(36).slice(2,8);
-          list.push({ ...data, id });
-        }
-        this.write(list);
-        return id;
-      },
-      deletePet(id){
-        const list = this.list();
-        const i = list.findIndex(p => (p.id||p._id)===id);
-        if (i>=0){ list.splice(i,1); this.write(list); }
-      }
-    };
-
-    // ===== Cargar si se edita =====
-    let PET_ID = qsp('id', null);
-    (async function prefill(){
-      try{
-        if (PET_ID){
-          const p = await REST.getPet(PET_ID);
-          if (p){
-            if (p.fotoDataUrl){ fotoDataUrl = p.fotoDataUrl; if (preview) preview.src = fotoDataUrl; }
-            $('nombre').value           = p.nombre || '';
-            microchip.value             = p.microchip || '';
-            noChip.checked              = !p.microchip;
-            especie.value               = p.especie || '';
-            raza.value = (p.especie==='Exótico') ? (p.tipoExotico||'') : (p.raza||'');
-            $('edad').value             = p.edad ?? '';
-            $('peso').value             = p.peso ?? '';
-            $('sexo').value             = p.sexo || '';
-            $('esterilizado').value     = p.esterilizado || '';
-            $('patologias').value       = p.patologias || '';
-            $('via').value              = p.via || '';
-            $('comidas').value          = p.comidas || '';
-            vacunas.value               = p.vacunas || '';
-            faltan.value                = p.faltan || '';
-            $('comportamiento').value   = p.comportamiento || '';
-            seguroVet.value             = p.seguroVet || '';
-            aseguradora.value           = p.aseguradora || '';
-            poliza.value                = p.poliza || '';
-            $('seguroRC').value         = p.seguroRC || '';
-            $('comentarios').value      = p.comentarios || '';
-            btnDel.style.display='inline-flex';
-          } else {
-            btnDel.style.display='none';
-          }
-        } else {
-          btnDel.style.display='none';
-        }
-      }catch(_){ btnDel.style.display='none'; }
-      toggleMicrochip(); toggleEspecie(); toggleVacunas(); toggleSeguro();
-    })();
-
-    // ===== Guardar =====
-    form.addEventListener('submit', async (e)=>{
-      e.preventDefault(); if (ok) ok.style.display='none'; if (err) err.style.display='none';
-      if (vacunas.value==='No' && !faltan.value.trim()){ return faltan.reportValidity(); }
-      if (seguroVet.value==='Sí' && (!aseguradora.value.trim() || !poliza.value.trim())){ aseguradora.reportValidity(); poliza.reportValidity(); return; }
-      if (!form.checkValidity()){ form.reportValidity(); return; }
-
-      const isExotico = (especie.value==='Exótico');
-      const data = {
-        fotoDataUrl: fotoDataUrl || undefined,
-        fotoUrl: '',
-        nombre: $('nombre').value.trim(),
-        microchip: noChip.checked ? '' : microchip.value.trim(),
-        especie: especie.value,
-        raza: isExotico ? '' : raza.value.trim(),
-        tipoExotico: isExotico ? raza.value.trim() : '',
-        edad: Number($('edad').value || 0),
-        peso: Number($('peso').value || 0),
-        sexo: $('sexo').value,
-        esterilizado: $('esterilizado').value,
-        patologias: $('patologias').value.trim(),
-        via: $('via').value.trim(),
-        comidas: $('comidas').value.trim(),
-        vacunas: vacunas.value,
-        faltan: (vacunas.value==='No') ? faltan.value.trim() : '',
-        comportamiento: $('comportamiento').value.trim(),
-        seguroVet: seguroVet.value,
-        aseguradora: (seguroVet.value==='Sí') ? aseguradora.value.trim() : '',
-        poliza: (seguroVet.value==='Sí') ? poliza.value.trim() : '',
-        seguroRC: $('seguroRC').value,
-        comentarios: $('comentarios').value.trim(),
-        updatedAt: new Date().toISOString()
-      };
-
-      try{
-        PET_ID = await REST.savePet(PET_ID, data);
-        if (ok){ ok.textContent='Guardado correctamente.'; ok.style.display='inline-flex'; }
-      }catch(e){
-        if (err){ err.textContent = 'No se pudo guardar: ' + (e.message||e); err.style.display='inline-flex'; }
-      }
-      setTimeout(()=> location.href = nextUrl(), 120);
-    });
-
-    // ===== Eliminar =====
-    btnDel?.addEventListener('click', async ()=>{
-      if (!PET_ID) return;
-      if (!confirm('¿Eliminar esta mascota?')) return;
-      try{ await REST.deletePet(PET_ID); }catch(_){}
-      location.href = nextUrl();
-    });
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = '';
+    if (edit) edit.style.display = 'none';
   }
+
+  function setOwnerComplete(mock){
+    setText('#tpl-owner-nombre', mock?.nombre || 'Tu nombre');
+    setText('#tpl-owner-telefono', mock?.telefono || '—');
+    setText('#tpl-owner-zona', mock?.zona || '—');
+    setText('#tpl-owner-email', mock?.email || '—');
+
+    const status = $('#tpl-owner-status');
+    if (status){
+      status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completo';
+    }
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = 'none';
+    if (edit) edit.style.display = '';
+  }
+
+  function setPetsEmpty(){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    $('#tpl-pets-status').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
+    if (empty) empty.style.display = 'flex';
+    hide(list);
+  }
+
+  function renderPets(pets){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    if (!Array.isArray(pets) || pets.length === 0) return setPetsEmpty();
+
+    if (empty) empty.style.display = 'none';
+    if (list){
+      list.innerHTML = '';
+      pets.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'tpl-pet-item';
+        item.innerHTML = `
+          <img class="tpl-pet-thumb" alt="Foto de ${escapeHtml(p.nombre||'mascota')}" src="${escapeAttr(p.foto||'images/pet-placeholder.png')}">
+          <div>
+            <div><strong>${escapeHtml(p.nombre||'Sin nombre')}</strong> · ${escapeHtml(p.especie||'')}</div>
+            <div style="color:#666;font-size:.9rem">${escapeHtml(p.raza || p.tipoExotico || '')} ${p.edad ? ('· ' + escapeHtml(p.edad)) : ''}</div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+      show(list);
+      $('#tpl-pets-status').innerHTML = `<i class="fa-solid fa-paw"></i> ${pets.length} ${pets.length===1?'mascota':'mascotas'}`;
+    }
+  }
+
+  function setBookingsEmpty(){
+    $('#tpl-bookings-status').innerHTML = '<i class="fa-regular fa-circle"></i> Sin reservas';
+    show($('#tpl-bookings-empty'));
+    hide($('#tpl-bookings-list'));
+  }
+
+  // Utilidades de escape
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+  function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
+
+  // Exponer helpers (por si los usamos luego)
+  window.__TPL_PERFIL__ = {
+    setOwnerComplete,
+    renderPets
+  };
 })();
-</script>
+/* TPL: FIN BLOQUE NUEVO */
