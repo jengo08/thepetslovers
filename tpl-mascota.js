@@ -1,6 +1,20 @@
-/* TPL: INICIO BLOQUE NUEVO [Guardar por click + Modo edición + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
+/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar en base por usuario (localStorage)] */
 (function(){
   'use strict';
+
+  // ====== Base por usuario (localStorage) ======
+  function getCurrentUserId(){
+    // Tu login debe setear esto: localStorage.setItem('tpl.currentUser', 'email@dominio.com')
+    return localStorage.getItem('tpl.currentUser') || 'default';
+  }
+  function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+  function udbGet(uid, key, fallback){
+    try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
+    catch(_){ return fallback; }
+  }
+  function udbSet(uid, key, value){
+    try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
+  }
 
   // ===== Listas (carga JSON si existe) =====
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
@@ -109,7 +123,7 @@
       }
       const tmp = URL.createObjectURL(f);
       preview.src = tmp;
-      avatarBox.classList.add('has-image');        // con imagen => se muestra foto
+      avatarBox.classList.add('has-image');        // con imagen
       photoPickRow.style.display = 'none';
       photoActions.style.display = 'flex';
 
@@ -150,17 +164,15 @@
     // ===== Seguro Vet: detalles SOLO si “Sí” =====
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
-      // TPL: INICIO BLOQUE NUEVO [Mostrar/ocultar con doble control]
       seguroVetData.classList.toggle('is-hidden', !yes);
       seguroVetData.hidden = !yes;
       seguroVetComp.required = seguroVetNum.required = yes;
       if (!yes){ seguroVetComp.value=''; seguroVetNum.value=''; }
-      // TPL: FIN BLOQUE NUEVO
     }
     seguroVet.addEventListener('change', toggleSeguroVet);
-    toggleSeguroVet(); // estado inicial correcto
+    toggleSeguroVet();
 
-    // ===== Cropper minimal (drag/flechas)
+    // ===== Cropper minimal (drag/flechas) =====
     const modal = byId('cropperModal');
     const cropCanvas = byId('cropCanvas');
     const ctx = cropCanvas.getContext('2d');
@@ -197,7 +209,7 @@
     modal.addEventListener('keydown', (e)=>{ if (!imageReady) return; const step=3; let moved=false; if (e.key==='ArrowLeft'){cropState.offX-=step;moved=true;} if (e.key==='ArrowRight'){cropState.offX+=step;moved=true;} if (e.key==='ArrowUp'){cropState.offY-=step;moved=true;} if (e.key==='ArrowDown'){cropState.offY+=step;moved=true;} if (moved){ e.preventDefault(); const p=drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; } if (e.key==='Escape'){ btnCancel.click(); } });
     btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
-    // ===== Modo edición (si ?edit=idx) =====
+    // ===== MODO EDICIÓN (lee de udb) =====
     (function initEditMode(){
       const params = new URLSearchParams(location.search);
       const e = params.get('edit');
@@ -205,8 +217,8 @@
       const idx = parseInt(e, 10);
       if (Number.isNaN(idx) || idx < 0) return;
 
-      let arr = [];
-      try { arr = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); } catch(_){}
+      const uid = getCurrentUserId();
+      const arr = udbGet(uid, 'pets', []);
       if (!Array.isArray(arr) || !arr[idx]) return;
 
       editIndex = idx;
@@ -216,7 +228,7 @@
       if (h1) h1.textContent = 'Editar mascota';
       if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
 
-      byId('nombre').value = pet.nombre || '';
+      nombre.value = pet.nombre || '';
       if ((pet.microchip||'') === 'No tiene'){
         microNo.checked = true;
         updateMicroState();
@@ -257,18 +269,18 @@
       existingFotoDataUrl = pet.foto || '';
       if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
         preview.src = existingFotoDataUrl;
-        avatarBox.classList.add('has-image');   // muestra foto
+        avatarBox.classList.add('has-image');
         photoPickRow.style.display = 'none';
         photoActions.style.display = 'flex';
       } else {
-        avatarBox.classList.remove('has-image'); // solo huellita
+        avatarBox.classList.remove('has-image');
         photoActions.style.display = 'none';
         photoPickRow.style.display = 'block';
         updateSpeciesIcon();
       }
     })();
 
-    // ===== Guardar por CLICK (crear/actualizar) =====
+    // ===== Guardar (crear/actualizar) directamente en udb =====
     saveBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
@@ -307,23 +319,23 @@
         foto: ''
       };
 
-      const file = fileInput.files && fileInput.files[0];
+      const uid = getCurrentUserId();
       const finalize = (dataUrl) => {
         const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
         mascota.foto = baseFoto;
 
-        try{
-          const arr = JSON.parse(sessionStorage.getItem('tpl.pets')||'[]');
-          if (editIndex >= 0 && Array.isArray(arr) && arr[editIndex]){
-            arr[editIndex] = mascota;   // actualizar
-          } else {
-            arr.push(mascota);          // crear
-          }
-          sessionStorage.setItem('tpl.pets', JSON.stringify(arr));
-        }catch(_){}
+        const arr = udbGet(uid, 'pets', []);
+        if (editIndex >= 0 && Array.isArray(arr) && arr[editIndex]){
+          arr[editIndex] = mascota;   // actualizar
+        } else {
+          arr.push(mascota);          // crear
+        }
+        udbSet(uid, 'pets', arr);
+
         location.assign('perfil.html');
       };
 
+      const file = fileInput.files && fileInput.files[0];
       if (currentCroppedDataUrl){ finalize(currentCroppedDataUrl); }
       else if (file){
         const reader = new FileReader();
@@ -348,7 +360,7 @@
     });
   });
 
-  // Refrescar datalist tras cargar JSON
+  // Refrescar datalist tras cargar JSON (fuera del DOMContentLoaded por el fetch inicial)
   function updateBreedList(){
     const especie = document.getElementById('especie');
     const labelRaza = document.getElementById('label-raza');
@@ -361,3 +373,4 @@
     else { labelRaza.textContent = 'Raza / Tipo *'; setOpts(breedList, []); }
   }
 })();
+ /* TPL: FIN BLOQUE NUEVO */
