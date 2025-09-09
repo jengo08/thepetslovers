@@ -265,8 +265,8 @@
 
         <!-- Acciones -->
         <div class="tpl-actions col-span-2">
-          <button type="submit" class="cta-button">Guardar</button>
-          <a href="perfil.html" class="cta-button link">Cancelar</a>
+          <button type="submit" class="cta-button" id="btnSave">Guardar</button>
+          <a href="perfil.html" class="cta-button link" id="btnCancel">Cancelar</a>
           <button type="button" id="tpl-btn-eliminar" class="cta-button danger" style="display:none">Eliminar</button>
           <span class="msg ok" id="tpl-msg-ok"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</span>
           <span class="msg err" id="tpl-msg-err"></span>
@@ -309,6 +309,8 @@
       const ok     = document.getElementById('tpl-msg-ok');
       const err    = document.getElementById('tpl-msg-err');
       const btnDel = document.getElementById('tpl-btn-eliminar');
+      const btnSave= document.getElementById('btnSave');
+      const btnCancel = document.getElementById('btnCancel');
 
       const fotoInput   = document.getElementById('foto');
       const btnCambiar  = document.getElementById('btnCambiarFoto');
@@ -335,10 +337,15 @@
       const labelRaza   = document.getElementById('label-raza');
 
       function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name) || fb; }
+      function nextUrl(){ const u=new URL(location.href); return u.searchParams.get('next') || 'perfil.html'; } /* TPL: INICIO BLOQUE NUEVO [redir flexible] */
       function showEl(el){ el.classList.remove('is-hidden'); }
       function hideEl(el){ el.classList.add('is-hidden'); }
       function showInline(el, ok=true){ el.style.display = ok ? 'inline-flex' : 'none'; }
       function hide(el){ el.style.display = 'none'; }
+      function lockForm(lock){ try{ form.setAttribute('aria-busy', lock?'true':'false'); btnSave.disabled = !!lock; }catch(_){}} /* TPL: INICIO BLOQUE NUEVO [bloqueo mientras guarda] */
+
+      // Actualiza Cancel para respetar ?next=
+      btnCancel.setAttribute('href', nextUrl()); /* TPL: INICIO BLOQUE NUEVO */
 
       const MODE_NEW = qsp('mode','') === 'new';
       let   PET_ID   = qsp('id','');   // Firestore doc id
@@ -444,7 +451,7 @@
       }
       // TPL: FIN BLOQUE NUEVO
 
-      // TPL: INICIO BLOQUE NUEVO [Seguro vet condicional — ¡FALTABA!]
+      // TPL: INICIO BLOQUE NUEVO [Seguro vet condicional]
       function toggleSeguroVet(){
         if (seguroVet.value === 'Sí'){
           showEl(wrapSeguro);
@@ -693,13 +700,15 @@
         };
 
         try{
+          lockForm(true); /* TPL: INICIO BLOQUE NUEVO */
           const u = auth.currentUser;
           await savePet(u?.uid || null, data);
           ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href='perfil.html'; }, 450);
+          setTimeout(()=>{ location.href = nextUrl(); }, 450);
         }catch(e){
           err.textContent = 'No se pudo guardar: ' + (e?.message || e);
           err.style.display='inline-flex';
+          lockForm(false); /* TPL: FIN BLOQUE NUEVO */
         }
       });
 
@@ -707,14 +716,16 @@
         if (!confirm('¿Eliminar esta mascota?')) return;
         ok.style.display='none'; err.style.display='none';
         try{
+          lockForm(true); /* TPL: INICIO BLOQUE NUEVO */
           const u = auth.currentUser;
           await deletePet(u?.uid || null);
           ok.textContent = 'Eliminada correctamente.';
           ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href='perfil.html'; }, 400);
+          setTimeout(()=>{ location.href = nextUrl(); }, 400);
         }catch(e){
           err.textContent = 'No se pudo eliminar: ' + (e?.message || e);
           err.style.display='inline-flex';
+          lockForm(false); /* TPL: FIN BLOQUE NUEVO */
         }
       });
     })();
