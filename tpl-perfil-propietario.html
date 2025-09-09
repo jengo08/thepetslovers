@@ -91,7 +91,7 @@
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase compat + config coherente] -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -100,17 +100,14 @@
       apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
       authDomain: "thepetslovers-c1111.firebaseapp.com",
       projectId: "thepetslovers-c1111",
-      /* TPL: INICIO BLOQUE NUEVO [storageBucket correcto] */
       storageBucket: "thepetslovers-c1111.appspot.com",
-      /* TPL: FIN BLOQUE NUEVO */
       messagingSenderId: "415914577533",
       appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
       measurementId: "G-FXPD69KXBG"
     };
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de formulario propietario (leer/guardar)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Lógica de formulario propietario (fix submit)] -->
   <script>
     (function(){
       if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
@@ -136,6 +133,7 @@
         if (kind === 'ok') msg.classList.add('tpl-ok');
         if (kind === 'err') msg.classList.add('tpl-err');
       }
+      function lockForm(lock){ try{ form.setAttribute('aria-busy', lock ? 'true':'false'); btnSave.disabled = !!lock; }catch(_){} }
 
       async function loadProfile(uid){
         setMsg('Cargando…');
@@ -164,13 +162,6 @@
         }), { merge:true });
       }
 
-      function lockForm(lock){
-        try{
-          form.setAttribute('aria-busy', lock ? 'true' : 'false');
-          btnSave.disabled = !!lock;
-        }catch(_){}
-      }
-
       auth.onAuthStateChanged(async (u)=>{
         if (!u || u.isAnonymous){
           location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(location.pathname + location.search);
@@ -180,6 +171,7 @@
         emailHidden.value = u.email || '';
         await loadProfile(u.uid);
 
+        // 🔧 FIX: quitamos { once:true } para permitir reintentos si la validación falla
         form.addEventListener('submit', async (ev)=>{
           ev.preventDefault();
           if (typeof form.reportValidity === 'function' && !form.reportValidity()) return;
@@ -193,7 +185,6 @@
             preferencias: form.preferencias.value.trim()
           };
 
-          // Validaciones mínimas
           if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.', 'err'); return; }
           if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.', 'err'); return; }
 
@@ -202,15 +193,15 @@
             lockForm(true);
             await saveProfile(u.uid, data);
             setMsg('¡Perfil guardado!', 'ok');
-            // Marca bandera local para habilitar reserva al volver
             try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
             location.href = nextUrl();
           }catch(e){
             console.error('Perfil propietario: save error', e);
-            setMsg('No se pudo guardar. Intenta de nuevo.', 'err');
+            // Mensaje de error claro para diagnosticar
+            setMsg('No se pudo guardar. ' + (e?.message || e), 'err');
             lockForm(false);
           }
-        }, { once: true }); // TPL: INICIO BLOQUE NUEVO [evitar doble submit]
+        });
       });
     })();
   </script>
