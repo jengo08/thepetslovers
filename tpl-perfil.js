@@ -177,6 +177,170 @@
     }, {passive:false});
   }
 
+/* TPL: INICIO BLOQUE NUEVO [Reservas: helpers + render + Firestore opcional] */
+  function formatDateES(iso){
+    if (!iso) return '—';
+    try{
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const dd = String(d.getDate()).padStart(2,'0');
+      const mm = String(d.getMonth()+1).padStart(2,'0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }catch(_){ return iso; }
+  }
+
+  function renderBookingsUI(items){
+    const pill  = $('#tpl-bookings-status');
+    const empty = $('#tpl-bookings-empty');
+    const list  = $('#tpl-bookings-list');
+
+    // Si la sección no existe en este HTML, salimos sin romper nada
+    if (!pill || !empty || !list) return;
+
+    if (!items || !items.length){
+      pill.innerHTML = '<i class="fa-regular fa-circle"></i> Sin reservas';
+      empty.style.display = '';
+      list.hidden = true;
+      list.innerHTML = '';
+      return;
+    }
+
+    const data = items.slice(0,3);
+    pill.innerHTML = `<i class="fa-solid fa-calendar-check"></i> ${data.length} reserva${data.length>1?'s':''}`;
+    empty.style.display = 'none';
+    list.hidden = false;
+
+    list.innerHTML = data.map(it=>{
+      const estado = String(it.estado || it._estado || 'enviada').toLowerCase();
+      const badge = estado === 'aceptada'  ? '<span class="tpl-pill"><i class="fa-regular fa-circle-check"></i> Aceptada</span>'
+                  : estado.includes('revis') ? '<span class="tpl-pill"><i class="fa-regular fa-hourglass-half"></i> En revisión</span>'
+                  : estado.includes('rech')  ? '<span class="tpl-pill"><i class="fa-regular fa-circle-xmark"></i> Rechazada</span>'
+                  : '<span class="tpl-pill"><i class="fa-regular fa-paper-plane"></i> Enviada</span>';
+
+      const svc = escapeHtml(it.serviceText || it.service || it.Servicio || '—');
+      const f1  = formatDateES(it.startDate || it.Fecha_inicio);
+      const f2  = formatDateES(it.endDate   || it.Fecha_fin);
+      const nm  = escapeHtml((it.petNames||it.Mascotas_lista||'').replace(/\|/g, ', '));
+
+      return `
+        <div class="tpl-empty" style="border-style:solid">
+          <i class="fa-regular fa-calendar"></i>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <strong>${svc}</strong>
+            <span>${f1}${f2 && f2!==f1 ? ' → '+f2 : ''}</span>
+            ${nm ? `<span style="color:#666">Mascotas: ${nm}</span>` : ''}
+            <div>${badge}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Snapshot local opcional (lo escribiremos desde reserva.js)
+  function readLocalLastReservation(uid){
+    try{
+      const raw = localStorage.getItem(udbKey(uid,'lastReservation'));
+      if (!raw) return null;
+      const x = JSON.parse(raw);
+      return {
+        service: x.service || x.Servicio,
+        serviceText: x.service || x.Servicio,
+        startDate: x.startDate || x.Fecha_inicio,
+        endDate: x.endDate || x.Fecha_fin,
+        estado: x.estado || x._estado || 'enviada',
+        petNames: x.petNames || x.Mascotas_lista || ''
+      };
+    }catch(_){ return null; }
+  }
+
+  // Carga perezosa Firebase v8 (compat namespaced) si no está presente
+  function lazyLoadFirebase(cb){
+    if (window.firebase && firebase.app) { cb && cb(); return; }
+    const urls = [
+      'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+      'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
+      'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
+    ];
+    let i=0;
+    (function next(){
+      if (i>=urls.length){ cb && cb(); return; }
+      const s=document.createElement('script');
+      s.src=urls[i++]; s.async=true; s.onload=next; s.onerror=function(){ console.warn('[tpl-perfil] No se pudo cargar Firebase SDK'); cb && cb(); };
+      document.head.appendChild(s);
+    })();
+  }
+
+  async function fetchBookingsFromFirestore(uid){
+    try{
+      if (!(window.firebase && firebase.firestore)) return [];
+      // Asegurar app init si no lo está
+      if (!firebase.apps || !firebase.apps.length){
+        const cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
+        if (cfg) { try{ firebase.initializeApp(cfg); }catch(_){ /* noop */ } }
+      }
+      const db = firebase.firestore();
+
+      // Si hay usuario logueado, usar su uid real
+      const auth = firebase.auth ? firebase.auth() : null;
+      const u = auth && auth.currentUser ? auth.currentUser : null;
+      const realUid = (u && u.uid) ? u.uid : uid;
+      if (!realUid) return [];
+
+      let snap;
+      try{
+        snap = await db.collection('reservas')
+          .where('_uid','==', realUid)
+          .orderBy('_createdAt','desc')
+          .limit(10)
+          .get();
+      }catch(_){
+        snap = await db.collection('reservas')
+          .where('_uid','==', realUid)
+          .limit(10)
+          .get();
+      }
+
+      const rows = snap.docs.map(d => ({ id: d.id, ...(d.data()||{}) }));
+      const norm = rows.map(r => ({
+        id: r.id,
+        service: r.Servicio,
+        serviceText: r.Servicio,
+        startDate: r.Fecha_inicio,
+        endDate: r.Fecha_fin,
+        estado: r._estado || r.estado || 'enviada',
+        petNames: r.Mascotas_lista || '',
+        createdAt: r._createdAt ? (r._createdAt.toDate ? r._createdAt.toDate().getTime() : Date.parse(r._createdAt)) : 0
+      }));
+      norm.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      return norm;
+    }catch(_){ return []; }
+  }
+
+  async function loadBookings(){
+    const uid = getCurrentUserId();
+
+    // 1) Pintar algo inmediato si existe snapshot local
+    const localLast = readLocalLastReservation(uid);
+    if (localLast) renderBookingsUI([localLast]); else renderBookingsUI([]);
+
+    // 2) Intentar Firebase (si se puede)
+    lazyLoadFirebase(async ()=>{
+      try{
+        if (!(window.firebase && firebase.auth)) return;
+        const auth = firebase.auth();
+        // Si ya hay usuario autenticado, vamos directo; si no, esperamos a onAuthStateChanged
+        const doFetch = async ()=>{
+          const list = await fetchBookingsFromFirestore(uid);
+          if (list && list.length) renderBookingsUI(list);
+        };
+        if (auth.currentUser){ doFetch(); }
+        auth.onAuthStateChanged(u=>{ if (u) doFetch(); });
+      }catch(_){}
+    });
+  }
+/* TPL: FIN BLOQUE NUEVO */
+
   // ---------- Inicio ----------
   function start(){
     setOwnerIncomplete();
@@ -184,6 +348,10 @@
     loadOwner();
     loadPetsAndRender();
     setupLogout();
+
+    /* TPL: INICIO BLOQUE NUEVO [Hook: cargar reservas] */
+    loadBookings();
+    /* TPL: FIN BLOQUE NUEVO */
   }
 
   if (document.readyState === 'loading') {
@@ -197,6 +365,9 @@
     if (e.persisted){
       loadOwner();
       loadPetsAndRender();
+      /* TPL: INICIO BLOQUE NUEVO [Re-pintar reservas en bfcache] */
+      loadBookings();
+      /* TPL: FIN BLOQUE NUEVO */
       const list = document.getElementById('tpl-pets-list');
       const empty = document.getElementById('tpl-pets-empty');
       if (list && list.children.length > 0 && empty){
@@ -210,6 +381,9 @@
     if (!ev) return;
     if (ev.key && ev.key.indexOf('tpl.udb.') === 0) {
       loadOwner(); loadPetsAndRender();
+      /* TPL: INICIO BLOQUE NUEVO [Escucha cambios que afecten reservas] */
+      if (ev.key.includes('.lastReservation') || ev.key === 'tpl.udb.lastChange'){ loadBookings(); }
+      /* TPL: FIN BLOQUE NUEVO */
     }
     if (ev.key === 'tpl.udb.lastChange'){
       loadOwner(); loadPetsAndRender();
@@ -217,6 +391,6 @@
   });
 
   // Exponer (si se usa en otros lados)
-  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender });
+  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender, refreshBookings: loadBookings });
 })();
  /* TPL: FIN BLOQUE NUEVO */
