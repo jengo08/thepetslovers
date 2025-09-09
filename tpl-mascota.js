@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar/eliminar con confirmación overlay + UID robusto — FIX toggleSeguroVet] */
+/* TPL: INICIO BLOQUE NUEVO [Mascota: crear/editar/eliminar con confirm y UID robusto] */
 (function(){
   'use strict';
 
@@ -21,14 +21,10 @@
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
     catch(_){ return fallback; }
   }
-  function udbSet(uid, key, value){
-    try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
-  }
-  function udbHas(uid, key){
-    try { return localStorage.getItem(udbKey(uid,key)) !== null; } catch(_){ return false; }
-  }
+  function udbSet(uid, key, value){ try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){ } }
+  function udbHas(uid, key){ try { return localStorage.getItem(udbKey(uid,key)) !== null; }catch(_){ return false; } }
 
-  // ===== Listas (carga JSON si existe) =====
+  // ===== Listas de razas (con posible JSON externo) =====
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
   let CAT_BREEDS = ["Mestizo","Europeo Común","Siamés","Persa","Maine Coon","Bengalí","Ragdoll","Sphynx","British Shorthair","Scottish Fold","Azul Ruso","Noruego de Bosque","Bosque de Siberia","Abisinio","Exótico de Pelo Corto"];
   const EXOTIC_TYPES = ["Pájaro","Conejo","Hurón","Hámster","Cobaya","Erizo","Iguana","Lagarto","Camaleón","Serpiente","Rana","Tortuga","Araña","Otro"];
@@ -43,7 +39,7 @@
   // ===== Helpers =====
   const $ = (sel, root=document) => root.querySelector(sel);
   const byId = (id) => document.getElementById(id);
-  const setOpts = (datalist, arr) => { datalist.innerHTML = arr.map(x=>`<option value="${escapeHtml(x)}"></option>`).join(''); };
+  const setOpts = (datalist, arr) => { if(!datalist) return; datalist.innerHTML = arr.map(x=>`<option value="${escapeHtml(x)}"></option>`).join(''); };
   function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
 
   // ===== Estado foto / crop =====
@@ -112,7 +108,7 @@
 
       const saveBtn = byId('saveBtn');
 
-      // Botones/Modal eliminar
+      // Botones/Modal eliminar (si existen en tu HTML)
       const deleteRow = byId('tpl-delete-row');
       const deleteBtn = byId('tpl-delete');
       const deleteModal = byId('deleteModal');
@@ -121,6 +117,7 @@
 
       // Icono por especie (si no hay foto)
       function updateSpeciesIcon(){
+        if (!avatarIcon || !especie) return;
         const v = especie.value;
         let cls = 'fa-paw';
         if (v === 'Perro') cls = 'fa-dog';
@@ -130,33 +127,35 @@
       }
 
       // Preview al elegir archivo
-      fileInput.addEventListener('change', () => {
-        const f = fileInput.files && fileInput.files[0];
-        if (!f){
-          preview.src = 'images/pet-placeholder.png';
-          avatarBox.classList.remove('has-image');
-          photoActions.style.display='none';
-          photoPickRow.style.display='block';
-          currentCroppedDataUrl=''; originalImg=null; imageReady=false;
-          updateSpeciesIcon();
-          return;
-        }
-        const tmp = URL.createObjectURL(f);
-        preview.src = tmp;
-        avatarBox.classList.add('has-image');
-        photoPickRow.style.display = 'none';
-        photoActions.style.display = 'flex';
+      if (fileInput){
+        fileInput.addEventListener('change', () => {
+          const f = fileInput.files && fileInput.files[0];
+          if (!f){
+            if (preview) preview.src = 'images/pet-placeholder.png';
+            if (avatarBox) avatarBox.classList.remove('has-image');
+            if (photoActions) photoActions.style.display='none';
+            if (photoPickRow) photoPickRow.style.display='block';
+            currentCroppedDataUrl=''; originalImg=null; imageReady=false;
+            updateSpeciesIcon();
+            return;
+          }
+          const tmp = URL.createObjectURL(f);
+          if (preview) preview.src = tmp;
+          if (avatarBox) avatarBox.classList.add('has-image');
+          if (photoPickRow) photoPickRow.style.display = 'none';
+          if (photoActions) photoActions.style.display = 'flex';
 
-        originalImg = new Image();
-        originalImg.onload = ()=>{ URL.revokeObjectURL(tmp); imageReady = true; };
-        originalImg.src = tmp;
-        currentCroppedDataUrl='';
-      });
-
-      btnChange.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); fileInput.click(); });
+          originalImg = new Image();
+          originalImg.onload = ()=>{ URL.revokeObjectURL(tmp); imageReady = true; };
+          originalImg.src = tmp;
+          currentCroppedDataUrl='';
+        });
+      }
+      if (btnChange){ btnChange.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); fileInput && fileInput.click(); }); }
 
       // Microchip obligatorio salvo "No tiene"
       function updateMicroState(){
+        if (!microchip || !microNo) return;
         if (microNo.checked){
           microchip.value = '';
           microchip.setAttribute('disabled','disabled');
@@ -166,22 +165,23 @@
           microchip.setAttribute('required','required');
         }
       }
-      microNo.addEventListener('change', updateMicroState);
+      if (microNo){ microNo.addEventListener('change', updateMicroState); }
       updateMicroState();
 
       // Especie -> razas/tipos + icono
       function updateBreedList(){
+        if (!especie || !labelRaza || !breedList) return;
         const v = especie.value;
         if (v === 'Perro'){ labelRaza.textContent = 'Raza *'; setOpts(breedList, DOG_BREEDS); }
         else if (v === 'Gato'){ labelRaza.textContent = 'Raza *'; setOpts(breedList, CAT_BREEDS); }
         else if (v === 'Exótico'){ labelRaza.textContent = 'Especie (exóticos) *'; setOpts(breedList, EXOTIC_TYPES); }
         else { labelRaza.textContent = 'Raza / Tipo *'; setOpts(breedList, []); }
-        if (!avatarBox.classList.contains('has-image')) updateSpeciesIcon();
+        if (!(avatarBox && avatarBox.classList.contains('has-image'))) updateSpeciesIcon();
       }
-      especie.addEventListener('change', updateBreedList);
+      if (especie){ especie.addEventListener('change', updateBreedList); }
       updateBreedList();
 
-      /* TPL: INICIO BLOQUE NUEVO [FIX — función faltante: toggleSeguroVet] */
+      // ===== Seguro Vet: detalles SOLO si “Sí” (definición que faltaba) =====
       function toggleSeguroVet(){
         if (!seguroVet || !seguroVetData) return;
         const yes = (seguroVet.value === 'Sí');
@@ -194,11 +194,10 @@
           if (seguroVetNum)  seguroVetNum.value  = '';
         }
       }
-      if (seguroVet){ 
+      if (seguroVet){
         seguroVet.addEventListener('change', toggleSeguroVet);
         toggleSeguroVet();
       }
-      /* TPL: FIN BLOQUE NUEVO */
 
       // ===== Cropper minimal (drag/flechas) =====
       const modal = byId('cropperModal');
@@ -209,10 +208,10 @@
       let dragging=false, lastX=0, lastY=0;
 
       function openCropper(){
-        if (!modal || !cropCanvas || !ctx) return;
+        if (!modal || !cropCanvas || !ctx || !preview) return;
         if (!imageReady){
-          const src = preview && preview.src;
-          if (!src || /pet-placeholder\.png$/i.test(src)){ fileInput.click(); return; }
+          const src = preview.src;
+          if (!src || /pet-placeholder\.png$/i.test(src)){ fileInput && fileInput.click(); return; }
           originalImg = new Image();
           originalImg.onload = ()=>{ imageReady=true; initAndDraw(); };
           originalImg.crossOrigin = 'anonymous';
@@ -229,8 +228,8 @@
           cropCanvas.focus();
         }
       }
-      if (btnAdjust) btnAdjust.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); openCropper(); });
-      if (btnCancel) btnCancel.addEventListener('click', ()=>{ if(!modal)return; modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; });
+      if (btnAdjust){ btnAdjust.addEventListener('click', (e)=>{ e.preventDefault(); e.stopPropagation(); openCropper(); }); }
+      if (btnCancel){ btnCancel.addEventListener('click', ()=>{ if(!modal) return; modal.style.display='none'; modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }); }
       if (cropCanvas){
         cropCanvas.addEventListener('pointerdown', (e)=>{ if (!imageReady) return; dragging=true; cropCanvas.setPointerCapture(e.pointerId); lastX=e.clientX; lastY=e.clientY; });
         cropCanvas.addEventListener('pointermove', (e)=>{ if (!dragging || !imageReady) return; const dx=e.clientX-lastX, dy=e.clientY-lastY; lastX=e.clientX; lastY=e.clientY; const p=drawToCanvas(ctx, originalImg, cropState.offX+dx, cropState.offY+dy, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; });
@@ -240,7 +239,7 @@
       if (modal){
         modal.addEventListener('keydown', (e)=>{ if (!imageReady || !ctx || !cropCanvas) return; const step=3; let moved=false; if (e.key==='ArrowLeft'){cropState.offX-=step;moved=true;} if (e.key==='ArrowRight'){cropState.offX+=step;moved=true;} if (e.key==='ArrowUp'){cropState.offY-=step;moved=true;} if (e.key==='ArrowDown'){cropState.offY+=step;moved=true;} if (moved){ e.preventDefault(); const p=drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; } if (e.key==='Escape' && btnCancel){ btnCancel.click(); } });
       }
-      if (btnApply) btnApply.addEventListener('click', ()=>{ if (!imageReady || !ctx) return btnCancel && btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel && btnCancel.click(); });
+      if (btnApply){ btnApply.addEventListener('click', ()=>{ if (!imageReady || !ctx) return btnCancel && btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); if (preview) preview.src = currentCroppedDataUrl; if (avatarBox) avatarBox.classList.add('has-image'); btnCancel && btnCancel.click(); }); }
 
       // ===== MODO EDICIÓN (lee de udb) =====
       (function initEditMode(){
@@ -263,35 +262,37 @@
         if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
         if (deleteRow) deleteRow.style.display = 'flex';
 
-        nombre.value = pet.nombre || '';
+        if (nombre) nombre.value = pet.nombre || '';
         if ((pet.microchip||'') === 'No tiene'){
-          microNo.checked = true; updateMicroState();
+          if (microNo) microNo.checked = true;
+          updateMicroState();
         } else {
-          microNo.checked = false; updateMicroState();
-          microchip.value = pet.microchip || '';
+          if (microNo) microNo.checked = false;
+          updateMicroState();
+          if (microchip) microchip.value = pet.microchip || '';
         }
 
-        especie.value = pet.especie || '';
+        if (especie) especie.value = pet.especie || '';
         updateBreedList();
-        raza.value = pet.raza || pet.tipoExotico || '';
+        if (raza) raza.value = pet.raza || pet.tipoExotico || '';
 
-        edad.value = pet.edad || '';
-        peso.value = pet.peso || '';
-        esterilizado.value = pet.esterilizado || '';
-        vacunas.value = pet.vacunas || '';
-        salud.value = pet.salud || '';
-        tratamiento.value = pet.tratamiento || '';
-        comidas.value = pet.comidas || '';
-        salidas.value = pet.salidas || '';
-        tamano.value = pet.tamano || '';
-        clinica.value = pet.clinica || '';
-        hospitalPref.value = pet.hospitalPref || '';
-        comportamiento.value = pet.comportamiento || '';
+        if (edad) edad.value = pet.edad || '';
+        if (peso) peso.value = pet.peso || '';
+        if (esterilizado) esterilizado.value = pet.esterilizado || '';
+        if (vacunas) vacunas.value = pet.vacunas || '';
+        if (salud) salud.value = pet.salud || '';
+        if (tratamiento) tratamiento.value = pet.tratamiento || '';
+        if (comidas) comidas.value = pet.comidas || '';
+        if (salidas) salidas.value = pet.salidas || '';
+        if (tamano) tamano.value = pet.tamano || '';
+        if (clinica) clinica.value = pet.clinica || '';
+        if (hospitalPref) hospitalPref.value = pet.hospitalPref || '';
+        if (comportamiento) comportamiento.value = pet.comportamiento || '';
 
-        camaras.value = pet.camaras || '';
-        fotosSel.value = pet.fotos || '';
+        if (camaras) camaras.value = pet.camaras || '';
+        if (fotosSel) fotosSel.value = pet.fotos || '';
 
-        if (seguroVet){ 
+        if (seguroVet){
           seguroVet.value = pet.seguroVet || '';
           toggleSeguroVet();
           if (seguroVet.value === 'Sí'){
@@ -303,34 +304,33 @@
 
         existingFotoDataUrl = pet.foto || '';
         if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
-          preview.src = existingFotoDataUrl;
-          avatarBox.classList.add('has-image');
-          photoPickRow.style.display = 'none';
-          photoActions.style.display = 'flex';
+          if (preview) preview.src = existingFotoDataUrl;
+          if (avatarBox) avatarBox.classList.add('has-image');
+          if (photoPickRow) photoPickRow.style.display = 'none';
+          if (photoActions) photoActions.style.display = 'flex';
         } else {
-          avatarBox.classList.remove('has-image');
-          photoActions.style.display = 'none';
-          photoPickRow.style.display = 'block';
+          if (avatarBox) avatarBox.classList.remove('has-image');
+          if (photoActions) photoActions.style.display = 'none';
+          if (photoPickRow) photoPickRow.style.display = 'block';
           updateSpeciesIcon();
         }
       })();
 
       // ===== Guardar (crear/actualizar) =====
-      saveBtn.addEventListener('click', (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
+      function doSave(){
+        if (!form) return false;
 
-        if (!microNo.checked && !microchip.value.trim()){
+        if (microNo && !microNo.checked && microchip && !microchip.value.trim()){
           alert('El microchip es obligatorio (o marca “No tiene”).');
-          microchip.focus();
-          return;
+          microchip && microchip.focus();
+          return false;
         }
-        if (!form.reportValidity()) return;
+        if (typeof form.reportValidity === 'function' && !form.reportValidity()) return false;
 
         const fd = new FormData(form);
         const mascota = {
           nombre: (fd.get('nombre')||'').toString().trim(),
-          microchip: microNo.checked ? 'No tiene' : (fd.get('microchip')||'').toString().trim(),
+          microchip: (microNo && microNo.checked) ? 'No tiene' : (fd.get('microchip')||'').toString().trim(),
           especie: (fd.get('especie')||'').toString(),
           raza: (fd.get('raza')||'').toString().trim(),
           edad: (fd.get('edad')||'').toString().trim(),
@@ -348,8 +348,8 @@
           camaras: (fd.get('camaras')||'').toString(),
           fotos: (fd.get('fotos')||'').toString(),
           seguroVet: (fd.get('seguroVet')||'').toString(),
-          seguroVetComp: (seguroVet && seguroVet.value==='Sí') ? (byId('seguroVetComp').value||'') : '',
-          seguroVetNum:  (seguroVet && seguroVet.value==='Sí') ? (byId('seguroVetNum').value ||'') : '',
+          seguroVetComp: (seguroVet && seguroVet.value==='Sí') ? (byId('seguroVetComp')?.value||'') : '',
+          seguroVetNum:  (seguroVet && seguroVet.value==='Sí') ? (byId('seguroVetNum')?.value ||'') : '',
           seguroRC: (fd.get('seguroRC')||'').toString(),
           foto: ''
         };
@@ -376,7 +376,7 @@
           location.assign('perfil.html');
         };
 
-        const file = fileInput.files && fileInput.files[0];
+        const file = fileInput && fileInput.files && fileInput.files[0];
         if (currentCroppedDataUrl){ finalize(currentCroppedDataUrl); }
         else if (file){
           const reader = new FileReader();
@@ -398,15 +398,45 @@
         } else {
           finalize('');
         }
-      });
+        return false;
+      }
 
-      /* TPL: INICIO BLOQUE NUEVO [Eliminar mascota con overlay] */
+      // Exponer para posible uso inline
+      window.__TPL_PET_SAVE__ = doSave;
+
+      if (saveBtn){
+        saveBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doSave(); });
+      }
+
+      /* ===== Eliminar mascota ===== */
+      function actuallyDelete(){
+        if (editIndex < 0) return;
+        const uid = getCurrentUserId();
+        const hasPets = udbHas(uid, 'pets');
+        let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+        if (!Array.isArray(arr)) arr = [];
+        if (arr[editIndex]) arr.splice(editIndex, 1);
+
+        udbSet(uid, 'pets', arr);
+        if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
+        try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
+
+        location.assign('perfil.html');
+      }
+      window.__TPL_PET_DELETE__ = actuallyDelete;
+
       function openDeleteModal(){
-        if (!deleteModal) return;
-        deleteModal.style.display = 'flex';
-        deleteModal.setAttribute('aria-hidden','false');
-        document.body.style.overflow = 'hidden';
-        if (btnConfirmDelete) btnConfirmDelete.focus();
+        if (deleteModal){
+          deleteModal.style.display = 'flex';
+          deleteModal.setAttribute('aria-hidden','false');
+          document.body.style.overflow = 'hidden';
+          btnConfirmDelete && btnConfirmDelete.focus();
+        } else {
+          // Fallback simple si no tienes el overlay en el HTML
+          if (confirm('¿Seguro que quieres eliminar esta mascota? No hay vuelta atrás.')) {
+            actuallyDelete();
+          }
+        }
       }
       function closeDeleteModal(){
         if (!deleteModal) return;
@@ -415,49 +445,20 @@
         document.body.style.overflow = '';
       }
 
-      if (deleteBtn){
-        deleteBtn.addEventListener('click', function(e){
-          e.preventDefault();
-          if (editIndex < 0) return; // solo en modo edición
-          openDeleteModal();
-        });
-      }
-      if (btnCancelDelete){
-        btnCancelDelete.addEventListener('click', function(){ closeDeleteModal(); });
-      }
+      if (deleteBtn){ deleteBtn.addEventListener('click', function(e){ e.preventDefault(); openDeleteModal(); }); }
+      if (btnCancelDelete){ btnCancelDelete.addEventListener('click', function(){ closeDeleteModal(); }); }
       if (deleteModal){
-        deleteModal.addEventListener('click', function(e){
-          if (e.target === deleteModal) closeDeleteModal(); // clic fuera cierra
-        });
-        deleteModal.addEventListener('keydown', function(e){
-          if (e.key === 'Escape') closeDeleteModal();
-        });
+        deleteModal.addEventListener('click', function(e){ if (e.target === deleteModal) closeDeleteModal(); });
+        deleteModal.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDeleteModal(); });
       }
-      if (btnConfirmDelete){
-        btnConfirmDelete.addEventListener('click', function(){
-          if (editIndex < 0) return;
-          const uid = getCurrentUserId();
-          const hasPets = udbHas(uid, 'pets');
-          let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-          if (!Array.isArray(arr)) arr = [];
-          if (arr[editIndex]) arr.splice(editIndex, 1);
-
-          udbSet(uid, 'pets', arr);
-          if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
-          try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
-
-          closeDeleteModal();
-          location.assign('perfil.html');
-        });
-      }
-      /* TPL: FIN BLOQUE NUEVO */
+      if (btnConfirmDelete){ btnConfirmDelete.addEventListener('click', function(){ closeDeleteModal(); actuallyDelete(); }); }
 
     }catch(err){
       console.error('[tpl-mascota] init error:', err);
     }
   });
 
-  // Refrescar datalist tras cargar JSON
+  // Refrescar datalist tras cargar JSON (si llegó después del DOMContentLoaded)
   function updateBreedList(){
     const especie = document.getElementById('especie');
     const labelRaza = document.getElementById('label-raza');
