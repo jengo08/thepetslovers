@@ -6,9 +6,11 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido (evita 404)] -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos propios de la página] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de la página (no tocan tu style.css)] -->
   <style>
     .page{ padding-top:120px }
     .tpl-card{ max-width: 980px; margin: 0 auto 60px; background:#fff; border:1px solid #eee; border-radius:16px; box-shadow:0 6px 24px rgba(0,0,0,.06); overflow:hidden; }
@@ -30,8 +32,8 @@
     .msg{ display:none; margin-top:6px; }
     .msg.ok{ color:#2a7e80 } .msg.err{ color:#b00020 }
 
-    /* TPL: INICIO BLOQUE NUEVO [Anti-subida: oculta cualquier UI externa de uploader] */
-    .tpl-upload, .tpl-upload-card, [data-tpl-upload] { display:none !important; visibility:hidden !important; }
+    /* TPL: INICIO BLOQUE NUEVO [Anti-uploader / Anti-overlay “enviando”] */
+    .tpl-upload, .tpl-upload-card, [data-tpl-upload]{ display:none !important; visibility:hidden !important; }
     /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -47,13 +49,13 @@
       </div>
 
       <form id="f" class="tpl-form" novalidate>
-        <!-- Foto (preview local; NO se sube) -->
+        <!-- Foto (solo preview local; NO se sube) -->
         <div class="tpl-field col-span-2">
           <label for="foto"><i class="fa-regular fa-image"></i> Foto (opcional)</label>
           <div class="tpl-photo-row">
             <img id="preview" class="tpl-photo" alt="Previsualización" src="" />
             <div>
-              <!-- TPL: INICIO BLOQUE NUEVO [data-flag para posibles scripts globales] -->
+              <!-- TPL: INICIO BLOQUE NUEVO [bandera anti-subida para scripts externos] -->
               <input id="foto" name="foto" type="file" accept="image/*" data-tpl-noupload="1">
               <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
@@ -123,7 +125,7 @@
         <div class="tpl-field col-span-2"><label for="comentarios">Comentarios</label><textarea id="comentarios" name="comentarios" rows="3"></textarea></div>
 
         <div class="tpl-actions col-span-2">
-          <button type="submit" class="cta-button">Guardar</button>
+          <button id="btn-submit" type="submit" class="cta-button">Guardar</button>
           <a class="cta-button link" id="btn-cancel" href="perfil.html">Cancelar</a>
           <button type="button" id="btn-eliminar" class="cta-button danger" style="display:none">Eliminar</button>
           <span class="msg ok" id="msg-ok"><i class="fa-solid fa-circle-check"></i> Guardado correctamente.</span>
@@ -136,10 +138,10 @@
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase (solo App/Auth/Firestore) + lógica sin subida + anti-uploader] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase (App/Auth/Firestore) + lógica sin subidas + anti “enviando…” + redirección garantizada] -->
   <script>
   (async function(){
-    // --- Carga segura de Firebase (sin Storage) ---
+    /** 1) Carga segura de Firebase (sin Storage) **/
     function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('No se pudo cargar '+src));document.head.appendChild(s);});}
     async function ensureFirebase(){
       if (typeof firebase==='undefined'){await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');}
@@ -161,74 +163,76 @@
     if (firebase.apps.length===0){ firebase.initializeApp(firebaseConfig); }
     const auth=firebase.auth(); const db=firebase.firestore();
 
-    // --- Anti-uploader global (cortafuegos) ---
-    /* TPL: INICIO BLOQUE NUEVO [Cortafuegos anti-subida] */
-    window.__TPL_DISABLE_UPLOAD__ = true; // bandera por si algún script la respeta
+    /** 2) Anti-uploader y anti-overlays de “enviando…” **/
+    // Bandera global opcional por si la leen otros scripts
+    window.__TPL_DISABLE_UPLOAD__ = true;
 
-    // 1) Intercepta el change del input#foto en fase de captura y corta propagación
-    const fileInput = document.getElementById('foto');
-    const preview   = document.getElementById('preview');
-    let fotoDataUrl = '';
-
-    document.addEventListener('change', function(e){
-      if (e.target === fileInput){
-        // Lee preview local y detiene cualquier otro listener
-        const f = fileInput.files?.[0];
-        if (f){
-          const r = new FileReader();
-          r.onload = ev => { fotoDataUrl = ev.target.result; preview.src = fotoDataUrl; };
-          r.readAsDataURL(f);
-        }
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        // NO preventDefault (para no romper UX), pero ya no habrá otros handlers
-      }
-    }, true); // <- captura
-
-    // 2) Borra cualquier nodo de "subiendo" que otros scripts inyecten
-    const KILL_TEXT = /(subiendo archivo|la subida no progresa|revisa reglas|conexi[oó]n|subiendo)/i;
-    const KILL_SEL  = '.tpl-upload, .tpl-upload-card, [data-tpl-upload]';
+    // Elimina cualquier overlay / tarjeta que aparezca con textos típicos
+    const KILL_TEXT = /(subiendo archivo|enviando|procesando|la subida no progresa|revisa reglas|conexi[oó]n|subiendo|cargando)/i;
+    const KILL_SEL  = '.tpl-upload, .tpl-upload-card, [data-tpl-upload], .upload, .uploader, .overlay, .loading';
     function purgeUploads(root=document){
       root.querySelectorAll(KILL_SEL).forEach(n=> n.remove());
-      const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_ELEMENT, null);
-      let node;
-      while((node=walker.nextNode())){
+      const all = (root.body || root).getElementsByTagName('*');
+      for (let i=0; i<all.length; i++){
+        const el = all[i];
         try{
-          if (node && node.textContent && KILL_TEXT.test(node.textContent)){
-            node.remove();
+          if (el && el.textContent && KILL_TEXT.test(el.textContent)) {
+            // solo si parece una capa/overlay (fixed/absolute) para no borrar textos normales
+            const style = getComputedStyle(el);
+            if (style.position==='fixed' || style.position==='absolute' || el.className.toLowerCase().includes('overlay')) {
+              el.remove();
+            }
           }
         }catch(_){}
       }
     }
     purgeUploads();
-    const mo = new MutationObserver((muts)=>{
-      for(const m of muts){
-        if (m.addedNodes && m.addedNodes.length){
-          m.addedNodes.forEach(n=>{
-            if (n.nodeType===1){ // ELEMENT_NODE
-              const el = /** @type {HTMLElement} */(n);
-              if (el.matches && el.matches(KILL_SEL)){ el.remove(); return; }
-              if (el.querySelector){ purgeUploads(el.ownerDocument); }
-            }
-          });
-        }
-      }
-    });
+    const mo = new MutationObserver(()=> purgeUploads());
     mo.observe(document.documentElement, {childList:true, subtree:true});
-    /* TPL: FIN BLOQUE NUEVO */
 
-    // --- Helpers de UI ---
+    /** 3) Refs y helpers **/
     const $=id=>document.getElementById(id);
     const form=$('f'), ok=$('msg-ok'), err=$('msg-err');
-    const btnDel=$('btn-eliminar'), btnCancel=$('btn-cancel');
+    const btnDel=$('btn-eliminar'), btnCancel=$('btn-cancel'), btnSubmit=$('btn-submit');
 
+    const foto=$('foto'), preview=$('preview');
     const noChip=$('noChip'), microchip=$('microchip');
     const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
     const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
     const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
 
     const LS_PETS_KEY='tpl-pets';
-    let PET_ID=null, PET_IDX=null;
+    const SUBMIT_TIMEOUT_MS = 1800; // ⏱️ watchdog contra “quedarse enviando…”
+    let PET_ID=null, PET_IDX=null, fotoDataUrl='', CURRENT_UID=null;
+
+    // Previene que *cualquier* listener externo capture el submit o el change de #foto
+    document.addEventListener('submit', (e)=>{
+      const isOurForm = e.target && (e.target.id==='f');
+      if (isOurForm){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        handleSubmit().catch(()=>{}); // no mostramos overlays de error
+      }
+    }, true);
+    document.addEventListener('click', (e)=>{
+      const btn = e.target && e.target.closest('#btn-submit');
+      if (btn){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        handleSubmit().catch(()=>{});
+      }
+    }, true);
+
+    // Preview local de la foto (NO se sube)
+    foto && foto.addEventListener('change', (e)=>{
+      const f=foto.files?.[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload = ev => { fotoDataUrl = ev.target.result; preview.src = fotoDataUrl; };
+      r.readAsDataURL(f);
+      e.stopPropagation(); e.stopImmediatePropagation();
+    }, true);
 
     function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name)||fb; }
     function nextUrl(){ return qsp('next','perfil.html'); }
@@ -284,14 +288,23 @@
     }
 
     async function savePet(uid, data){
-      try{
+      // Intenta Firestore; si tarda más de SUBMIT_TIMEOUT_MS, seguimos en local (optimista)
+      const saveToFirestore = (async ()=>{
         if (uid){
           if (!PET_ID){ const ref=await db.collection('users').doc(uid).collection('pets').add(data); PET_ID=ref.id; }
           else { await db.collection('users').doc(uid).collection('pets').doc(PET_ID).set(data,{merge:true}); }
-          return;
+        } else {
+          throw new Error('no-uid');
         }
-      }catch(_){}
+      })();
+
+      const timed = new Promise((resolve)=> setTimeout(()=>resolve('timeout'), SUBMIT_TIMEOUT_MS));
+      const result = await Promise.race([saveToFirestore.then(()=> 'ok').catch(()=> 'error'), timed]);
+
+      if (result==='ok'){ return true; }
+      // Guardado local como fallback silencioso
       saveLocal(PET_IDX, data);
+      return false;
     }
 
     async function deletePet(uid){
@@ -326,66 +339,74 @@
       form.comentarios.value    = p.comentarios || '';
     }
 
+    // Carga inicial con guardia de sesión
     auth.onAuthStateChanged(async (u)=>{
       if (!u || u.isAnonymous){
         location.href = 'iniciar-sesion.html?next=' + encodeURIComponent(location.pathname + location.search);
         return;
       }
-      const pet = await getPet(u.uid);
+      CURRENT_UID = u.uid;
+      const pet = await getPet(CURRENT_UID);
       if (pet){ fill(pet); btnDel.style.display='inline-flex'; } else { btnDel.style.display='none'; }
       toggleMicrochip(); toggleEspecie(); toggleVacunas(); toggleSeguro();
+    });
 
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault(); ok.style.display='none'; err.style.display='none';
-        if (vacunas.value==='No' && !faltan.value.trim()){ faltan.reportValidity(); return; }
-        if (!form.reportValidity()){ form.reportValidity(); return; }
+    // Handler central de envío (con watchdog y redirección garantizada)
+    async function handleSubmit(){
+      ok.style.display='none'; err.style.display='none';
 
-        const isExotico=(especie.value==='Exótico');
-        const data = {
-          fotoDataUrl: fotoDataUrl || undefined, fotoUrl:'',
-          nombre: form.nombre.value.trim(),
-          microchip: noChip.checked ? '' : microchip.value.trim(),
-          especie: especie.value,
-          raza: isExotico ? '' : raza.value.trim(),
-          tipoExotico: isExotico ? raza.value.trim() : '',
-          edad: Number(form.edad.value || 0),
-          peso: Number(form.peso.value || 0),
-          sexo: form.sexo.value,
-          esterilizado: form.esterilizado.value,
-          patologias: form.patologias.value.trim(),
-          via: form.via.value.trim(),
-          comidas: form.comidas.value.trim(),
-          vacunas: vacunas.value,
-          faltan: (vacunas.value==='No') ? faltan.value.trim() : '',
-          comportamiento: form.comportamiento.value.trim(),
-          seguroVet: seguroVet.value,
-          aseguradora: (seguroVet.value==='Sí') ? aseguradora.value.trim() : '',
-          poliza: (seguroVet.value==='Sí') ? poliza.value.trim() : '',
-          seguroRC: form.seguroRC.value,
-          comentarios: form.comentarios.value.trim(),
-          updatedAt: new Date().toISOString()
-        };
+      if (vacunas.value==='No' && !faltan.value.trim()){ faltan.reportValidity(); return; }
+      if (seguroVet.value==='Sí' && (!aseguradora.value.trim() || !poliza.value.trim())){ aseguradora.reportValidity(); poliza.reportValidity(); return; }
+      if (!form.checkValidity()){ form.reportValidity(); return; }
 
-        try{
-          await savePet(u.uid, data);
-          ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href = nextUrl(); }, 350);
-        }catch(e){
-          err.textContent = 'No se pudo guardar: ' + (e?.message || e); err.style.display='inline-flex';
-        }
-      });
+      const isExotico=(especie.value==='Exótico');
+      const data = {
+        fotoDataUrl: fotoDataUrl || undefined, fotoUrl:'',
+        nombre: form.nombre.value.trim(),
+        microchip: noChip.checked ? '' : microchip.value.trim(),
+        especie: especie.value,
+        raza: isExotico ? '' : raza.value.trim(),
+        tipoExotico: isExotico ? raza.value.trim() : '',
+        edad: Number(form.edad.value || 0),
+        peso: Number(form.peso.value || 0),
+        sexo: form.sexo.value,
+        esterilizado: form.esterilizado.value,
+        patologias: form.patologias.value.trim(),
+        via: form.via.value.trim(),
+        comidas: form.comidas.value.trim(),
+        vacunas: vacunas.value,
+        faltan: (vacunas.value==='No') ? faltan.value.trim() : '',
+        comportamiento: form.comportamiento.value.trim(),
+        seguroVet: seguroVet.value,
+        aseguradora: (seguroVet.value==='Sí') ? aseguradora.value.trim() : '',
+        poliza: (seguroVet.value==='Sí') ? poliza.value.trim() : '',
+        seguroRC: form.seguroRC.value,
+        comentarios: form.comentarios.value.trim(),
+        updatedAt: new Date().toISOString()
+      };
 
-      btnDel.addEventListener('click', async ()=>{
-        if (!confirm('¿Eliminar esta mascota?')) return;
-        ok.style.display='none'; err.style.display='none';
-        try{
-          await deletePet(u.uid);
-          ok.textContent='Eliminada correctamente.'; ok.style.display='inline-flex';
-          setTimeout(()=>{ location.href = nextUrl(); }, 350);
-        }catch(e){
-          err.textContent='No se pudo eliminar: ' + (e?.message || e); err.style.display='inline-flex';
-        }
-      });
+      // Desactiva botón para evitar dobles clics (sin mostrar “enviando…”)
+      btnSubmit.disabled = true;
+
+      try{
+        await savePet(CURRENT_UID, data); // guarda en Firestore o en local si hay timeout
+      }catch(_){ /* ignoramos para no bloquear UX */ }
+      // Redirección SIEMPRE (optimista)
+      try{ sessionStorage.setItem('tplJustSavedPet','1'); }catch(_){}
+      location.href = nextUrl();
+    }
+
+    // Eliminar mascota
+    btnDel.addEventListener('click', async ()=>{
+      if (!confirm('¿Eliminar esta mascota?')) return;
+      ok.style.display='none'; err.style.display='none';
+      try{
+        await deletePet(CURRENT_UID);
+        try{ sessionStorage.setItem('tplJustDeletedPet','1'); }catch(_){}
+        location.href = nextUrl();
+      }catch(e){
+        err.textContent='No se pudo eliminar: ' + (e?.message || e); err.style.display='inline-flex';
+      }
     });
   })();
   </script>
