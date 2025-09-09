@@ -11,57 +11,45 @@
 
   <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del formulario de mascota] -->
   <style>
-    :root{
-      --tpl-color:#339496; --tpl-text:#58425a; --tpl-border:#ececec; --tpl-muted:#666; --tpl-bg:#fff;
-    }
+    :root{ --tpl-color:#339496; --tpl-text:#58425a; --tpl-border:#ececec; --tpl-muted:#666; --tpl-bg:#fff; }
     .tpl-page { padding-top: 110px; }
     .tpl-wrap { max-width: 920px; margin: 0 auto; padding: 16px; }
-    .tpl-card {
-      background: var(--tpl-bg); border:1px solid var(--tpl-border);
-      border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.04);
-    }
+    .tpl-card { background: var(--tpl-bg); border:1px solid var(--tpl-border); border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.04); }
     .tpl-card h1 { margin:0 0 4px; }
     .tpl-card p.lead { color: var(--tpl-muted); margin:0 0 10px; }
 
-    form.tpl-form { display:grid; gap:12px; }          /* más juntito */
-    .tpl-row { display:grid; grid-template-columns:1fr; gap: 10px; }
+    form.tpl-form { display:grid; gap:12px; } /* compacto */
+    .tpl-row { display:grid; grid-template-columns:1fr; gap:10px; }
     @media(min-width:840px){ .tpl-row { grid-template-columns: 1fr 1fr; } }
     .tpl-field { display:flex; flex-direction:column; gap:6px; }
     .tpl-field label { font-weight:600; color:var(--tpl-text); }
-    .tpl-input, .tpl-select, .tpl-textarea {
-      border:1px solid var(--tpl-border); border-radius:10px; padding:10px 12px; font:inherit; color:#222; background:#fff;
-    }
+    .tpl-input, .tpl-select, .tpl-textarea { border:1px solid var(--tpl-border); border-radius:10px; padding:10px 12px; font:inherit; color:#222; background:#fff; }
     .tpl-textarea { min-height: 96px; resize: vertical; }
     .tpl-help { font-size:.9rem; color:var(--tpl-muted); }
-
-    /* Avatar circular + overlay de texto */
-    .tpl-avatar {
-      position:relative; display:flex; align-items:center; gap:12px; padding:10px;
-      border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa;
-    }
-    .tpl-avatar-thumb{
-      width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff;
-    }
-    .tpl-avatar-hint{
-      position:absolute; left:10px; width:96px; height:96px; display:flex; align-items:center; justify-content:center;
-      text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none;
-    }
-    .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
-
     .tpl-actions { display:flex; gap:10px; flex-wrap:wrap; }
-    .tpl-btn {
-      display:inline-flex; align-items:center; gap:8px; justify-content:center;
-      border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border);
-      text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color);
-    }
+    .tpl-btn { display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border); text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color); }
     .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
 
-    .tpl-section-title{ margin:4px 0 2px; font-weight:700; color:var(--tpl-text); }
-    .tpl-sep{ height:1px; background:#f0f0f0; border:0; margin:2px 0 6px; }
+    /* Avatar circular + overlay de texto */
+    .tpl-avatar { position:relative; display:flex; align-items:center; gap:12px; padding:10px; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; }
+    .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
+    .tpl-avatar-hint{ position:absolute; left:10px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
+    .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
+    .tight { margin-top:-4px; }
 
-    .tight { margin-top: -4px; } /* compactar bloques cercanos */
+    /* Botonera foto (aparece tras elegir) */
+    .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; margin-left:116px; }
+    .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
 
-    .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
+    /* Modal cropper ligero */
+    .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
+    .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
+    .crop-area{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+    #cropCanvas{ width:320px; height:320px; background:#f3f3f3; border-radius:12px; border:1px solid #eee; }
+    .crop-controls{ display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+    .crop-controls label{ font-weight:600; color:var(--tpl-text); font-size:.9rem; }
+    .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -75,9 +63,7 @@
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
+        <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
         <a href="index.html" class="home-button">Inicio</a>
         <ul class="nav-links">
           <li><a href="como-funciona.html">Cómo funciona</a></li>
@@ -98,35 +84,46 @@
         <p class="lead">Completa los datos de tu mascota para agilizar tu reserva.</p>
 
         <form class="tpl-form" id="tpl-pet-form" novalidate>
-          <!-- ========== Datos de tu mascota (más compacto) ========== -->
+          <!-- ========== Datos de tu mascota ========== -->
           <div class="tpl-section-title">🐶 Datos de tu mascota</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
-          <!-- Foto (sin “opcional” y sin texto de uso) -->
+          <!-- Foto (sin “opcional”) -->
           <div class="tpl-field tight">
             <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
               <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
               <div class="tpl-avatar-hint">Sube foto de tu mascota</div>
-              <div style="margin-left:116px">
+
+              <div id="photoPickRow" style="margin-left:116px">
                 <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
+              </div>
+
+              <div id="photoActions" class="tpl-photo-actions" aria-live="polite">
+                <button type="button" class="tpl-btn secondary" id="btnChangePhoto"><i class="fa-solid fa-image"></i> Cambiar foto</button>
+                <button type="button" class="tpl-btn" id="btnAdjustPhoto"><i class="fa-solid fa-crop"></i> Ajustar</button>
               </div>
             </div>
           </div>
 
-          <!-- Nombre + Microchip (microchip sin checkbox, deja vacío si no tiene) -->
+          <!-- Nombre + Microchip (microchip obligatorio con “No tiene”) -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="nombre">Nombre de tu mascota <span aria-hidden="true">*</span></label>
               <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Luna, Max...">
             </div>
             <div class="tpl-field">
-              <label for="microchip">Número de microchip</label>
-              <input class="tpl-input" type="text" id="microchip" name="microchip" placeholder="Déjalo vacío si no tiene">
+              <label for="microchip">Número de microchip <span aria-hidden="true">*</span></label>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input class="tpl-input" type="text" id="microchip" name="microchip" placeholder="Ej. 9851230..." required>
+                <label style="display:flex;gap:6px;align-items:center;white-space:nowrap;">
+                  <input type="checkbox" id="microchip_no_tiene"> <span>No tiene</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <!-- Especie y Raza (sin textos extra) -->
+          <!-- Especie y Raza -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="especie">Especie <span aria-hidden="true">*</span></label>
@@ -174,7 +171,7 @@
             </div>
           </div>
 
-          <!-- Salud y rutinas (sin campo “Descripción”) -->
+          <!-- Salud y rutinas (sin campo Descripción) -->
           <div class="tpl-field">
             <label for="salud">¿Tiene alguna patología o tratamiento que debamos conocer? <span aria-hidden="true">*</span></label>
             <textarea id="salud" name="salud" class="tpl-textarea" required placeholder="Describir brevemente"></textarea>
@@ -221,18 +218,24 @@
             <textarea id="comportamiento" name="comportamiento" class="tpl-textarea" required placeholder="Sociable, nervioso, ladra a otros perros, etc."></textarea>
           </div>
 
-          <!-- ========== Cámaras + Extras (compacto) ========== -->
+          <!-- ========== Seguimiento y opciones ========== -->
           <div class="tpl-section-title">📸 Extras y seguimiento</div>
           <hr class="tpl-sep" aria-hidden="true"/>
 
           <div class="tpl-row">
             <div class="tpl-field">
-              <label for="camaras">¿Tienes cámaras en casa para seguimiento?</label>
+              <label><input type="checkbox" id="isVisita"> Este servicio es una visita a domicilio</label>
+            </div>
+            <div class="tpl-field" id="row-camaras" hidden>
+              <label for="camaras">¿Tienes cámaras en casa para seguimiento? <span aria-hidden="true">*</span></label>
               <select class="tpl-select" id="camaras" name="camaras">
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
             </div>
+          </div>
+
+          <div class="tpl-row">
             <div class="tpl-field">
               <label for="fotos">¿Te gustaría recibir fotos y vídeos durante el servicio?</label>
               <select class="tpl-select" id="fotos" name="fotos">
@@ -240,9 +243,7 @@
                 <option>Sí</option><option>No</option><option>Me da igual</option>
               </select>
             </div>
-          </div>
 
-          <div class="tpl-row">
             <div class="tpl-field">
               <label for="seguroVet">¿Tienes contratado seguro veterinario para tu mascota?</label>
               <select class="tpl-select" id="seguroVet" name="seguroVet">
@@ -257,15 +258,6 @@
                 </div>
               </div>
             </div>
-
-            <div class="tpl-field">
-              <label for="seguroRC">¿Tienes seguro de responsabilidad civil para tu mascota?</label>
-              <select class="tpl-select" id="seguroRC" name="seguroRC">
-                <option value="">Selecciona…</option>
-                <option>Sí</option><option>No</option>
-              </select>
-              <!-- Sin detalles: solo saber si lo tiene -->
-            </div>
           </div>
 
           <div class="tpl-actions">
@@ -276,6 +268,36 @@
       </div>
     </div>
   </main>
+
+  <!-- Modal de recorte -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper] -->
+  <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto">
+    <div class="box">
+      <h3><i class="fa-solid fa-crop"></i> Ajustar foto</h3>
+      <div class="crop-area">
+        <canvas id="cropCanvas" width="320" height="320"></canvas>
+        <div class="crop-controls">
+          <div>
+            <label for="zoomRange">Zoom</label>
+            <input type="range" id="zoomRange" min="1" max="3" step="0.01" value="1">
+          </div>
+          <div>
+            <label for="xRange">Desplazamiento X</label>
+            <input type="range" id="xRange" min="-100" max="100" step="1" value="0">
+          </div>
+          <div>
+            <label for="yRange">Desplazamiento Y</label>
+            <input type="range" id="yRange" min="-100" max="100" step="1" value="0">
+          </div>
+        </div>
+        <div class="crop-actions">
+          <button type="button" class="tpl-btn secondary" id="btnCancelCrop">Cancelar</button>
+          <button type="button" class="tpl-btn" id="btnApplyCrop">Aplicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
   <div id="tpl-footer">
