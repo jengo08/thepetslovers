@@ -10,8 +10,26 @@
   const escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
   // ---------- Base por usuario ----------
+  /* TPL: INICIO BLOQUE NUEVO [UID fallback a Firebase] */
+  function getFirebaseUid(){
+    try{
+      if (window.firebase && firebase.auth){
+        var u = firebase.auth().currentUser;
+        if (u && !u.isAnonymous && u.uid) return u.uid;
+      }
+    }catch(_){}
+    return null;
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   function getCurrentUserId(){
-    return localStorage.getItem('tpl.currentUser') || 'default';
+    const explicit = localStorage.getItem('tpl.currentUser');
+    if (explicit) return explicit;
+    /* TPL: INICIO BLOQUE NUEVO [Fallback UID Firebase si existe] */
+    const fuid = getFirebaseUid();
+    if (fuid) return fuid;
+    /* TPL: FIN BLOQUE NUEVO */
+    return 'default';
   }
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
@@ -151,6 +169,11 @@
         localStorage.removeItem('tpl.session');
         localStorage.removeItem('tpl.auth');
         localStorage.removeItem('tpl.currentUser');
+        /* TPL: INICIO BLOQUE NUEVO [Limpieza coherente con navbar/auth] */
+        localStorage.removeItem('tpl_auth_email');
+        localStorage.removeItem('tpl_auth_uid');
+        try{ document.body && document.body.setAttribute('data-auth','out'); }catch(_){}
+        /* TPL: FIN BLOQUE NUEVO */
       }catch(_){}
       location.assign('index.html');
     }, {passive:false});
@@ -178,6 +201,22 @@
       }
     }
   });
+
+  /* TPL: INICIO BLOQUE NUEVO [Reaccionar a cambios de sesión/almacenamiento] */
+  // Cuando navbar/auth anuncian cambio de sesión:
+  window.addEventListener('tpl-auth-change', function(){
+    loadOwner();
+    loadPetsAndRender();
+  });
+  // Si cambia storage (otra pestaña o logout):
+  window.addEventListener('storage', function(ev){
+    if (!ev) return;
+    if (ev.key === 'tpl.currentUser' || ev.key === 'tpl_auth_uid' || ev.key === 'tpl_auth_email'){
+      loadOwner();
+      loadPetsAndRender();
+    }
+  });
+  /* TPL: FIN BLOQUE NUEVO */
 
   // Exponer por si se usa externamente
   window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender });
