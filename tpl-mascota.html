@@ -18,7 +18,7 @@
     .tpl-card h1 { margin:0 0 4px; }
     .tpl-card p.lead { color: var(--tpl-muted); margin:0 0 10px; }
 
-    form.tpl-form { display:grid; gap:12px; } /* compacto */
+    form.tpl-form { display:grid; gap:12px; }
     .tpl-row { display:grid; grid-template-columns:1fr; gap:10px; }
     @media(min-width:840px){ .tpl-row { grid-template-columns: 1fr 1fr; } }
     .tpl-field { display:flex; flex-direction:column; gap:6px; }
@@ -29,32 +29,43 @@
     .tpl-btn { display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border); text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color); }
     .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
 
-    /* Avatar circular + overlay de texto */
-    .tpl-avatar { position:relative; display:flex; align-items:center; gap:12px; padding:10px; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; }
+    .tpl-section-title{ margin:2px 0 2px; font-weight:700; color:var(--tpl-text); }
+
+    /* Avatar circular */
+    .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
+    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
+    .tpl-avatar-col{ display:flex; align-items:center; gap:12px; }
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
-    .tpl-avatar-hint{ position:absolute; left:10px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
+    .tpl-avatar-hint{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
     .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
 
-    .tpl-section-title{ margin:4px 0 2px; font-weight:700; color:var(--tpl-text); } /* negrita */
-    .tpl-sep{ height:1px; background:#f0f0f0; border:0; margin:2px 0 6px; } /* muy pegado */
-    .tight { margin-top:-4px; }
+    /* Icono de especie dentro del círculo (fallback) */
+    .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
+    .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
 
-    /* Botonera foto (aparece tras elegir) */
-    .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; margin-left:116px; }
+    /* Pick + acciones apiladas para evitar “alargado” */
+    .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; margin-left:0; }
+    .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
+    @media(min-width:600px){
+      .tpl-avatar-inner{ justify-content:flex-start; }
+    }
 
-    /* Modal cropper simple (drag + flechas, sin sliders) */
+    /* Modal cropper minimal (drag/flechas) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
-    .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); font-weight:700; }
-    .crop-area{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+    .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
+    .crop-area{ display:flex; flex-direction:column; gap:8px; align-items:center; }
     #cropCanvas{ width:320px; height:320px; background:#f3f3f3; border-radius:12px; border:1px solid #eee; touch-action:none; }
-    .crop-hint{ font-size:.9rem; color:#666; }
+    .crop-hint{ font-size:.9rem; color:var(--tpl-muted); }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+    /* Utilidades */
+    .is-hidden{ display:none !important; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro navbar] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
   <script>window.__TPL_SAFE_MODE__ = true;</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -84,25 +95,28 @@
         <h1>Nueva mascota</h1>
         <p class="lead">Completa los datos de tu mascota para agilizar tu reserva.</p>
 
-        <form class="tpl-form" id="tpl-pet-form" novalidate>
-          <!-- ========== Datos de tu mascota (negrita y pegado) ========== -->
-          <div class="tpl-section-title">🐶 Datos de tu mascota</div>
-          <hr class="tpl-sep" aria-hidden="true"/>
+        <form class="tpl-form" id="tpl-pet-form" action="#" novalidate>
+          <!-- ========== Datos de tu mascota (compacto) ========== -->
+          <div class="tpl-section-title"><strong>🐶 Datos de tu mascota</strong></div>
 
           <!-- Foto -->
-          <div class="tpl-field tight">
+          <div class="tpl-field">
             <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
-              <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
-              <div class="tpl-avatar-hint">Sube foto de tu mascota</div>
+              <div class="tpl-avatar-inner">
+                <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
+                <div class="tpl-avatar-hint">Sube foto de tu mascota</div>
+                <div class="tpl-avatar-icon" id="avatarIcon" aria-hidden="true"><i class="fa-solid fa-paw"></i></div>
 
-              <div id="photoPickRow" style="margin-left:116px">
-                <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
-              </div>
-
-              <div id="photoActions" class="tpl-photo-actions" aria-live="polite">
-                <button type="button" class="tpl-btn secondary" id="btnChangePhoto"><i class="fa-solid fa-image"></i> Cambiar foto</button>
-                <button type="button" class="tpl-btn" id="btnAdjustPhoto"><i class="fa-solid fa-crop"></i> Ajustar</button>
+                <div class="tpl-photo-controls">
+                  <div id="photoPickRow">
+                    <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*">
+                  </div>
+                  <div id="photoActions" class="tpl-photo-actions" aria-live="polite">
+                    <button type="button" class="tpl-btn secondary" id="btnChangePhoto"><i class="fa-solid fa-image"></i> Cambiar foto</button>
+                    <button type="button" class="tpl-btn" id="btnAdjustPhoto"><i class="fa-solid fa-crop"></i> Ajustar</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -220,12 +234,11 @@
           </div>
 
           <!-- ========== Extras y seguimiento ========== -->
-          <div class="tpl-section-title">📸 Extras y seguimiento</div>
-          <hr class="tpl-sep" aria-hidden="true"/>
+          <div class="tpl-section-title"><strong>📸 Extras y seguimiento</strong></div>
 
           <div class="tpl-row">
             <div class="tpl-field">
-              <label for="camaras">¿Tienes cámaras en casa <span style="font-weight:400">(para servicio a domicilio)</span>?</label>
+              <label for="camaras">¿Tienes cámaras en casa? <span style="font-weight:400;">(para servicio a domicilio)</span></label>
               <select class="tpl-select" id="camaras" name="camaras">
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
@@ -247,7 +260,7 @@
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
-              <div id="seguroVetData" class="tpl-field" hidden style="margin-top:8px;">
+              <div id="seguroVetData" class="tpl-field is-hidden" style="margin-top:8px;">
                 <label>Detalles del seguro veterinario</label>
                 <div class="tpl-row">
                   <input class="tpl-input" type="text" id="seguroVetComp" placeholder="Compañía">
@@ -266,7 +279,7 @@
           </div>
 
           <div class="tpl-actions">
-            <button class="tpl-btn" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <button class="tpl-btn" id="saveBtn" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
@@ -274,14 +287,14 @@
     </div>
   </main>
 
-  <!-- Modal de recorte (drag + flechas) -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper simple] -->
-  <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto">
+  <!-- Modal de recorte (drag/flechas) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper minimal] -->
+  <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto" tabindex="-1">
     <div class="box">
       <h3><i class="fa-solid fa-crop"></i> Ajustar foto</h3>
       <div class="crop-area">
         <canvas id="cropCanvas" width="320" height="320"></canvas>
-        <div class="crop-hint">Arrastra con el dedo/ratón o usa las flechas. Sin zoom: se adapta al círculo.</div>
+        <div class="crop-hint">Arrastra con el dedo/ratón para centrar. Usa ← ↑ → ↓ para ajustes finos.</div>
         <div class="crop-actions">
           <button type="button" class="tpl-btn secondary" id="btnCancelCrop">Cancelar</button>
           <button type="button" class="tpl-btn" id="btnApplyCrop">Aplicar</button>
