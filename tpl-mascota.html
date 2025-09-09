@@ -1,110 +1,244 @@
-/* TPL: INICIO BLOQUE NUEVO [Estado mínimo del perfil + lectura temporal de mascotas] */
-(function(){
-  'use strict';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfil de Mascota · The Pets Lovers</title>
 
-  // Helpers de DOM
-  const $ = (sel) => document.querySelector(sel);
-  const show = (el) => { if (el) el.hidden = false; };
-  const hide = (el) => { if (el) el.hidden = true; };
-  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  document.addEventListener('DOMContentLoaded', () => {
-    // ------- OWNER -------
-    setOwnerIncomplete();
-
-    // ------- PETS -------
-    setPetsEmpty();
-
-    /* TPL: INICIO BLOQUE NUEVO [Cargar mascotas desde sessionStorage] */
-    try{
-      const saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]');
-      if (Array.isArray(saved) && saved.length){
-        renderPets(saved);
-      }
-    }catch(e){ /* noop */ }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    // ------- BOOKINGS -------
-    setBookingsEmpty();
-  });
-
-  function setOwnerIncomplete(){
-    setText('#tpl-owner-nombre', '—');
-    setText('#tpl-owner-telefono', '—');
-    setText('#tpl-owner-zona', '—');
-    setText('#tpl-owner-email', '—');
-
-    const status = $('#tpl-owner-status');
-    if (status){
-      status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Incompleto';
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del formulario de mascota] -->
+  <style>
+    :root{
+      --tpl-color:#339496; --tpl-text:#58425a; --tpl-border:#ececec; --tpl-muted:#666; --tpl-bg:#fff;
     }
-    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
-    if (fill) fill.style.display = '';
-    if (edit) edit.style.display = 'none';
-  }
-
-  function setOwnerComplete(mock){
-    setText('#tpl-owner-nombre', mock?.nombre || 'Tu nombre');
-    setText('#tpl-owner-telefono', mock?.telefono || '—');
-    setText('#tpl-owner-zona', mock?.zona || '—');
-    setText('#tpl-owner-email', mock?.email || '—');
-
-    const status = $('#tpl-owner-status');
-    if (status){
-      status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completo';
+    .tpl-page { padding-top: 110px; }
+    .tpl-wrap { max-width: 820px; margin: 0 auto; padding: 16px; }
+    .tpl-card {
+      background: var(--tpl-bg); border:1px solid var(--tpl-border);
+      border-radius: 14px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,.04);
     }
-    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
-    if (fill) fill.style.display = 'none';
-    if (edit) edit.style.display = '';
-  }
+    .tpl-card h1 { margin-top:0; margin-bottom: 6px; }
+    .tpl-card p.lead { color: var(--tpl-muted); margin-top:0; }
 
-  function setPetsEmpty(){
-    const empty = $('#tpl-pets-empty');
-    const list  = $('#tpl-pets-list');
-    $('#tpl-pets-status').innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
-    if (empty) empty.style.display = 'flex';
-    hide(list);
-  }
+    form.tpl-form { display:grid; gap:14px; }
+    .tpl-row { display:grid; grid-template-columns:1fr; gap: 12px; }
+    @media(min-width:720px){ .tpl-row { grid-template-columns: 1fr 1fr; } }
+    .tpl-field { display:flex; flex-direction:column; gap:6px; }
+    .tpl-field label { font-weight:600; color:var(--tpl-text); }
+    .tpl-input, .tpl-select, .tpl-textarea {
+      border:1px solid var(--tpl-border); border-radius:10px; padding:10px 12px; font:inherit; color:#222; background:#fff;
+    }
+    .tpl-textarea { min-height: 96px; resize: vertical; }
+    .tpl-help { font-size:.9rem; color:var(--tpl-muted); }
 
-  function renderPets(pets){
-    const empty = $('#tpl-pets-empty');
-    const list  = $('#tpl-pets-list');
-    if (!Array.isArray(pets) || pets.length === 0) return setPetsEmpty();
+    /* Avatar circular + preview */
+    .tpl-avatar {
+      display:flex; align-items:center; gap:14px; padding:12px; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa;
+    }
+    .tpl-avatar-thumb{
+      width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff;
+    }
+    .tpl-actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .tpl-btn {
+      display:inline-flex; align-items:center; gap:8px; justify-content:center;
+      border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border);
+      text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color);
+    }
+    .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
 
-    if (empty) empty.style.display = 'none';
-    if (list){
-      list.innerHTML = '';
-      pets.forEach(p => {
-        const item = document.createElement('div');
-        item.className = 'tpl-pet-item';
-        item.innerHTML = `
-          <img class="tpl-pet-thumb" alt="Foto de ${escapeHtml(p.nombre||'mascota')}" src="${escapeAttr(p.foto||'images/pet-placeholder.png')}">
-          <div>
-            <div><strong>${escapeHtml(p.nombre||'Sin nombre')}</strong> · ${escapeHtml(p.especie||'')}</div>
-            <div style="color:#666;font-size:.9rem">${escapeHtml(p.raza || p.tipoExotico || '')} ${p.edad ? ('· ' + escapeHtml(p.edad)) : ''}</div>
+    .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
+  <script>window.__TPL_SAFE_MODE__ = true;</script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</head>
+<body>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <main class="container tpl-page">
+    <div class="tpl-wrap">
+      <div class="tpl-card">
+        <h1>Nueva mascota</h1>
+        <p class="lead">Sube una foto (solo vista), elige especie y completa los datos. Podrás editarlo más tarde.</p>
+
+        <form class="tpl-form" id="tpl-pet-form" novalidate>
+          <!-- Foto -->
+          <div class="tpl-field">
+            <label for="foto">Foto de la mascota (opcional)</label>
+            <div class="tpl-avatar">
+              <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Vista previa de la mascota">
+              <div>
+                <input class="tpl-input" type="file" id="foto" name="foto" accept="image/*" aria-describedby="foto-help">
+                <div class="tpl-help" id="foto-help">Se mostrará en tu perfil en formato circular. No se guarda en servidor.</div>
+              </div>
+            </div>
           </div>
-        `;
-        list.appendChild(item);
-      });
-      show(list);
-      $('#tpl-pets-status').innerHTML = `<i class="fa-solid fa-paw"></i> ${pets.length} ${pets.length===1?'mascota':'mascotas'}`;
-    }
-  }
 
-  function setBookingsEmpty(){
-    $('#tpl-bookings-status').innerHTML = '<i class="fa-regular fa-circle"></i> Sin reservas';
-    show($('#tpl-bookings-empty'));
-    hide($('#tpl-bookings-list'));
-  }
+          <!-- Nombre + Especie -->
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="nombre">Nombre</label>
+              <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Luna, Max...">
+            </div>
 
-  // Utilidades de escape
-  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-  function escapeAttr(s){ return escapeHtml(s).replace(/"/g, '&quot;'); }
+            <div class="tpl-field">
+              <label for="especie">Especie</label>
+              <select class="tpl-select" id="especie" name="especie" required>
+                <option value="">Selecciona…</option>
+                <option value="Perro">Perro</option>
+                <option value="Gato">Gato</option>
+                <option value="Exótico">Exótico</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
 
-  // Exponer helpers (por si los usamos luego)
-  window.__TPL_PERFIL__ = {
-    setOwnerComplete,
-    renderPets
-  };
-})();
-/* TPL: FIN BLOQUE NUEVO */
+          <!-- Tipo (para Exóticos) -->
+          <div class="tpl-row" id="row-exotico" hidden>
+            <div class="tpl-field">
+              <label for="tipoExotico">Tipo de animal (Exóticos)</label>
+              <select class="tpl-select" id="tipoExotico" name="tipoExotico">
+                <option value="">Selecciona…</option>
+                <option>Pájaro</option><option>Conejo</option><option>Hurón</option>
+                <option>Hámster</option><option>Cobaya</option><option>Erizo</option>
+                <option>Iguana</option><option>Lagarto</option><option>Camaleón</option>
+                <option>Serpiente</option><option>Rana</option><option>Tortuga</option>
+                <option>Araña</option><option>Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Raza / Especie/Tipo -->
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="raza" id="label-raza">Raza</label>
+              <input class="tpl-input" list="tpl-breed-list" id="raza" name="raza" placeholder="Elige o escribe…">
+              <datalist id="tpl-breed-list"></datalist>
+              <div class="tpl-help">Puedes elegir de la lista o escribir manualmente.</div>
+            </div>
+
+            <div class="tpl-field">
+              <label for="sexo">Sexo</label>
+              <select class="tpl-select" id="sexo" name="sexo">
+                <option value="">Selecciona…</option>
+                <option>Macho</option>
+                <option>Hembra</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Edad / Peso -->
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="edad">Edad</label>
+              <input class="tpl-input" type="text" id="edad" name="edad" placeholder="3 años, 6 meses…">
+            </div>
+            <div class="tpl-field">
+              <label for="peso">Peso (kg)</label>
+              <input class="tpl-input" type="number" id="peso" name="peso" step="0.1" min="0" placeholder="Ej. 12.5">
+            </div>
+          </div>
+
+          <!-- Esterilizado / Vacunas / Microchip -->
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="esterilizado">Esterilizado</label>
+              <select class="tpl-select" id="esterilizado" name="esterilizado">
+                <option value="">Selecciona…</option>
+                <option>Sí</option><option>No</option>
+              </select>
+            </div>
+            <div class="tpl-field">
+              <label for="vacunas">Vacunas al día</label>
+              <select class="tpl-select" id="vacunas" name="vacunas">
+                <option value="">Selecciona…</option>
+                <option>Sí</option><option>No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="tpl-row">
+            <div class="tpl-field">
+              <label for="microchip">Microchip</label>
+              <input class="tpl-input" type="text" id="microchip" name="microchip" placeholder="Opcional">
+            </div>
+            <div class="tpl-field">
+              <label for="tamano">Tamaño</</label>
+              <select class="tpl-select" id="tamano" name="tamano">
+                <option value="">Selecciona…</option>
+                <option>Mini</option><option>Pequeño</option><option>Mediano</option><option>Grande</option><option>Gigante</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Comportamiento / Salud -->
+          <div class="tpl-field">
+            <label for="comportamiento">Comportamiento</label>
+            <textarea id="comportamiento" name="comportamiento" class="tpl-textarea" placeholder="Sociable, nervioso, ladra a otros perros, etc."></textarea>
+          </div>
+
+          <div class="tpl-field">
+            <label for="salud">Salud / Alergias / Medicación</label>
+            <textarea id="salud" name="salud" class="tpl-textarea" placeholder="Alergias, medicación, dieta especial…"></textarea>
+          </div>
+
+          <div class="tpl-actions">
+            <button class="tpl-btn" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones</a><span class="sep">|</span>
+              <a href="canal-denuncias.html">Canal de denuncias</a>
+            </nav>
+          </div>
+        </div>
+      </footer>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+  <script src="tpl-mascota.js" defer></script>
+</body>
+</html>
