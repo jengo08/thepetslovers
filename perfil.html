@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del perfil - seguros y aislados] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del perfil] -->
   <style>
     :root{
       --tpl-color: var(--color-principal, #339496);
@@ -23,6 +23,7 @@
 
     .tpl-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
     @media (min-width: 840px){ .tpl-grid { grid-template-columns: 1fr 1fr; } }
+
     .tpl-card {
       background: var(--tpl-bg); border:1px solid var(--tpl-border);
       border-radius: 14px; padding: 14px;
@@ -60,42 +61,36 @@
       display:flex; gap:10px; align-items:center; padding:8px; border:1px solid var(--tpl-border); border-radius:12px;
       background:#fff; position:relative;
     }
-
-    /* Avatar circular + icono fallback + meta */
     .tpl-pet-thumb {
-      width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;
-      object-fit:cover;
-      border:2px solid var(--tpl-border);
-      background:#fff;
+      width:56px; height:56px; flex:0 0 56px; border-radius:50%; object-fit:cover;
+      border:2px solid var(--tpl-border); background:#fff;
     }
     .tpl-pet-icon {
-      width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;
+      width:56px; height:56px; flex:0 0 56px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
-      border:2px solid var(--tpl-border);
-      background:#fafafa; color:#9aa0a6; font-size:22px;
+      border:2px solid var(--tpl-border); background:#fafafa; color:#9aa0a6; font-size:22px;
     }
     .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
     .tpl-pet-name{ font-weight:700; color:#222; }
     .tpl-pet-sub{ color:#666; font-size:.95rem; }
+    .tpl-pet-edit{
+      position:absolute; right:10px; bottom:8px; font-size:.9rem;
+      color: var(--tpl-text); text-decoration: underline;
+    }
+    .tpl-pet-edit:focus{ outline:2px dashed var(--tpl-color); outline-offset:2px; border-radius:6px; }
 
-    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión fijo y por encima del footer] */
+    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión fijo, siempre visible y por encima del footer] */
     .tpl-logout{
-      position: fixed; right: 16px; bottom: 16px;
-      z-index: 9999; /* por encima de todo, incluido footer */
+      position: fixed;
+      right: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+      z-index: 9999; /* por encima de todo */
       background: var(--tpl-color); color: #fff; border: 1px solid var(--tpl-border);
       border-radius: 999px; padding: 10px 12px; font-weight: 600; text-decoration: none;
       box-shadow: 0 4px 16px rgba(0,0,0,.12);
     }
     .tpl-logout i{ margin-right:6px; }
     /* TPL: FIN BLOQUE NUEVO */
-
-    .tpl-pet-edit{
-      position:absolute; right:10px; bottom:8px; font-size:.9rem;
-      color: var(--tpl-text); text-decoration: underline;
-    }
-    .tpl-pet-edit:focus{ outline:2px dashed var(--tpl-color); outline-offset:2px; border-radius:6px; }
 
     .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
   </style>
@@ -157,9 +152,7 @@
             Aún no has añadido mascotas.
           </div>
 
-          <div class="tpl-pet-list" id="tpl-pets-list" hidden>
-            <!-- Items de mascotas se renderizarán aquí -->
-          </div>
+          <div class="tpl-pet-list" id="tpl-pets-list" hidden></div>
 
           <div class="tpl-actions">
             <a class="tpl-btn" id="tpl-pet-add" href="tpl-mascota.html"><i class="fa-solid fa-plus"></i> Añadir mascota</a>
