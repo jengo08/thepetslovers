@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Perfil: owner + mascotas (udb) + logout robusto — FIX UID + compat 'mascotas'] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-perfil.js — Perfil estable por UID: owner+mascotas+reservas con watcher, migración y dedupe] */
 (function(){
   'use strict';
 
@@ -9,25 +9,7 @@
   const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
   const escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  // ---------- Base por usuario (UID robusto) ----------
-  function getCurrentUserId(){
-    // 1) tu comportamiento previo si estaba seteado manualmente
-    var explicit = localStorage.getItem('tpl.currentUser');
-    if (explicit) return explicit;
-    // 2) UID que deja navbar/auth al iniciar sesión
-    var uidLS = localStorage.getItem('tpl_auth_uid');
-    if (uidLS) return uidLS;
-    // 3) UID de Firebase si está disponible
-    try{
-      if (window.firebase && typeof firebase.auth === 'function'){
-        var u = firebase.auth().currentUser;
-        if (u && !u.isAnonymous && u.uid) return u.uid;
-      }
-    }catch(_){}
-    // 4) fallback
-    return 'default';
-  }
-
+  // ---------- UDB helpers ----------
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
@@ -36,8 +18,94 @@
   function udbHas(uid, key){
     try { return localStorage.getItem(udbKey(uid,key)) !== null; }catch(_){ return false; }
   }
+  function udbSet(uid, key, value){
+    try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
+  }
 
-  // ---------- Owner (placeholder/cargado) ----------
+  // ---------- UID robusto + watcher ----------
+  let CURRENT_UID = null;
+  function getCurrentUserId(){
+    const explicit = localStorage.getItem('tpl.currentUser');
+    if (explicit) return explicit;
+    const uidLS = localStorage.getItem('tpl_auth_uid');
+    if (uidLS) return uidLS;
+    try{
+      if (window.firebase && typeof firebase.auth === 'function'){
+        const u = firebase.auth().currentUser;
+        if (u && !u.isAnonymous && u.uid) return u.uid;
+      }
+    }catch(_){}
+    return 'default';
+  }
+
+  // ---------- Dedupe / saneo de mascotas ----------
+  function normalize(s){ return String(s||'').trim(); }
+  function normKey(v){ return String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function dedupePets(arr){
+    if (!Array.isArray(arr)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const p of arr){
+      const nombre = normKey(p?.nombre);
+      const chip   = normKey(p?.microchip);
+      const esp    = normKey(p?.especie || p?.tipo || '');
+      const key = `${nombre}|${chip}|${esp}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      // Saneo mínimo
+      out.push({
+        nombre: normalize(p?.nombre),
+        microchip: normalize(p?.microchip || p?.chip || ''),
+        especie: normalize(p?.especie || p?.tipo || ''),
+        raza: normalize(p?.raza || p?.tipoExotico || ''),
+        edad: normalize(p?.edad || ''),
+        peso: normalize(p?.peso || ''),
+        esterilizado: normalize(p?.esterilizado || ''),
+        vacunas: normalize(p?.vacunas || ''),
+        salud: normalize(p?.salud || ''),
+        tratamiento: normalize(p?.tratamiento || ''),
+        comidas: normalize(p?.comidas || ''),
+        salidas: normalize(p?.salidas || ''),
+        tamano: normalize(p?.tamano || ''),
+        clinica: normalize(p?.clinica || ''),
+        hospitalPref: normalize(p?.hospitalPref || ''),
+        comportamiento: normalize(p?.comportamiento || ''),
+        camaras: normalize(p?.camaras || ''),
+        fotos: normalize(p?.fotos || ''),
+        seguroVet: normalize(p?.seguroVet || ''),
+        seguroVetComp: normalize(p?.seguroVetComp || ''),
+        seguroVetNum: normalize(p?.seguroVetNum || ''),
+        seguroRC: normalize(p?.seguroRC || ''),
+        foto: typeof p?.foto === 'string' ? p.foto : ''
+      });
+      if (out.length >= 100) break; // safety hard-limit
+    }
+    return out;
+  }
+
+  // ---------- Migración suave default → UID real (una sola vez) ----------
+  function maybeMigrateFromDefault(toUid){
+    if (!toUid || toUid === 'default') return;
+    const flagKey = `tpl.udb.migratedTo.${toUid}`;
+    if (localStorage.getItem(flagKey)) return;
+
+    const ownerDefault = udbGet('default','owner',null);
+    const petsDefault  = (udbHas('default','pets') ? udbGet('default','pets',[]) : udbGet('default','mascotas',[])) || [];
+
+    const ownerTo = udbGet(toUid,'owner',null);
+    const hasPetsTo = udbHas(toUid,'pets') || udbHas(toUid,'mascotas');
+
+    if (!ownerTo && ownerDefault){ udbSet(toUid,'owner', ownerDefault); }
+    if (!hasPetsTo && Array.isArray(petsDefault) && petsDefault.length){
+      const clean = dedupePets(petsDefault);
+      udbSet(toUid,'pets', clean);
+      if (udbHas(toUid,'mascotas')) udbSet(toUid,'mascotas', clean);
+    }
+
+    try{ localStorage.setItem(flagKey, '1'); }catch(_){}
+  }
+
+  // ---------- Owner ----------
   function setOwnerIncomplete(){
     setText('#tpl-owner-nombre', '—');
     setText('#tpl-owner-telefono', '—');
@@ -51,7 +119,7 @@
   }
 
   function loadOwner(){
-    const uid = getCurrentUserId();
+    const uid = CURRENT_UID || getCurrentUserId();
     const owner = udbGet(uid, 'owner', null);
     if (!owner){ setOwnerIncomplete(); return; }
 
@@ -92,11 +160,12 @@
 
     if (!Array.isArray(pets) || pets.length===0){ setPetsEmpty(); return; }
 
+    const cleaned = dedupePets(pets);
     if (empty){ empty.style.display = 'none'; empty.hidden = true; }
     show(list, 'block');
     list.innerHTML = '';
 
-    pets.forEach((p, idx) => {
+    cleaned.forEach((p, idx) => {
       const nombre  = escapeHtml(p?.nombre || 'Sin nombre');
       const especie = escapeHtml(p?.especie || '');
       const raza    = escapeHtml(p?.raza || p?.tipoExotico || '');
@@ -142,20 +211,30 @@
     });
 
     if (status){
-      const n = pets.length;
+      const n = cleaned.length;
       status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
+    }
+
+    // Persistimos el dedupe si había diferencias
+    const uid = CURRENT_UID || getCurrentUserId();
+    const hasPets = udbHas(uid, 'pets');
+    const stored = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+    if (JSON.stringify(stored) !== JSON.stringify(cleaned)){
+      udbSet(uid,'pets', cleaned);
+      if (udbHas(uid,'mascotas')) udbSet(uid,'mascotas', cleaned);
+      try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
     }
   }
 
   function loadPetsAndRender(){
-    const uid = getCurrentUserId();
-    // Compat: si no existe 'pets', lee 'mascotas'
+    const uid = CURRENT_UID || getCurrentUserId();
     const hasPets = udbHas(uid, 'pets');
     const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-    renderPets(pets);
+    if (!Array.isArray(pets) || !pets.length){ setPetsEmpty(); }
+    renderPets(pets || []);
   }
 
-  // ---------- Logout robusto (sin cambios) ----------
+  // ---------- Logout robusto (igual que tenías) ----------
   function setupLogout(){
     const btn = $('#tpl-logout');
     if (!btn) return;
@@ -177,7 +256,7 @@
     }, {passive:false});
   }
 
-/* TPL: INICIO BLOQUE NUEVO [Reservas: helpers + render + Firestore opcional] */
+  /* TPL: INICIO BLOQUE NUEVO [Reservas: UI + Firestore opcional + snapshot local] */
   function formatDateES(iso){
     if (!iso) return '—';
     try{
@@ -189,13 +268,10 @@
       return `${dd}/${mm}/${yyyy}`;
     }catch(_){ return iso; }
   }
-
   function renderBookingsUI(items){
     const pill  = $('#tpl-bookings-status');
     const empty = $('#tpl-bookings-empty');
     const list  = $('#tpl-bookings-list');
-
-    // Si la sección no existe en este HTML, salimos sin romper nada
     if (!pill || !empty || !list) return;
 
     if (!items || !items.length){
@@ -205,7 +281,6 @@
       list.innerHTML = '';
       return;
     }
-
     const data = items.slice(0,3);
     pill.innerHTML = `<i class="fa-solid fa-calendar-check"></i> ${data.length} reserva${data.length>1?'s':''}`;
     empty.style.display = 'none';
@@ -236,8 +311,6 @@
       `;
     }).join('');
   }
-
-  // Snapshot local opcional (lo escribiremos desde reserva.js)
   function readLocalLastReservation(uid){
     try{
       const raw = localStorage.getItem(udbKey(uid,'lastReservation'));
@@ -253,8 +326,6 @@
       };
     }catch(_){ return null; }
   }
-
-  // Carga perezosa Firebase v8 (compat namespaced) si no está presente
   function lazyLoadFirebase(cb){
     if (window.firebase && firebase.app) { cb && cb(); return; }
     const urls = [
@@ -270,18 +341,14 @@
       document.head.appendChild(s);
     })();
   }
-
   async function fetchBookingsFromFirestore(uid){
     try{
       if (!(window.firebase && firebase.firestore)) return [];
-      // Asegurar app init si no lo está
       if (!firebase.apps || !firebase.apps.length){
         const cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
         if (cfg) { try{ firebase.initializeApp(cfg); }catch(_){ /* noop */ } }
       }
       const db = firebase.firestore();
-
-      // Si hay usuario logueado, usar su uid real
       const auth = firebase.auth ? firebase.auth() : null;
       const u = auth && auth.currentUser ? auth.currentUser : null;
       const realUid = (u && u.uid) ? u.uid : uid;
@@ -292,15 +359,12 @@
         snap = await db.collection('reservas')
           .where('_uid','==', realUid)
           .orderBy('_createdAt','desc')
-          .limit(10)
-          .get();
+          .limit(10).get();
       }catch(_){
         snap = await db.collection('reservas')
           .where('_uid','==', realUid)
-          .limit(10)
-          .get();
+          .limit(10).get();
       }
-
       const rows = snap.docs.map(d => ({ id: d.id, ...(d.data()||{}) }));
       const norm = rows.map(r => ({
         id: r.id,
@@ -316,20 +380,14 @@
       return norm;
     }catch(_){ return []; }
   }
-
   async function loadBookings(){
-    const uid = getCurrentUserId();
-
-    // 1) Pintar algo inmediato si existe snapshot local
+    const uid = CURRENT_UID || getCurrentUserId();
     const localLast = readLocalLastReservation(uid);
     if (localLast) renderBookingsUI([localLast]); else renderBookingsUI([]);
-
-    // 2) Intentar Firebase (si se puede)
     lazyLoadFirebase(async ()=>{
       try{
         if (!(window.firebase && firebase.auth)) return;
         const auth = firebase.auth();
-        // Si ya hay usuario autenticado, vamos directo; si no, esperamos a onAuthStateChanged
         const doFetch = async ()=>{
           const list = await fetchBookingsFromFirestore(uid);
           if (list && list.length) renderBookingsUI(list);
@@ -339,58 +397,75 @@
       }catch(_){}
     });
   }
-/* TPL: FIN BLOQUE NUEVO */
+  /* TPL: FIN BLOQUE NUEVO */
+
+  // ---------- Refresh orquestado ----------
+  let refreshTimer = null;
+  function refreshAll(reason){
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(()=>{
+      const newUid = getCurrentUserId();
+      if (CURRENT_UID !== newUid){
+        maybeMigrateFromDefault(newUid);
+        CURRENT_UID = newUid;
+      }
+      setOwnerIncomplete();
+      setPetsEmpty();
+      loadOwner();
+      loadPetsAndRender();
+      if (typeof renderBookingsUI === 'function') loadBookings();
+    }, reason === 'immediate' ? 0 : 60);
+  }
+
+  // ---------- Watchers: auth, focus, visibility, local key polling ----------
+  function attachWatchers(){
+    // Firebase auth watcher
+    lazyLoadFirebase(()=>{
+      try{
+        if (!(window.firebase && firebase.auth)) return;
+        firebase.auth().onAuthStateChanged(function(){ refreshAll('immediate'); });
+      }catch(_){}
+    });
+
+    // Cambios de foco/visibilidad → revalida UID y repinta
+    window.addEventListener('focus', ()=>refreshAll());
+    document.addEventListener('visibilitychange', ()=>{ if (!document.hidden) refreshAll(); });
+
+    // Bfcache back/forward
+    window.addEventListener('pageshow', (e)=>{ if (e.persisted) refreshAll('immediate'); });
+
+    // Polling ligero del key de auth para detectar cambios en la MISMA pestaña
+    let lastAuthKey = localStorage.getItem('tpl_auth_uid') || '';
+    setInterval(()=>{
+      const cur = localStorage.getItem('tpl_auth_uid') || '';
+      if (cur !== lastAuthKey){ lastAuthKey = cur; refreshAll('immediate'); }
+    }, 1200);
+
+    // storage (otras pestañas)
+    window.addEventListener('storage', function(ev){
+      if (!ev) return;
+      if ((ev.key||'').startsWith('tpl.udb.')) refreshAll();
+      if (ev.key === 'tpl.udb.lastChange') refreshAll();
+      if (ev.key === 'tpl_auth_uid') refreshAll('immediate');
+    });
+  }
 
   // ---------- Inicio ----------
   function start(){
-    setOwnerIncomplete();
-    setPetsEmpty();
-    loadOwner();
-    loadPetsAndRender();
+    CURRENT_UID = getCurrentUserId();
+    maybeMigrateFromDefault(CURRENT_UID);
     setupLogout();
-
-    /* TPL: INICIO BLOQUE NUEVO [Hook: cargar reservas] */
-    loadBookings();
-    /* TPL: FIN BLOQUE NUEVO */
+    refreshAll('immediate');
+    attachWatchers();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
 
-  // Reforzar al volver de atrás/adelante (bfcache)
-  window.addEventListener('pageshow', (e)=>{
-    if (e.persisted){
-      loadOwner();
-      loadPetsAndRender();
-      /* TPL: INICIO BLOQUE NUEVO [Re-pintar reservas en bfcache] */
-      loadBookings();
-      /* TPL: FIN BLOQUE NUEVO */
-      const list = document.getElementById('tpl-pets-list');
-      const empty = document.getElementById('tpl-pets-empty');
-      if (list && list.children.length > 0 && empty){
-        empty.style.display = 'none'; empty.hidden = true;
-      }
-    }
+  // Exponer API útil
+  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, {
+    refresh: refreshAll,
+    getUid: ()=>CURRENT_UID
   });
-
-  // Si otros módulos avisan de cambios, refrescamos
-  window.addEventListener('storage', function(ev){
-    if (!ev) return;
-    if (ev.key && ev.key.indexOf('tpl.udb.') === 0) {
-      loadOwner(); loadPetsAndRender();
-      /* TPL: INICIO BLOQUE NUEVO [Escucha cambios que afecten reservas] */
-      if (ev.key.includes('.lastReservation') || ev.key === 'tpl.udb.lastChange'){ loadBookings(); }
-      /* TPL: FIN BLOQUE NUEVO */
-    }
-    if (ev.key === 'tpl.udb.lastChange'){
-      loadOwner(); loadPetsAndRender();
-    }
-  });
-
-  // Exponer (si se usa en otros lados)
-  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender, refreshBookings: loadBookings });
 })();
  /* TPL: FIN BLOQUE NUEVO */
