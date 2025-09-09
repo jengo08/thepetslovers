@@ -33,19 +33,18 @@
 
     /* Avatar circular compacto */
     .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
-    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
     .tpl-avatar-hint{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
     .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
     .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
     .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
 
-    /* Controles foto apilados (evitar alargado) */
-    .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; min-width:220px; }
+    .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; }
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
 
-    /* Modal cropper minimal (drag/flechas) */
+    /* Modal cropper (drag/flechas) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
     .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
@@ -58,13 +57,13 @@
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro navbar] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
   <script>window.__TPL_SAFE_MODE__ = true;</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar fallback] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -92,7 +91,7 @@
           <!-- ========== Datos de tu mascota ========== -->
           <div class="tpl-section-title"><strong>🐶 Datos de tu mascota</strong></div>
 
-          <!-- TPL: INICIO BLOQUE NUEVO [Foto compacto con acciones] -->
+          <!-- Foto -->
           <div class="tpl-field">
             <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
@@ -113,7 +112,6 @@
               </div>
             </div>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <!-- Nombre + Microchip -->
           <div class="tpl-row">
@@ -254,7 +252,7 @@
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
-              <div id="seguroVetData" class="tpl-field is-hidden" style="margin-top:8px;">
+              <div id="seguroVetData" class="tpl-field is-hidden" hidden style="margin-top:8px;">
                 <label>Detalles del seguro veterinario</label>
                 <div class="tpl-row">
                   <input class="tpl-input" type="text" id="seguroVetComp" placeholder="Compañía">
@@ -273,7 +271,9 @@
           </div>
 
           <div class="tpl-actions">
-            <button class="tpl-btn" id="saveBtn" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <!-- TPL: INICIO BLOQUE NUEVO [Botón sin submit nativo] -->
+            <button class="tpl-btn" id="saveBtn" type="button"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <!-- TPL: FIN BLOQUE NUEVO -->
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
@@ -281,7 +281,7 @@
     </div>
   </main>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper minimal] -->
+  <!-- Modal de recorte -->
   <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto" tabindex="-1">
     <div class="box">
       <h3><i class="fa-solid fa-crop"></i> Ajustar foto</h3>
@@ -295,29 +295,6 @@
       </div>
     </div>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer fallback] -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones</a><span class="sep">|</span>
-              <a href="canal-denuncias.html">Canal de denuncias</a>
-            </nav>
-          </div>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
