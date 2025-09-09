@@ -112,7 +112,6 @@
     const form = document.getElementById('tpl-owner-form');
     if (!form) return false;
 
-    // Validaciones nativas
     if (typeof form.reportValidity === 'function' && !form.reportValidity()) return false;
 
     const uid = getCurrentUserId();
@@ -120,12 +119,11 @@
     udbSet(uid, 'owner', owner);
     try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
-    // Redirigir SIEMPRE a perfil
     location.assign('perfil.html');
-    return false; // bloquea cualquier envío nativo
+    return false;
   }
 
-  // Exponer el manejador para el onsubmit inline (blindaje)
+  // Exponer el manejador para el onsubmit inline y el botón
   window.__TPL_OWNER_SUBMIT__ = handleSubmit;
 
   function init(){
@@ -133,7 +131,7 @@
     const btn  = document.getElementById('saveOwner');
     if (!form || !btn) return;
 
-    // Prefill
+    // Prefill si ya había datos
     const uid = getCurrentUserId();
     const existing = udbGet(uid, 'owner', null);
     if (existing) fillFormFromOwner(existing);
@@ -147,9 +145,14 @@
     }
     attachDniValidation();
 
-    // Enganche en captura + fallback botón
+    // Enganche en captura (si otro script intenta interceptar)
     form.addEventListener('submit', handleSubmit, {capture:true});
-    btn.addEventListener('click', function(){ if (typeof form.requestSubmit === 'function') form.requestSubmit(); });
+
+    // Click del botón → submit o fallback directo a handleSubmit
+    btn.addEventListener('click', function(){
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else handleSubmit();
+    });
   }
 
   if (document.readyState === 'loading'){
