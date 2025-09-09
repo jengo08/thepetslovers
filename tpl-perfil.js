@@ -1,213 +1,161 @@
-/* TPL: INICIO BLOQUE NUEVO [Perfil: owner + mascotas (udb) + logout robusto] */
+/* TPL: INICIO BLOQUE NUEVO [Propietario: guardar/editar en base por usuario (localStorage) + submit blindado] */
 (function(){
   'use strict';
 
-  // ---------- Helpers DOM ----------
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const show = (el, disp='') => { if (!el) return; el.style.display = disp; el.hidden = false; };
-  const hide = (el) => { if (!el) return; el.style.display = 'none'; el.hidden = true; };
-  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
-  const escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-
-  // ---------- UID robusto ----------
+  // ===== UID robusto (igual que perfil/mascotas) =====
   function getCurrentUserId(){
-    // 1) UID antiguo explícito (si lo pones tú)
-    const explicit = localStorage.getItem('tpl.currentUser');
+    var explicit = localStorage.getItem('tpl.currentUser');
     if (explicit) return explicit;
-    // 2) UID sincronizado por navbar/auth nuevo
-    const uidLS = localStorage.getItem('tpl_auth_uid');
+    var uidLS = localStorage.getItem('tpl_auth_uid');
     if (uidLS) return uidLS;
-    // 3) UID real de Firebase si está cargado
     try{
       if (window.firebase && typeof firebase.auth === 'function'){
-        const u = firebase.auth().currentUser;
+        var u = firebase.auth().currentUser;
         if (u && !u.isAnonymous && u.uid) return u.uid;
       }
     }catch(_){}
-    // 4) Fallback
     return 'default';
   }
 
-  // ---------- Base por usuario ----------
+  // ===== Utils udb =====
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
-    try { const v = localStorage.getItem(udbKey(uid,key)); return v !== null ? JSON.parse(v) : fallback; }
-    catch(_){ return fallback; }
+    try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
   }
-  function udbHas(uid, key){
-    try { return localStorage.getItem(udbKey(uid,key)) !== null; } catch(_){ return false; }
-  }
-
-  // ---------- Owner (placeholder/cargado) ----------
-  function setOwnerIncomplete(){
-    setText('#tpl-owner-nombre', '—');
-    setText('#tpl-owner-telefono', '—');
-    setText('#tpl-owner-zona', '—');
-    setText('#tpl-owner-email', '—');
-    const status = $('#tpl-owner-status');
-    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Incompleto'; }
-    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
-    if (fill) fill.style.display = '';
-    if (edit) edit.style.display = 'none';
-  }
-  function loadOwner(){
-    const uid = getCurrentUserId();
-    const owner = udbGet(uid, 'owner', null);
-    if (!owner){ setOwnerIncomplete(); return; }
-    setText('#tpl-owner-nombre', owner.nombre || '—');
-    setText('#tpl-owner-telefono', owner.telefono || '—');
-    setText('#tpl-owner-zona', owner.zona || '—');
-    setText('#tpl-owner-email', owner.email || '—');
-    const status = $('#tpl-owner-status');
-    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completo'; }
-    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
-    if (fill) fill.style.display = 'none';
-    if (edit) edit.style.display = '';
+  function udbSet(uid, key, value){
+    try{ localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); }catch(_){}
   }
 
-  // ---------- Mascotas ----------
-  function iconBySpecies(sp){
-    const v = (sp||'').toLowerCase();
-    if (v.includes('perro')) return 'fa-dog';
-    if (v.includes('gato'))  return 'fa-cat';
-    if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
-    return 'fa-paw';
+  // ===== DOM =====
+  const $ = (sel, root=document) => root.querySelector(sel);
+
+  function computeZona(localidad, provincia, cp){
+    const parts = [];
+    if (localidad) parts.push(localidad.trim());
+    if (provincia) parts.push(provincia.trim());
+    if (!parts.length && cp) parts.push(cp.trim());
+    return parts.join(', ');
   }
-  function setPetsEmpty(){
-    const empty = $('#tpl-pets-empty');
-    const list  = $('#tpl-pets-list');
-    if (list){ list.innerHTML = ''; hide(list); }
-    if (empty){ empty.style.display = 'flex'; empty.hidden = false; }
-    const st = $('#tpl-pets-status');
-    if (st) st.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
+
+  function fillFormFromOwner(owner){
+    if (!owner) return;
+    $('#nombre').value     = owner.nombre || '';
+    $('#dni').value        = owner.dni || '';
+    $('#direccion').value  = owner.direccion || '';
+    $('#cp').value         = owner.cp || '';
+    $('#provincia').value  = owner.provincia || '';
+    $('#localidad').value  = owner.localidad || '';
+    $('#email').value      = owner.email || '';
+    $('#telefono').value   = owner.telefono || '';
+    const pref = owner.contacto || 'whatsapp';
+    const r = document.querySelector(`input[name="contacto"][value="${pref}"]`);
+    if (r) r.checked = true;
+    $('#contactoHorario').value = owner.contactoHorario || '';
   }
-  function renderPets(pets){
-    const empty = $('#tpl-pets-empty');
-    const list  = $('#tpl-pets-list');
-    const status = $('#tpl-pets-status');
 
-    if (!Array.isArray(pets) || pets.length===0){ setPetsEmpty(); return; }
-
-    if (empty){ empty.style.display = 'none'; empty.hidden = true; }
-    show(list, 'block');
-    list.innerHTML = '';
-
-    pets.forEach((p, idx) => {
-      const nombre  = escapeHtml(p?.nombre || 'Sin nombre');
-      const especie = escapeHtml(p?.especie || '');
-      const raza    = escapeHtml(p?.raza || p?.tipoExotico || '');
-      const edad    = escapeHtml(p?.edad || '');
-      const foto    = (p && typeof p.foto === 'string') ? p.foto : '';
-
-      const item = document.createElement('div');
-      item.className = 'tpl-pet-item';
-
-      if (foto){
-        const img = document.createElement('img');
-        img.className = 'tpl-pet-thumb';
-        img.src = foto;
-        img.alt = `Foto de ${nombre}`;
-        item.appendChild(img);
-      } else {
-        const ic = document.createElement('div');
-        ic.className = 'tpl-pet-icon';
-        ic.innerHTML = `<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`;
-        item.appendChild(ic);
-      }
-
-      const meta = document.createElement('div');
-      meta.className = 'tpl-pet-meta';
-      const nm = document.createElement('div');
-      nm.className = 'tpl-pet-name';
-      nm.textContent = nombre;
-      const sub = document.createElement('div');
-      sub.className = 'tpl-pet-sub';
-      const parts = [especie, raza, edad && ('Edad: ' + edad)].filter(Boolean);
-      sub.textContent = parts.join(' · ');
-      meta.appendChild(nm); meta.appendChild(sub);
-      item.appendChild(meta);
-
-      const edit = document.createElement('a');
-      edit.href = `tpl-mascota.html?edit=${idx}`;
-      edit.className = 'tpl-pet-edit';
-      edit.textContent = 'Editar';
-      edit.setAttribute('aria-label', `Editar a ${nombre}`);
-      item.appendChild(edit);
-
-      list.appendChild(item);
-    });
-
-    if (status){
-      const n = pets.length;
-      status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
+  function normalizeId(v){
+    return String(v||'').toUpperCase().replace(/\s+/g,'').replace(/-/g,'');
+  }
+  const DNI_LETTERS = 'TRWAGMYFPDXBNJZSQVHLCKE';
+  function isValidSpanishId(idRaw){
+    const id = normalizeId(idRaw);
+    if (!id) return false;
+    const mDni = id.match(/^(\d{8})([A-Z])$/);
+    if (mDni){
+      const num = parseInt(mDni[1],10);
+      const letter = DNI_LETTERS[num % 23];
+      return mDni[2] === letter;
     }
-  }
-
-  function loadPetsAndRender(){
-    const uid = getCurrentUserId();
-
-    // ⚖️ Fuente autoritativa: si EXISTE la clave 'pets' (aunque esté vacía), se usa esa.
-    // Solo si NO existe 'pets' para ese UID, caemos a 'mascotas'.
-    const hasPets = udbHas(uid, 'pets');
-    const pets = hasPets ? udbGet(uid, 'pets', []) : (udbGet(uid, 'mascotas', []) || []);
-
-    if (Array.isArray(pets) && pets.length > 0) renderPets(pets);
-    else setPetsEmpty();
-  }
-
-  // ---------- Logout robusto ----------
-  function setupLogout(){
-    const btn = $('#tpl-logout');
-    if (!btn) return;
-    btn.style.position = 'fixed';
-    btn.style.right = '16px';
-    btn.style.bottom = '16px';
-    btn.style.zIndex = '999999';
-
-    btn.addEventListener('click', function(ev){
-      ev.preventDefault();
-      if (window.__TPL_LOGOUT__) return window.__TPL_LOGOUT__();
-      try{ sessionStorage.clear(); }catch(_){}
-      try{
-        localStorage.removeItem('tpl.session');
-        localStorage.removeItem('tpl.auth');
-        localStorage.removeItem('tpl.currentUser');
-      }catch(_){}
-      location.assign('index.html');
-    }, {passive:false});
-  }
-
-  // ---------- Inicio ----------
-  document.addEventListener('DOMContentLoaded', ()=>{
-    setOwnerIncomplete();
-    setPetsEmpty();
-    loadOwner();
-    loadPetsAndRender();
-    setupLogout();
-  });
-
-  // Reforzar al volver de atrás/adelante (bfcache)
-  window.addEventListener('pageshow', (e)=>{
-    if (e.persisted){
-      loadOwner();
-      loadPetsAndRender();
-      const list = document.getElementById('tpl-pets-list');
-      const empty = document.getElementById('tpl-pets-empty');
-      if (list && list.children.length > 0 && empty){
-        empty.style.display = 'none'; empty.hidden = true;
-      }
+    const mNie = id.match(/^([XYZ])(\d{7})([A-Z])$/);
+    if (mNie){
+      const map = {X:'0', Y:'1', Z:'2'};
+      const num = parseInt(map[mNie[1]] + mNie[2], 10);
+      const letter = DNI_LETTERS[num % 23];
+      return mNie[3] === letter;
     }
-  });
+    return false;
+  }
+  function attachDniValidation(){
+    const dni = $('#dni');
+    if (!dni) return;
+    const apply = ()=>{
+      const v = normalizeId(dni.value);
+      dni.value = v;
+      if (!v){ dni.setCustomValidity(''); return; }
+      if (isValidSpanishId(v)){ dni.setCustomValidity(''); }
+      else { dni.setCustomValidity('DNI/NIE no válido'); }
+    };
+    dni.addEventListener('input', apply);
+    dni.addEventListener('blur', apply);
+    apply();
+  }
 
-  // Re-render ante cambios locales (por si otra pestaña borra/guarda)
-  window.addEventListener('storage', function(ev){
-    if (!ev) return;
+  function readForm(){
+    const nombre     = ($('#nombre').value||'').trim();
+    const dni        = normalizeId($('#dni').value||'');
+    const direccion  = ($('#direccion').value||'').trim();
+    const cp         = ($('#cp').value||'').trim();
+    const provincia  = ($('#provincia').value||'').trim();
+    const localidad  = ($('#localidad').value||'').trim();
+    const email      = ($('#email').value||'').trim();
+    const telefono   = ($('#telefono').value||'').trim();
+    const contacto   = (document.querySelector('input[name="contacto"]:checked') || {}).value || 'whatsapp';
+    const contactoHorario = ($('#contactoHorario').value||'').trim();
+    const zona = computeZona(localidad, provincia, cp);
+    return { nombre, dni, direccion, cp, provincia, localidad, email, telefono, contacto, contactoHorario, zona };
+  }
+
+  // ===== Guardado + redirección (expuesto global) =====
+  function handleSubmit(ev){
+    if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+
+    const form = document.getElementById('tpl-owner-form');
+    if (!form) return false;
+
+    // Validaciones nativas
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()) return false;
+
     const uid = getCurrentUserId();
-    const keysOfInterest = new Set([udbKey(uid,'pets'), udbKey(uid,'mascotas'), 'tpl.udb.lastChange']);
-    if (keysOfInterest.has(ev.key)){ loadPetsAndRender(); }
-  });
+    const owner = readForm();
+    udbSet(uid, 'owner', owner);
+    try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
-  // Exponer por si se usa externamente
-  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender });
+    // Redirigir SIEMPRE a perfil
+    location.assign('perfil.html');
+    return false; // bloquea cualquier envío nativo
+  }
+
+  // Exponer el manejador para el onsubmit inline (blindaje)
+  window.__TPL_OWNER_SUBMIT__ = handleSubmit;
+
+  function init(){
+    const form = document.getElementById('tpl-owner-form');
+    const btn  = document.getElementById('saveOwner');
+    if (!form || !btn) return;
+
+    // Prefill
+    const uid = getCurrentUserId();
+    const existing = udbGet(uid, 'owner', null);
+    if (existing) fillFormFromOwner(existing);
+
+    // Validaciones rápidas
+    const cp = document.getElementById('cp');
+    if (cp){
+      cp.setAttribute('inputmode','numeric');
+      cp.setAttribute('pattern','[0-9]{5}');
+      cp.setAttribute('maxlength','5');
+    }
+    attachDniValidation();
+
+    // Enganche en captura + fallback botón
+    form.addEventListener('submit', handleSubmit, {capture:true});
+    btn.addEventListener('click', function(){ if (typeof form.requestSubmit === 'function') form.requestSubmit(); });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
  /* TPL: FIN BLOQUE NUEVO */
