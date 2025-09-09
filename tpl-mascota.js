@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Guardar por click sin submit nativo + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
+/* TPL: INICIO BLOQUE NUEVO [Guardar por click + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
 (function(){
   'use strict';
 
@@ -132,7 +132,7 @@
     especie.addEventListener('change', updateBreedList);
     updateBreedList();
 
-    // Seguro Vet: detalles solo si “Sí” (robusto)
+    // Seguro Vet: detalles solo si “Sí”
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
       seguroVetData.classList.toggle('is-hidden', !yes);
@@ -152,7 +152,6 @@
     let dragging=false, lastX=0, lastY=0;
 
     function openCropper(){
-      // Si aún no hay imagen lista, la generamos desde el preview actual
       if (!imageReady){
         const src = preview && preview.src;
         if (!src || /pet-placeholder\.png$/i.test(src)){ fileInput.click(); return; }
@@ -160,9 +159,7 @@
         originalImg.onload = ()=>{ imageReady=true; initAndDraw(); };
         originalImg.crossOrigin = 'anonymous';
         originalImg.src = src;
-      } else {
-        initAndDraw();
-      }
+      } else { initAndDraw(); }
       function initAndDraw(){
         const W = cropCanvas.width, H = cropCanvas.height;
         cropState.scale = fitCoverScale(originalImg.width, originalImg.height, W, H);
@@ -187,13 +184,13 @@
     saveBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
-      // Validación microchip
+
+      // Validación microchip (si no está marcado "No tiene")
       if (!microNo.checked && !microchip.value.trim()){
         alert('El microchip es obligatorio (o marca “No tiene”).');
         microchip.focus();
         return;
       }
-      // Validación HTML5
       if (!form.reportValidity()) return;
 
       const fd = new FormData(form);
