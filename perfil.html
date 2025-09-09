@@ -1,45 +1,43 @@
+<!-- TPL: INICIO BLOQUE NUEVO [Script robusto: carga Firebase + perfil propietario/mascotas sin Storage] -->
 <script>
 (async function(){
-  // --- CARGADOR ROBUSTO DE FIREBASE (compat) ---
+  // -------- CARGA DINÁMICA DE FIREBASE (compat) --------
   function loadScript(src){
     return new Promise((res, rej)=>{
       const s = document.createElement('script');
-      s.src = src; s.async = true; s.onload = res; s.onerror = ()=>rej(new Error('No se pudo cargar: '+src));
+      s.src = src; s.async = true; s.onload = res;
+      s.onerror = ()=>rej(new Error('No se pudo cargar: '+src));
       document.head.appendChild(s);
     });
   }
   async function ensureFirebase(){
-    // Carga app-compat y luego módulos compat si hiciera falta
     if (typeof window.firebase === 'undefined'){
       await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     }
     if (!('auth' in firebase))      { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js'); }
     if (!('firestore' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js'); }
-    try {
-      if (!('storage' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js'); }
-    } catch(_) { /* opcional, no bloquea */ }
+    try { if (!('storage' in firebase)) { await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js'); } } catch(_){}
 
-    // Config por defecto si no la definiste en otra parte
+    // Usa tu config si ya existe; si no, pongo fallback correcto (con appspot.com)
     if (typeof window.firebaseConfig === 'undefined'){
       window.firebaseConfig = {
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
         authDomain: "thepetslovers-c1111.firebaseapp.com",
         projectId: "thepetslovers-c1111",
-        storageBucket: "thepetslovers-c1111.appspot.com", // correcto
+        storageBucket: "thepetslovers-c1111.appspot.com",
         messagingSenderId: "415914577533",
         appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
         measurementId: "G-FXPD69KXBG"
       };
     }
   }
-
   await ensureFirebase();
 
-  // ---------- AQUÍ EMPIEZA TU LÓGICA (igual que te la pasé, con guardias) ----------
+  // ---------- INIT ----------
   if (firebase.apps.length === 0) { firebase.initializeApp(window.firebaseConfig); }
   const auth = firebase.auth();
   const db   = firebase.firestore();
-  let st = null; try { if (firebase.storage) st = firebase.storage(); } catch(_){ st=null; } // no usamos fotos en storage
+  // (No usamos Storage para fotos; solo DataURL)
 
   let CURRENT_UID = null;
 
@@ -47,7 +45,7 @@
   const LS_PETS_KEY    = 'tpl-pets';
   const LS_RES_KEY     = 'tpl-reservas';
 
-  // --------- Refs UI base ----------
+  // --------- Refs UI ----------
   const bannerInc   = document.getElementById('tpl-banner-incompleto');
 
   const emptyCliente  = document.getElementById('tpl-cliente-empty');
@@ -569,7 +567,7 @@
 
     const isExotico = (pEspecie.value === 'Exótico');
     const data = {
-      fotoDataUrl: petPhotoDataUrl || undefined,
+      fotoDataUrl: (typeof petPhotoDataUrl === 'string' && petPhotoDataUrl) ? petPhotoDataUrl : undefined,
       fotoUrl: '',
 
       nombre: document.getElementById('p_nombre').value.trim(),
@@ -684,7 +682,8 @@
     }
   });
 
-  // (Opcional) Log de errores en consola
+  // Log de errores de runtime (para depurar rápido)
   window.addEventListener('error', e => { console.error('TPL runtime error:', e.error || e.message || e); });
 })();
 </script>
+<!-- TPL: FIN BLOQUE NUEVO -->
