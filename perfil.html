@@ -472,7 +472,9 @@
             linkEditar.setAttribute('aria-hidden','false');
           }
         } else {
-          actionsPerfil && actionsPerfil.classList.remove('tpl-hidden');
+          // TPL: INICIO BLOQUE NUEVO [Ocultar botón grande siempre]
+          actionsPerfil && actionsPerfil.classList.add('tpl-hidden');
+          // TPL: FIN BLOQUE NUEVO
           if (linkEditar){
             linkEditar.classList.add('tpl-hidden');
             linkEditar.setAttribute('aria-hidden','true');
@@ -718,13 +720,23 @@
         ownerModal.setAttribute('aria-hidden','false');
         document.documentElement.style.overflow='hidden';
         ownerForm.reset(); oMsg.style.display='none';
-        ownerForm.o_nombre.value = pre?.nombre || '';
-        ownerForm.o_telefono.value = pre?.telefono || '';
-        ownerForm.o_email.value = (auth.currentUser && auth.currentUser.email) || pre?.email || '';
-        ownerForm.o_direccion.value = pre?.direccion || '';
-        ownerForm.o_cp.value = pre?.cp || '';
-        ownerForm.o_pref.value = pre?.preferencias || '';
-        setTimeout(()=> ownerForm.o_nombre.focus(), 0);
+
+        // TPL: INICIO BLOQUE NUEVO [Selección correcta por id]
+        const f_nombre = ownerForm.querySelector('#o_nombre');
+        const f_tel    = ownerForm.querySelector('#o_telefono');
+        const f_email  = ownerForm.querySelector('#o_email');
+        const f_dir    = ownerForm.querySelector('#o_direccion');
+        const f_cp     = ownerForm.querySelector('#o_cp');
+        const f_pref   = ownerForm.querySelector('#o_pref');
+
+        f_nombre.value = pre?.nombre || '';
+        f_tel.value    = pre?.telefono || '';
+        f_email.value  = (auth.currentUser && auth.currentUser.email) || pre?.email || '';
+        f_dir.value    = pre?.direccion || '';
+        f_cp.value     = pre?.cp || '';
+        f_pref.value   = pre?.preferencias || '';
+        setTimeout(()=> f_nombre.focus(), 0);
+        // TPL: FIN BLOQUE NUEVO
       }
       function closeOwnerModal(){
         ownerModal.setAttribute('aria-hidden','true');
@@ -736,15 +748,19 @@
       ownerForm.addEventListener('submit', async (e)=>{
         e.preventDefault(); oMsg.style.display='none';
         if (!ownerForm.reportValidity()) return;
+
+        // TPL: INICIO BLOQUE NUEVO [Lectura correcta por id]
         const data = {
-          nombre: ownerForm.o_nombre.value.trim(),
-          telefono: ownerForm.o_telefono.value.trim(),
-          email: ownerForm.o_email.value.trim(),
-          direccion: ownerForm.o_direccion.value.trim(),
-          cp: ownerForm.o_cp.value.trim(),
-          preferencias: ownerForm.o_pref.value.trim(),
-          updatedAt: new Date().toISOString()
+          nombre:      ownerForm.querySelector('#o_nombre').value.trim(),
+          telefono:    ownerForm.querySelector('#o_telefono').value.trim(),
+          email:       ownerForm.querySelector('#o_email').value.trim(),
+          direccion:   ownerForm.querySelector('#o_direccion').value.trim(),
+          cp:          ownerForm.querySelector('#o_cp').value.trim(),
+          preferencias:ownerForm.querySelector('#o_pref').value.trim(),
+          updatedAt:   new Date().toISOString()
         };
+        // TPL: FIN BLOQUE NUEVO
+
         try{
           await db.collection('users').doc(CURRENT_UID).collection('private').doc('profile').set(data, {merge:true});
           oMsg.style.display='inline-flex';
@@ -1030,6 +1046,14 @@
           else if (pet){ openPetFromIdOrNew(pet); }
         }catch(_){}
       }
+
+      // ---------- Cerrar modales con ESC ----------
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape'){
+          if (ownerModal.getAttribute('aria-hidden') === 'false') closeOwnerModal();
+          if (petModal.getAttribute('aria-hidden') === 'false') closePetModal();
+        }
+      });
 
       // ---------- Auth guard ----------
       auth.onAuthStateChanged(async (u)=>{
