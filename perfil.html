@@ -1,277 +1,203 @@
-<script>
-/* ================================
-   TPL · PERFIL.HTML — SCRIPT COMPLETO
-   Carga Firebase de forma segura, lee perfil + mascotas,
-   tolera errores de permisos/red y nunca deja la página en blanco.
-   ================================ */
-(async function(){
-  // ---------- Cargador de Firebase (compat) ----------
-  function loadScript(src){
-    return new Promise((res, rej)=>{
-      const s = document.createElement('script');
-      s.src = src; s.async = true;
-      s.onload = res;
-      s.onerror = ()=>rej(new Error('No se pudo cargar: '+src));
-      document.head.appendChild(s);
-    });
-  }
-  async function ensureFirebase(){
-    if (typeof firebase === 'undefined'){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi perfil · The Pets Lovers</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos locales del perfil - seguros y aislados] -->
+  <style>
+    :root{
+      --tpl-color: var(--color-principal, #339496);
+      --tpl-text: var(--color-texto, #58425a);
+      --tpl-muted:#666; --tpl-border:#ececec; --tpl-bg:#fff; --tpl-chip:#f6fbfb;
     }
-    if (!('auth' in firebase)){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    .tpl-page { padding-top: 110px; }
+    .tpl-profile-wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+    .tpl-page h1 { margin: 0 0 8px; }
+    .tpl-page p.lead { color: var(--tpl-muted); margin: 0 0 18px; }
+
+    .tpl-grid {
+      display: grid; gap: 14px;
+      grid-template-columns: 1fr;
     }
-    if (!('firestore' in firebase)){
-      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    @media (min-width: 840px){ .tpl-grid { grid-template-columns: 1fr 1fr; } }
+    .tpl-card {
+      background: var(--tpl-bg); border:1px solid var(--tpl-border);
+      border-radius: 14px; padding: 14px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.04);
     }
-    // Config: usa la global si ya la declaraste en otra parte; si no, ponemos la tuya
-    if (!window.firebaseConfig){
-      window.firebaseConfig = {
-        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-        authDomain: "thepetslovers-c1111.firebaseapp.com",
-        projectId: "thepetslovers-c1111",
-        storageBucket: "thepetslovers-c1111.appspot.com",
-        messagingSenderId: "415914577533",
-        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-        measurementId: "G-FXPD69KXBG"
-      };
+    .tpl-card h2 { margin: 0 0 6px; display:flex; align-items:center; gap:10px; }
+    .tpl-pill {
+      display:inline-flex; align-items:center; gap:6px;
+      background: var(--tpl-chip); color: var(--tpl-text);
+      border:1px solid var(--tpl-border); border-radius:999px;
+      font-size:.85rem; padding:4px 10px;
     }
-  }
-
-  try {
-    await ensureFirebase();
-  } catch (e){
-    console.error('TPL Firebase loader error:', e);
-  }
-
-  // ✅ CLAVE: inicializar SIEMPRE con la config correcta
-  const cfg = window.firebaseConfig || {};
-  try {
-    if (firebase && firebase.apps && firebase.apps.length === 0){
-      firebase.initializeApp(cfg);
+    .tpl-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .tpl-btn {
+      display:inline-flex; align-items:center; gap:8px; justify-content:center;
+      border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border);
+      text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color);
+      transition: transform .06s ease, box-shadow .06s ease;
     }
-  } catch(e){
-    console.warn('TPL init app warning:', e);
-  }
+    .tpl-btn.secondary { background:#fff; color:var(--tpl-text); }
+    .tpl-btn:active { transform: translateY(1px); }
 
-  // ---------- Instancias ----------
-  const auth = (firebase && firebase.auth) ? firebase.auth() : null;
-  const db   = (firebase && firebase.firestore) ? firebase.firestore() : null;
+    .tpl-dl { display:grid; grid-template-columns: 150px 1fr; row-gap:4px; column-gap:10px; margin-top:8px; }
+    .tpl-dl dt { color: var(--tpl-muted); }
+    .tpl-dl dd { margin:0; color: var(--tpl-text); }
 
-  // ---------- Refs DOM (null-safe) ----------
-  const $ = (id)=> document.getElementById(id);
-
-  const bannerInc   = $('tpl-banner-incompleto');
-
-  const emptyCliente  = $('tpl-cliente-empty');
-  const viewCliente   = $('tpl-cliente-view');
-  const statusCliente = $('tpl-cliente-status');
-  const actionsPerfil = $('tpl-actions-perfil');
-  const linkEditar    = $('tpl-link-editar');
-
-  const mascotasEmpty = $('tpl-mascotas-empty');
-  const mascotasView  = $('tpl-mascotas-view');
-  const mascotasList  = $('tpl-mascotas-list');
-  const chipMascotas  = $('tpl-chip-mascotas');
-  const cntMascotas   = $('tpl-count-mascotas');
-
-  const logoutBtn     = $('tpl-logout-btn');
-
-  // ---------- Storage local (fallback) ----------
-  const LS_PROFILE_KEY = 'tpl-profile';
-  const LS_PETS_KEY    = 'tpl-pets';
-
-  const permErr = (e)=> !!(e && (e.code === 'permission-denied' || /insufficient permissions/i.test(e.message||'')));
-
-  // ---------- UI helpers ----------
-  function updateBadge(profile){
-    const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
-    if (statusCliente){
-      statusCliente.classList.toggle('tpl-hidden', !complete);
-      statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
-    }
-    if (actionsPerfil && linkEditar){
-      if (complete){
-        actionsPerfil.classList.add('tpl-hidden');
-        linkEditar.classList.remove('tpl-hidden');
-        linkEditar.setAttribute('aria-hidden','false');
-      } else {
-        actionsPerfil.classList.remove('tpl-hidden');
-        linkEditar.classList.add('tpl-hidden');
-        linkEditar.setAttribute('aria-hidden','true');
-      }
-    }
-    if (bannerInc) bannerInc.hidden = complete;
-  }
-
-  function setText(id, val){
-    const el = $(id);
-    if (el) el.textContent = (val ?? '—');
-  }
-
-  // ---------- Data: Perfil ----------
-  async function getProfile(uid){
-    // Intenta Firestore primero
-    if (db && uid){
-      try{
-        const snap = await db.collection('users').doc(uid).collection('private').doc('profile').get();
-        if (snap.exists) return snap.data();
-      }catch(e){
-        if (!permErr(e)) console.warn('TPL perfil:getProfile error', e);
-      }
-    }
-    // Fallback local
-    try{ return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); }
-    catch(_){ return null; }
-  }
-
-  // ---------- Data: Mascotas ----------
-  async function getPets(uid){
-    if (db && uid){
-      try{
-        const snap = await db.collection('users').doc(uid).collection('pets').get();
-        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      }catch(e){
-        if (!permErr(e)) console.warn('TPL perfil:getPets error', e);
-      }
-    }
-    try{ return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); }
-    catch(_){ return []; }
-  }
-
-  // ---------- Render: Perfil ----------
-  function renderProfile(p){
-    if (p && (p.nombre || p.telefono || p.email || p.cp)){
-      setText('tpl-view-nombre',    p.nombre || '—');
-      setText('tpl-view-telefono',  p.telefono || '—');
-      setText('tpl-view-email',     p.email || '—');
-      setText('tpl-view-direccion', p.direccion || '—');
-      setText('tpl-view-cp',        p.cp || '—');
-      setText('tpl-view-pref',      p.preferencias || '—');
-
-      if (emptyCliente) emptyCliente.classList.add('tpl-hidden');
-      if (viewCliente)  viewCliente.classList.remove('tpl-hidden');
-    } else {
-      if (viewCliente)  viewCliente.classList.add('tpl-hidden');
-      if (emptyCliente) emptyCliente.classList.remove('tpl-hidden');
-    }
-    updateBadge(p);
-  }
-
-  // ---------- Render: Mascotas ----------
-  function petEditHref(p, idx, isFirebase){
-    return (isFirebase && p.id)
-      ? ('perfil-mascotas.html?id=' + encodeURIComponent(p.id) + '&next=perfil.html')
-      : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx) + '&next=perfil.html');
-  }
-
-  function renderPets(pets, isFirebase){
-    if (!mascotasList) return;
-
-    mascotasList.innerHTML = '';
-    const count = Array.isArray(pets) ? pets.length : 0;
-
-    if (count > 0){
-      mascotasEmpty && mascotasEmpty.classList.add('tpl-hidden');
-      mascotasView  && mascotasView.classList.remove('tpl-hidden');
-      if (chipMascotas){
-        chipMascotas.classList.remove('tpl-hidden');
-        chipMascotas.setAttribute('aria-hidden','false');
-      }
-      if (cntMascotas) cntMascotas.textContent = String(count);
-
-      pets.forEach((p, idx)=>{
-        const card = document.createElement('div'); card.className='tpl-pet';
-
-        // Avatar (usa fotoDataUrl si existe; si no, fotoUrl; si no, iniciales)
-        const avatar = document.createElement('div'); avatar.className='tpl-avatar';
-        const src = p.fotoDataUrl || p.fotoUrl || '';
-        if (src){
-          const img = document.createElement('img');
-          img.src = src; img.alt = `Foto de ${p.nombre||'mascota'}`;
-          avatar.appendChild(img);
-        } else {
-          const initials = (p.nombre||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || '—';
-          avatar.textContent = initials;
-        }
-
-        const text = document.createElement('div');
-        const n = document.createElement('div'); n.className='tpl-pet-name'; n.textContent = p.nombre || '—';
-        const s = document.createElement('div'); s.className='tpl-pet-secondary'; s.textContent = p.especie || '—';
-        text.appendChild(n); text.appendChild(s);
-
-        const actions = document.createElement('div'); actions.style.marginLeft='auto';
-        const edit = document.createElement('a');
-        edit.className='tpl-btn-sm tpl-btn-outline';
-        edit.textContent='Editar';
-        edit.href = petEditHref(p, idx, isFirebase);
-        actions.appendChild(edit);
-
-        card.appendChild(avatar); card.appendChild(text); card.appendChild(actions);
-        mascotasList.appendChild(card);
-      });
-    } else {
-      mascotasView  && mascotasView.classList.add('tpl-hidden');
-      mascotasEmpty && mascotasEmpty.classList.remove('tpl-hidden');
-      if (chipMascotas){
-        chipMascotas.classList.add('tpl-hidden');
-        chipMascotas.setAttribute('aria-hidden','true');
-      }
-      if (cntMascotas) cntMascotas.textContent = '0';
+    .tpl-empty {
+      border:1px dashed var(--tpl-border); border-radius:12px; padding:10px; color:var(--tpl-muted);
+      display:flex; align-items:center; gap:8px; background:#fafafa;
     }
 
-    // Banner de “Perfil incompleto”
-    const hasProfile = !!(
-      ( $('tpl-view-nombre')?.textContent || '' ).trim() &&
-      ( $('tpl-view-telefono')?.textContent || '' ).trim() &&
-      ( $('tpl-view-cp')?.textContent || '' ).trim()
-    );
-    const hasPets = count > 0;
-    if (bannerInc) bannerInc.hidden = (hasProfile && hasPets);
-  }
-
-  // ---------- Orquestador ----------
-  async function render(uid){
-    const isFirebase = !!uid;
-    const profile = await getProfile(uid);
-    renderProfile(profile);
-    const pets = await getPets(uid);
-    renderPets(pets, isFirebase);
-  }
-
-  // ---------- Logout ----------
-  logoutBtn && logoutBtn.addEventListener('click', async (e)=>{
-    e.preventDefault();
-    try { await auth?.signOut(); } catch(_){}
-    try {
-      localStorage.removeItem('tpl_auth_email');
-      localStorage.removeItem('tpl_auth_uid');
-      localStorage.removeItem('tplProfileComplete');
-      // (opcional) mirrors tuyos:
-      // localStorage.removeItem('tpl-profile');
-      // localStorage.removeItem('tpl-pets');
-    } catch(_){}
-    location.href = 'index.html';
-  });
-
-  // ---------- Guard de sesión ----------
-  if (!auth){
-    console.error('TPL: Firebase Auth no disponible');
-    // Pinta “vacío” en ausencia de auth para evitar página en blanco
-    renderProfile(null);
-    renderPets([], false);
-    return;
-  }
-
-  auth.onAuthStateChanged(async (u)=>{
-    if (u && !u.isAnonymous){
-      try { await render(u.uid); }
-      catch(e){ console.error('TPL render error:', e); }
-    } else {
-      location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
+    /* Mascotas list */
+    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+    .tpl-pet-item {
+      display:flex; gap:10px; align-items:center; padding:8px; border:1px solid var(--tpl-border); border-radius:12px;
+      background:#fff;
     }
-  });
+    .tpl-pet-thumb { width:56px; height:56px; flex:0 0 56px; border-radius:10px; object-fit:cover; border:1px solid var(--tpl-border); }
+    .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
+  </style>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+</head>
+<body>
 
-})();
-</script>
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo">
+          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+        </div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="index.html#contactanos">Contáctanos</a></li>
+          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <main class="container tpl-page">
+    <div class="tpl-profile-wrap" aria-live="polite">
+      <h1>Mi perfil</h1>
+      <p class="lead">Completa tu información de propietario y la de tu(s) mascota(s). Así la reserva se rellena sola.</p>
+
+      <section class="tpl-grid" id="tpl-profile-cards">
+        <!-- Card: Propietario -->
+        <article class="tpl-card" id="tpl-card-owner">
+          <h2><i class="fa-solid fa-user"></i> Propietario
+            <span class="tpl-pill" id="tpl-owner-status"><i class="fa-solid fa-circle-exclamation"></i> Incompleto</span>
+          </h2>
+          <dl class="tpl-dl">
+            <dt>Nombre</dt><dd id="tpl-owner-nombre">—</dd>
+            <dt>Teléfono</dt><dd id="tpl-owner-telefono">—</dd>
+            <dt>Zona</dt><dd id="tpl-owner-zona">—</dd>
+            <dt>Email</dt><dd id="tpl-owner-email">—</dd>
+          </dl>
+          <div class="tpl-actions">
+            <a class="tpl-btn" id="tpl-owner-fill" href="tpl-propietario.html"><i class="fa-solid fa-pen-to-square"></i> Rellenar</a>
+            <a class="tpl-btn secondary" id="tpl-owner-edit" href="tpl-propietario.html" style="display:none"><i class="fa-solid fa-pen"></i> Editar</a>
+          </div>
+        </article>
+
+        <!-- Card: Mascotas -->
+        <article class="tpl-card" id="tpl-card-pets">
+          <h2><i class="fa-solid fa-paw"></i> Mascotas
+            <span class="tpl-pill" id="tpl-pets-status"><i class="fa-solid fa-circle-exclamation"></i> Ninguna</span>
+          </h2>
+
+          <div class="tpl-empty" id="tpl-pets-empty">
+            <i class="fa-regular fa-face-smile"></i>
+            Aún no has añadido mascotas.
+          </div>
+
+          <div class="tpl-pet-list" id="tpl-pets-list" hidden>
+            <!-- Items de mascotas se renderizarán aquí -->
+          </div>
+
+          <div class="tpl-actions">
+            <a class="tpl-btn" id="tpl-pet-add" href="tpl-mascota.html"><i class="fa-solid fa-plus"></i> Añadir mascota</a>
+          </div>
+        </article>
+
+        <!-- Card: Reservas -->
+        <article class="tpl-card" id="tpl-card-bookings" style="grid-column: 1 / -1;">
+          <h2><i class="fa-solid fa-calendar-check"></i> Reservas
+            <span class="tpl-pill" id="tpl-bookings-status"><i class="fa-regular fa-circle"></i> Sin reservas</span>
+          </h2>
+
+          <div class="tpl-empty" id="tpl-bookings-empty">
+            <i class="fa-regular fa-calendar"></i>
+            Aquí verás tus reservas <em>enviadas / en revisión / aceptadas</em> cuando empecemos a conectarlo.
+          </div>
+
+          <div id="tpl-bookings-list" hidden>
+            <!-- Más adelante: listaremos las reservas del usuario -->
+          </div>
+
+          <div class="tpl-actions">
+            <a class="tpl-btn secondary" href="reserva.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Ir a reservar</a>
+          </div>
+        </article>
+      </section>
+    </div>
+  </main>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer">
+        <div class="container footer-row">
+          <div class="footer-left">
+            <nav class="footer-links-row">
+              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
+              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
+              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
+              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
+              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
+              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
+              <a href="digital-services-act.html">Digital Services Act</a>
+            </nav>
+            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
+          </div>
+          <div class="footer-right socials">
+            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+        <div class="footer-bottom footer-bottom--inline">
+          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
+          <nav class="footer-bottom-right legal-links">
+            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
+            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
+            <a href="cookies.html">Cookies</a><span class="sep">|</span>
+            <a href="canal-denuncias.html">Canal de denuncias</a>
+          </nav>
+        </div>
+      </footer>
+    </noscript>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Scripts -->
+  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
+  <script src="tpl-navbar.js" defer></script> <!-- mismo patrón de ayuda/legales -->
+  <script src="tpl-footer.js" defer></script> <!-- inyección de footer -->
+  <script src="tpl-perfil.js" defer></script> <!-- lógica ligera de estado -->
+</body>
+</html>
