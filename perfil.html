@@ -64,16 +64,14 @@
       background:#fff;
     }
 
-    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota] */
+    /* TPL: INICIO BLOQUE NUEVO [Avatar circular + icono fallback + meta] */
     .tpl-pet-thumb {
       width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;              /* <-- circular */
+      border-radius:50%;
       object-fit:cover;
       border:2px solid var(--tpl-border);
+      background:#fff;
     }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    /* TPL: INICIO BLOQUE NUEVO [Icono fallback + meta] */
     .tpl-pet-icon {
       width:56px; height:56px; flex:0 0 56px;
       border-radius:50%;
@@ -84,6 +82,22 @@
     .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
     .tpl-pet-name{ font-weight:700; color:#222; }
     .tpl-pet-sub{ color:#666; font-size:.95rem; }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Cerrar sesión flotante + enlace Editar] */
+    .tpl-logout{
+      position: fixed; right: 16px; bottom: 16px; z-index: 50;
+      background: var(--tpl-color); color: #fff; border: 1px solid var(--tpl-border);
+      border-radius: 999px; padding: 10px 12px; font-weight: 600; text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    }
+    .tpl-logout i{ margin-right:6px; }
+    .tpl-pet-item{ position: relative; }
+    .tpl-pet-edit{
+      position:absolute; right:10px; bottom:8px; font-size:.9rem;
+      color: var(--tpl-text); text-decoration: underline;
+    }
+    .tpl-pet-edit:focus{ outline:2px dashed var(--tpl-color); outline-offset:2px; border-radius:6px; }
     /* TPL: FIN BLOQUE NUEVO */
 
     .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
@@ -178,6 +192,10 @@
     </div>
   </main>
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Botón Cerrar sesión fijo] -->
+  <a href="index.html" id="tpl-logout" class="tpl-logout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</a>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
   <div id="tpl-footer">
     <noscript>
@@ -222,7 +240,7 @@
   <script src="tpl-footer.js" defer></script>
   <script src="tpl-perfil.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage + forzado de estado cuando hay mascotas] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage + link Editar + estado correcto] -->
   <script>
   (function(){
     'use strict';
@@ -254,7 +272,7 @@
       list.hidden = false;
       list.innerHTML = '';
 
-      pets.forEach(p => {
+      pets.forEach((p, idx) => {
         const nombre   = escapeHtml(p?.nombre || 'Sin nombre');
         const especie  = escapeHtml(p?.especie || '');
         const raza     = escapeHtml(p?.raza || p?.tipoExotico || '');
@@ -292,6 +310,15 @@
         meta.appendChild(sub);
         item.appendChild(meta);
 
+        // TPL: INICIO BLOQUE NUEVO [Enlace Editar por mascota]
+        const edit = document.createElement('a');
+        edit.href = `tpl-mascota.html?edit=${idx}`;
+        edit.className = 'tpl-pet-edit';
+        edit.textContent = 'Editar';
+        edit.setAttribute('aria-label', `Editar a ${nombre}`);
+        item.appendChild(edit);
+        // TPL: FIN BLOQUE NUEVO
+
         list.appendChild(item);
       });
 
@@ -301,7 +328,6 @@
       }
     }
 
-    // Forzar estado correcto si otra lógica reescribe el chip/empty:
     function ensureState(){
       const empty = document.getElementById('tpl-pets-empty');
       const list  = document.getElementById('tpl-pets-list');
@@ -323,11 +349,9 @@
       ensureState();
     }
 
-    // Ejecutamos al final (cuando todo ha cargado) y re-ejecutamos en el siguiente tick
     window.addEventListener('load', () => {
       loadAndRender();
       setTimeout(loadAndRender, 0);
-      // Vigilar cambios en la lista (por si otro script re-renderiza)
       const list = document.getElementById('tpl-pets-list');
       if (list){
         const mo = new MutationObserver(()=>ensureState());
@@ -335,7 +359,23 @@
       }
     });
 
-    // Exponer para refrescar manualmente si hace falta
+    // TPL: INICIO BLOQUE NUEVO [Cerrar sesión: limpiar y redirigir]
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const btn = document.getElementById('tpl-logout');
+      if (btn){
+        btn.addEventListener('click', (ev)=>{
+          ev.preventDefault();
+          try{
+            sessionStorage.removeItem('tpl.pets');
+            sessionStorage.removeItem('tpl.owner');
+          }catch(e){}
+          location.assign('index.html');
+        });
+      }
+    });
+    // TPL: FIN BLOQUE NUEVO
+
+    // Exponer por si hace falta refrescar desde fuera
     window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__ || {}, { renderPets });
   })();
   </script>
