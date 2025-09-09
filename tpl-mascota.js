@@ -24,9 +24,8 @@
   let originalImg = null, imageReady = false;
   let cropState = { offX:0, offY:0, scale:1 };
   let currentCroppedDataUrl = '';
-  let editIndex = -1;            // índice en sessionStorage si editamos
-  let loadedPet = null;          // mascota cargada para edición
-  let existingFotoDataUrl = '';  // foto ya guardada, por si no cambiamos
+  let editIndex = -1;
+  let existingFotoDataUrl = '';
 
   function fitCoverScale(imgW, imgH, boxW, boxH){ return Math.max(boxW/imgW, boxH/imgH); }
   function drawToCanvas(ctx, img, offX, offY, scale, W, H){
@@ -101,7 +100,7 @@
       const f = fileInput.files && fileInput.files[0];
       if (!f){
         preview.src = 'images/pet-placeholder.png';
-        avatarBox.classList.remove('has-image');
+        avatarBox.classList.remove('has-image');   // sin imagen => solo huellita
         photoActions.style.display='none';
         photoPickRow.style.display='block';
         currentCroppedDataUrl=''; originalImg=null; imageReady=false;
@@ -110,7 +109,7 @@
       }
       const tmp = URL.createObjectURL(f);
       preview.src = tmp;
-      avatarBox.classList.add('has-image');
+      avatarBox.classList.add('has-image');        // con imagen => se muestra foto
       photoPickRow.style.display = 'none';
       photoActions.style.display = 'flex';
 
@@ -148,16 +147,18 @@
     especie.addEventListener('change', updateBreedList);
     updateBreedList();
 
-    // Seguro Vet: detalles solo si “Sí”
+    // ===== Seguro Vet: detalles SOLO si “Sí” =====
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
+      // TPL: INICIO BLOQUE NUEVO [Mostrar/ocultar con doble control]
       seguroVetData.classList.toggle('is-hidden', !yes);
       seguroVetData.hidden = !yes;
       seguroVetComp.required = seguroVetNum.required = yes;
       if (!yes){ seguroVetComp.value=''; seguroVetNum.value=''; }
+      // TPL: FIN BLOQUE NUEVO
     }
     seguroVet.addEventListener('change', toggleSeguroVet);
-    toggleSeguroVet();
+    toggleSeguroVet(); // estado inicial correcto
 
     // ===== Cropper minimal (drag/flechas)
     const modal = byId('cropperModal');
@@ -196,7 +197,7 @@
     modal.addEventListener('keydown', (e)=>{ if (!imageReady) return; const step=3; let moved=false; if (e.key==='ArrowLeft'){cropState.offX-=step;moved=true;} if (e.key==='ArrowRight'){cropState.offX+=step;moved=true;} if (e.key==='ArrowUp'){cropState.offY-=step;moved=true;} if (e.key==='ArrowDown'){cropState.offY+=step;moved=true;} if (moved){ e.preventDefault(); const p=drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; } if (e.key==='Escape'){ btnCancel.click(); } });
     btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
-    // ===== MODO EDICIÓN =====
+    // ===== Modo edición (si ?edit=idx) =====
     (function initEditMode(){
       const params = new URLSearchParams(location.search);
       const e = params.get('edit');
@@ -209,67 +210,65 @@
       if (!Array.isArray(arr) || !arr[idx]) return;
 
       editIndex = idx;
-      loadedPet = arr[idx];
+      const pet = arr[idx];
 
-      // Cambiar textos
       const h1 = document.querySelector('h1');
       if (h1) h1.textContent = 'Editar mascota';
       if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
 
-      // Prefill
-      nombre.value = loadedPet.nombre || '';
-      if ((loadedPet.microchip||'') === 'No tiene'){
+      byId('nombre').value = pet.nombre || '';
+      if ((pet.microchip||'') === 'No tiene'){
         microNo.checked = true;
         updateMicroState();
       } else {
         microNo.checked = false;
         updateMicroState();
-        microchip.value = loadedPet.microchip || '';
+        microchip.value = pet.microchip || '';
       }
 
-      especie.value = loadedPet.especie || '';
+      especie.value = pet.especie || '';
       updateBreedList();
-      raza.value = loadedPet.raza || loadedPet.tipoExotico || '';
+      raza.value = pet.raza || pet.tipoExotico || '';
 
-      edad.value = loadedPet.edad || '';
-      peso.value = loadedPet.peso || '';
-      esterilizado.value = loadedPet.esterilizado || '';
-      vacunas.value = loadedPet.vacunas || '';
-      salud.value = loadedPet.salud || '';
-      tratamiento.value = loadedPet.tratamiento || '';
-      comidas.value = loadedPet.comidas || '';
-      salidas.value = loadedPet.salidas || '';
-      tamano.value = loadedPet.tamano || '';
-      clinica.value = loadedPet.clinica || '';
-      hospitalPref.value = loadedPet.hospitalPref || '';
-      comportamiento.value = loadedPet.comportamiento || '';
+      edad.value = pet.edad || '';
+      peso.value = pet.peso || '';
+      esterilizado.value = pet.esterilizado || '';
+      vacunas.value = pet.vacunas || '';
+      salud.value = pet.salud || '';
+      tratamiento.value = pet.tratamiento || '';
+      comidas.value = pet.comidas || '';
+      salidas.value = pet.salidas || '';
+      tamano.value = pet.tamano || '';
+      clinica.value = pet.clinica || '';
+      hospitalPref.value = pet.hospitalPref || '';
+      comportamiento.value = pet.comportamiento || '';
 
-      camaras.value = loadedPet.camaras || '';
-      fotosSel.value = loadedPet.fotos || '';
+      camaras.value = pet.camaras || '';
+      fotosSel.value = pet.fotos || '';
 
-      seguroVet.value = loadedPet.seguroVet || '';
+      seguroVet.value = pet.seguroVet || '';
       toggleSeguroVet();
       if (seguroVet.value === 'Sí'){
-        seguroVetComp.value = loadedPet.seguroVetComp || '';
-        seguroVetNum.value = loadedPet.seguroVetNum || '';
+        seguroVetComp.value = pet.seguroVetComp || '';
+        seguroVetNum.value  = pet.seguroVetNum  || '';
       }
-      seguroRC.value = loadedPet.seguroRC || '';
+      seguroRC.value = pet.seguroRC || '';
 
-      existingFotoDataUrl = loadedPet.foto || '';
+      existingFotoDataUrl = pet.foto || '';
       if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
         preview.src = existingFotoDataUrl;
-        avatarBox.classList.add('has-image');
+        avatarBox.classList.add('has-image');   // muestra foto
         photoPickRow.style.display = 'none';
         photoActions.style.display = 'flex';
       } else {
-        avatarBox.classList.remove('has-image');
+        avatarBox.classList.remove('has-image'); // solo huellita
         photoActions.style.display = 'none';
         photoPickRow.style.display = 'block';
         updateSpeciesIcon();
       }
     })();
 
-    // ===== Guardar por CLICK (sin submit nativo)
+    // ===== Guardar por CLICK (crear/actualizar) =====
     saveBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
@@ -302,24 +301,23 @@
         camaras: (fd.get('camaras')||'').toString(),
         fotos: (fd.get('fotos')||'').toString(),
         seguroVet: (fd.get('seguroVet')||'').toString(),
-        seguroVetComp: (seguroVet.value==='Sí') ? (seguroVetComp.value||'') : '',
-        seguroVetNum: (seguroVet.value==='Sí') ? (seguroVetNum.value||'') : '',
+        seguroVetComp: (seguroVet.value==='Sí') ? (byId('seguroVetComp').value||'') : '',
+        seguroVetNum:  (seguroVet.value==='Sí') ? (byId('seguroVetNum').value ||'') : '',
         seguroRC: (fd.get('seguroRC')||'').toString(),
         foto: ''
       };
 
       const file = fileInput.files && fileInput.files[0];
       const finalize = (dataUrl) => {
-        // Si no hay nueva imagen ni crop, conservar la existente (en edición)
         const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
         mascota.foto = baseFoto;
 
         try{
           const arr = JSON.parse(sessionStorage.getItem('tpl.pets')||'[]');
           if (editIndex >= 0 && Array.isArray(arr) && arr[editIndex]){
-            arr[editIndex] = mascota;    // actualizar
+            arr[editIndex] = mascota;   // actualizar
           } else {
-            arr.push(mascota);           // crear
+            arr.push(mascota);          // crear
           }
           sessionStorage.setItem('tpl.pets', JSON.stringify(arr));
         }catch(_){}
@@ -345,7 +343,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        finalize(''); // usará existingFotoDataUrl si existe
+        finalize('');
       }
     });
   });
