@@ -24,6 +24,148 @@
   function udbSet(uid, key, value){ try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){ } }
   function udbHas(uid, key){ try { return localStorage.getItem(udbKey(uid,key)) !== null; }catch(_){ return false; } }
 
+  /* TPL: INICIO BLOQUE NUEVO [Firestore opcional: helpers lazy + meta ids por mascota] */
+  function tplLazyLoadFirebase8(){
+    return new Promise(function(resolve){
+      if (window.firebase && firebase.app) return resolve();
+      var urls = [
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
+      ];
+      var i = 0;
+      (function next(){
+        if (i >= urls.length) return resolve();
+        var s = document.createElement('script');
+        s.src = urls[i++]; s.async = true; s.onload = next; s.onerror = function(){ resolve(); };
+        document.head.appendChild(s);
+      })();
+    });
+  }
+  function tplEnsureFirebaseInit(){
+    try{
+      if (!window.firebase) return false;
+      if (firebase.apps && firebase.apps.length) return true;
+      var cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
+      if (!cfg) return false;
+      firebase.initializeApp(cfg);
+      return true;
+    }catch(_){ return false; }
+  }
+  function petsMetaGet(uid){
+    return udbGet(uid, 'petsMeta', { docIds: [] });
+  }
+  function petsMetaSet(uid, meta){
+    udbSet(uid, 'petsMeta', meta || { docIds: [] });
+  }
+  function genPetId(){
+    return 'pet_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+  }
+  async function __TPL_PET_SYNC_UPSERT__(uid, pet, index, totalCount){
+    try{
+      if (!uid || uid === 'default') return false;
+      await tplLazyLoadFirebase8();
+      if (!tplEnsureFirebaseInit() || !(firebase.auth && firebase.firestore)) return false;
+
+      // Asegurar sesión válida del mismo uid
+      if (!firebase.auth().currentUser || firebase.auth().currentUser.uid !== uid){
+        await new Promise(function(res){
+          var unsub = firebase.auth().onAuthStateChanged(function(){ try{unsub();}catch(_){ } res(); });
+        });
+      }
+      var u = firebase.auth().currentUser;
+      if (!u || u.uid !== uid) return false;
+
+      var db = firebase.firestore();
+      var ownerRef = db.collection('owners').doc(uid);
+
+      // Mapear índice a docId estable
+      var meta = petsMetaGet(uid);
+      meta.docIds = Array.isArray(meta.docIds) ? meta.docIds : [];
+      if (typeof index !== 'number' || index < 0) index = meta.docIds.length; // fallback crear
+      var docId = meta.docIds[index] || genPetId();
+      meta.docIds[index] = docId;
+      petsMetaSet(uid, meta);
+
+      var petRef = ownerRef.collection('pets').doc(docId);
+      var snap = await petRef.get();
+      var FV = firebase.firestore.FieldValue;
+
+      var payload = {
+        nombre: pet.nombre || '',
+        microchip: pet.microchip || '',
+        especie: pet.especie || '',
+        raza: pet.raza || '',
+        edad: pet.edad || '',
+        peso: pet.peso || '',
+        esterilizado: pet.esterilizado || '',
+        vacunas: pet.vacunas || '',
+        salud: pet.salud || '',
+        tratamiento: pet.tratamiento || '',
+        comidas: pet.comidas || '',
+        salidas: pet.salidas || '',
+        tamano: pet.tamano || '',
+        clinica: pet.clinica || '',
+        hospitalPref: pet.hospitalPref || '',
+        comportamiento: pet.comportamiento || '',
+        camaras: pet.camaras || '',
+        fotos: pet.fotos || '',
+        foto: pet.foto || '',
+        updatedAt: FV.serverTimestamp()
+      };
+      if (!snap.exists){
+        payload.createdAt = FV.serverTimestamp();
+      }
+      await petRef.set(payload, { merge: true });
+
+      // Asegurar flag en owner
+      await ownerRef.set({ hasPet: (totalCount > 0), updatedAt: FV.serverTimestamp() }, { merge: true });
+
+      return true;
+    }catch(e){
+      console.warn('[tpl-mascota] sync upsert fallo (no bloqueante):', e);
+      return false;
+    }
+  }
+  async function __TPL_PET_SYNC_DELETE__(uid, index, remainingCount){
+    try{
+      if (!uid || uid === 'default') return false;
+      await tplLazyLoadFirebase8();
+      if (!tplEnsureFirebaseInit() || !(firebase.auth && firebase.firestore)) return false;
+
+      if (!firebase.auth().currentUser || firebase.auth().currentUser.uid !== uid){
+        await new Promise(function(res){
+          var unsub = firebase.auth().onAuthStateChanged(function(){ try{unsub();}catch(_){ } res(); });
+        });
+      }
+      var u = firebase.auth().currentUser;
+      if (!u || u.uid !== uid) return false;
+
+      var db = firebase.firestore();
+      var ownerRef = db.collection('owners').doc(uid);
+
+      var meta = petsMetaGet(uid);
+      meta.docIds = Array.isArray(meta.docIds) ? meta.docIds : [];
+      var docId = (typeof index === 'number' && index >= 0) ? meta.docIds[index] : null;
+
+      if (docId){
+        try{ await ownerRef.collection('pets').doc(docId).delete(); }catch(_){}
+        // re-alinear ids (eliminamos la posición)
+        meta.docIds.splice(index, 1);
+        petsMetaSet(uid, meta);
+      }
+
+      var FV = firebase.firestore.FieldValue;
+      await ownerRef.set({ hasPet: (remainingCount > 0), updatedAt: FV.serverTimestamp() }, { merge: true });
+
+      return true;
+    }catch(e){
+      console.warn('[tpl-mascota] sync delete fallo (no bloqueante):', e);
+      return false;
+    }
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   // ===== Listas de razas (con posible JSON externo) =====
   let DOG_BREEDS = ["Mestizo","Labrador Retriever","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche / Poodle","Chihuahua","Pomerania","Yorkshire Terrier","Shih Tzu","Beagle","Bóxer","Border Collie","Dálmata","Rottweiler","Husky Siberiano","Cocker Spaniel","Teckel / Dachshund","Pastor Belga Malinois","Pastor Australiano"];
   let CAT_BREEDS = ["Mestizo","Europeo Común","Siamés","Persa","Maine Coon","Bengalí","Ragdoll","Sphynx","British Shorthair","Scottish Fold","Azul Ruso","Noruego de Bosque","Bosque de Siberia","Abisinio","Exótico de Pelo Corto"];
@@ -298,6 +440,13 @@
           if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
           try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
+          /* TPL: INICIO BLOQUE NUEVO [Sync opcional Firestore en upsert (no bloqueante)] */
+          try{
+            var newIndex = (editIndex >= 0 ? editIndex : (arr.length - 1));
+            __TPL_PET_SYNC_UPSERT__(uid, mascota, newIndex, arr.length);
+          }catch(_){}
+          /* TPL: FIN BLOQUE NUEVO */
+
           location.assign('perfil.html');
         };
 
@@ -358,6 +507,12 @@
         udbSet(uid, 'pets', arr);
         if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
         try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
+
+        /* TPL: INICIO BLOQUE NUEVO [Sync opcional Firestore en delete (no bloqueante)] */
+        try{
+          __TPL_PET_SYNC_DELETE__(uid, editIndex, arr.length);
+        }catch(_){}
+        /* TPL: FIN BLOQUE NUEVO */
 
         location.assign('perfil.html');
       }
@@ -442,6 +597,7 @@
             if (microchip) microchip.value = pet.microchip || '';
           }
 
+          const especie = byId('especie'); // re-calc local para evitar sombras
           if (especie) especie.value = pet.especie || '';
           updateBreedList();
           if (raza) raza.value = pet.raza || pet.tipoExotico || '';
@@ -461,16 +617,6 @@
 
           if (camaras) camaras.value = pet.camaras || '';
           if (fotosSel) fotosSel.value = pet.fotos || '';
-
-          if (seguroVet){
-            seguroVet.value = pet.seguroVet || '';
-            toggleSeguroVet();
-            if (seguroVet.value === 'Sí'){
-              if (seguroVetComp) seguroVetComp.value = pet.seguroVetComp || '';
-              if (seguroVetNum)  seguroVetNum.value  = pet.seguroVetNum  || '';
-            }
-          }
-          if (seguroRC) seguroRC.value = pet.seguroRC || '';
 
           existingFotoDataUrl = pet.foto || '';
           if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
@@ -514,4 +660,4 @@
     else { labelRaza.textContent = 'Raza / Tipo *'; setOpts(breedList, []); }
   }
 })();
- /* TPL: FIN BLOQUE NUEVO */
+/* TPL: FIN BLOQUE NUEVO */
