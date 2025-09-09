@@ -4,7 +4,11 @@
     if (firebase.apps.length === 0) { firebase.initializeApp(firebaseConfig); }
     const auth = firebase.auth();
     const db   = firebase.firestore();
-    const st   = firebase.storage(); // no usado para fotos ahora
+
+    /* TPL: INICIO BLOQUE NUEVO [Storage desactivado con guardia] */
+    let st = null;
+    try { if (firebase.storage) { st = firebase.storage(); } } catch(_) { st = null; }
+    /* TPL: FIN BLOQUE NUEVO */
 
     let CURRENT_UID = null;
 
@@ -112,13 +116,19 @@
         window.__TPL_PROFILE_COMPLETE__ = complete;
         localStorage.setItem('tplProfileComplete', complete ? '1' : '0');
       }catch(_){}
-      bannerInc.hidden = complete;
+      /* TPL: INICIO BLOQUE NUEVO [guardia si no existe el banner] */
+      if (bannerInc) bannerInc.hidden = complete;
+      /* TPL: FIN BLOQUE NUEVO */
       if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
 
       function guardClick(e){
         e.preventDefault();
-        bannerInc.hidden = false;
-        bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
+        /* TPL: INICIO BLOQUE NUEVO [guardia banner] */
+        if (bannerInc){
+          bannerInc.hidden = false;
+          bannerInc.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+        /* TPL: FIN BLOQUE NUEVO */
       }
       if (btnIrReserva){
         btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
