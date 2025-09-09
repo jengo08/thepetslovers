@@ -1,4 +1,4 @@
-Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
@@ -476,6 +476,55 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
       'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
     };
 
+    /* TPL: INICIO BLOQUE NUEVO [Helpers UID + owner/pets desde localStorage y Firestore] */
+    function getCurrentUserId(){
+      try{
+        const explicit = localStorage.getItem('tpl.currentUser');
+        if (explicit) return explicit;
+        const uidLS = localStorage.getItem('tpl_auth_uid');
+        if (uidLS) return uidLS;
+        if (typeof firebase !== 'undefined' && firebase.auth){
+          const u = firebase.auth().currentUser;
+          if (u && !u.isAnonymous && u.uid) return u.uid;
+        }
+      }catch(_){}
+      return 'default';
+    }
+    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+    function udbGet(uid, key, fallback){
+      try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
+    }
+    function splitNombreCompleto(str){
+      const s = String(str||'').trim();
+      if(!s) return { first:'', last:'' };
+      const parts = s.split(/\s+/);
+      if(parts.length === 1) return { first: parts[0], last: '' };
+      return { first: parts[0], last: parts.slice(1).join(' ') };
+    }
+    async function loadOwnerFromFirestore(uid){
+      try{
+        if (typeof firebase === 'undefined' || !firebase.firestore) return null;
+        const db = firebase.firestore();
+        const snap = await db.collection('owners').doc(uid).get();
+        return snap.exists ? snap.data() : null;
+      }catch(_){ return null; }
+    }
+    async function loadPetsFromFirestore(uid){
+      try{
+        if (typeof firebase === 'undefined' || !firebase.firestore) return [];
+        const db = firebase.firestore();
+        const col = await db.collection('owners').doc(uid).collection('pets').get();
+        return col.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
+      }catch(_){ return []; }
+    }
+    function readLocalOwner(uid){ return udbGet(uid,'owner',null); }
+    function readLocalPets(uid){
+      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+      let arr = hasPets ? udbGet(uid,'pets',[]) : udbGet(uid,'mascotas',[]);
+      return Array.isArray(arr) ? arr : [];
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
     function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function eachDate(from,to){
@@ -807,53 +856,80 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Auto-cachorro y contacto desde perfil (si existe)
+    /* TPL: INICIO BLOQUE NUEVO [Autorrelleno real: owner + mascotas (localStorage primero, Firestore si hay sesión)] */
     async function autoPuppyFromProfile(){
       try{
-        if(typeof firebase === 'undefined') return;
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const u = auth.currentUser;
-        if(!u) return;
-        const snap = await db.collection('users').doc(u.uid).collection('mascotas').limit(1).get();
-        if(!snap.empty){
-          const pet = snap.docs[0].data();
-          if(pet?.birthdate){
-            const b = new Date(pet.birthdate);
-            const today = new Date();
-            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-            const isP = months < 6;
-            const svc = els.service?.value || '';
-            const species = els.species?.value || 'perro';
-            const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && species !== 'otros' && svc !== 'visitas';
-            if(els.isPuppy && puppyAllowed){ els.isPuppy.value = isP ? 'si' : 'no'; }
-            await recalc();
-          }
+        const uid = getCurrentUserId();
+        const localPets = readLocalPets(uid);
+        let refPet = localPets && localPets[0];
+        // Si hay sesión, intentamos Firestore para tener datos más recientes
+        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser){
+          const petsFS = await loadPetsFromFirestore(uid);
+          if (Array.isArray(petsFS) && petsFS.length) refPet = petsFS[0];
         }
+        if (!refPet) return;
+
+        // Deducción simple: si "edad" contiene "mes" y <= 6 -> cachorro
+        let isP = false;
+        const raw = String(refPet.edad || '').toLowerCase();
+        const m = raw.match(/(\d+)\s*mes/);
+        if (m){ isP = parseInt(m[1],10) <= 6; }
+        if (els.isPuppy && !els.isPuppy.parentElement.hidden){
+          els.isPuppy.value = isP ? 'si' : 'no';
+        }
+        await recalc();
       }catch(_){}
     }
 
-    async function autoContactFromProfile(u){
+    async function autoContactFromProfile(user){
       try{
-        if(!u || typeof firebase === 'undefined') return;
-        const db = firebase.firestore();
-        const doc = await db.collection('users').doc(u.uid).get();
-        const d = doc.exists ? doc.data() : {};
-        els.firstName.value = d?.nombre || u.displayName?.split(' ')?.[0] || '';
-        els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
-        els.email.value     = d?.email || u.email || '';
-        els.phone.value     = d?.telefono || u.phoneNumber || '';
-        if(d?.direccion) els.address.value = d.direccion;
-        if(d?.cp)        els.postalCode.value = d.cp;
-        if(d?.ccaa && els.region){
-          const val = (''+d.ccaa).toLowerCase();
-          if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
+        const uid = getCurrentUserId();
+        // Owner: primero local
+        let owner = readLocalOwner(uid);
+        // Si hay sesión, pruebo owners/{uid}
+        if ((!owner || !owner.email) && user && typeof firebase !== 'undefined' && firebase.firestore){
+          const fsOwner = await loadOwnerFromFirestore(uid);
+          if (fsOwner) owner = {
+            nombre: fsOwner.nombre || fsOwner.nombreCompleto || '',
+            dni: fsOwner.dni || '',
+            direccion: fsOwner.direccion || '',
+            cp: fsOwner.cp || '',
+            provincia: fsOwner.provincia || '',
+            localidad: fsOwner.localidad || '',
+            email: fsOwner.email || '',
+            telefono: fsOwner.telefono || '',
+            contacto: fsOwner.contacto || 'whatsapp',
+            contactoHorario: fsOwner.contactoHorario || '',
+            zona: fsOwner.zona || ''
+          };
         }
-        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-        PROFILE_PET_NAMES = petsSnap.docs.map(x=> (x.data()?.nombre || '').trim()).filter(Boolean);
+        // Pintar
+        if (owner){
+          const n = splitNombreCompleto(owner.nombre);
+          if (els.firstName && !els.firstName.value) els.firstName.value = n.first || '';
+          if (els.lastName  && !els.lastName.value)  els.lastName.value  = n.last || '';
+          if (els.email     && !els.email.value)     els.email.value     = owner.email || user?.email || '';
+          if (els.phone     && !els.phone.value)     els.phone.value     = owner.telefono || user?.phoneNumber || '';
+          if (els.address   && !els.address.value)   els.address.value   = owner.direccion || '';
+          if (els.postalCode&& !els.postalCode.value)els.postalCode.value= owner.cp || '';
+        }
+        // Datalist de mascotas
+        PROFILE_PET_NAMES = (readLocalPets(uid).map(p=>p?.nombre||'').filter(Boolean));
+        if (user && typeof firebase !== 'undefined' && firebase.firestore){
+          const petsFS = await loadPetsFromFirestore(uid);
+          const namesFS = petsFS.map(p=> String(p?.nombre||'').trim()).filter(Boolean);
+          PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...namesFS]));
+        }
         fillPetDatalist();
+        // Si no hay ningún campo de mascota relleno, precargo la primera
+        const firstInput = els.petsContainer?.querySelector('input[id^="petName_"]');
+        if (firstInput && !firstInput.value && PROFILE_PET_NAMES.length){
+          firstInput.value = PROFILE_PET_NAMES[0];
+          updatePetsListHidden();
+        }
       }catch(_){}
     }
+    /* TPL: FIN BLOQUE NUEVO */
 
     function validateContactPreference(e){
       const pref = (new FormData(form).get('Preferencia_contacto')) || 'cualquiera';
@@ -867,43 +943,6 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
       return true;
     }
 
-    // Antes de enviar: preparar campo resumen (lo usa el correo)
-    form.addEventListener('submit', async (e)=>{
-      if(!validateContactPreference(e)) return;
-      const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
-      let petsVal = els.numPets?.value || '1';
-      if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
-      updatePetsListHidden();
-
-      const lines = [];
-      lines.push(`Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`);
-      lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
-      lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      if(els.service?.value === 'visitas'){
-        lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
-      }else{
-        const puppyAllowed = (els.service?.value === 'alojamiento' || els.service?.value === 'guarderia') && (els.species?.value !== 'otros');
-        lines.push(`Tipo de animal: ${els.species?.value || '-'}`);
-        lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
-      }
-      lines.push(`Nº mascotas: ${petsVal}`);
-      const petNames = els.petsListHidden.value || '';
-      if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
-      lines.push(`Dirección: ${els.address?.value || '-'}`);
-      lines.push(`CP: ${els.postalCode?.value || '-'}`);
-      lines.push(`CCAA: ${regionText}`);
-      lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
-      if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
-      lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
-      lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
-      if(els.service?.value === 'guarderia' && els.rowBono?.style.display !== 'none'){
-        lines.push(`Bono guardería (descuento): −${els.sumBono?.textContent || '0.00'} €`);
-      }
-      lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
-      lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
-      document.getElementById('summaryField').value = lines.join(' | ');
-    });
-
     // Firebase: activar UI y auto-completar
     if (typeof firebase !== 'undefined') {
       const auth = firebase.auth();
@@ -911,9 +950,19 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
         const logged = !!user;
         if (form) form.classList.toggle('disabled', !logged);
         if (wall) wall.style.display = logged ? 'none' : 'block';
+        /* TPL: INICIO BLOQUE NUEVO [Autorrelleno al entrar] */
         if (logged){ autoContactFromProfile(user); autoPuppyFromProfile(); }
+        else {
+          // Aún así, si hay datos locales, los pinto (aunque el form queda deshabilitado)
+          autoContactFromProfile(null);
+        }
+        /* TPL: FIN BLOQUE NUEVO */
       }
       auth.onAuthStateChanged(updateAuthUI);
+    } else {
+      /* TPL: INICIO BLOQUE NUEVO [Sin Firebase: prefill solo desde local] */
+      autoContactFromProfile(null);
+      /* TPL: FIN BLOQUE NUEVO */
     }
 
     // Hooks
@@ -1112,7 +1161,6 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
           if(service && template){
             var payload = Object.fromEntries(fd.entries());
             Object.assign(payload, extra || {});
-            // Si ya se hizo emailjs.init con publicKey, no hace falta pasar pubKey
             if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
             else { await emailjs.send(service, template, payload); }
             return true;
@@ -1122,6 +1170,58 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
         }
         return false;
       }
+
+      /* TPL: INICIO BLOQUE NUEVO [Recolectar snapshots de owner + pets para adjuntar a la reserva] */
+      function getCurrentUserId(){
+        try{
+          const explicit = localStorage.getItem('tpl.currentUser');
+          if (explicit) return explicit;
+          const uidLS = localStorage.getItem('tpl_auth_uid');
+          if (uidLS) return uidLS;
+          if (typeof firebase !== 'undefined' && firebase.auth){
+            const u = firebase.auth().currentUser;
+            if (u && !u.isAnonymous && u.uid) return u.uid;
+          }
+        }catch(_){}
+        return 'default';
+      }
+      function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+      function udbGet(uid, key, fallback){
+        try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
+      }
+      async function loadOwnerFromFirestore(uid){
+        try{
+          if (typeof firebase === 'undefined' || !firebase.firestore) return null;
+          const db = firebase.firestore();
+          const snap = await db.collection('owners').doc(uid).get();
+          return snap.exists ? snap.data() : null;
+        }catch(_){ return null; }
+      }
+      async function loadPetsFromFirestore(uid){
+        try{
+          if (typeof firebase === 'undefined' || !firebase.firestore) return [];
+          const db = firebase.firestore();
+          const col = await db.collection('owners').doc(uid).collection('pets').get();
+          return col.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
+        }catch(_){ return []; }
+      }
+      function readLocalOwner(uid){ return udbGet(uid,'owner',null); }
+      function readLocalPets(uid){
+        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+        let arr = hasPets ? udbGet(uid,'pets',[]) : udbGet(uid,'mascotas',[]);
+        return Array.isArray(arr) ? arr : [];
+      }
+      function pickPetSnapshotsByNames(allPets, names){
+        const out = [];
+        const norm = s => String(s||'').trim().toLowerCase();
+        names.forEach(n=>{
+          const found = allPets.find(p => norm(p.nombre) === norm(n));
+          if (found) out.push(found);
+          else out.push({ nombre: n }); // al menos dejamos el nombre
+        });
+        return out;
+      }
+      /* TPL: FIN BLOQUE NUEVO */
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault(); // no navegamos; mostramos overlay + redirigimos a perfil.html
@@ -1137,16 +1237,94 @@ Sigue sin funcionar. Te paso el de reservas y me lo miras. <!DOCTYPE html>
             var payload = {};
             fd.forEach(function (v, k) { payload[k] = v; });
 
+            /* TPL: INICIO BLOQUE NUEVO [Adjuntar metadata útil + snapshots] */
+            const uid = getCurrentUserId();
             payload._page = location.href;
             payload._estado = 'enviada';
+            payload._uid = (u && u.uid) ? u.uid : (uid !== 'default' ? uid : null);
+            payload._email = (u && (u.email || null)) || (payload.Email || null);
             if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
+
+            // recopilar owner + pets de local/FS
+            let owner = readLocalOwner(uid);
+            if ((!owner || !owner.email) && u){ owner = await loadOwnerFromFirestore(uid) || owner; }
+            // mascotas: union local + FS para buscar por nombres
+            const petsLocal = readLocalPets(uid);
+            let petsFS = [];
+            if (u){ try{ petsFS = await loadPetsFromFirestore(uid); }catch(_){ petsFS = []; } }
+            const allPets = [...petsLocal, ...petsFS];
+
+            // nombres de mascotas escritos en inputs
+            const petNames = (payload.Mascotas_lista || '')
+              .split(',').map(s=>s.trim()).filter(Boolean);
+
+            const petsSnapshot = petNames.length ? pickPetSnapshotsByNames(allPets, petNames) : allPets.slice(0, Math.max(1, parseInt(payload.N_mascotas||'1',10)));
+
+            payload._snapshots = {
+              owner: owner ? {
+                nombre: owner.nombre || owner.nombreCompleto || '',
+                dni: owner.dni || '',
+                direccion: owner.direccion || '',
+                cp: owner.cp || '',
+                provincia: owner.provincia || '',
+                localidad: owner.localidad || '',
+                email: owner.email || '',
+                telefono: owner.telefono || '',
+                contacto: owner.contacto || '',
+                contactoHorario: owner.contactoHorario || '',
+                zona: owner.zona || ''
+              } : null,
+              pets: petsSnapshot.map(p=>({
+                nombre: p.nombre || '',
+                microchip: p.microchip || '',
+                especie: p.especie || '',
+                raza: p.raza || p.tipoExotico || '',
+                edad: p.edad || '',
+                peso: p.peso || '',
+                esterilizado: p.esterilizado || '',
+                vacunas: p.vacunas || '',
+                salud: p.salud || '',
+                tratamiento: p.tratamiento || '',
+                comidas: p.comidas || '',
+                salidas: p.salidas || '',
+                tamano: p.tamano || '',
+                clinica: p.clinica || '',
+                hospitalPref: p.hospitalPref || '',
+                comportamiento: p.comportamiento || '',
+                foto: p.foto || ''
+              }))
+            };
+
+            // Campos extra útiles para admin
+            payload._serviceType = payload.Servicio || '';
+            payload._startDate = payload.Fecha_inicio || '';
+            payload._endDate   = payload.Fecha_fin || '';
+            payload._startTime = payload.Hora_inicio || '';
+            payload._endTime   = payload.Hora_fin || '';
+            payload._nMascotas = payload.N_mascotas || '';
+            payload._subtotal  = document.getElementById('sumSubtotal')?.textContent || '';
+            payload._deposit   = document.getElementById('sumDeposit')?.textContent || '';
+            /* TPL: FIN BLOQUE NUEVO */
 
             await db.collection('reservas').add(payload);
             console.log('TPL: reserva guardada en Firestore');
 
             // Enviar correo vía EmailJS (sin Formspree)
             await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
+
+            /* TPL: INICIO BLOQUE NUEVO [Persistir última reserva local → para mostrar en perfil] */
+            try{
+              const localUid = uid || 'default';
+              const last = {
+                createdAt: Date.now(),
+                estado: 'enviada',
+                service: payload._serviceType,
+                startDate: payload._startDate,
+                endDate: payload._endDate
+              };
+              localStorage.setItem(udbKey(localUid,'lastReservation'), JSON.stringify(last));
+            }catch(_){}
+            /* TPL: FIN BLOQUE NUEVO */
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
