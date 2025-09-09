@@ -31,25 +31,19 @@
 
     .tpl-section-title{ margin:2px 0 2px; font-weight:700; color:var(--tpl-text); }
 
-    /* Avatar circular */
+    /* Avatar circular compacto */
     .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
-    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
-    .tpl-avatar-col{ display:flex; align-items:center; gap:12px; }
+    .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
     .tpl-avatar-hint{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; font-size:.8rem; color:#777; pointer-events:none; }
     .tpl-avatar.has-image .tpl-avatar-hint{ display:none; }
-
-    /* Icono de especie dentro del círculo (fallback) */
     .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
     .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
 
-    /* Pick + acciones apiladas para evitar “alargado” */
-    .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; margin-left:0; }
+    /* Controles foto apilados (evitar alargado) */
+    .tpl-photo-controls{ display:flex; flex-direction:column; gap:8px; min-width:220px; }
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
-    @media(min-width:600px){
-      .tpl-avatar-inner{ justify-content:flex-start; }
-    }
 
     /* Modal cropper minimal (drag/flechas) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
@@ -60,18 +54,17 @@
     .crop-hint{ font-size:.9rem; color:var(--tpl-muted); }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
 
-    /* Utilidades */
     .is-hidden{ display:none !important; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro para evitar redirecciones del navbar] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Modo seguro navbar] -->
   <script>window.__TPL_SAFE_MODE__ = true;</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Navbar inyectable + fallback] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Navbar fallback] -->
   <div id="tpl-navbar">
     <noscript>
       <nav class="navbar">
@@ -96,10 +89,10 @@
         <p class="lead">Completa los datos de tu mascota para agilizar tu reserva.</p>
 
         <form class="tpl-form" id="tpl-pet-form" action="#" novalidate>
-          <!-- ========== Datos de tu mascota (compacto) ========== -->
+          <!-- ========== Datos de tu mascota ========== -->
           <div class="tpl-section-title"><strong>🐶 Datos de tu mascota</strong></div>
 
-          <!-- Foto -->
+          <!-- TPL: INICIO BLOQUE NUEVO [Foto compacto con acciones] -->
           <div class="tpl-field">
             <label for="foto">Foto de la mascota</label>
             <div class="tpl-avatar" id="avatarBox">
@@ -120,6 +113,7 @@
               </div>
             </div>
           </div>
+          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <!-- Nombre + Microchip -->
           <div class="tpl-row">
@@ -287,7 +281,6 @@
     </div>
   </main>
 
-  <!-- Modal de recorte (drag/flechas) -->
   <!-- TPL: INICIO BLOQUE NUEVO [Modal cropper minimal] -->
   <div class="tpl-modal" id="cropperModal" aria-hidden="true" role="dialog" aria-label="Ajustar foto" tabindex="-1">
     <div class="box">
@@ -304,7 +297,7 @@
   </div>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Footer inyectable + fallback] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Footer fallback] -->
   <div id="tpl-footer">
     <noscript>
       <footer class="site-footer">
