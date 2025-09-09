@@ -34,8 +34,12 @@
     /* Avatar circular compacto */
     .tpl-avatar { position:relative; border:1px dashed var(--tpl-border); border-radius:14px; background:#fafafa; padding:12px; }
     .tpl-avatar-inner{ display:flex; align-items:center; gap:14px; }
+
     .tpl-avatar-thumb{ width:96px; height:96px; border-radius:50%; object-fit:cover; border:2px solid var(--tpl-border); background:#fff; }
-    /* Eliminado el texto dentro del círculo: solo huellita */
+    /* TPL: INICIO BLOQUE NUEVO [Solo huellita si no hay imagen: ocultar preview sin foto] */
+    .tpl-avatar:not(.has-image) .tpl-avatar-thumb{ display:none; }
+    /* TPL: FIN BLOQUE NUEVO */
+
     .tpl-avatar-icon{ position:absolute; left:12px; top:12px; width:96px; height:96px; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:40px; }
     .tpl-avatar.has-image .tpl-avatar-icon{ display:none; }
 
@@ -43,7 +47,7 @@
     .tpl-photo-actions{ display:none; gap:8px; flex-wrap:wrap; }
     .tpl-photo-actions .tpl-btn{ padding:8px 12px; }
 
-    /* Modal cropper minimal (drag/flechas) */
+    /* Modal cropper (drag/flechas) */
     .tpl-modal{ position:fixed; inset:0; background:rgba(0,0,0,.5); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-modal .box{ background:#fff; border-radius:14px; padding:14px; max-width:540px; width:calc(100% - 24px); }
     .tpl-modal h3{ margin:0 0 8px; color:var(--tpl-text); }
@@ -51,6 +55,11 @@
     #cropCanvas{ width:320px; height:320px; background:#f3f3f3; border-radius:12px; border:1px solid #eee; touch-action:none; }
     .crop-hint{ font-size:.9rem; color:var(--tpl-muted); }
     .crop-actions{ display:flex; gap:8px; justify-content:flex-end; margin-top:8px; }
+
+    /* Asegurar que .is-hidden realmente oculta (por si estilos globales) */
+    /* TPL: INICIO BLOQUE NUEVO [is-hidden util] */
+    .is-hidden{ display:none !important; }
+    /* TPL: FIN BLOQUE NUEVO */
 
     /* Accesibilidad: label visualmente oculto para la foto */
     .sr-only{ position:absolute!important; width:1px; height:1px; clip:rect(1px,1px,1px,1px); overflow:hidden; white-space:nowrap; }
@@ -93,9 +102,7 @@
 
           <!-- Foto -->
           <div class="tpl-field">
-            <!-- TPL: INICIO BLOQUE NUEVO [Label oculto: solo huellita visible] -->
             <label for="foto" class="sr-only">Foto de la mascota</label>
-            <!-- TPL: FIN BLOQUE NUEVO -->
             <div class="tpl-avatar" id="avatarBox">
               <div class="tpl-avatar-inner">
                 <img id="preview" class="tpl-avatar-thumb" src="images/pet-placeholder.png" alt="Foto de la mascota">
@@ -259,6 +266,8 @@
                 <option value="">Selecciona…</option>
                 <option>Sí</option><option>No</option>
               </select>
+
+              <!-- TPL: INICIO BLOQUE NUEVO [Detalles del seguro: visibles solo si “Sí”] -->
               <div id="seguroVetData" class="tpl-field is-hidden" hidden style="margin-top:8px;">
                 <label>Detalles del seguro veterinario</label>
                 <div class="tpl-row">
@@ -266,6 +275,7 @@
                   <input class="tpl-input" type="text" id="seguroVetNum" placeholder="Nº de póliza">
                 </div>
               </div>
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
 
             <div class="tpl-field">
