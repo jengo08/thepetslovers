@@ -6,11 +6,9 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <!-- TPL: INICIO BLOQUE NUEVO [Favicon embebido (opcional, no afecta estilos)] -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Crect width='64' height='64' rx='12' ry='12' fill='%23339496'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-size='44' fill='white'%3E🐾%3C/text%3E%3C/svg%3E" />
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos del formulario, sin tocar tu style.css] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos propios de la página] -->
   <style>
     .page{ padding-top:120px }
     .tpl-card{ max-width: 980px; margin: 0 auto 60px; background:#fff; border:1px solid #eee; border-radius:16px; box-shadow:0 6px 24px rgba(0,0,0,.06); overflow:hidden; }
@@ -31,6 +29,10 @@
     .is-hidden{ display:none !important; }
     .msg{ display:none; margin-top:6px; }
     .msg.ok{ color:#2a7e80 } .msg.err{ color:#b00020 }
+
+    /* TPL: INICIO BLOQUE NUEVO [Anti-subida: oculta cualquier UI externa de uploader] */
+    .tpl-upload, .tpl-upload-card, [data-tpl-upload] { display:none !important; visibility:hidden !important; }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -42,22 +44,23 @@
     <div class="tpl-card" role="region" aria-labelledby="t">
       <div class="tpl-card-head">
         <h1 id="t"><i class="fa-solid fa-paw"></i> Perfil de tu mascota</h1>
-        <!-- (Se elimina la frase sobre DataURL) -->
       </div>
 
       <form id="f" class="tpl-form" novalidate>
-        <!-- Foto (solo preview local; NO se sube) -->
+        <!-- Foto (preview local; NO se sube) -->
         <div class="tpl-field col-span-2">
           <label for="foto"><i class="fa-regular fa-image"></i> Foto (opcional)</label>
           <div class="tpl-photo-row">
             <img id="preview" class="tpl-photo" alt="Previsualización" src="" />
             <div>
-              <input id="foto" name="foto" type="file" accept="image/*">
+              <!-- TPL: INICIO BLOQUE NUEVO [data-flag para posibles scripts globales] -->
+              <input id="foto" name="foto" type="file" accept="image/*" data-tpl-noupload="1">
+              <!-- TPL: FIN BLOQUE NUEVO -->
             </div>
           </div>
         </div>
 
-        <!-- Básicos -->
+        <!-- Datos básicos -->
         <div class="tpl-field"><label for="nombre">Nombre *</label><input id="nombre" name="nombre" required></div>
 
         <div class="tpl-field">
@@ -133,10 +136,10 @@
   <div id="tpl-footer"></div>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase (solo Auth + Firestore) + lógica sin subir archivos] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Firebase (solo App/Auth/Firestore) + lógica sin subida + anti-uploader] -->
   <script>
   (async function(){
-    // Carga segura de Firebase (sin Storage)
+    // --- Carga segura de Firebase (sin Storage) ---
     function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.async=true;s.onload=res;s.onerror=()=>rej(new Error('No se pudo cargar '+src));document.head.appendChild(s);});}
     async function ensureFirebase(){
       if (typeof firebase==='undefined'){await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');}
@@ -158,30 +161,78 @@
     if (firebase.apps.length===0){ firebase.initializeApp(firebaseConfig); }
     const auth=firebase.auth(); const db=firebase.firestore();
 
+    // --- Anti-uploader global (cortafuegos) ---
+    /* TPL: INICIO BLOQUE NUEVO [Cortafuegos anti-subida] */
+    window.__TPL_DISABLE_UPLOAD__ = true; // bandera por si algún script la respeta
+
+    // 1) Intercepta el change del input#foto en fase de captura y corta propagación
+    const fileInput = document.getElementById('foto');
+    const preview   = document.getElementById('preview');
+    let fotoDataUrl = '';
+
+    document.addEventListener('change', function(e){
+      if (e.target === fileInput){
+        // Lee preview local y detiene cualquier otro listener
+        const f = fileInput.files?.[0];
+        if (f){
+          const r = new FileReader();
+          r.onload = ev => { fotoDataUrl = ev.target.result; preview.src = fotoDataUrl; };
+          r.readAsDataURL(f);
+        }
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        // NO preventDefault (para no romper UX), pero ya no habrá otros handlers
+      }
+    }, true); // <- captura
+
+    // 2) Borra cualquier nodo de "subiendo" que otros scripts inyecten
+    const KILL_TEXT = /(subiendo archivo|la subida no progresa|revisa reglas|conexi[oó]n|subiendo)/i;
+    const KILL_SEL  = '.tpl-upload, .tpl-upload-card, [data-tpl-upload]';
+    function purgeUploads(root=document){
+      root.querySelectorAll(KILL_SEL).forEach(n=> n.remove());
+      const walker = document.createTreeWalker(root.body || root, NodeFilter.SHOW_ELEMENT, null);
+      let node;
+      while((node=walker.nextNode())){
+        try{
+          if (node && node.textContent && KILL_TEXT.test(node.textContent)){
+            node.remove();
+          }
+        }catch(_){}
+      }
+    }
+    purgeUploads();
+    const mo = new MutationObserver((muts)=>{
+      for(const m of muts){
+        if (m.addedNodes && m.addedNodes.length){
+          m.addedNodes.forEach(n=>{
+            if (n.nodeType===1){ // ELEMENT_NODE
+              const el = /** @type {HTMLElement} */(n);
+              if (el.matches && el.matches(KILL_SEL)){ el.remove(); return; }
+              if (el.querySelector){ purgeUploads(el.ownerDocument); }
+            }
+          });
+        }
+      }
+    });
+    mo.observe(document.documentElement, {childList:true, subtree:true});
+    /* TPL: FIN BLOQUE NUEVO */
+
+    // --- Helpers de UI ---
     const $=id=>document.getElementById(id);
     const form=$('f'), ok=$('msg-ok'), err=$('msg-err');
     const btnDel=$('btn-eliminar'), btnCancel=$('btn-cancel');
 
-    const foto=$('foto'), preview=$('preview');
     const noChip=$('noChip'), microchip=$('microchip');
     const especie=$('especie'), raza=$('raza'), lblRaza=$('label-raza');
     const vacunas=$('vacunas'), wrapFaltan=$('wrap-faltan'), faltan=$('faltan');
     const seguroVet=$('seguroVet'), wrapSeguro=$('wrap-seguro'), aseguradora=$('aseguradora'), poliza=$('poliza');
 
     const LS_PETS_KEY='tpl-pets';
-    let PET_ID=null, PET_IDX=null, fotoDataUrl='';
+    let PET_ID=null, PET_IDX=null;
 
     function qsp(name, fb){ const u=new URL(location.href); return u.searchParams.get(name)||fb; }
     function nextUrl(){ return qsp('next','perfil.html'); }
     btnCancel.setAttribute('href', nextUrl());
-
-    // ★ Solo preview local: NO se sube, NO se muestra "subiendo archivo"
-    foto && foto.addEventListener('change', ()=>{
-      const f=foto.files?.[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = e => { fotoDataUrl = e.target.result; preview.src = fotoDataUrl; };
-      reader.readAsDataURL(f);
-    });
 
     function toggleMicrochip(){ if (!noChip||!microchip) return; if(noChip.checked){microchip.value=''; microchip.disabled=true;} else {microchip.disabled=false;} }
     noChip && noChip.addEventListener('change', toggleMicrochip);
@@ -208,6 +259,7 @@
     }
     seguroVet && seguroVet.addEventListener('change', toggleSeguro);
 
+    // LocalStorage helpers
     function loadLocal(idx){
       try{ const list=JSON.parse(localStorage.getItem(LS_PETS_KEY)||'[]'); return list[Number(idx)]||null; }catch(_){ return null; }
     }
@@ -232,7 +284,6 @@
     }
 
     async function savePet(uid, data){
-      // Intentar Firestore; si falla por permisos, guardamos local sin mostrar ningún mensaje extra.
       try{
         if (uid){
           if (!PET_ID){ const ref=await db.collection('users').doc(uid).collection('pets').add(data); PET_ID=ref.id; }
