@@ -1,10 +1,16 @@
-/* TPL: INICIO BLOQUE NUEVO [Propietario: guardar/cargar en base por usuario (localStorage)] */
+/* TPL: INICIO BLOQUE NUEVO [Perfil: owner + mascotas (udb) + logout robusto] */
 (function(){
   'use strict';
 
-  // ====== Base por usuario (localStorage) ======
+  // ---------- Helpers DOM ----------
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const show = (el, disp='') => { if (!el) return; el.style.display = disp; el.hidden = false; };
+  const hide = (el) => { if (!el) return; el.style.display = 'none'; el.hidden = true; };
+  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
+  const escapeHtml = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  // ---------- Base por usuario ----------
   function getCurrentUserId(){
-    // Tu login debe setear esto: localStorage.setItem('tpl.currentUser', 'email@dominio.com')
     return localStorage.getItem('tpl.currentUser') || 'default';
   }
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
@@ -12,75 +18,168 @@
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
     catch(_){ return fallback; }
   }
-  function udbSet(uid, key, value){
-    try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
+
+  // ---------- Owner (placeholder/cargado) ----------
+  function setOwnerIncomplete(){
+    setText('#tpl-owner-nombre', '—');
+    setText('#tpl-owner-telefono', '—');
+    setText('#tpl-owner-zona', '—');
+    setText('#tpl-owner-email', '—');
+    const status = $('#tpl-owner-status');
+    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Incompleto'; }
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = '';
+    if (edit) edit.style.display = 'none';
+  }
+  function loadOwner(){
+    const uid = getCurrentUserId();
+    const owner = udbGet(uid, 'owner', null);
+    if (!owner){ setOwnerIncomplete(); return; }
+    setText('#tpl-owner-nombre', owner.nombre || '—');
+    setText('#tpl-owner-telefono', owner.telefono || '—');
+    setText('#tpl-owner-zona', owner.zona || '—');
+    setText('#tpl-owner-email', owner.email || '—');
+    const status = $('#tpl-owner-status');
+    if (status){ status.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completo'; }
+    const fill = $('#tpl-owner-fill'); const edit = $('#tpl-owner-edit');
+    if (fill) fill.style.display = 'none';
+    if (edit) edit.style.display = '';
   }
 
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const byId = (id) => document.getElementById(id);
+  // ---------- Mascotas ----------
+  function iconBySpecies(sp){
+    const v = (sp||'').toLowerCase();
+    if (v.includes('perro')) return 'fa-dog';
+    if (v.includes('gato'))  return 'fa-cat';
+    if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
+    return 'fa-paw';
+  }
+  function setPetsEmpty(){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    if (empty){ empty.style.display = 'flex'; empty.hidden = false; }
+    hide(list);
+    const st = $('#tpl-pets-status');
+    if (st) st.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
+  }
+  function renderPets(pets){
+    const empty = $('#tpl-pets-empty');
+    const list  = $('#tpl-pets-list');
+    const status = $('#tpl-pets-status');
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    // Localiza el formulario (id recomendado: tpl-owner-form)
-    const form = byId('tpl-owner-form') || $('form');
-    if (!form) return;
+    if (!Array.isArray(pets) || pets.length===0){ setPetsEmpty(); return; }
 
-    // Botón de guardar (id recomendado: saveBtn)
-    const saveBtn = byId('saveBtn');
+    // Ocultar vacío con doble control
+    if (empty){ empty.style.display = 'none'; empty.hidden = true; }
+    show(list, 'block');
+    list.innerHTML = '';
 
-    // Campos “canónicos” que usa perfil.html para mostrar
-    const fNombre   = byId('nombre')   || $('[name="nombre"]');
-    const fTelefono = byId('telefono') || $('[name="telefono"]');
-    const fZona     = byId('zona')     || $('[name="zona"]');
-    const fEmail    = byId('email')    || $('[name="email"]');
+    pets.forEach((p, idx) => {
+      const nombre  = escapeHtml(p?.nombre || 'Sin nombre');
+      const especie = escapeHtml(p?.especie || '');
+      const raza    = escapeHtml(p?.raza || p?.tipoExotico || '');
+      const edad    = escapeHtml(p?.edad || '');
+      const foto    = (p && typeof p.foto === 'string') ? p.foto : '';
 
-    // Precarga desde udb
-    (function prefill(){
-      const uid = getCurrentUserId();
-      const owner = udbGet(uid, 'owner', null);
-      if (!owner) return;
-      if (fNombre)   fNombre.value   = owner.nombre   || '';
-      if (fTelefono) fTelefono.value = owner.telefono || '';
-      if (fZona)     fZona.value     = owner.zona     || '';
-      if (fEmail)    fEmail.value    = owner.email    || '';
+      const item = document.createElement('div');
+      item.className = 'tpl-pet-item';
 
-      // Precargar extras si hay name=...
-      form.querySelectorAll('input[name], select[name], textarea[name]').forEach(el=>{
-        const nm = el.name;
-        if (nm && owner.hasOwnProperty(nm) && el !== fNombre && el !== fTelefono && el !== fZona && el !== fEmail){
-          el.value = owner[nm] || '';
-        }
-      });
-    })();
+      if (foto){
+        const img = document.createElement('img');
+        img.className = 'tpl-pet-thumb';
+        img.src = foto;
+        img.alt = `Foto de ${nombre}`;
+        item.appendChild(img);
+      } else {
+        const ic = document.createElement('div');
+        ic.className = 'tpl-pet-icon';
+        ic.innerHTML = `<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`;
+        item.appendChild(ic);
+      }
 
-    function doSave(ev){
-      if (ev){ ev.preventDefault(); ev.stopPropagation(); }
-      if (form.reportValidity && !form.reportValidity()) return;
+      const meta = document.createElement('div');
+      meta.className = 'tpl-pet-meta';
+      const nm = document.createElement('div');
+      nm.className = 'tpl-pet-name';
+      nm.textContent = nombre;
+      const sub = document.createElement('div');
+      sub.className = 'tpl-pet-sub';
+      const parts = [especie, raza, edad && ('Edad: ' + edad)].filter(Boolean);
+      sub.textContent = parts.join(' · ');
+      meta.appendChild(nm); meta.appendChild(sub);
+      item.appendChild(meta);
 
-      // Recoger lo básico
-      const owner = {
-        nombre:   fNombre   ? (fNombre.value||'').trim()   : '',
-        telefono: fTelefono ? (fTelefono.value||'').trim() : '',
-        zona:     fZona     ? (fZona.value||'').trim()     : '',
-        email:    fEmail    ? (fEmail.value||'').trim()    : ''
-      };
+      const edit = document.createElement('a');
+      edit.href = `tpl-mascota.html?edit=${idx}`;
+      edit.className = 'tpl-pet-edit';
+      edit.textContent = 'Editar';
+      edit.setAttribute('aria-label', `Editar a ${nombre}`);
+      item.appendChild(edit);
 
-      // Recoger también todos los name=... por si añadimos más campos
-      form.querySelectorAll('input[name], select[name], textarea[name]').forEach(el=>{
-        const nm = el.name;
-        if (!nm) return;
-        const v = (el.type === 'checkbox') ? (el.checked ? 'Sí' : 'No') : (el.value || '');
-        owner[nm] = v;
-      });
+      list.appendChild(item);
+    });
 
-      const uid = getCurrentUserId();
-      udbSet(uid, 'owner', owner);
-
-      // Vuelta al perfil
-      location.assign('perfil.html');
+    if (status){
+      const n = pets.length;
+      status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
     }
+  }
+  function loadPetsAndRender(){
+    const uid = getCurrentUserId();
+    const pets = udbGet(uid, 'pets', []);
+    renderPets(pets);
+  }
 
-    if (saveBtn){ saveBtn.addEventListener('click', doSave); }
-    form.addEventListener('submit', doSave);
+  // ---------- Logout robusto ----------
+  function setupLogout(){
+    const btn = $('#tpl-logout');
+    if (!btn) return;
+
+    // Seguridad extra: reforzar estilos por si alguna hoja los pisa
+    btn.style.position = 'fixed';
+    btn.style.right = '16px';
+    btn.style.bottom = '16px';
+    btn.style.zIndex = '999999';
+
+    // Si por lo que sea el inline fallback no corre, también escuchamos aquí:
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      if (window.__TPL_LOGOUT__) return window.__TPL_LOGOUT__();
+      // Fallback del fallback:
+      try{ sessionStorage.clear(); }catch(_){}
+      try{
+        localStorage.removeItem('tpl.session');
+        localStorage.removeItem('tpl.auth');
+        localStorage.removeItem('tpl.currentUser');
+      }catch(_){}
+      location.assign('index.html');
+    }, {passive:false});
+  }
+
+  // ---------- Inicio ----------
+  document.addEventListener('DOMContentLoaded', ()=>{
+    setOwnerIncomplete();
+    setPetsEmpty();
+    loadOwner();
+    loadPetsAndRender();
+    setupLogout();
   });
+
+  // Reforzar al volver de atrás/adelante (bfcache)
+  window.addEventListener('pageshow', (e)=>{
+    if (e.persisted){
+      loadOwner();
+      loadPetsAndRender();
+      // Ocultar vacío si hay items pintados (doble seguridad visual)
+      const list = document.getElementById('tpl-pets-list');
+      const empty = document.getElementById('tpl-pets-empty');
+      if (list && list.children.length > 0 && empty){
+        empty.style.display = 'none'; empty.hidden = true;
+      }
+    }
+  });
+
+  // Exponer por si se usa externamente
+  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { loadPetsAndRender });
 })();
  /* TPL: FIN BLOQUE NUEVO */
