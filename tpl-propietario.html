@@ -30,8 +30,6 @@
     .tpl-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .tpl-btn { display:inline-flex; align-items:center; gap:8px; justify-content:center; border-radius:10px; padding:10px 14px; border:1px solid var(--tpl-border); text-decoration:none; font-weight:600; color:#fff; background: var(--tpl-color); }
     .tpl-btn.secondary{ background:#fff; color:var(--tpl-text); }
-
-    .sr-only{ position:absolute!important; width:1px; height:1px; clip:rect(1px,1px,1px,1px); overflow:hidden; white-space:nowrap; }
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
@@ -65,12 +63,12 @@
         <h1>Datos de propietario</h1>
         <p class="lead">Guarda tus datos para la reserva, para poder hacer tu reserva.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Opt-out + gancho onsubmit a prueba de todo] -->
+        <!-- TPL: INICIO BLOQUE NUEVO [Opt-out + onsubmit blindado] -->
         <form
           class="tpl-form"
           id="tpl-owner-form"
           action="#"
-          method="get"
+          method="post"
           novalidate
           data-tpl-emailjs="false"
           onsubmit="return (window.__TPL_OWNER_SUBMIT__ ? window.__TPL_OWNER_SUBMIT__(event) : false)"
@@ -121,7 +119,6 @@
           </div>
 
           <div class="tpl-field">
-            <span class="sr-only" id="contacto-legend">Preferencia de contacto</span>
             <label>¿Cómo prefieres que te contactemos?</label>
             <div style="display:flex; gap:12px; flex-wrap:wrap;">
               <label><input type="radio" name="contacto" value="whatsapp" checked> WhatsApp</label>
@@ -130,17 +127,20 @@
             </div>
           </div>
 
-          <!-- TPL: INICIO BLOQUE NUEVO [Horario preferido] -->
           <div class="tpl-row">
             <div class="tpl-field">
               <label for="contactoHorario">Horario preferido de contacto</label>
               <input class="tpl-input" type="text" id="contactoHorario" name="contactoHorario" placeholder="Ej. 9:00–14:00 o tardes">
             </div>
           </div>
-          <!-- TPL: FIN BLOQUE NUEVO -->
 
           <div class="tpl-actions">
-            <button class="tpl-btn" id="saveOwner" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
+            <!-- TPL: INICIO BLOQUE NUEVO [Click directo → __TPL_OWNER_SUBMIT__] -->
+            <button class="tpl-btn" id="saveOwner" type="button"
+              onclick="return (window.__TPL_OWNER_SUBMIT__ ? window.__TPL_OWNER_SUBMIT__(event) : false)">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil
+            </button>
+            <!-- TPL: FIN BLOQUE NUEVO -->
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
