@@ -106,24 +106,116 @@
   }
 
   // ===== Guardado + redirección (expuesto global) =====
-  function handleSubmit(ev){
+  /* TPL: INICIO BLOQUE NUEVO [Firestore sync helpers - lazy load + init] */
+  function tplLazyLoadFirebase8(){
+    return new Promise(function(resolve){
+      if (window.firebase && firebase.app) return resolve();
+      var urls = [
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
+        'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
+      ];
+      var i = 0;
+      (function next(){
+        if (i >= urls.length) return resolve();
+        var s = document.createElement('script');
+        s.src = urls[i++]; s.async = true; s.onload = next; s.onerror = function(){ resolve(); };
+        document.head.appendChild(s);
+      })();
+    });
+  }
+  function tplEnsureFirebaseInit(){
+    try{
+      if (!window.firebase) return false;
+      if (firebase.apps && firebase.apps.length) return true;
+      var cfg = window.TPL_FIREBASE_CONFIG || window.firebaseConfig || window.__TPL_FIREBASE_CONFIG;
+      if (!cfg) return false;
+      firebase.initializeApp(cfg);
+      return true;
+    }catch(_){ return false; }
+  }
+  async function __tplOwnerSyncToFirestore(uid, owner){
+    // Requisitos mínimos
+    if (!uid || uid === 'default') return false;
+    await tplLazyLoadFirebase8();
+    if (!tplEnsureFirebaseInit() || !(firebase.auth && firebase.firestore)) return false;
+
+    // Asegurar sesión (evitamos escribir en uid incorrecto)
+    if (!firebase.auth().currentUser || firebase.auth().currentUser.uid !== uid){
+      await new Promise(function(res){
+        var unsub = firebase.auth().onAuthStateChanged(function(){ try{unsub();}catch(_){ } res(); });
+      });
+    }
+    var u = firebase.auth().currentUser;
+    if (!u || u.uid !== uid) return false;
+
+    var db = firebase.firestore();
+    var docRef = db.collection('owners').doc(uid);
+    var snap = await docRef.get();
+    var FV = firebase.firestore.FieldValue;
+
+    var payload = {
+      nombre: owner.nombre || '',
+      dni: owner.dni || '',
+      direccion: owner.direccion || '',
+      cp: owner.cp || '',
+      provincia: owner.provincia || '',
+      localidad: owner.localidad || '',
+      email: owner.email || '',
+      telefono: owner.telefono || '',
+      contacto: owner.contacto || 'whatsapp',
+      contactoHorario: owner.contactoHorario || '',
+      zona: owner.zona || ''
+      // hasPet lo gestionaremos cuando crees la primera mascota
+    };
+
+    if (snap.exists){
+      payload.updatedAt = FV.serverTimestamp();
+      await docRef.set(payload, { merge: true });
+    } else {
+      payload.createdAt = FV.serverTimestamp();
+      payload.updatedAt = FV.serverTimestamp();
+      await docRef.set(payload, { merge: true });
+    }
+
+    try { localStorage.setItem('tpl.owner.synced', String(Date.now())); }catch(_){}
+    return true;
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
+  // Exponer el manejador para el onsubmit inline y el botón
+  /* TPL: INICIO BLOQUE NUEVO [handleSubmit async + sync Firestore si disponible] */
+  async function handleSubmit(ev){
     if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
 
     const form = document.getElementById('tpl-owner-form');
+    const btn  = document.getElementById('saveOwner');
     if (!form) return false;
 
     if (typeof form.reportValidity === 'function' && !form.reportValidity()) return false;
 
+    try{ if (btn){ btn.disabled = true; btn.style.opacity = '.6'; } }catch(_){}
+
     const uid = getCurrentUserId();
     const owner = readForm();
+
+    // Siempre guardamos en local (como ya hacías)
     udbSet(uid, 'owner', owner);
     try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
 
+    // Sincronización opcional a Firestore (si está disponible y hay sesión válida)
+    try{
+      await __tplOwnerSyncToFirestore(uid, owner);
+    }catch(e){
+      console.warn('[TPL propietario] Sync Firestore fallo (continuamos igual):', e);
+    }
+
+    // Redirección idéntica a tu flujo actual
     location.assign('perfil.html');
     return false;
   }
+  /* TPL: FIN BLOQUE NUEVO */
 
-  // Exponer el manejador para el onsubmit inline y el botón
   window.__TPL_OWNER_SUBMIT__ = handleSubmit;
 
   function init(){
@@ -161,4 +253,4 @@
     init();
   }
 })();
- /* TPL: FIN BLOQUE NUEVO */
+/* TPL: FIN BLOQUE NUEVO */
