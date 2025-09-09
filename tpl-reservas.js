@@ -873,3 +873,212 @@
   }
 })();
 /* TPL: FIN BLOQUE NUEVO */
+/* TPL: INICIO BLOQUE NUEVO [Reservas: selector de mascotas + adjuntar detalle propietario/mascotas a la reserva] */
+(function(){
+  'use strict';
+
+  // ===== Helpers UDB coherentes con tus scripts =====
+  function getCurrentUserId(){
+    try{
+      const explicit = localStorage.getItem('tpl.currentUser');
+      if (explicit) return explicit;
+      const uidLS = localStorage.getItem('tpl_auth_uid');
+      if (uidLS) return uidLS;
+      if (window.firebase && typeof firebase.auth === 'function'){
+        const u = firebase.auth().currentUser;
+        if (u && !u.isAnonymous && u.uid) return u.uid;
+      }
+    }catch(_){}
+    return 'default';
+  }
+  function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+  function udbGet(uid, key, fallback){
+    try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
+  }
+  function norm(s){ return String(s||'').trim(); }
+  function nkey(s){ return norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+  // ===== Cargar owner + mascotas del usuario =====
+  function getOwner(){ return udbGet(getCurrentUserId(), 'owner', null); }
+  function getPets(){
+    const uid = getCurrentUserId();
+    const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+    let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+    if (!Array.isArray(arr)) arr = [];
+    // dedupe suave por nombre+microchip+especie
+    const seen = new Set(), out=[];
+    arr.forEach(p=>{
+      const key = `${nkey(p?.nombre)}|${nkey(p?.microchip)}|${nkey(p?.especie||p?.tipo||'')}`;
+      if (seen.has(key)) return; seen.add(key); out.push(p);
+    });
+    return out;
+  }
+
+  // ===== UI: modal selector =====
+  function openPetPicker(){
+    const pets = getPets();
+    if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
+
+    const overlay = document.getElementById('tpl-petpicker');
+    const list = document.getElementById('tpl-petpicker-list');
+    const btnApply = document.getElementById('tpl-petpicker-apply');
+    const btnCancel = document.getElementById('tpl-petpicker-cancel');
+    if (!overlay || !list || !btnApply || !btnCancel) return;
+
+    list.innerHTML = pets.map((p, i)=>{
+      const foto = (typeof p.foto === 'string' && p.foto) ? `<img src="${p.foto}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #eee">` : `<span style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #eee;color:#9aa0a6"><i class="fa-solid fa-paw"></i></span>`;
+      const raza = norm(p.raza || p.tipoExotico || '');
+      const esp  = norm(p.especie || p.tipo || '');
+      const sub  = [esp, raza].filter(Boolean).join(' · ');
+      return `
+        <label style="display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:10px;padding:8px 10px">
+          <input type="checkbox" class="tpl-petpick" value="${i}" style="transform:scale(1.2)">
+          ${foto}
+          <span style="display:flex;flex-direction:column;line-height:1.25">
+            <strong>${norm(p.nombre)||'Sin nombre'}</strong>
+            <span style="color:#666;font-size:.92rem">${sub||''}</span>
+          </span>
+        </label>
+      `;
+    }).join('');
+
+    function close(){ overlay.classList.remove('on'); overlay.style.display='none'; document.body.style.overflow=''; overlay.setAttribute('aria-hidden','true'); }
+    overlay.classList.add('on'); overlay.style.display='flex'; document.body.style.overflow='hidden'; overlay.setAttribute('aria-hidden','false');
+
+    btnCancel.onclick = close;
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) close(); }, { once:true });
+
+    btnApply.onclick = function(){
+      const checks = list.querySelectorAll('.tpl-petpick:checked');
+      if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
+
+      // Rellenar los inputs "Mascota_#" existentes
+      const names = [];
+      checks.forEach(ch=>{
+        const p = pets[parseInt(ch.value,10)];
+        if (p && p.nombre) names.push(norm(p.nombre));
+      });
+
+      // Ajusta nº de mascotas si hace falta
+      const numSel = document.getElementById('numPets');
+      if (numSel){
+        const n = Math.min(5, Math.max(1, names.length));
+        numSel.value = String(n);
+        numSel.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+
+      // Volcar nombres en petName_#
+      setTimeout(()=>{
+        names.forEach((n, idx)=>{
+          const inp = document.getElementById('petName_'+(idx+1));
+          if (inp){ inp.value = n; inp.dispatchEvent(new Event('input', { bubbles:true })); }
+        });
+      }, 120);
+
+      close();
+    };
+  }
+
+  // ===== Build detalles a enviar (propietaria + mascotas) =====
+  function buildOwnerDetail(){
+    // Preferimos lo que haya escrito en el form (si existe); si no, owner UDB
+    const f = {
+      nombre: norm(document.getElementById('firstName')?.value)+' '+norm(document.getElementById('lastName')?.value),
+      telefono: norm(document.getElementById('phone')?.value),
+      email: norm(document.getElementById('email')?.value),
+      direccion: norm(document.getElementById('location')?.value),
+      cp: norm(document.getElementById('postalCode')?.value),
+      ccaa: (document.getElementById('region')?.selectedOptions?.[0]?.text || '').trim(),
+      pref: (new FormData(document.getElementById('bookingForm')||undefined).get('Preferencia_contacto') || '').toString(),
+      hora: norm(document.getElementById('contactTime')?.value)
+    };
+    const fallback = getOwner() || {};
+    const val = (x, fb) => x ? x : norm(fb||'');
+    const row = {
+      Nombre: val(f.nombre, fallback.nombre),
+      Telefono: val(f.telefono, fallback.telefono),
+      Email: val(f.email, fallback.email),
+      Direccion: val(f.direccion, fallback.direccion),
+      CP: val(f.cp, fallback.cp),
+      CCAA: f.ccaa || fallback.ccaa || '',
+      Preferencia_contacto: f.pref || fallback.contacto || '',
+      Hora_preferida: f.hora || fallback.contactoHorario || ''
+    };
+    // Texto plano compacto para plantillas
+    const text = `Nombre: ${row.Nombre} | Teléfono: ${row.Telefono} | Email: ${row.Email} | Dirección: ${row.Direccion} | CP: ${row.CP} | CCAA: ${row.CCAA} | Preferencia: ${row.Preferencia_contacto || 'cualquiera'}${row.Hora_preferida ? ' | Hora: '+row.Hora_preferida : ''}`;
+    return { row, text };
+  }
+
+  function buildPetsDetail(){
+    const uid = getCurrentUserId();
+    const pets = getPets(); // del UDB
+    // Obtén nombres que el usuario finalmente va a reservar (inputs petName_#)
+    const inputs = Array.from(document.querySelectorAll('input[id^="petName_"]'));
+    const wantNames = inputs.map(i=>nkey(i.value)).filter(Boolean);
+    // Si está vacío, intenta hidden ya calculado
+    if (!wantNames.length){
+      const raw = document.getElementById('petsListHidden')?.value || '';
+      raw.split(',').forEach(x=>{ const k=nkey(x); if(k) wantNames.push(k); });
+    }
+    // Emparejar por nombre normalizado
+    const selected = pets.filter(p => wantNames.includes(nkey(p?.nombre))).slice(0, Math.max(1, wantNames.length||1));
+    // Formateos
+    const toRow = (p)=>({
+      Nombre: norm(p?.nombre),
+      Especie: norm(p?.especie || p?.tipo),
+      Raza: norm(p?.raza || p?.tipoExotico),
+      Edad: norm(p?.edad),
+      Peso: norm(p?.peso),
+      Microchip: norm(p?.microchip),
+      Esterilizado: norm(p?.esterilizado),
+      Vacunas: norm(p?.vacunas),
+      Salud: norm(p?.salud),
+      Tratamiento: norm(p?.tratamiento),
+      Comportamiento: norm(p?.comportamiento),
+      SeguroRC: norm(p?.seguroRC),
+      SeguroVet: norm(p?.seguroVet),
+      SeguroVetComp: norm(p?.seguroVetComp),
+      SeguroVetNum: norm(p?.seguroVetNum)
+    });
+    const rows = selected.map(toRow);
+    const text = rows.map(r=>(
+      `Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}${r.Edad? ' | Edad: '+r.Edad:''}${r.Peso? ' | Peso: '+r.Peso:''}${r.Esterilizado? ' | Esterilizado: '+r.Esterilizado:''}${r.Vacunas? ' | Vacunas: '+r.Vacunas:''}${r.Salud? ' | Salud: '+r.Salud:''}${r.Tratamiento? ' | Tratamiento: '+r.Tratamiento:''}${r.Comportamiento? ' | Comportamiento: '+r.Comportamiento:''}${r.SeguroRC? ' | Seguro RC: '+r.SeguroRC:''}`
+    )).join(' || ');
+    return { rows, text };
+  }
+
+  // ===== Wire: botón abrir selector =====
+  function attachPickerButton(){
+    const btn = document.getElementById('tpl-open-petpicker');
+    if (!btn) return;
+    btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
+  }
+
+  // ===== Antes de enviar: adjuntar detalle a los hidden =====
+  function attachSubmitEnrichment(){
+    const form = document.getElementById('bookingForm');
+    if (!form) return;
+    form.addEventListener('submit', function(){
+      try{
+        const od = buildOwnerDetail();
+        const pd = buildPetsDetail();
+        const fOwner = document.getElementById('ownerDetail');
+        const fPets  = document.getElementById('petsDetail');
+        const fPetsJ = document.getElementById('petsDetailJson');
+        if (fOwner) fOwner.value = od.text;
+        if (fPets)  fPets.value  = pd.text;
+        if (fPetsJ) fPetsJ.value = JSON.stringify(pd.rows);
+        // Nota: tus listeners existentes (Firestore + EmailJS) ya tomarán estos campos
+      }catch(err){ console.warn('[TPL reservas] enrich submit warn:', err); }
+    }, { capture:true });
+  }
+
+  // ===== Init =====
+  function init(){
+    attachPickerButton();
+    attachSubmitEnrichment();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+ /* TPL: FIN BLOQUE NUEVO */
