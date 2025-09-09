@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Guardar por click + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
+/* TPL: INICIO BLOQUE NUEVO [Guardar por click + Modo edición + Foto/Ajuste + Seguro Vet condicional + Razas JSON + Fallback iconos] */
 (function(){
   'use strict';
 
@@ -24,6 +24,9 @@
   let originalImg = null, imageReady = false;
   let cropState = { offX:0, offY:0, scale:1 };
   let currentCroppedDataUrl = '';
+  let editIndex = -1;            // índice en sessionStorage si editamos
+  let loadedPet = null;          // mascota cargada para edición
+  let existingFotoDataUrl = '';  // foto ya guardada, por si no cambiamos
 
   function fitCoverScale(imgW, imgH, boxW, boxH){ return Math.max(boxW/imgW, boxH/imgH); }
   function drawToCanvas(ctx, img, offX, offY, scale, W, H){
@@ -56,8 +59,21 @@
     const raza      = byId('raza');
     const breedList = byId('tpl-breed-list');
 
+    const nombre    = byId('nombre');
     const microchip = byId('microchip');
     const microNo   = byId('microchip_no_tiene');
+    const edad      = byId('edad');
+    const peso      = byId('peso');
+    const esterilizado = byId('esterilizado');
+    const vacunas   = byId('vacunas');
+    const salud     = byId('salud');
+    const tratamiento = byId('tratamiento');
+    const comidas   = byId('comidas');
+    const salidas   = byId('salidas');
+    const tamano    = byId('tamano');
+    const clinica   = byId('clinica');
+    const hospitalPref = byId('hospitalPref');
+    const comportamiento = byId('comportamiento');
 
     const camaras   = byId('camaras');
     const fotosSel  = byId('fotos');
@@ -136,7 +152,7 @@
     function toggleSeguroVet(){
       const yes = (seguroVet.value === 'Sí');
       seguroVetData.classList.toggle('is-hidden', !yes);
-      seguroVetData.hidden = !yes; // doble bloqueo contra CSS externos
+      seguroVetData.hidden = !yes;
       seguroVetComp.required = seguroVetNum.required = yes;
       if (!yes){ seguroVetComp.value=''; seguroVetNum.value=''; }
     }
@@ -180,12 +196,84 @@
     modal.addEventListener('keydown', (e)=>{ if (!imageReady) return; const step=3; let moved=false; if (e.key==='ArrowLeft'){cropState.offX-=step;moved=true;} if (e.key==='ArrowRight'){cropState.offX+=step;moved=true;} if (e.key==='ArrowUp'){cropState.offY-=step;moved=true;} if (e.key==='ArrowDown'){cropState.offY+=step;moved=true;} if (moved){ e.preventDefault(); const p=drawToCanvas(ctx, originalImg, cropState.offX, cropState.offY, cropState.scale, cropCanvas.width, cropCanvas.height); cropState.offX=p.x; cropState.offY=p.y; } if (e.key==='Escape'){ btnCancel.click(); } });
     btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
+    // ===== MODO EDICIÓN =====
+    (function initEditMode(){
+      const params = new URLSearchParams(location.search);
+      const e = params.get('edit');
+      if (e == null) return;
+      const idx = parseInt(e, 10);
+      if (Number.isNaN(idx) || idx < 0) return;
+
+      let arr = [];
+      try { arr = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); } catch(_){}
+      if (!Array.isArray(arr) || !arr[idx]) return;
+
+      editIndex = idx;
+      loadedPet = arr[idx];
+
+      // Cambiar textos
+      const h1 = document.querySelector('h1');
+      if (h1) h1.textContent = 'Editar mascota';
+      if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
+
+      // Prefill
+      nombre.value = loadedPet.nombre || '';
+      if ((loadedPet.microchip||'') === 'No tiene'){
+        microNo.checked = true;
+        updateMicroState();
+      } else {
+        microNo.checked = false;
+        updateMicroState();
+        microchip.value = loadedPet.microchip || '';
+      }
+
+      especie.value = loadedPet.especie || '';
+      updateBreedList();
+      raza.value = loadedPet.raza || loadedPet.tipoExotico || '';
+
+      edad.value = loadedPet.edad || '';
+      peso.value = loadedPet.peso || '';
+      esterilizado.value = loadedPet.esterilizado || '';
+      vacunas.value = loadedPet.vacunas || '';
+      salud.value = loadedPet.salud || '';
+      tratamiento.value = loadedPet.tratamiento || '';
+      comidas.value = loadedPet.comidas || '';
+      salidas.value = loadedPet.salidas || '';
+      tamano.value = loadedPet.tamano || '';
+      clinica.value = loadedPet.clinica || '';
+      hospitalPref.value = loadedPet.hospitalPref || '';
+      comportamiento.value = loadedPet.comportamiento || '';
+
+      camaras.value = loadedPet.camaras || '';
+      fotosSel.value = loadedPet.fotos || '';
+
+      seguroVet.value = loadedPet.seguroVet || '';
+      toggleSeguroVet();
+      if (seguroVet.value === 'Sí'){
+        seguroVetComp.value = loadedPet.seguroVetComp || '';
+        seguroVetNum.value = loadedPet.seguroVetNum || '';
+      }
+      seguroRC.value = loadedPet.seguroRC || '';
+
+      existingFotoDataUrl = loadedPet.foto || '';
+      if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
+        preview.src = existingFotoDataUrl;
+        avatarBox.classList.add('has-image');
+        photoPickRow.style.display = 'none';
+        photoActions.style.display = 'flex';
+      } else {
+        avatarBox.classList.remove('has-image');
+        photoActions.style.display = 'none';
+        photoPickRow.style.display = 'block';
+        updateSpeciesIcon();
+      }
+    })();
+
     // ===== Guardar por CLICK (sin submit nativo)
     saveBtn.addEventListener('click', (e)=>{
       e.preventDefault();
       e.stopPropagation();
 
-      // Validación microchip (si no está marcado "No tiene")
       if (!microNo.checked && !microchip.value.trim()){
         alert('El microchip es obligatorio (o marca “No tiene”).');
         microchip.focus();
@@ -222,10 +310,17 @@
 
       const file = fileInput.files && fileInput.files[0];
       const finalize = (dataUrl) => {
-        mascota.foto = currentCroppedDataUrl || dataUrl || 'images/pet-placeholder.png';
+        // Si no hay nueva imagen ni crop, conservar la existente (en edición)
+        const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
+        mascota.foto = baseFoto;
+
         try{
           const arr = JSON.parse(sessionStorage.getItem('tpl.pets')||'[]');
-          arr.push(mascota);
+          if (editIndex >= 0 && Array.isArray(arr) && arr[editIndex]){
+            arr[editIndex] = mascota;    // actualizar
+          } else {
+            arr.push(mascota);           // crear
+          }
           sessionStorage.setItem('tpl.pets', JSON.stringify(arr));
         }catch(_){}
         location.assign('perfil.html');
@@ -250,7 +345,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        finalize('');
+        finalize(''); // usará existingFotoDataUrl si existe
       }
     });
   });
