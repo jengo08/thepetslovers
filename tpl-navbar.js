@@ -172,6 +172,40 @@
         var auth = initFirebase();
         if (!auth) return;
 
+        // ========= 💥 AQUI VA EL LOGOUT REAL =============
+        /* TPL: INICIO BLOQUE NUEVO [Logout unificado Firebase] */
+        (function setupUnifiedLogout(){
+          // Define/reescribe el handler global que usa tu <a id="tpl-logout"> en perfil.html
+          window.__TPL_LOGOUT__ = async function(){
+            try {
+              if (auth && typeof auth.signOut === 'function'){
+                await auth.signOut();                   // 1) cerrar sesión REAL en Firebase
+              }
+            } catch(e){ /* silencioso */ }
+
+            try { syncStorageFromUser(null); } catch(_){}
+
+            // 2) limpiar tus claves de estado UI (exactamente las que usas)
+            try{ sessionStorage.clear(); }catch(_){}
+            try{
+              localStorage.removeItem('tpl.session');
+              localStorage.removeItem('tpl.auth');
+              localStorage.removeItem('tpl.currentUser');
+              localStorage.removeItem('tpl_auth_email');
+              localStorage.removeItem('tpl_auth_uid');
+              localStorage.setItem('tpl.loggedOut', String(Date.now()));
+              setTimeout(()=>localStorage.removeItem('tpl.loggedOut'), 0);
+            }catch(_){}
+
+            try{ document.body && document.body.setAttribute('data-auth','out'); }catch(_){}
+            setDefaultBtn();                            // 3) botón vuelve a “Iniciar sesión”
+            location.assign('index.html');              // 4) ir a home ya deslogueada
+            return false;                               // evita navegación doble del <a>
+          };
+        })();
+        /* TPL: FIN BLOQUE NUEVO */
+        // ========= 💥 FIN LOGOUT REAL ====================
+
         // Estado inicial
         updateBtn(auth.currentUser);
 
@@ -714,7 +748,7 @@
 
     // Registro histórico (opcional)
     try{
-      await db.collection('tpl_submissions').doc(id).set({
+      await firebase.firestore().collection('tpl_submissions').doc(id).set({
         type,
         uid: user.uid || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
