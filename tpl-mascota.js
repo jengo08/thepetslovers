@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Mascota: crear/editar/eliminar con confirm y UID robusto] */
+/* TPL: INICIO BLOQUE NUEVO [Mascota: crear/editar/eliminar con confirm y UID robusto — FIX bind en edición] */
 (function(){
   'use strict';
 
@@ -110,7 +110,7 @@
 
       // Botones/Modal eliminar (si existen en tu HTML)
       const deleteRow = byId('tpl-delete-row');
-      const deleteBtn = byId('tpl-delete');
+      let deleteBtn   = byId('tpl-delete'); // puede no existir; habrá fallback
       const deleteModal = byId('deleteModal');
       const btnCancelDelete = byId('btnCancelDelete');
       const btnConfirmDelete = byId('btnConfirmDelete');
@@ -181,7 +181,7 @@
       if (especie){ especie.addEventListener('change', updateBreedList); }
       updateBreedList();
 
-      // ===== Seguro Vet: detalles SOLO si “Sí” (definición que faltaba) =====
+      // ===== Seguro Vet: detalles SOLO si “Sí” =====
       function toggleSeguroVet(){
         if (!seguroVet || !seguroVetData) return;
         const yes = (seguroVet.value === 'Sí');
@@ -241,81 +241,6 @@
       }
       if (btnApply){ btnApply.addEventListener('click', ()=>{ if (!imageReady || !ctx) return btnCancel && btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); if (preview) preview.src = currentCroppedDataUrl; if (avatarBox) avatarBox.classList.add('has-image'); btnCancel && btnCancel.click(); }); }
 
-      // ===== MODO EDICIÓN (lee de udb) =====
-      (function initEditMode(){
-        const params = new URLSearchParams(location.search);
-        const e = params.get('edit');
-        if (e == null) return;
-        const idx = parseInt(e, 10);
-        if (Number.isNaN(idx) || idx < 0) return;
-
-        const uid = getCurrentUserId();
-        const hasPets = udbHas(uid, 'pets');
-        const arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-        if (!Array.isArray(arr) || !arr[idx]) return;
-
-        editIndex = idx;
-        const pet = arr[idx];
-
-        const h1 = document.querySelector('h1');
-        if (h1) h1.textContent = 'Editar mascota';
-        if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
-        if (deleteRow) deleteRow.style.display = 'flex';
-
-        if (nombre) nombre.value = pet.nombre || '';
-        if ((pet.microchip||'') === 'No tiene'){
-          if (microNo) microNo.checked = true;
-          updateMicroState();
-        } else {
-          if (microNo) microNo.checked = false;
-          updateMicroState();
-          if (microchip) microchip.value = pet.microchip || '';
-        }
-
-        if (especie) especie.value = pet.especie || '';
-        updateBreedList();
-        if (raza) raza.value = pet.raza || pet.tipoExotico || '';
-
-        if (edad) edad.value = pet.edad || '';
-        if (peso) peso.value = pet.peso || '';
-        if (esterilizado) esterilizado.value = pet.esterilizado || '';
-        if (vacunas) vacunas.value = pet.vacunas || '';
-        if (salud) salud.value = pet.salud || '';
-        if (tratamiento) tratamiento.value = pet.tratamiento || '';
-        if (comidas) comidas.value = pet.comidas || '';
-        if (salidas) salidas.value = pet.salidas || '';
-        if (tamano) tamano.value = pet.tamano || '';
-        if (clinica) clinica.value = pet.clinica || '';
-        if (hospitalPref) hospitalPref.value = pet.hospitalPref || '';
-        if (comportamiento) comportamiento.value = pet.comportamiento || '';
-
-        if (camaras) camaras.value = pet.camaras || '';
-        if (fotosSel) fotosSel.value = pet.fotos || '';
-
-        if (seguroVet){
-          seguroVet.value = pet.seguroVet || '';
-          toggleSeguroVet();
-          if (seguroVet.value === 'Sí'){
-            if (seguroVetComp) seguroVetComp.value = pet.seguroVetComp || '';
-            if (seguroVetNum)  seguroVetNum.value  = pet.seguroVetNum  || '';
-          }
-        }
-        if (seguroRC) seguroRC.value = pet.seguroRC || '';
-
-        existingFotoDataUrl = pet.foto || '';
-        if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
-          if (preview) preview.src = existingFotoDataUrl;
-          if (avatarBox) avatarBox.classList.add('has-image');
-          if (photoPickRow) photoPickRow.style.display = 'none';
-          if (photoActions) photoActions.style.display = 'flex';
-        } else {
-          if (avatarBox) avatarBox.classList.remove('has-image');
-          if (photoActions) photoActions.style.display = 'none';
-          if (photoPickRow) photoPickRow.style.display = 'block';
-          updateSpeciesIcon();
-        }
-      })();
-
       // ===== Guardar (crear/actualizar) =====
       function doSave(){
         if (!form) return false;
@@ -366,7 +291,7 @@
           if (editIndex >= 0 && arr[editIndex]){
             arr[editIndex] = mascota;   // actualizar
           } else {
-            arr.push(mascota);          // crear
+            arr.push(mascota);          // crear (modo alta)
           }
 
           udbSet(uid, 'pets', arr);
@@ -400,13 +325,26 @@
         }
         return false;
       }
-
-      // Exponer para posible uso inline
+      // Exponer para uso inline si lo necesitas
       window.__TPL_PET_SAVE__ = doSave;
 
-      if (saveBtn){
-        saveBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doSave(); });
+      // —— Bind robusto al botón Guardar:
+      function bindSaveButton(){
+        // 1) por ID
+        if (saveBtn && !saveBtn.__tplBound){
+          saveBtn.__tplBound = true;
+          saveBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doSave(); });
+          return;
+        }
+        // 2) fallback: por texto “guardar … perfil”
+        const cand = Array.prototype.slice.call(document.querySelectorAll('button, a'))
+          .find(el => !el.__tplBound && /guardar/i.test(el.textContent||'') && /perfil/i.test(el.textContent||''));
+        if (cand){
+          cand.__tplBound = true;
+          cand.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doSave(); });
+        }
       }
+      bindSaveButton();
 
       /* ===== Eliminar mascota ===== */
       function actuallyDelete(){
@@ -432,12 +370,13 @@
           document.body.style.overflow = 'hidden';
           btnConfirmDelete && btnConfirmDelete.focus();
         } else {
-          // Fallback simple si no tienes el overlay en el HTML
           if (confirm('¿Seguro que quieres eliminar esta mascota? No hay vuelta atrás.')) {
             actuallyDelete();
           }
         }
       }
+      window.__TPL_PET_OPEN_DELETE__ = openDeleteModal;
+
       function closeDeleteModal(){
         if (!deleteModal) return;
         deleteModal.style.display = 'none';
@@ -445,13 +384,117 @@
         document.body.style.overflow = '';
       }
 
-      if (deleteBtn){ deleteBtn.addEventListener('click', function(e){ e.preventDefault(); openDeleteModal(); }); }
+      // —— Bind robusto al botón Eliminar:
+      function bindDeleteButton(){
+        // 1) por ID
+        if (deleteBtn && !deleteBtn.__tplBound){
+          deleteBtn.__tplBound = true;
+          deleteBtn.addEventListener('click', function(e){ e.preventDefault(); openDeleteModal(); });
+          return;
+        }
+        // 2) fallback: por texto “eliminar”
+        const cand = Array.prototype.slice.call(document.querySelectorAll('button, a'))
+          .find(el => !el.__tplBound && /eliminar/i.test(el.textContent||''));
+        if (cand){
+          deleteBtn = cand;
+          cand.__tplBound = true;
+          cand.addEventListener('click', function(e){ e.preventDefault(); openDeleteModal(); });
+        }
+      }
+      bindDeleteButton();
+
       if (btnCancelDelete){ btnCancelDelete.addEventListener('click', function(){ closeDeleteModal(); }); }
       if (deleteModal){
         deleteModal.addEventListener('click', function(e){ if (e.target === deleteModal) closeDeleteModal(); });
         deleteModal.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeDeleteModal(); });
       }
       if (btnConfirmDelete){ btnConfirmDelete.addEventListener('click', function(){ closeDeleteModal(); actuallyDelete(); }); }
+
+      // ===== MODO EDICIÓN (aislado: si falla, no rompe los binds) =====
+      (function initEditModeSafe(){
+        try{
+          const params = new URLSearchParams(location.search);
+          const e = params.get('edit');
+          if (e == null) return;
+          const idx = parseInt(e, 10);
+          if (Number.isNaN(idx) || idx < 0) return;
+
+          const uid = getCurrentUserId();
+          const hasPets = udbHas(uid, 'pets');
+          const arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+          if (!Array.isArray(arr) || !arr[idx]) return;
+
+          editIndex = idx;
+          const pet = arr[idx];
+
+          const h1 = document.querySelector('h1');
+          if (h1) h1.textContent = 'Editar mascota';
+          if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
+          if (deleteRow) deleteRow.style.display = 'flex';
+
+          if (nombre) nombre.value = pet.nombre || '';
+          if ((pet.microchip||'') === 'No tiene'){
+            if (microNo) microNo.checked = true;
+            updateMicroState();
+          } else {
+            if (microNo) microNo.checked = false;
+            updateMicroState();
+            if (microchip) microchip.value = pet.microchip || '';
+          }
+
+          if (especie) especie.value = pet.especie || '';
+          updateBreedList();
+          if (raza) raza.value = pet.raza || pet.tipoExotico || '';
+
+          if (edad) edad.value = pet.edad || '';
+          if (peso) peso.value = pet.peso || '';
+          if (esterilizado) esterilizado.value = pet.esterilizado || '';
+          if (vacunas) vacunas.value = pet.vacunas || '';
+          if (salud) salud.value = pet.salud || '';
+          if (tratamiento) tratamiento.value = pet.tratamiento || '';
+          if (comidas) comidas.value = pet.comidas || '';
+          if (salidas) salidas.value = pet.salidas || '';
+          if (tamano) tamano.value = pet.tamano || '';
+          if (clinica) clinica.value = pet.clinica || '';
+          if (hospitalPref) hospitalPref.value = pet.hospitalPref || '';
+          if (comportamiento) comportamiento.value = pet.comportamiento || '';
+
+          if (camaras) camaras.value = pet.camaras || '';
+          if (fotosSel) fotosSel.value = pet.fotos || '';
+
+          if (seguroVet){
+            seguroVet.value = pet.seguroVet || '';
+            toggleSeguroVet();
+            if (seguroVet.value === 'Sí'){
+              if (seguroVetComp) seguroVetComp.value = pet.seguroVetComp || '';
+              if (seguroVetNum)  seguroVetNum.value  = pet.seguroVetNum  || '';
+            }
+          }
+          if (seguroRC) seguroRC.value = pet.seguroRC || '';
+
+          existingFotoDataUrl = pet.foto || '';
+          if (existingFotoDataUrl && !/pet-placeholder\.png$/i.test(existingFotoDataUrl)){
+            if (preview) preview.src = existingFotoDataUrl;
+            if (avatarBox) avatarBox.classList.add('has-image');
+            if (photoPickRow) photoPickRow.style.display = 'none';
+            if (photoActions) photoActions.style.display = 'flex';
+          } else {
+            if (avatarBox) avatarBox.classList.remove('has-image');
+            if (photoActions) photoActions.style.display = 'none';
+            if (photoPickRow) photoPickRow.style.display = 'block';
+            updateSpeciesIcon();
+          }
+        }catch(e){
+          console.warn('[tpl-mascota] initEditModeSafe:', e);
+          // Aun si algo falla, los botones ya están enlazados (binds arriba)
+        }
+      })();
+
+      // Safety: re-bind si el DOM cambia (por inyecciones tardías)
+      new MutationObserver(function(){
+        bindSaveButton();
+        bindDeleteButton();
+      }).observe(document.documentElement, { childList:true, subtree:true });
 
     }catch(err){
       console.error('[tpl-mascota] init error:', err);
