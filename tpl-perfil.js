@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [Perfil: owner + mascotas (udb) + logout robusto] */
+/* TPL: INICIO BLOQUE NUEVO [Perfil: owner + mascotas (udb) + logout robusto + migración] */
 (function(){
   'use strict';
 
@@ -36,6 +36,48 @@
     try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
     catch(_){ return fallback; }
   }
+  /* TPL: INICIO BLOQUE NUEVO [udb set/any helpers] */
+  function udbSet(uid, key, val){
+    try{ localStorage.setItem(udbKey(uid,key), JSON.stringify(val)); }catch(_){}
+  }
+  function udbGetAny(uid, keys, fallback){
+    for (var i=0;i<keys.length;i++){
+      var v = udbGet(uid, keys[i], undefined);
+      if (v !== undefined && v !== null) return v;
+    }
+    return fallback;
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
+  /* TPL: INICIO BLOQUE NUEVO [Migración default → UID + alias "mascotas"] */
+  function migrateUdbToCurrentUid(){
+    const uid = getCurrentUserId();
+    if (uid === 'default') return;
+
+    // 1) Alias "mascotas" -> "pets" si procede
+    const aliasPets = udbGet(uid, 'mascotas', null);
+    const petsNow   = udbGet(uid, 'pets', null);
+    if (Array.isArray(aliasPets) && !Array.isArray(petsNow)){
+      udbSet(uid, 'pets', aliasPets);
+    }
+
+    // 2) Si no hay pets para este UID, intentar traer de default (pets o mascotas)
+    const petsAfterAlias = udbGet(uid, 'pets', null);
+    if (!Array.isArray(petsAfterAlias) || petsAfterAlias.length === 0){
+      const defaultPets = udbGetAny('default', ['pets','mascotas'], []);
+      if (Array.isArray(defaultPets) && defaultPets.length){
+        udbSet(uid, 'pets', defaultPets);
+      }
+    }
+
+    // 3) Owner: si falta en este UID, copiar de default
+    const ownerNow = udbGet(uid, 'owner', null);
+    if (!ownerNow){
+      const defaultOwner = udbGet('default', 'owner', null);
+      if (defaultOwner){ udbSet(uid, 'owner', defaultOwner); }
+    }
+  }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ---------- Owner (placeholder/cargado) ----------
   function setOwnerIncomplete(){
@@ -144,7 +186,9 @@
   }
   function loadPetsAndRender(){
     const uid = getCurrentUserId();
-    const pets = udbGet(uid, 'pets', []);
+    // Acepta alias antiguo "mascotas" y migra silenciosamente
+    let pets = udbGetAny(uid, ['pets','mascotas'], []);
+    if (!Array.isArray(pets)) pets = [];
     renderPets(pets);
   }
 
@@ -181,6 +225,10 @@
 
   // ---------- Inicio ----------
   document.addEventListener('DOMContentLoaded', ()=>{
+    /* TPL: INICIO BLOQUE NUEVO [Migración antes de pintar] */
+    migrateUdbToCurrentUid();
+    /* TPL: FIN BLOQUE NUEVO */
+
     setOwnerIncomplete();
     setPetsEmpty();
     loadOwner();
@@ -205,13 +253,16 @@
   /* TPL: INICIO BLOQUE NUEVO [Reaccionar a cambios de sesión/almacenamiento] */
   // Cuando navbar/auth anuncian cambio de sesión:
   window.addEventListener('tpl-auth-change', function(){
+    migrateUdbToCurrentUid();
     loadOwner();
     loadPetsAndRender();
   });
   // Si cambia storage (otra pestaña o logout):
   window.addEventListener('storage', function(ev){
     if (!ev) return;
-    if (ev.key === 'tpl.currentUser' || ev.key === 'tpl_auth_uid' || ev.key === 'tpl_auth_email'){
+    if (ev.key === 'tpl.currentUser' || ev.key === 'tpl_auth_uid' || ev.key === 'tpl_auth_email'
+        || (ev.key && ev.key.indexOf('tpl.udb.') === 0)){
+      migrateUdbToCurrentUid();
       loadOwner();
       loadPetsAndRender();
     }
