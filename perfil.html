@@ -64,14 +64,16 @@
       background:#fff;
     }
 
-    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota + icono fallback + meta] */
+    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota] */
     .tpl-pet-thumb {
       width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;
+      border-radius:50%;              /* <-- circular */
       object-fit:cover;
       border:2px solid var(--tpl-border);
-      background:#fff;
     }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    /* TPL: INICIO BLOQUE NUEVO [Icono fallback + meta] */
     .tpl-pet-icon {
       width:56px; height:56px; flex:0 0 56px;
       border-radius:50%;
@@ -220,7 +222,7 @@
   <script src="tpl-footer.js" defer></script>
   <script src="tpl-perfil.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage, seguro y aislado] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage + forzado de estado cuando hay mascotas] -->
   <script>
   (function(){
     'use strict';
@@ -239,7 +241,7 @@
       const empty = $('#tpl-pets-empty');
       const list  = $('#tpl-pets-list');
       const status = $('#tpl-pets-status');
-      if (!list){ console.warn('[TPL] Falta #tpl-pets-list en perfil.html'); return; }
+      if (!list) return;
 
       if (!Array.isArray(pets) || pets.length===0){
         if (empty) empty.hidden = false;
@@ -262,7 +264,6 @@
         const item = document.createElement('div');
         item.className = 'tpl-pet-item';
 
-        // Avatar: foto o icono
         if (foto){
           const img = document.createElement('img');
           img.className = 'tpl-pet-thumb';
@@ -276,7 +277,6 @@
           item.appendChild(ic);
         }
 
-        // Meta
         const meta = document.createElement('div');
         meta.className = 'tpl-pet-meta';
         const nm = document.createElement('div');
@@ -301,16 +301,42 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // Nota: sessionStorage es por subdominio (usa siempre https://www.thepetslovers.es/)
+    // Forzar estado correcto si otra lógica reescribe el chip/empty:
+    function ensureState(){
+      const empty = document.getElementById('tpl-pets-empty');
+      const list  = document.getElementById('tpl-pets-list');
+      const status= document.getElementById('tpl-pets-status');
+      if (!list) return;
+      const n = list.children.length;
+      if (n > 0){
+        if (empty) empty.hidden = true;
+        list.hidden = false;
+        if (status) status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
+      }
+    }
+
+    function loadAndRender(){
       let saved = [];
       try { saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); }
       catch(e){ saved = []; }
       renderPets(saved);
+      ensureState();
+    }
 
-      // Exponer para refrescar desde otros módulos si hace falta
-      window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__ || {}, { renderPets });
+    // Ejecutamos al final (cuando todo ha cargado) y re-ejecutamos en el siguiente tick
+    window.addEventListener('load', () => {
+      loadAndRender();
+      setTimeout(loadAndRender, 0);
+      // Vigilar cambios en la lista (por si otro script re-renderiza)
+      const list = document.getElementById('tpl-pets-list');
+      if (list){
+        const mo = new MutationObserver(()=>ensureState());
+        mo.observe(list, {childList:true});
+      }
     });
+
+    // Exponer para refrescar manualmente si hace falta
+    window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__ || {}, { renderPets });
   })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
