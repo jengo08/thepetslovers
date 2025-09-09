@@ -1,19 +1,16 @@
-/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar en base por usuario (localStorage)] */
+/* TPL: INICIO BLOQUE NUEVO [Mascota: guardar/editar/eliminar en base por usuario (localStorage)] */
 (function(){
   'use strict';
 
   // ====== Base por usuario (localStorage) ======
   /* TPL: INICIO BLOQUE NUEVO [UID robusto: currentUser -> tpl_auth_uid -> Firebase UID -> default] */
   function getCurrentUserId(){
-    // 1) UID explícito si lo setea tu login antiguo
     var explicit = localStorage.getItem('tpl.currentUser');
     if (explicit) return explicit;
 
-    // 2) UID sincronizado por navbar/auth reciente
     var uidLS = localStorage.getItem('tpl_auth_uid');
     if (uidLS) return uidLS;
 
-    // 3) UID real de Firebase si está cargado
     try{
       if (window.firebase && typeof firebase.auth === 'function'){
         var u = firebase.auth().currentUser;
@@ -21,7 +18,6 @@
       }
     }catch(_){}
 
-    // 4) Fallback
     return 'default';
   }
   /* TPL: FIN BLOQUE NUEVO */
@@ -34,15 +30,7 @@
   function udbSet(uid, key, value){
     try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){}
   }
-
-  /* TPL: INICIO BLOQUE NUEVO [Helpers compat: leer varias claves y saber si existe alias] */
-  function udbGetAny(uid, keys, fallback){
-    for (var i=0;i<keys.length;i++){
-      var v = udbGet(uid, keys[i], undefined);
-      if (v !== undefined && v !== null) return v;
-    }
-    return fallback;
-  }
+  /* TPL: INICIO BLOQUE NUEVO [Saber si existe clave] */
   function udbHas(uid, key){
     try { return localStorage.getItem(udbKey(uid,key)) !== null; } catch(_){ return false; }
   }
@@ -242,6 +230,9 @@
     btnApply.addEventListener('click', ()=>{ if (!imageReady) return btnCancel.click(); const out=document.createElement('canvas'); out.width=256; out.height=256; const octx=out.getContext('2d'); const factor=256/320; drawToCanvas(octx, originalImg, cropState.offX*factor, cropState.offY*factor, cropState.scale*factor, 256,256); currentCroppedDataUrl = out.toDataURL('image/jpeg', 0.9); preview.src = currentCroppedDataUrl; avatarBox.classList.add('has-image'); btnCancel.click(); });
 
     // ===== MODO EDICIÓN (lee de udb) =====
+    const deleteRow = byId('tpl-delete-row');
+    const deleteBtn = byId('tpl-delete');
+
     (function initEditMode(){
       const params = new URLSearchParams(location.search);
       const e = params.get('edit');
@@ -250,9 +241,9 @@
       if (Number.isNaN(idx) || idx < 0) return;
 
       const uid = getCurrentUserId();
-      /* TPL: INICIO BLOQUE NUEVO [Leer pets con compat a alias "mascotas"] */
-      const arr = udbGetAny(uid, ['pets','mascotas'], []);
-      /* TPL: FIN BLOQUE NUEVO */
+      // Leer pets (preferente). Si no existe clave 'pets', caer a alias antiguo 'mascotas'
+      const hasPets = udbHas(uid, 'pets');
+      const arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
       if (!Array.isArray(arr) || !arr[idx]) return;
 
       editIndex = idx;
@@ -261,6 +252,9 @@
       const h1 = document.querySelector('h1');
       if (h1) h1.textContent = 'Editar mascota';
       if (saveBtn) saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios y volver al perfil';
+
+      // Mostrar opción de eliminar en modo edición
+      if (deleteRow) deleteRow.style.display = 'flex';
 
       nombre.value = pet.nombre || '';
       if ((pet.microchip||'') === 'No tiene'){
@@ -358,18 +352,23 @@
         const baseFoto = currentCroppedDataUrl || dataUrl || existingFotoDataUrl || 'images/pet-placeholder.png';
         mascota.foto = baseFoto;
 
-        /* TPL: INICIO BLOQUE NUEVO [Leer con compat y escribir sincronizando alias si existe] */
-        let arr = udbGetAny(uid, ['pets','mascotas'], []);
+        // Leer preferentemente 'pets'; si no existe, caer a 'mascotas'
+        const hasPets = udbHas(uid, 'pets');
+        let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
         if (!Array.isArray(arr)) arr = [];
+
         if (editIndex >= 0 && arr[editIndex]){
           arr[editIndex] = mascota;   // actualizar
         } else {
           arr.push(mascota);          // crear
         }
+
+        // Escribir SIEMPRE en 'pets'
         udbSet(uid, 'pets', arr);
+        // Sincronizar alias antiguo SOLO si existe
         if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
+
         try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
-        /* TPL: FIN BLOQUE NUEVO */
 
         location.assign('perfil.html');
       };
@@ -397,6 +396,34 @@
         finalize('');
       }
     });
+
+    /* TPL: INICIO BLOQUE NUEVO [Eliminar mascota: usa UID robusto y escribe pets=[]] */
+    if (deleteBtn){
+      deleteBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        if (editIndex < 0) return; // solo en modo edición
+        if (!confirm('¿Seguro que deseas eliminar esta mascota?')) return;
+
+        const uid = getCurrentUserId();
+
+        // Fuente preferente: 'pets'. Si no existe, caer a 'mascotas'
+        const hasPets = udbHas(uid, 'pets');
+        let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+        if (!Array.isArray(arr)) arr = [];
+
+        if (arr[editIndex]) arr.splice(editIndex, 1);
+
+        // Escribir SIEMPRE en 'pets' (incluso si queda [])
+        udbSet(uid, 'pets', arr);
+        // Sincronizar alias antiguo SOLO si existe
+        if (udbHas(uid, 'mascotas')){ udbSet(uid, 'mascotas', arr); }
+
+        try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){}
+
+        location.assign('perfil.html');
+      });
+    }
+    /* TPL: FIN BLOQUE NUEVO */
   });
 
   // Refrescar datalist tras cargar JSON (fuera del DOMContentLoaded por el fetch inicial)
