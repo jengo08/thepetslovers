@@ -64,13 +64,24 @@
       background:#fff;
     }
 
-    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota] */
+    /* TPL: INICIO BLOQUE NUEVO [Avatar circular para mascota + icono fallback + meta] */
     .tpl-pet-thumb {
       width:56px; height:56px; flex:0 0 56px;
-      border-radius:50%;              /* <-- circular */
+      border-radius:50%;
       object-fit:cover;
       border:2px solid var(--tpl-border);
+      background:#fff;
     }
+    .tpl-pet-icon {
+      width:56px; height:56px; flex:0 0 56px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid var(--tpl-border);
+      background:#fafafa; color:#9aa0a6; font-size:22px;
+    }
+    .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
+    .tpl-pet-name{ font-weight:700; color:#222; }
+    .tpl-pet-sub{ color:#666; font-size:.95rem; }
     /* TPL: FIN BLOQUE NUEVO */
 
     .sr-only{position:absolute!important;width:1px;height:1px;clip:rect(1px,1px,1px,1px);overflow:hidden;white-space:nowrap}
@@ -208,5 +219,100 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
   <script src="tpl-perfil.js" defer></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Render de mascotas desde sessionStorage, seguro y aislado] -->
+  <script>
+  (function(){
+    'use strict';
+    const $ = (s, r=document)=>r.querySelector(s);
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function iconBySpecies(sp){
+      const v = (sp||'').toLowerCase();
+      if (v.includes('perro')) return 'fa-dog';
+      if (v.includes('gato'))  return 'fa-cat';
+      if (v.includes('exó') || v.includes('exo')) return 'fa-dove';
+      return 'fa-paw';
+    }
+
+    function renderPets(pets){
+      const empty = $('#tpl-pets-empty');
+      const list  = $('#tpl-pets-list');
+      const status = $('#tpl-pets-status');
+      if (!list){ console.warn('[TPL] Falta #tpl-pets-list en perfil.html'); return; }
+
+      if (!Array.isArray(pets) || pets.length===0){
+        if (empty) empty.hidden = false;
+        list.hidden = true;
+        if (status) status.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
+        return;
+      }
+
+      if (empty) empty.hidden = true;
+      list.hidden = false;
+      list.innerHTML = '';
+
+      pets.forEach(p => {
+        const nombre   = escapeHtml(p?.nombre || 'Sin nombre');
+        const especie  = escapeHtml(p?.especie || '');
+        const raza     = escapeHtml(p?.raza || p?.tipoExotico || '');
+        const edad     = escapeHtml(p?.edad || '');
+        const foto     = (p && typeof p.foto === 'string') ? p.foto : '';
+
+        const item = document.createElement('div');
+        item.className = 'tpl-pet-item';
+
+        // Avatar: foto o icono
+        if (foto){
+          const img = document.createElement('img');
+          img.className = 'tpl-pet-thumb';
+          img.src = foto;
+          img.alt = `Foto de ${nombre}`;
+          item.appendChild(img);
+        } else {
+          const ic = document.createElement('div');
+          ic.className = 'tpl-pet-icon';
+          ic.innerHTML = `<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`;
+          item.appendChild(ic);
+        }
+
+        // Meta
+        const meta = document.createElement('div');
+        meta.className = 'tpl-pet-meta';
+        const nm = document.createElement('div');
+        nm.className = 'tpl-pet-name';
+        nm.textContent = nombre;
+
+        const sub = document.createElement('div');
+        sub.className = 'tpl-pet-sub';
+        const parts = [especie, raza, edad && ('Edad: ' + edad)].filter(Boolean);
+        sub.textContent = parts.join(' · ');
+
+        meta.appendChild(nm);
+        meta.appendChild(sub);
+        item.appendChild(meta);
+
+        list.appendChild(item);
+      });
+
+      if (status){
+        const n = pets.length;
+        status.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Nota: sessionStorage es por subdominio (usa siempre https://www.thepetslovers.es/)
+      let saved = [];
+      try { saved = JSON.parse(sessionStorage.getItem('tpl.pets') || '[]'); }
+      catch(e){ saved = []; }
+      renderPets(saved);
+
+      // Exponer para refrescar desde otros módulos si hace falta
+      window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__ || {}, { renderPets });
+    });
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
