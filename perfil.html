@@ -1,331 +1,277 @@
-<!-- TPL: Config REST Navar/Codinary -->
 <script>
-  window.TPL_API = window.TPL_API || {
-    baseUrl: 'https://TU_BACKEND_NAVAR/api',  // ← CAMBIA ESTO A TU API
-    authHeaders: async () => {
-      const t = localStorage.getItem('tpl_api_token') || '';
-      return t ? { 'Authorization': 'Bearer ' + t } : {};
-    },
-    currentUserId: async () => {
-      const ls = localStorage.getItem('tpl_auth_uid');
-      if (ls) return ls;
-      try { return window.firebase?.auth?.().currentUser?.uid || null; } catch(_) { return null; }
-    },
-    endpoints: {
-      profileGet: (uid)    => `/users/${uid}/profile`,
-      petList:    (uid)    => `/users/${uid}/pets`,
-      reservas:   (uid)    => `/users/${uid}/bookings`   // si tu API lo expone
-    }
-  };
-</script>
-
-<!-- TPL: Lógica Perfil — REST-first con fallback seguro (sin romper la UI) -->
-<script>
-(function(){
-  'use strict';
-  function onReady(fn){ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fn);} else {fn();} }
-  onReady(init);
-
-  function init(){
-    const byId = (id)=> document.getElementById(id);
-    const $ = (sel)=> document.querySelector(sel);
-
-    const bannerInc   = byId('tpl-banner-incompleto');
-
-    const emptyCliente  = byId('tpl-cliente-empty');
-    const viewCliente   = byId('tpl-cliente-view');
-    const statusCliente = byId('tpl-cliente-status');
-    const actionsPerfil = byId('tpl-actions-perfil');
-    const linkEditar    = byId('tpl-link-editar');
-
-    const mascotasEmpty = byId('tpl-mascotas-empty');
-    const mascotasView  = byId('tpl-mascotas-view');
-    const mascotasList  = byId('tpl-mascotas-list');
-    const chipMascotas  = byId('tpl-chip-mascotas');
-    const cntMascotas   = byId('tpl-count-mascotas');
-
-    const reservasView  = byId('tpl-reservas-view');
-    const reservasList  = byId('tpl-reservas-list');
-    const reservasEmpty = byId('tpl-reservas-empty');
-    const btnIrReserva  = byId('tpl-btn-ir-reserva');
-    const pHintReserva  = $("article[aria-labelledby='h-reservas'] p");
-
-    const logoutBtn     = byId('tpl-logout-btn');
-
-    const SERVICE_LABELS = {
-      "guarderia-dia": "Guardería de día",
-      "visitas": "Visitas a domicilio (gatos)",
-      "alojamiento": "Alojamiento nocturno",
-      "paseos": "Paseos",
-      "transporte": "Transporte",
-      "bodas": "Bodas",
-      "postoperatorio": "Postoperatorio",
-      "exoticos": "Exóticos"
-    };
-
-    const LS = {
-      P:'tpl-profile',
-      PETS:'tpl-pets',
-      profile(){ try{ return JSON.parse(localStorage.getItem(this.P)||'null'); }catch(_){ return null; } },
-      pets(){ try{ return JSON.parse(localStorage.getItem(this.PETS)||'[]'); }catch(_){ return []; } }
-    };
-
-    const REST = {
-      ok: !!(window.TPL_API && window.TPL_API.baseUrl),
-      base: () => String(window.TPL_API.baseUrl||'').replace(/\/+$/,''),
-      allowLocalFallback(){
-        // Fallback solo si NO has configurado la URL real
-        return !this.ok || /TU_BACKEND_NAVAR/i.test(this.base());
-      },
-      headers: async () => ({ 'Content-Type':'application/json', ...(await window.TPL_API.authHeaders?.()||{}) }),
-      uid:     async () => await (window.TPL_API.currentUserId?.() || null),
-      url(name, uid){ const e=window.TPL_API.endpoints||{}; const path=(typeof e[name]==='function')?e[name](uid):''; return this.base()+path; },
-      async getProfile(){
-        const uid = await this.uid();
-        if (this.allowLocalFallback() || !uid){
-          return LS.profile();
-        }
-        const res = await fetch(this.url('profileGet', uid), { headers: await this.headers() }).catch(()=>null);
-        if (!res || !res.ok) return this.allowLocalFallback() ? LS.profile() : null;
-        return await res.json();
-      },
-      async getPets(){
-        const uid = await this.uid();
-        if (this.allowLocalFallback() || !uid){
-          return LS.pets();
-        }
-        const res = await fetch(this.url('petList', uid), { headers: await this.headers() }).catch(()=>null);
-        if (!res || !res.ok) return this.allowLocalFallback() ? LS.pets() : [];
-        return await res.json();
-      },
-      async getReservas(){
-        const uid = await this.uid();
-        if (!window.TPL_API.endpoints?.reservas) return [];
-        if (this.allowLocalFallback() || !uid) return [];
-        const res = await fetch(this.url('reservas', uid), { headers: await this.headers() }).catch(()=>null);
-        return (res && res.ok) ? await res.json() : [];
-      }
-    };
-
-    function toDate(any){
-      if (!any) return null;
-      if (typeof any==='number') return new Date(any);
-      const d = new Date(String(any)); return isNaN(d) ? null : d;
-    }
-    function statusBadge(status){
-      const s = String(status || '').toLowerCase();
-      if (s==='aceptada' || s==='aprobada') return '<span class="tpl-badge ok"><i class="fa-solid fa-check"></i> Aceptada</span>';
-      if (s.includes('revision')) return '<span class="tpl-badge review"><i class="fa-solid fa-hourglass-half"></i> En revisión</span>';
-      if (s==='enviada' || s==='pendiente') return '<span class="tpl-badge pending"><i class="fa-regular fa-paper-plane"></i> Enviada</span>';
-      if (s==='completada' || s==='finalizada') return '<span class="tpl-badge done"><i class="fa-regular fa-circle-check"></i> Completada</span>';
-      if (s==='cancelada') return '<span class="tpl-badge canceled"><i class="fa-regular fa-circle-xmark"></i> Cancelada</span>';
-      return '<span class="tpl-badge"><i class="fa-regular fa-circle-question"></i> —</span>';
-    }
-
-    function updateBadge(profile){
-      const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
-      if (statusCliente){ statusCliente.classList.toggle('tpl-hidden', !complete); statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true'); }
-      if (complete) {
-        actionsPerfil && actionsPerfil.classList.add('tpl-hidden');
-        if (linkEditar){ linkEditar.classList.remove('tpl-hidden'); linkEditar.setAttribute('aria-hidden','false'); }
-      } else {
-        actionsPerfil && actionsPerfil.classList.add('tpl-hidden');
-        if (linkEditar){ linkEditar.classList.add('tpl-hidden'); linkEditar.setAttribute('aria-hidden','true'); }
-      }
-    }
-
-    function ensureReservationAccess(hasProfile, hasPets){
-      const complete = !!(hasProfile && hasPets);
-      try{
-        window.__TPL_PROFILE_COMPLETE__ = complete;
-        localStorage.setItem('tplProfileComplete', complete ? '1' : '0');
-      }catch(_){}
-      if (bannerInc) bannerInc.hidden = complete;
-      if (pHintReserva) pHintReserva.style.display = complete ? 'none' : '';
-
-      function guardClick(e){
-        e.preventDefault();
-        if (bannerInc){ bannerInc.hidden = false; bannerInc.scrollIntoView({behavior:'smooth', block:'start'}); }
-      }
-      if (btnIrReserva){
-        btnIrReserva.setAttribute('aria-disabled', complete ? 'false' : 'true');
-        if (!complete){
-          btnIrReserva.addEventListener('click', guardClick);
-          btnIrReserva.setAttribute('title','Completa tu perfil y añade una mascota para continuar');
-          btnIrReserva.setAttribute('href', '#completar');
-        } else {
-          const fresh = btnIrReserva.cloneNode(true);
-          btnIrReserva.replaceWith(fresh);
-          fresh.id = 'tpl-btn-ir-reserva';
-          fresh.setAttribute('href','reserva.html'); fresh.removeAttribute('aria-disabled'); fresh.removeAttribute('title');
-        }
-      }
-    }
-
-    function renderReservas(reservas){
-      if (!reservasList || !reservasView || !reservasEmpty) return;
-      reservasList.innerHTML = '';
-      if (!reservas || reservas.length===0){
-        reservasView.classList.add('tpl-hidden');
-        reservasEmpty.classList.remove('tpl-hidden');
-        return;
-      }
-      reservasEmpty.classList.add('tpl-hidden');
-      reservasView.classList.remove('tpl-hidden');
-
-      reservas.sort((a,b)=>{
-        const da = toDate(a.fechaInicio || a.startAt || a.startDate || a.inicio) || new Date(8640000000000000);
-        const dbb = toDate(b.fechaInicio || b.startAt || b.startDate || b.inicio) || new Date(8640000000000000);
-        return da - dbb;
-      });
-
-      reservas.forEach(r=>{
-        const start = toDate(r.fechaInicio || r.startAt || r.startDate || r.inicio);
-        const end   = toDate(r.fechaFin || r.endAt || r.endDate || r.fin);
-        const servicio = SERVICE_LABELS[r.servicio] || r.servicio || 'Servicio';
-        const estado   = r.estado || r.status || 'enviada';
-        const pets     = Array.isArray(r.mascotas) ? r.mascotas : (r.mascotaNombre ? [r.mascotaNombre] : []);
-        const caret    = r.cuidadorNombre || r.cuidador || '';
-        const addr     = r.direccion || r.address || '';
-        const price    = r.precio || r.price || '';
-
-        const el = document.createElement('div');
-        el.className = 'tpl-reserva';
-        el.innerHTML = `
-          <h3>${servicio}</h3>
-          <div class="row"><i class="fa-regular fa-calendar"></i> ${start ? start.toLocaleDateString('es-ES') : '—'} ${end ? ' · ' + end.toLocaleDateString('es-ES') : ''}</div>
-          <div class="row"><i class="fa-solid fa-paw"></i> ${pets.length ? pets.join(', ') : '—'}</div>
-          ${caret ? `<div class="row"><i class="fa-regular fa-user"></i> ${caret}</div>` : ''}
-          ${addr ? `<div class="row"><i class="fa-regular fa-map"></i> ${addr}</div>` : ''}
-          ${price ? `<div class="row"><i class="fa-solid fa-euro-sign"></i> ${price}</div>` : ''}
-          <div class="row">${statusBadge(estado)}</div>
-        `;
-        reservasList.appendChild(el);
-      });
-    }
-
-    function petEditHref(p){
-      const pid = p.id || p._id || '';
-      return pid ? ('perfil-mascotas.html?id=' + encodeURIComponent(pid) + '&next=perfil.html') : 'perfil-mascotas.html?mode=new&next=perfil.html';
-    }
-
-    async function render(){
-      // 1) Perfil
-      let profile = null;
-      try { profile = await REST.getProfile(); } catch(_){}
-      updateBadge(profile);
-      if (profile && (profile.nombre || profile.telefono || profile.email || profile.cp)) {
-        byId('tpl-view-nombre')   && (byId('tpl-view-nombre').textContent    = profile.nombre || '—');
-        byId('tpl-view-telefono') && (byId('tpl-view-telefono').textContent  = profile.telefono || '—');
-        byId('tpl-view-email')    && (byId('tpl-view-email').textContent     = profile.email || '—');
-        byId('tpl-view-direccion')&& (byId('tpl-view-direccion').textContent = profile.direccion || '—');
-        byId('tpl-view-cp')       && (byId('tpl-view-cp').textContent        = profile.cp || '—');
-        byId('tpl-view-pref')     && (byId('tpl-view-pref').textContent      = profile.preferencias || '—');
-        emptyCliente && emptyCliente.classList.add('tpl-hidden');
-        viewCliente  && viewCliente.classList.remove('tpl-hidden');
-      } else {
-        viewCliente  && viewCliente.classList.add('tpl-hidden');
-        emptyCliente && emptyCliente.classList.remove('tpl-hidden');
-      }
-
-      // 2) Mascotas
-      let pets = [];
-      try { pets = await REST.getPets(); } catch(_){}
-      if (!Array.isArray(pets)) pets = [];
-      mascotasList && (mascotasList.innerHTML = '');
-      const count = pets.length;
-
-      if (count > 0) {
-        mascotasEmpty && mascotasEmpty.classList.add('tpl-hidden');
-        mascotasView  && mascotasView.classList.remove('tpl-hidden');
-        chipMascotas  && chipMascotas.classList.remove('tpl-hidden');
-        chipMascotas  && chipMascotas.setAttribute('aria-hidden','false');
-        cntMascotas   && (cntMascotas.textContent = String(count));
-
-        pets.forEach((p) => {
-          const especie = p.especie || '—';
-          const card   = document.createElement('div');
-          card.className = 'tpl-pet';
-
-          const avatar = document.createElement('div');
-          avatar.className = 'tpl-avatar';
-          const imgSrc = p.fotoDataUrl || p.fotoUrl || '';
-          if (imgSrc){
-            const img = document.createElement('img');
-            img.src = imgSrc; img.alt = `Foto de ${p.nombre || 'mascota'}`;
-            avatar.appendChild(img);
-          } else {
-            const initials = (p.nombre||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || '—';
-            avatar.textContent = initials;
-          }
-
-          const textBox = document.createElement('div');
-          const nameEl = document.createElement('div'); nameEl.className='tpl-pet-name'; nameEl.textContent=p.nombre||'—';
-          const secEl  = document.createElement('div'); secEl.className='tpl-pet-secondary'; secEl.textContent=especie;
-          textBox.appendChild(nameEl); textBox.appendChild(secEl);
-
-          const actions = document.createElement('div'); actions.className='tpl-pet-actions';
-          const edit = document.createElement('a');
-          edit.textContent = 'Editar';
-          edit.className = 'tpl-btn-sm tpl-btn-outline';
-          edit.setAttribute('href', petEditHref(p));
-          actions.appendChild(edit);
-
-          const pop = document.createElement('div');
-          pop.className = 'tpl-popover'; pop.setAttribute('role','dialog');
-          pop.innerHTML = `
-            <dl>
-              <dt>Especie</dt><dd>${especie || '—'}</dd>
-              <dt>Edad</dt><dd>${(p.edad ?? '—')}</dd>
-              <dt>Peso</dt><dd>${(p.peso ?? '—')}</dd>
-              <dt>Sexo</dt><dd>${p.sexo || '—'}</dd>
-              <dt>Esterilizado</dt><dd>${(p.esterilizado ?? '—')}</dd>
-            </dl>
-            ${p.comentarios ? `<div class="tpl-notas"><strong>Notas:</strong> ${p.comentarios}</div>` : ''}
-          `;
-
-          card.appendChild(avatar);
-          card.appendChild(textBox);
-          card.appendChild(actions);
-          card.appendChild(pop);
-          mascotasList && mascotasList.appendChild(card);
-        });
-      } else {
-        mascotasView  && mascotasView.classList.add('tpl-hidden');
-        mascotasEmpty && mascotasEmpty.classList.remove('tpl-hidden');
-        chipMascotas  && chipMascotas.classList.add('tpl-hidden');
-        chipMascotas  && chipMascotas.setAttribute('aria-hidden','true');
-        cntMascotas   && (cntMascotas.textContent = '0');
-      }
-
-      const hasProfile = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
-      const hasPets    = count > 0;
-      ensureReservationAccess(hasProfile, hasPets);
-
-      // 3) Reservas (si hay API)
-      let reservas = [];
-      try { reservas = await REST.getReservas(); } catch(_){}
-      renderReservas(reservas);
-    }
-
-    async function main(){
-      // Requiere UID del navbar o de Firebase si existe; si no hay, redirige a login
-      const uid = localStorage.getItem('tpl_auth_uid') || window.firebase?.auth?.().currentUser?.uid || null;
-      if (!uid){
-        location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
-        return;
-      }
-      await render();
-    }
-    main();
-
-    // Logout
-    async function doLogout(){
-      try { localStorage.removeItem('tpl_auth_email'); localStorage.removeItem('tpl_auth_uid'); localStorage.removeItem('tpl_api_token'); localStorage.removeItem('tplProfileComplete'); } catch(_){}
-      try { await window.firebase?.auth?.().signOut?.(); } catch(_){}
-      location.href = 'index.html';
-    }
-    logoutBtn && logoutBtn.addEventListener('click', doLogout);
+/* ================================
+   TPL · PERFIL.HTML — SCRIPT COMPLETO
+   Carga Firebase de forma segura, lee perfil + mascotas,
+   tolera errores de permisos/red y nunca deja la página en blanco.
+   ================================ */
+(async function(){
+  // ---------- Cargador de Firebase (compat) ----------
+  function loadScript(src){
+    return new Promise((res, rej)=>{
+      const s = document.createElement('script');
+      s.src = src; s.async = true;
+      s.onload = res;
+      s.onerror = ()=>rej(new Error('No se pudo cargar: '+src));
+      document.head.appendChild(s);
+    });
   }
+  async function ensureFirebase(){
+    if (typeof firebase === 'undefined'){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
+    }
+    if (!('auth' in firebase)){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
+    }
+    if (!('firestore' in firebase)){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
+    }
+    // Config: usa la global si ya la declaraste en otra parte; si no, ponemos la tuya
+    if (!window.firebaseConfig){
+      window.firebaseConfig = {
+        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain: "thepetslovers-c1111.firebaseapp.com",
+        projectId: "thepetslovers-c1111",
+        storageBucket: "thepetslovers-c1111.appspot.com",
+        messagingSenderId: "415914577533",
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId: "G-FXPD69KXBG"
+      };
+    }
+  }
+
+  try {
+    await ensureFirebase();
+  } catch (e){
+    console.error('TPL Firebase loader error:', e);
+  }
+
+  // ✅ CLAVE: inicializar SIEMPRE con la config correcta
+  const cfg = window.firebaseConfig || {};
+  try {
+    if (firebase && firebase.apps && firebase.apps.length === 0){
+      firebase.initializeApp(cfg);
+    }
+  } catch(e){
+    console.warn('TPL init app warning:', e);
+  }
+
+  // ---------- Instancias ----------
+  const auth = (firebase && firebase.auth) ? firebase.auth() : null;
+  const db   = (firebase && firebase.firestore) ? firebase.firestore() : null;
+
+  // ---------- Refs DOM (null-safe) ----------
+  const $ = (id)=> document.getElementById(id);
+
+  const bannerInc   = $('tpl-banner-incompleto');
+
+  const emptyCliente  = $('tpl-cliente-empty');
+  const viewCliente   = $('tpl-cliente-view');
+  const statusCliente = $('tpl-cliente-status');
+  const actionsPerfil = $('tpl-actions-perfil');
+  const linkEditar    = $('tpl-link-editar');
+
+  const mascotasEmpty = $('tpl-mascotas-empty');
+  const mascotasView  = $('tpl-mascotas-view');
+  const mascotasList  = $('tpl-mascotas-list');
+  const chipMascotas  = $('tpl-chip-mascotas');
+  const cntMascotas   = $('tpl-count-mascotas');
+
+  const logoutBtn     = $('tpl-logout-btn');
+
+  // ---------- Storage local (fallback) ----------
+  const LS_PROFILE_KEY = 'tpl-profile';
+  const LS_PETS_KEY    = 'tpl-pets';
+
+  const permErr = (e)=> !!(e && (e.code === 'permission-denied' || /insufficient permissions/i.test(e.message||'')));
+
+  // ---------- UI helpers ----------
+  function updateBadge(profile){
+    const complete = !!(profile && profile.nombre && profile.telefono && profile.email && profile.cp);
+    if (statusCliente){
+      statusCliente.classList.toggle('tpl-hidden', !complete);
+      statusCliente.setAttribute('aria-hidden', complete ? 'false' : 'true');
+    }
+    if (actionsPerfil && linkEditar){
+      if (complete){
+        actionsPerfil.classList.add('tpl-hidden');
+        linkEditar.classList.remove('tpl-hidden');
+        linkEditar.setAttribute('aria-hidden','false');
+      } else {
+        actionsPerfil.classList.remove('tpl-hidden');
+        linkEditar.classList.add('tpl-hidden');
+        linkEditar.setAttribute('aria-hidden','true');
+      }
+    }
+    if (bannerInc) bannerInc.hidden = complete;
+  }
+
+  function setText(id, val){
+    const el = $(id);
+    if (el) el.textContent = (val ?? '—');
+  }
+
+  // ---------- Data: Perfil ----------
+  async function getProfile(uid){
+    // Intenta Firestore primero
+    if (db && uid){
+      try{
+        const snap = await db.collection('users').doc(uid).collection('private').doc('profile').get();
+        if (snap.exists) return snap.data();
+      }catch(e){
+        if (!permErr(e)) console.warn('TPL perfil:getProfile error', e);
+      }
+    }
+    // Fallback local
+    try{ return JSON.parse(localStorage.getItem(LS_PROFILE_KEY) || 'null'); }
+    catch(_){ return null; }
+  }
+
+  // ---------- Data: Mascotas ----------
+  async function getPets(uid){
+    if (db && uid){
+      try{
+        const snap = await db.collection('users').doc(uid).collection('pets').get();
+        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      }catch(e){
+        if (!permErr(e)) console.warn('TPL perfil:getPets error', e);
+      }
+    }
+    try{ return JSON.parse(localStorage.getItem(LS_PETS_KEY) || '[]'); }
+    catch(_){ return []; }
+  }
+
+  // ---------- Render: Perfil ----------
+  function renderProfile(p){
+    if (p && (p.nombre || p.telefono || p.email || p.cp)){
+      setText('tpl-view-nombre',    p.nombre || '—');
+      setText('tpl-view-telefono',  p.telefono || '—');
+      setText('tpl-view-email',     p.email || '—');
+      setText('tpl-view-direccion', p.direccion || '—');
+      setText('tpl-view-cp',        p.cp || '—');
+      setText('tpl-view-pref',      p.preferencias || '—');
+
+      if (emptyCliente) emptyCliente.classList.add('tpl-hidden');
+      if (viewCliente)  viewCliente.classList.remove('tpl-hidden');
+    } else {
+      if (viewCliente)  viewCliente.classList.add('tpl-hidden');
+      if (emptyCliente) emptyCliente.classList.remove('tpl-hidden');
+    }
+    updateBadge(p);
+  }
+
+  // ---------- Render: Mascotas ----------
+  function petEditHref(p, idx, isFirebase){
+    return (isFirebase && p.id)
+      ? ('perfil-mascotas.html?id=' + encodeURIComponent(p.id) + '&next=perfil.html')
+      : ('perfil-mascotas.html?idx=' + encodeURIComponent(idx) + '&next=perfil.html');
+  }
+
+  function renderPets(pets, isFirebase){
+    if (!mascotasList) return;
+
+    mascotasList.innerHTML = '';
+    const count = Array.isArray(pets) ? pets.length : 0;
+
+    if (count > 0){
+      mascotasEmpty && mascotasEmpty.classList.add('tpl-hidden');
+      mascotasView  && mascotasView.classList.remove('tpl-hidden');
+      if (chipMascotas){
+        chipMascotas.classList.remove('tpl-hidden');
+        chipMascotas.setAttribute('aria-hidden','false');
+      }
+      if (cntMascotas) cntMascotas.textContent = String(count);
+
+      pets.forEach((p, idx)=>{
+        const card = document.createElement('div'); card.className='tpl-pet';
+
+        // Avatar (usa fotoDataUrl si existe; si no, fotoUrl; si no, iniciales)
+        const avatar = document.createElement('div'); avatar.className='tpl-avatar';
+        const src = p.fotoDataUrl || p.fotoUrl || '';
+        if (src){
+          const img = document.createElement('img');
+          img.src = src; img.alt = `Foto de ${p.nombre||'mascota'}`;
+          avatar.appendChild(img);
+        } else {
+          const initials = (p.nombre||'').trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || '—';
+          avatar.textContent = initials;
+        }
+
+        const text = document.createElement('div');
+        const n = document.createElement('div'); n.className='tpl-pet-name'; n.textContent = p.nombre || '—';
+        const s = document.createElement('div'); s.className='tpl-pet-secondary'; s.textContent = p.especie || '—';
+        text.appendChild(n); text.appendChild(s);
+
+        const actions = document.createElement('div'); actions.style.marginLeft='auto';
+        const edit = document.createElement('a');
+        edit.className='tpl-btn-sm tpl-btn-outline';
+        edit.textContent='Editar';
+        edit.href = petEditHref(p, idx, isFirebase);
+        actions.appendChild(edit);
+
+        card.appendChild(avatar); card.appendChild(text); card.appendChild(actions);
+        mascotasList.appendChild(card);
+      });
+    } else {
+      mascotasView  && mascotasView.classList.add('tpl-hidden');
+      mascotasEmpty && mascotasEmpty.classList.remove('tpl-hidden');
+      if (chipMascotas){
+        chipMascotas.classList.add('tpl-hidden');
+        chipMascotas.setAttribute('aria-hidden','true');
+      }
+      if (cntMascotas) cntMascotas.textContent = '0';
+    }
+
+    // Banner de “Perfil incompleto”
+    const hasProfile = !!(
+      ( $('tpl-view-nombre')?.textContent || '' ).trim() &&
+      ( $('tpl-view-telefono')?.textContent || '' ).trim() &&
+      ( $('tpl-view-cp')?.textContent || '' ).trim()
+    );
+    const hasPets = count > 0;
+    if (bannerInc) bannerInc.hidden = (hasProfile && hasPets);
+  }
+
+  // ---------- Orquestador ----------
+  async function render(uid){
+    const isFirebase = !!uid;
+    const profile = await getProfile(uid);
+    renderProfile(profile);
+    const pets = await getPets(uid);
+    renderPets(pets, isFirebase);
+  }
+
+  // ---------- Logout ----------
+  logoutBtn && logoutBtn.addEventListener('click', async (e)=>{
+    e.preventDefault();
+    try { await auth?.signOut(); } catch(_){}
+    try {
+      localStorage.removeItem('tpl_auth_email');
+      localStorage.removeItem('tpl_auth_uid');
+      localStorage.removeItem('tplProfileComplete');
+      // (opcional) mirrors tuyos:
+      // localStorage.removeItem('tpl-profile');
+      // localStorage.removeItem('tpl-pets');
+    } catch(_){}
+    location.href = 'index.html';
+  });
+
+  // ---------- Guard de sesión ----------
+  if (!auth){
+    console.error('TPL: Firebase Auth no disponible');
+    // Pinta “vacío” en ausencia de auth para evitar página en blanco
+    renderProfile(null);
+    renderPets([], false);
+    return;
+  }
+
+  auth.onAuthStateChanged(async (u)=>{
+    if (u && !u.isAnonymous){
+      try { await render(u.uid); }
+      catch(e){ console.error('TPL render error:', e); }
+    } else {
+      location.href = 'iniciar-sesion.html?next=' + encodeURIComponent('perfil.html');
+    }
+  });
+
 })();
 </script>
