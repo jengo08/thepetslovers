@@ -27,6 +27,10 @@
     .tpl-msg{ min-height:1.2em; color:#58425a; margin-top:6px; }
     .tpl-note{ background:#f8fdfd; border:1px dashed #339496; color:#2a7e80; padding:10px 12px; border-radius:12px; margin-bottom:14px; }
     .tpl-badge{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid #e7e7e7; border-radius:999px; background:#fff; font-weight:700; color:#58425a; }
+    /* TPL: INICIO BLOQUE NUEVO [micro feedback accesible] */
+    .tpl-ok{ color:#2a7e80; font-weight:700 }
+    .tpl-err{ color:#9a1f1f; font-weight:700 }
+    /* TPL: FIN BLOQUE NUEVO */
   </style>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -46,11 +50,11 @@
       <div class="tpl-grid-2">
         <div class="tpl-field">
           <label for="nombre">Nombre y apellidos *</label>
-          <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Tu nombre completo">
+          <input class="tpl-input" type="text" id="nombre" name="nombre" required placeholder="Tu nombre completo" autocomplete="name">
         </div>
         <div class="tpl-field">
           <label for="telefono">Teléfono *</label>
-          <input class="tpl-input" type="tel" id="telefono" name="telefono" required inputmode="tel" placeholder="+34 ...">
+          <input class="tpl-input" type="tel" id="telefono" name="telefono" required inputmode="tel" placeholder="+34 ..." autocomplete="tel">
         </div>
       </div>
 
@@ -62,13 +66,13 @@
         </div>
         <div class="tpl-field">
           <label for="cp">Código postal *</label>
-          <input class="tpl-input" type="text" id="cp" name="cp" required pattern="[0-9]{5}" inputmode="numeric" maxlength="5" placeholder="12345">
+          <input class="tpl-input" type="text" id="cp" name="cp" required pattern="[0-9]{5}" inputmode="numeric" maxlength="5" placeholder="12345" autocomplete="postal-code">
         </div>
       </div>
 
       <div class="tpl-field">
         <label for="direccion">Dirección</label>
-        <input class="tpl-input" type="text" id="direccion" name="direccion" placeholder="Calle, nº, localidad">
+        <input class="tpl-input" type="text" id="direccion" name="direccion" placeholder="Calle, nº, localidad" autocomplete="street-address">
       </div>
 
       <div class="tpl-field">
@@ -77,7 +81,7 @@
       </div>
 
       <div class="tpl-actions">
-        <button type="submit" class="tpl-btn">Guardar</button>
+        <button type="submit" class="tpl-btn" id="btnSave">Guardar</button>
         <a id="cancel" class="tpl-btn-ghost" href="perfil.html">Cancelar</a>
       </div>
       <p id="msg" class="tpl-msg" aria-live="polite"></p>
@@ -118,6 +122,7 @@
       const email = document.getElementById('email');
       const emailHidden = document.getElementById('emailHidden');
       const cancel = document.getElementById('cancel');
+      const btnSave = document.getElementById('btnSave');
 
       function nextUrl(){
         const qs = new URLSearchParams(location.search);
@@ -125,7 +130,12 @@
       }
       cancel.setAttribute('href', nextUrl());
 
-      function setMsg(t){ msg.textContent = t || ''; }
+      function setMsg(t, kind){
+        msg.textContent = t || '';
+        msg.classList.remove('tpl-ok','tpl-err');
+        if (kind === 'ok') msg.classList.add('tpl-ok');
+        if (kind === 'err') msg.classList.add('tpl-err');
+      }
 
       async function loadProfile(uid){
         setMsg('Cargando…');
@@ -142,7 +152,8 @@
           }
           setMsg('');
         }catch(e){
-          setMsg('No se pudo cargar tu perfil. Puedes intentarlo de nuevo.');
+          console.error('Perfil propietario: load error', e);
+          setMsg('No se pudo cargar tu perfil. Puedes intentarlo de nuevo.', 'err');
         }
       }
 
@@ -151,6 +162,13 @@
         await ref.set(Object.assign({}, data, {
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }), { merge:true });
+      }
+
+      function lockForm(lock){
+        try{
+          form.setAttribute('aria-busy', lock ? 'true' : 'false');
+          btnSave.disabled = !!lock;
+        }catch(_){}
       }
 
       auth.onAuthStateChanged(async (u)=>{
@@ -174,26 +192,28 @@
             direccion: form.direccion.value.trim(),
             preferencias: form.preferencias.value.trim()
           };
+
           // Validaciones mínimas
-          if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.'); return; }
-          if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.'); return; }
+          if (!/^\d{5}$/.test(data.cp)){ setMsg('El código postal debe tener 5 dígitos.', 'err'); return; }
+          if (!data.nombre || !data.telefono){ setMsg('Completa los campos obligatorios.', 'err'); return; }
 
           try{
             setMsg('Guardando…');
+            lockForm(true);
             await saveProfile(u.uid, data);
-            setMsg('¡Perfil guardado!');
-            // Marca bandera local para que el botón reservar quede habilitado tras volver
+            setMsg('¡Perfil guardado!', 'ok');
+            // Marca bandera local para habilitar reserva al volver
             try{ localStorage.setItem('tplProfileComplete','1'); }catch(_){}
             location.href = nextUrl();
           }catch(e){
             console.error('Perfil propietario: save error', e);
-            setMsg('No se pudo guardar. Intenta de nuevo.');
+            setMsg('No se pudo guardar. Intenta de nuevo.', 'err');
+            lockForm(false);
           }
-        });
+        }, { once: true }); // TPL: INICIO BLOQUE NUEVO [evitar doble submit]
       });
     })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 </body>
 </html>
-
