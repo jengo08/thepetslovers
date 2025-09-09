@@ -65,8 +65,16 @@
         <h1>Datos de propietario</h1>
         <p class="lead">Guarda tus datos para la reserva, para poder hacer tu reserva.</p>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Opt-out de EmailJS/interceptores] -->
-        <form class="tpl-form" id="tpl-owner-form" action="#" novalidate data-tpl-emailjs="false">
+        <!-- TPL: INICIO BLOQUE NUEVO [Opt-out + gancho onsubmit a prueba de todo] -->
+        <form
+          class="tpl-form"
+          id="tpl-owner-form"
+          action="#"
+          method="get"
+          novalidate
+          data-tpl-emailjs="false"
+          onsubmit="return (window.__TPL_OWNER_SUBMIT__ ? window.__TPL_OWNER_SUBMIT__(event) : false)"
+        >
         <!-- TPL: FIN BLOQUE NUEVO -->
           <div class="tpl-row">
             <div class="tpl-field">
@@ -132,9 +140,7 @@
           <!-- TPL: FIN BLOQUE NUEVO -->
 
           <div class="tpl-actions">
-            <!-- TPL: INICIO BLOQUE NUEVO [Submit nativo] -->
             <button class="tpl-btn" id="saveOwner" type="submit"><i class="fa-solid fa-floppy-disk"></i> Guardar y volver al perfil</button>
-            <!-- TPL: FIN BLOQUE NUEVO -->
             <a class="tpl-btn secondary" href="perfil.html"><i class="fa-solid fa-xmark"></i> Cancelar</a>
           </div>
         </form>
