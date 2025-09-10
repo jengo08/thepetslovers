@@ -1001,6 +1001,13 @@
   <!-- EmailJS (envío directo) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
+    // Opcional: define tu config aquí o en un JS aparte
+    // window.TPL_EMAILJS = {
+    //   publicKey: "TU_PUBLIC_KEY",
+    //   serviceId: "tu_service_id",
+    //   templates: { reserva: "tu_template_id" }
+    // };
+
     (function(){
       const cfg = window.TPL_EMAILJS || {};
       if (window.emailjs) {
@@ -1113,6 +1120,65 @@
         wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
       }
 
+      function getText(id){
+        var el = document.getElementById(id);
+        return (el && el.textContent || '').trim();
+      }
+
+      // Mapea datos del formulario a las variables que espera tu plantilla EmailJS
+      function buildTemplateVars(fd, extra){
+        var payload = Object.fromEntries(fd.entries());
+        var f = document.getElementById('bookingForm');
+
+        var serviceText = (f.querySelector('#service')?.selectedOptions?.[0]?.text || payload['Servicio'] || '').trim();
+        var regionText  = (f.querySelector('#region')?.selectedOptions?.[0]?.text || payload['CCAA'] || '').trim();
+
+        var ownerNombre    = [payload['Nombre']||'', payload['Apellidos']||''].join(' ').trim();
+        var mascotasLista  = payload['Mascotas_lista'] || '';
+        var mascotasDet    = payload['Mascotas_detalle'] || (document.getElementById('petsDetail')?.value || '');
+        var mascotasDetJSON= payload['Mascotas_detalle_json'] || (document.getElementById('petsDetailJson')?.value || '');
+
+        var subtotal  = getText('sumSubtotal').replace('—','').trim();
+        var deposito  = getText('sumDeposit').replace('—','').trim();
+        var resumen   = payload['Desglose'] || (document.getElementById('summaryField')?.value || '');
+
+        var tv = {
+          owner_nombre: ownerNombre,
+          owner_nombre_only: (payload['Nombre']||'').trim(),
+          owner_apellidos: (payload['Apellidos']||'').trim(),
+          owner_email: (payload['Email']||'').trim(),
+          owner_telefono: (payload['Telefono']||'').trim(),
+          owner_direccion: (payload['Direccion']||'').trim(),
+          owner_cp: (payload['CP']||'').trim(),
+          owner_ccaa: regionText,
+
+          // Sinónimos por si prefieres estos
+          dueno_nombre: ownerNombre,
+          dueno_email: (payload['Email']||'').trim(),
+          dueno_telefono: (payload['Telefono']||'').trim(),
+          dueno_direccion: (payload['Direccion']||'').trim(),
+
+          mascotas: mascotasLista,
+          mascotas_detalle: mascotasDet,
+          mascotas_detalle_json: mascotasDetJSON,
+
+          servicio: serviceText,
+          fecha_inicio: (payload['Fecha_inicio']||'').trim(),
+          fecha_fin: (payload['Fecha_fin']||'').trim(),
+          hora_inicio: (payload['Hora_inicio']||'').trim(),
+          hora_fin: (payload['Hora_fin']||'').trim(),
+
+          subtotal: subtotal,
+          deposito: deposito,
+          resumen: resumen,
+
+          _estado: (extra && extra._estado) || 'enviada'
+        };
+
+        if (extra && extra.reserva_id) tv.reserva_id = extra.reserva_id;
+        return tv;
+      }
+
       async function tryEmailJS(fd, extra){
         if(!window.emailjs) return false;
         try{
@@ -1122,10 +1188,12 @@
           var pubKey   = cfg.publicKey || cfg.userId;
 
           if(service && template){
-            var payload = Object.fromEntries(fd.entries());
-            Object.assign(payload, extra || {});
-            if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
-            else { await emailjs.send(service, template, payload); }
+            var basePayload = Object.fromEntries(fd.entries());
+            var templateVars = buildTemplateVars(fd, extra);
+
+            var finalPayload = Object.assign({}, basePayload, templateVars, (extra||{}));
+            if (pubKey) { await emailjs.send(service, template, finalPayload, pubKey); }
+            else { await emailjs.send(service, template, finalPayload); }
             return true;
           }
         }catch(err){
@@ -1137,7 +1205,7 @@
       form.addEventListener('submit', async function (e) {
         e.preventDefault(); // no navegamos; mostramos overlay + redirigimos a perfil.html
 
-        // Guardar en Firestore
+        // Guardar en Firestore y enviar correo
         try {
           if (typeof firebase !== 'undefined' && firebase.firestore) {
             var db   = firebase.firestore();
@@ -1149,22 +1217,32 @@
             fd.forEach(function (v, k) { payload[k] = v; });
 
             payload._page = location.href;
+            payload._tipo = 'reserva';
             payload._estado = 'enviada';
-            if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
             if (u) { payload._uid = u.uid; payload._email = u.email || null; }
+            if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
 
-            await db.collection('reservas').add(payload);
-            console.log('TPL: reserva guardada en Firestore');
+            // Creamos docId antes para poder incluirlo en EmailJS como reserva_id
+            var docRef = db.collection('reservas').doc();
+            payload.reserva_id = docRef.id;
+            await docRef.set(payload);
+            console.log('TPL: reserva guardada en Firestore con id', docRef.id);
 
-            // Enviar correo vía EmailJS (sin Formspree)
-            await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
+            // Enviar correo vía EmailJS (ya con reserva_id)
+            await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: docRef.id });
+          } else {
+            // Si no hay Firestore, al menos intentamos el email con un id local
+            var fdNoFS = new FormData(form);
+            var fakeId = 'R-' + Math.random().toString(36).slice(2,10).toUpperCase();
+            await tryEmailJS(fdNoFS, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: fakeId });
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
           // Aunque falle Firestore, intentamos el email igualmente
           try {
             var fd2 = new FormData(form);
-            await tryEmailJS(fd2, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
+            var backupId = 'R-' + Math.random().toString(36).slice(2,10).toUpperCase();
+            await tryEmailJS(fd2, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: backupId });
           } catch(_){}
         }
 
