@@ -39,7 +39,7 @@
     /* Buscador de dirección ligero */
     .tpl-addr-wrap{ position: relative; }
     .tpl-addr-suggest{ position:absolute; inset:auto 0 0 0; transform: translateY(calc(100% + 6px));
-      background:#fff; border:1px solid #ddd; border-radius:10px; box-shadow: 0 6px 18px rgba(0,0,0,.08); z-index: 999;
+      background:#fff; border:1px solid #ddd; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.08); z-index: 999;
       max-height: 240px; overflow:auto; display:none; }
     .tpl-addr-item{ padding:10px 12px; cursor:pointer; }
     .tpl-addr-item:hover, .tpl-addr-item:focus{ background:#f5f7f8; outline:none; }
@@ -80,7 +80,7 @@
     .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
     .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
 
-    /* Overlay éxito */
+    /* Overlay éxito / modal reutilizado */
     .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-overlay.on{ display:flex; }
     .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
@@ -219,6 +219,14 @@
         <h2 id="sec-mascotas">Mascotas</h2>
         <div class="booking-grid" id="petsContainer"></div>
         <datalist id="tplPetNamesList"></datalist>
+
+        <!-- TPL: INICIO BLOQUE NUEVO [Botón selector de mascotas] -->
+        <div class="booking-actions" style="justify-content:flex-start;margin-top:6px">
+          <button type="button" class="tpl-btn-outline" id="tpl-open-petpicker">
+            <i class="fa-solid fa-list-check"></i> Elegir de mis mascotas
+          </button>
+        </div>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </section>
 
       <!-- =================== DATOS DE LA PERSONA =================== -->
@@ -376,6 +384,12 @@
       <input type="hidden" name="Desglose" id="summaryField">
       <input type="hidden" name="Mascotas_lista" id="petsListHidden">
 
+      <!-- TPL: INICIO BLOQUE NUEVO [Campos ocultos: detalle propietaria + mascotas] -->
+      <input type="hidden" name="Owner_detalle" id="ownerDetail">
+      <input type="hidden" name="Mascotas_detalle" id="petsDetail">
+      <input type="hidden" name="Mascotas_detalle_json" id="petsDetailJson">
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <!-- Acciones: submit centrado + ayuda derecha -->
       <div class="booking-actions tpl-actions">
         <span class="tpl-spacer" aria-hidden="true"></span>
@@ -475,55 +489,6 @@
       'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
       'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
     };
-
-    /* TPL: INICIO BLOQUE NUEVO [Helpers UID + owner/pets desde localStorage y Firestore] */
-    function getCurrentUserId(){
-      try{
-        const explicit = localStorage.getItem('tpl.currentUser');
-        if (explicit) return explicit;
-        const uidLS = localStorage.getItem('tpl_auth_uid');
-        if (uidLS) return uidLS;
-        if (typeof firebase !== 'undefined' && firebase.auth){
-          const u = firebase.auth().currentUser;
-          if (u && !u.isAnonymous && u.uid) return u.uid;
-        }
-      }catch(_){}
-      return 'default';
-    }
-    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-    function udbGet(uid, key, fallback){
-      try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
-    }
-    function splitNombreCompleto(str){
-      const s = String(str||'').trim();
-      if(!s) return { first:'', last:'' };
-      const parts = s.split(/\s+/);
-      if(parts.length === 1) return { first: parts[0], last: '' };
-      return { first: parts[0], last: parts.slice(1).join(' ') };
-    }
-    async function loadOwnerFromFirestore(uid){
-      try{
-        if (typeof firebase === 'undefined' || !firebase.firestore) return null;
-        const db = firebase.firestore();
-        const snap = await db.collection('owners').doc(uid).get();
-        return snap.exists ? snap.data() : null;
-      }catch(_){ return null; }
-    }
-    async function loadPetsFromFirestore(uid){
-      try{
-        if (typeof firebase === 'undefined' || !firebase.firestore) return [];
-        const db = firebase.firestore();
-        const col = await db.collection('owners').doc(uid).collection('pets').get();
-        return col.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
-      }catch(_){ return []; }
-    }
-    function readLocalOwner(uid){ return udbGet(uid,'owner',null); }
-    function readLocalPets(uid){
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? udbGet(uid,'pets',[]) : udbGet(uid,'mascotas',[]);
-      return Array.isArray(arr) ? arr : [];
-    }
-    /* TPL: FIN BLOQUE NUEVO */
 
     function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -719,7 +684,6 @@
       }
       return { festivo, senalado, nDias: days.length };
     }
-
     function calcPetSupplements(service, species, n){
       if(n <= 1) return 0;
       if(service === 'visitas'){
@@ -733,7 +697,6 @@
       if(service === 'alojamiento' && species === 'perro') return 25 * (n - 1);
       return 0;
     }
-
     function getBasePrice(service, species, isPuppy){
       if(service === 'visitas') return 0;
       if(service === 'alojamiento'){
@@ -856,80 +819,53 @@
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    /* TPL: INICIO BLOQUE NUEVO [Autorrelleno real: owner + mascotas (localStorage primero, Firestore si hay sesión)] */
+    // Auto-cachorro y contacto desde perfil (si existe)
     async function autoPuppyFromProfile(){
       try{
-        const uid = getCurrentUserId();
-        const localPets = readLocalPets(uid);
-        let refPet = localPets && localPets[0];
-        // Si hay sesión, intentamos Firestore para tener datos más recientes
-        if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser){
-          const petsFS = await loadPetsFromFirestore(uid);
-          if (Array.isArray(petsFS) && petsFS.length) refPet = petsFS[0];
+        if(typeof firebase === 'undefined') return;
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const u = auth.currentUser;
+        if(!u) return;
+        const snap = await db.collection('users').doc(u.uid).collection('mascotas').limit(1).get();
+        if(!snap.empty){
+          const pet = snap.docs[0].data();
+          if(pet?.birthdate){
+            const b = new Date(pet.birthdate);
+            const today = new Date();
+            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+            const isP = months < 6;
+            const svc = els.service?.value || '';
+            const species = els.species?.value || 'perro';
+            const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && species !== 'otros' && svc !== 'visitas';
+            if(els.isPuppy && puppyAllowed){ els.isPuppy.value = isP ? 'si' : 'no'; }
+            await recalc();
+          }
         }
-        if (!refPet) return;
-
-        // Deducción simple: si "edad" contiene "mes" y <= 6 -> cachorro
-        let isP = false;
-        const raw = String(refPet.edad || '').toLowerCase();
-        const m = raw.match(/(\d+)\s*mes/);
-        if (m){ isP = parseInt(m[1],10) <= 6; }
-        if (els.isPuppy && !els.isPuppy.parentElement.hidden){
-          els.isPuppy.value = isP ? 'si' : 'no';
-        }
-        await recalc();
       }catch(_){}
     }
 
-    async function autoContactFromProfile(user){
+    async function autoContactFromProfile(u){
       try{
-        const uid = getCurrentUserId();
-        // Owner: primero local
-        let owner = readLocalOwner(uid);
-        // Si hay sesión, pruebo owners/{uid}
-        if ((!owner || !owner.email) && user && typeof firebase !== 'undefined' && firebase.firestore){
-          const fsOwner = await loadOwnerFromFirestore(uid);
-          if (fsOwner) owner = {
-            nombre: fsOwner.nombre || fsOwner.nombreCompleto || '',
-            dni: fsOwner.dni || '',
-            direccion: fsOwner.direccion || '',
-            cp: fsOwner.cp || '',
-            provincia: fsOwner.provincia || '',
-            localidad: fsOwner.localidad || '',
-            email: fsOwner.email || '',
-            telefono: fsOwner.telefono || '',
-            contacto: fsOwner.contacto || 'whatsapp',
-            contactoHorario: fsOwner.contactoHorario || '',
-            zona: fsOwner.zona || ''
-          };
+        if(!u || typeof firebase === 'undefined') return;
+        const db = firebase.firestore();
+        const doc = await db.collection('users').doc(u.uid).get();
+        const d = doc.exists ? doc.data() : {};
+        els.firstName.value = d?.nombre || u.displayName?.split(' ')?.[0] || '';
+        els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
+        els.email.value     = d?.email || u.email || '';
+        els.phone.value     = d?.telefono || u.phoneNumber || '';
+        if(d?.direccion) els.address.value = d.direccion;
+        if(d?.cp)        els.postalCode.value = d.cp;
+        if(d?.ccaa && els.region){
+          const val = (''+d.ccaa).toLowerCase();
+          if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
         }
-        // Pintar
-        if (owner){
-          const n = splitNombreCompleto(owner.nombre);
-          if (els.firstName && !els.firstName.value) els.firstName.value = n.first || '';
-          if (els.lastName  && !els.lastName.value)  els.lastName.value  = n.last || '';
-          if (els.email     && !els.email.value)     els.email.value     = owner.email || user?.email || '';
-          if (els.phone     && !els.phone.value)     els.phone.value     = owner.telefono || user?.phoneNumber || '';
-          if (els.address   && !els.address.value)   els.address.value   = owner.direccion || '';
-          if (els.postalCode&& !els.postalCode.value)els.postalCode.value= owner.cp || '';
-        }
-        // Datalist de mascotas
-        PROFILE_PET_NAMES = (readLocalPets(uid).map(p=>p?.nombre||'').filter(Boolean));
-        if (user && typeof firebase !== 'undefined' && firebase.firestore){
-          const petsFS = await loadPetsFromFirestore(uid);
-          const namesFS = petsFS.map(p=> String(p?.nombre||'').trim()).filter(Boolean);
-          PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...namesFS]));
-        }
+        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
+        PROFILE_PET_NAMES = petsSnap.docs.map(x=> (x.data()?.nombre || '').trim()).filter(Boolean);
         fillPetDatalist();
-        // Si no hay ningún campo de mascota relleno, precargo la primera
-        const firstInput = els.petsContainer?.querySelector('input[id^="petName_"]');
-        if (firstInput && !firstInput.value && PROFILE_PET_NAMES.length){
-          firstInput.value = PROFILE_PET_NAMES[0];
-          updatePetsListHidden();
-        }
       }catch(_){}
     }
-    /* TPL: FIN BLOQUE NUEVO */
 
     function validateContactPreference(e){
       const pref = (new FormData(form).get('Preferencia_contacto')) || 'cualquiera';
@@ -943,6 +879,43 @@
       return true;
     }
 
+    // Antes de enviar: preparar campo resumen (lo usa el correo)
+    form.addEventListener('submit', async (e)=>{
+      if(!validateContactPreference(e)) return;
+      const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
+      let petsVal = els.numPets?.value || '1';
+      if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
+      updatePetsListHidden();
+
+      const lines = [];
+      lines.push(`Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`);
+      lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
+      lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
+      if(els.service?.value === 'visitas'){
+        lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
+      }else{
+        const puppyAllowed = (els.service?.value === 'alojamiento' || els.service?.value === 'guarderia') && (els.species?.value !== 'otros');
+        lines.push(`Tipo de animal: ${els.species?.value || '-'}`);
+        lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
+      }
+      lines.push(`Nº mascotas: ${petsVal}`);
+      const petNames = els.petsListHidden.value || '';
+      if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
+      lines.push(`Dirección: ${els.address?.value || '-'}`);
+      lines.push(`CP: ${els.postalCode?.value || '-'}`);
+      lines.push(`CCAA: ${regionText}`);
+      lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
+      if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
+      lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
+      lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
+      if(els.service?.value === 'guarderia' && els.rowBono?.style.display !== 'none'){
+        lines.push(`Bono guardería (descuento): −${els.sumBono?.textContent || '0.00'} €`);
+      }
+      lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
+      lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
+      document.getElementById('summaryField').value = lines.join(' | ');
+    });
+
     // Firebase: activar UI y auto-completar
     if (typeof firebase !== 'undefined') {
       const auth = firebase.auth();
@@ -950,19 +923,9 @@
         const logged = !!user;
         if (form) form.classList.toggle('disabled', !logged);
         if (wall) wall.style.display = logged ? 'none' : 'block';
-        /* TPL: INICIO BLOQUE NUEVO [Autorrelleno al entrar] */
         if (logged){ autoContactFromProfile(user); autoPuppyFromProfile(); }
-        else {
-          // Aún así, si hay datos locales, los pinto (aunque el form queda deshabilitado)
-          autoContactFromProfile(null);
-        }
-        /* TPL: FIN BLOQUE NUEVO */
       }
       auth.onAuthStateChanged(updateAuthUI);
-    } else {
-      /* TPL: INICIO BLOQUE NUEVO [Sin Firebase: prefill solo desde local] */
-      autoContactFromProfile(null);
-      /* TPL: FIN BLOQUE NUEVO */
     }
 
     // Hooks
@@ -1171,58 +1134,6 @@
         return false;
       }
 
-      /* TPL: INICIO BLOQUE NUEVO [Recolectar snapshots de owner + pets para adjuntar a la reserva] */
-      function getCurrentUserId(){
-        try{
-          const explicit = localStorage.getItem('tpl.currentUser');
-          if (explicit) return explicit;
-          const uidLS = localStorage.getItem('tpl_auth_uid');
-          if (uidLS) return uidLS;
-          if (typeof firebase !== 'undefined' && firebase.auth){
-            const u = firebase.auth().currentUser;
-            if (u && !u.isAnonymous && u.uid) return u.uid;
-          }
-        }catch(_){}
-        return 'default';
-      }
-      function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-      function udbGet(uid, key, fallback){
-        try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
-      }
-      async function loadOwnerFromFirestore(uid){
-        try{
-          if (typeof firebase === 'undefined' || !firebase.firestore) return null;
-          const db = firebase.firestore();
-          const snap = await db.collection('owners').doc(uid).get();
-          return snap.exists ? snap.data() : null;
-        }catch(_){ return null; }
-      }
-      async function loadPetsFromFirestore(uid){
-        try{
-          if (typeof firebase === 'undefined' || !firebase.firestore) return [];
-          const db = firebase.firestore();
-          const col = await db.collection('owners').doc(uid).collection('pets').get();
-          return col.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
-        }catch(_){ return []; }
-      }
-      function readLocalOwner(uid){ return udbGet(uid,'owner',null); }
-      function readLocalPets(uid){
-        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-        let arr = hasPets ? udbGet(uid,'pets',[]) : udbGet(uid,'mascotas',[]);
-        return Array.isArray(arr) ? arr : [];
-      }
-      function pickPetSnapshotsByNames(allPets, names){
-        const out = [];
-        const norm = s => String(s||'').trim().toLowerCase();
-        names.forEach(n=>{
-          const found = allPets.find(p => norm(p.nombre) === norm(n));
-          if (found) out.push(found);
-          else out.push({ nombre: n }); // al menos dejamos el nombre
-        });
-        return out;
-      }
-      /* TPL: FIN BLOQUE NUEVO */
-
       form.addEventListener('submit', async function (e) {
         e.preventDefault(); // no navegamos; mostramos overlay + redirigimos a perfil.html
 
@@ -1237,94 +1148,16 @@
             var payload = {};
             fd.forEach(function (v, k) { payload[k] = v; });
 
-            /* TPL: INICIO BLOQUE NUEVO [Adjuntar metadata útil + snapshots] */
-            const uid = getCurrentUserId();
             payload._page = location.href;
             payload._estado = 'enviada';
-            payload._uid = (u && u.uid) ? u.uid : (uid !== 'default' ? uid : null);
-            payload._email = (u && (u.email || null)) || (payload.Email || null);
             if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-
-            // recopilar owner + pets de local/FS
-            let owner = readLocalOwner(uid);
-            if ((!owner || !owner.email) && u){ owner = await loadOwnerFromFirestore(uid) || owner; }
-            // mascotas: union local + FS para buscar por nombres
-            const petsLocal = readLocalPets(uid);
-            let petsFS = [];
-            if (u){ try{ petsFS = await loadPetsFromFirestore(uid); }catch(_){ petsFS = []; } }
-            const allPets = [...petsLocal, ...petsFS];
-
-            // nombres de mascotas escritos en inputs
-            const petNames = (payload.Mascotas_lista || '')
-              .split(',').map(s=>s.trim()).filter(Boolean);
-
-            const petsSnapshot = petNames.length ? pickPetSnapshotsByNames(allPets, petNames) : allPets.slice(0, Math.max(1, parseInt(payload.N_mascotas||'1',10)));
-
-            payload._snapshots = {
-              owner: owner ? {
-                nombre: owner.nombre || owner.nombreCompleto || '',
-                dni: owner.dni || '',
-                direccion: owner.direccion || '',
-                cp: owner.cp || '',
-                provincia: owner.provincia || '',
-                localidad: owner.localidad || '',
-                email: owner.email || '',
-                telefono: owner.telefono || '',
-                contacto: owner.contacto || '',
-                contactoHorario: owner.contactoHorario || '',
-                zona: owner.zona || ''
-              } : null,
-              pets: petsSnapshot.map(p=>({
-                nombre: p.nombre || '',
-                microchip: p.microchip || '',
-                especie: p.especie || '',
-                raza: p.raza || p.tipoExotico || '',
-                edad: p.edad || '',
-                peso: p.peso || '',
-                esterilizado: p.esterilizado || '',
-                vacunas: p.vacunas || '',
-                salud: p.salud || '',
-                tratamiento: p.tratamiento || '',
-                comidas: p.comidas || '',
-                salidas: p.salidas || '',
-                tamano: p.tamano || '',
-                clinica: p.clinica || '',
-                hospitalPref: p.hospitalPref || '',
-                comportamiento: p.comportamiento || '',
-                foto: p.foto || ''
-              }))
-            };
-
-            // Campos extra útiles para admin
-            payload._serviceType = payload.Servicio || '';
-            payload._startDate = payload.Fecha_inicio || '';
-            payload._endDate   = payload.Fecha_fin || '';
-            payload._startTime = payload.Hora_inicio || '';
-            payload._endTime   = payload.Hora_fin || '';
-            payload._nMascotas = payload.N_mascotas || '';
-            payload._subtotal  = document.getElementById('sumSubtotal')?.textContent || '';
-            payload._deposit   = document.getElementById('sumDeposit')?.textContent || '';
-            /* TPL: FIN BLOQUE NUEVO */
+            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
 
             await db.collection('reservas').add(payload);
             console.log('TPL: reserva guardada en Firestore');
 
             // Enviar correo vía EmailJS (sin Formspree)
             await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
-
-            /* TPL: INICIO BLOQUE NUEVO [Persistir última reserva local → para mostrar en perfil] */
-            try{
-              const localUid = uid || 'default';
-              const last = {
-                createdAt: Date.now(),
-                estado: 'enviada',
-                service: payload._serviceType,
-                startDate: payload._startDate,
-                endDate: payload._endDate
-              };
-              localStorage.setItem(udbKey(localUid,'lastReservation'), JSON.stringify(last));
-            }catch(_){}
-            /* TPL: FIN BLOQUE NUEVO */
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
@@ -1340,9 +1173,256 @@
       });
     });
   </script>
-<!-- TPL: INICIO BLOQUE NUEVO [Cargar lógica de reservas] -->
-<script src="tpl-reservas.js" defer></script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Modal selector de mascotas] -->
+  <div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
+    <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
+      <h3 id="tpl-petpicker-title" style="margin-top:0">Elige tus mascotas</h3>
+      <div id="tpl-petpicker-list" style="display:grid;gap:10px;max-height:320px;overflow:auto;margin:10px 0"></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+        <button type="button" class="tpl-btn" id="tpl-petpicker-apply">Usar selección</button>
+        <button type="button" class="tpl-btn-outline" id="tpl-petpicker-cancel">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Reservas: selector + validación (>=2 mascotas) + adjuntar detalle propietario/mascotas] -->
+  <script>
+  (function(){
+    'use strict';
+    if (window.__TPL_RESERV_PICKER__) return; // guard
+    window.__TPL_RESERV_PICKER__ = true;
+
+    // ==== Helpers UDB ====
+    function getCurrentUserId(){
+      try{
+        const explicit = localStorage.getItem('tpl.currentUser');
+        if (explicit) return explicit;
+        const uidLS = localStorage.getItem('tpl_auth_uid');
+        if (uidLS) return uidLS;
+        if (window.firebase && typeof firebase.auth === 'function'){
+          const u = firebase.auth().currentUser;
+          if (u && !u.isAnonymous && u.uid) return u.uid;
+        }
+      }catch(_){}
+      return 'default';
+    }
+    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+    function udbGet(uid, key, fallback){
+      try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
+    }
+    function norm(s){ return String(s||'').trim(); }
+
+    function getOwner(){ return udbGet(getCurrentUserId(), 'owner', null); }
+    function getPets(){
+      const uid = getCurrentUserId();
+      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+      let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+      if (!Array.isArray(arr)) arr = [];
+      // dedupe suave
+      const seen = new Set(), out=[];
+      arr.forEach(p=>{
+        const key = `${norm(p?.nombre).toLowerCase()}|${norm(p?.microchip).toLowerCase()}|${norm(p?.especie||p?.tipo||'').toLowerCase()}`;
+        if (seen.has(key)) return; seen.add(key); out.push(p);
+      });
+      return out;
+    }
+
+    // ==== UI Pet Picker ====
+    let SELECTED_INDEXES = []; // índices elegidos por el usuario
+    function openPetPicker(){
+      const pets = getPets();
+      if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
+
+      const overlay = document.getElementById('tpl-petpicker');
+      const list = document.getElementById('tpl-petpicker-list');
+      const btnApply = document.getElementById('tpl-petpicker-apply');
+      const btnCancel = document.getElementById('tpl-petpicker-cancel');
+      if (!overlay || !list || !btnApply || !btnCancel) return;
+
+      list.innerHTML = pets.map((p, i)=>{
+        const foto = (typeof p.foto === 'string' && p.foto) ? `<img src="${p.foto}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #eee">` : `<span style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #eee;color:#9aa0a6"><i class="fa-solid fa-paw"></i></span>`;
+        const raza = norm(p.raza || p.tipoExotico || '');
+        const esp  = norm(p.especie || p.tipo || '');
+        const sub  = [esp, raza].filter(Boolean).join(' · ');
+        const checked = SELECTED_INDEXES.includes(i) ? 'checked' : '';
+        return `
+          <label style="display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:10px;padding:8px 10px">
+            <input type="checkbox" class="tpl-petpick" value="${i}" ${checked} style="transform:scale(1.2)">
+            ${foto}
+            <span style="display:flex;flex-direction:column;line-height:1.25">
+              <strong>${norm(p.nombre)||'Sin nombre'}</strong>
+              <span style="color:#666;font-size:.92rem">${sub||''}</span>
+            </span>
+          </label>
+        `;
+      }).join('');
+
+      function close(){ overlay.classList.remove('on'); overlay.style.display='none'; document.body.style.overflow=''; overlay.setAttribute('aria-hidden','true'); }
+      overlay.classList.add('on'); overlay.style.display='flex'; document.body.style.overflow='hidden'; overlay.setAttribute('aria-hidden','false');
+
+      btnCancel.onclick = close;
+      overlay.addEventListener('click', (e)=>{ if (e.target === overlay) close(); }, { once:true });
+
+      btnApply.onclick = function(){
+        const checks = list.querySelectorAll('.tpl-petpick:checked');
+        if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
+        SELECTED_INDEXES = Array.from(checks).map(ch => parseInt(ch.value,10)).filter(n=>!isNaN(n));
+
+        const pets = getPets(); // refresco
+        const names = SELECTED_INDEXES.map(ix => pets[ix]).filter(Boolean).map(p=>norm(p.nombre)).filter(Boolean);
+
+        // Ajusta nº de mascotas
+        const numSel = document.getElementById('numPets');
+        if (numSel){
+          const n = Math.min(5, Math.max(1, names.length));
+          numSel.value = String(n);
+          numSel.dispatchEvent(new Event('change', { bubbles:true }));
+        }
+
+        // Pone nombres en inputs dinámicos
+        setTimeout(()=>{
+          names.forEach((n, idx)=>{
+            const inp = document.getElementById('petName_'+(idx+1));
+            if (inp){ inp.value = n; inp.dispatchEvent(new Event('input', { bubbles:true })); }
+          });
+        }, 120);
+
+        close();
+      };
+    }
+
+    // ==== Construcción de detalles para EmailJS / Firestore ====
+    function buildOwnerDetail(){
+      const form = document.getElementById('bookingForm');
+      const f = {
+        nombre: norm(document.getElementById('firstName')?.value)+' '+norm(document.getElementById('lastName')?.value),
+        telefono: norm(document.getElementById('phone')?.value),
+        email: norm(document.getElementById('email')?.value),
+        direccion: norm(document.getElementById('location')?.value),
+        cp: norm(document.getElementById('postalCode')?.value),
+        ccaa: (document.getElementById('region')?.selectedOptions?.[0]?.text || '').trim(),
+        pref: (new FormData(form||undefined).get('Preferencia_contacto') || '').toString(),
+        hora: norm(document.getElementById('contactTime')?.value)
+      };
+      const fb = getOwner() || {};
+      const v = (x, b) => x || norm(b||'');
+      const row = {
+        Nombre: v(f.nombre, fb.nombre),
+        Telefono: v(f.telefono, fb.telefono),
+        Email: v(f.email, fb.email),
+        Direccion: v(f.direccion, fb.direccion),
+        CP: v(f.cp, fb.cp),
+        CCAA: f.ccaa || fb.ccaa || '',
+        Preferencia_contacto: f.pref || fb.contacto || '',
+        Hora_preferida: f.hora || fb.contactoHorario || ''
+      };
+      const text = `Nombre: ${row.Nombre} | Teléfono: ${row.Telefono} | Email: ${row.Email} | Dirección: ${row.Direccion} | CP: ${row.CP} | CCAA: ${row.CCAA} | Preferencia: ${row.Preferencia_contacto || 'cualquiera'}${row.Hora_preferida ? ' | Hora: '+row.Hora_preferida : ''}`;
+      return { row, text };
+    }
+
+    function buildPetsDetail(){
+      const pets = getPets();
+      let chosen = [];
+      if (SELECTED_INDEXES.length) {
+        chosen = SELECTED_INDEXES.map(ix => pets[ix]).filter(Boolean);
+      } else if (pets.length === 1) {
+        chosen = [pets[0]]; // auto si solo hay una
+      } else {
+        chosen = []; // si hay >=2 y no eligió, lo bloquearemos más abajo
+      }
+      const rows = chosen.map(p => ({
+        Nombre: norm(p?.nombre),
+        Especie: norm(p?.especie || p?.tipo),
+        Raza: norm(p?.raza || p?.tipoExotico),
+        Edad: norm(p?.edad),
+        Peso: norm(p?.peso),
+        Microchip: norm(p?.microchip),
+        Esterilizado: norm(p?.esterilizado),
+        Vacunas: norm(p?.vacunas),
+        Salud: norm(p?.salud),
+        Tratamiento: norm(p?.tratamiento),
+        Comportamiento: norm(p?.comportamiento),
+        SeguroRC: norm(p?.seguroRC),
+        SeguroVet: norm(p?.seguroVet),
+        SeguroVetComp: norm(p?.seguroVetComp),
+        SeguroVetNum: norm(p?.seguroVetNum)
+      }));
+      const text = rows.map(r=>(
+        `Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}${r.Edad? ' | Edad: '+r.Edad:''}${r.Peso? ' | Peso: '+r.Peso:''}${r.Esterilizado? ' | Esterilizado: '+r.Esterilizado:''}${r.Vacunas? ' | Vacunas: '+r.Vacunas:''}${r.Salud? ' | Salud: '+r.Salud:''}${r.Tratamiento? ' | Tratamiento: '+r.Tratamiento:''}${r.Comportamiento? ' | Comportamiento: '+r.Comportamiento:''}${r.SeguroRC? ' | Seguro RC: '+r.SeguroRC:''}`
+      )).join(' || ');
+      return { rows, text };
+    }
+
+    // ==== Wire UI ====
+    function attachPickerButton(){
+      const btn = document.getElementById('tpl-open-petpicker');
+      if (!btn) return;
+      btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
+    }
+
+    // ==== Validación + adjuntar hidden en submit ====
+    function attachSubmitValidator(){
+      const form = document.getElementById('bookingForm');
+      if (!form) return;
+      form.addEventListener('submit', function(e){
+        try{
+          const pets = getPets();
+          const hasMany = pets.length >= 2;
+          if (hasMany && !SELECTED_INDEXES.length){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            alert('Por favor, elige la(s) mascota(s) con el botón “Elegir de mis mascotas”.');
+            return false;
+          }
+          // construir y adjuntar detalles
+          const od = buildOwnerDetail();
+          const pd = buildPetsDetail();
+          const fOwner = document.getElementById('ownerDetail');
+          const fPets  = document.getElementById('petsDetail');
+          const fPetsJ = document.getElementById('petsDetailJson');
+          if (fOwner) fOwner.value = od.text;
+          if (fPets)  fPets.value  = pd.text;
+          if (fPetsJ) fPetsJ.value = JSON.stringify(pd.rows);
+        }catch(err){
+          console.warn('[TPL reservas] enrich/validate warn:', err);
+        }
+      }, true); // capture:true para validar ANTES del listener que guarda en Firestore
+    }
+
+    // ==== Auto-escenario: 1 sola mascota → rellenar nombres ====
+    function autoFillSinglePet(){
+      const pets = getPets();
+      if (pets.length === 1){
+        SELECTED_INDEXES = [0];
+        const name = norm(pets[0]?.nombre || '');
+        const numSel = document.getElementById('numPets');
+        if (numSel){
+          numSel.value = '1';
+          numSel.dispatchEvent(new Event('change', { bubbles:true }));
+        }
+        setTimeout(()=>{
+          const inp = document.getElementById('petName_1');
+          if (inp && !inp.value){
+            inp.value = name;
+            inp.dispatchEvent(new Event('input', { bubbles:true }));
+          }
+        }, 120);
+      }
+    }
+
+    // init
+    function init(){
+      attachPickerButton();
+      attachSubmitValidator();
+      autoFillSinglePet();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
