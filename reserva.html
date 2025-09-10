@@ -1495,6 +1495,109 @@
     else init();
   })();
   </script>
+<script>
+/* === TPL · BLOQUE ÚNICO (pegar justo antes de </body>) ===================== */
+(function(){
+  'use strict';
+
+  // 1) Configura EmailJS (tus datos)
+  window.TPL_EMAILJS = {
+    publicKey: 'L2xAATfVuHJwj4EIV',
+    serviceId: 'service_odjqrfl',
+    templates: { reserva: 'template_rao5n0c' }
+  };
+
+  // 2) Cuando exista el formulario de reserva, inyectamos aliases + autollenado
+  document.addEventListener('DOMContentLoaded', function(){
+    var form = document.getElementById('bookingForm');
+    if (!form) return;
+
+    // Crea todos los alias que espera tu plantilla de EmailJS
+    var aliasNames = [
+      // Dueña / propietario
+      'owner_nombre','owner_nombre_only','owner_apellidos','owner_email','owner_telefono','owner_direccion','owner_cp','owner_ccaa',
+      // Sinónimos por si los usas en el template
+      'dueno_nombre','dueno_email','dueno_telefono','dueno_direccion',
+      // Mascotas
+      'mascotas','mascotas_detalle','mascotas_detalle_json',
+      // Reserva
+      'servicio','fecha_inicio','fecha_fin','hora_inicio','hora_fin','subtotal','deposito','resumen','reserva_id','_estado'
+    ];
+    aliasNames.forEach(function(n){
+      if (!form.querySelector('[name="'+n+'"]')){
+        var i = document.createElement('input');
+        i.type = 'hidden'; i.name = n;
+        form.appendChild(i);
+      }
+    });
+
+    // Helpers
+    function v(id){ var el = document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+    function selText(id){
+      var el = document.getElementById(id);
+      try { return el && el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].text : (el && el.value) || ''; }
+      catch(_){ return (el && el.value) || ''; }
+    }
+    function set(name, val){ var inp = form.querySelector('[name="'+name+'"]'); if (inp) inp.value = val || ''; }
+    function shortId(){ return 'R' + Math.random().toString(36).slice(2,8).toUpperCase(); }
+
+    // Rellenar aliases JUSTO antes de que se procese el submit
+    form.addEventListener('submit', function(){
+      var first = v('firstName'), last = v('lastName');
+
+      // Dueña / propietario
+      set('owner_nombre', (first+' '+last).trim());
+      set('owner_nombre_only', first);
+      set('owner_apellidos', last);
+      set('owner_email', v('email'));
+      set('owner_telefono', v('phone'));
+      set('owner_direccion', v('location'));
+      set('owner_cp', v('postalCode'));
+      set('owner_ccaa', selText('region'));
+
+      // Sinónimos (por si los usas en tu template de EmailJS)
+      set('dueno_nombre', (first+' '+last).trim());
+      set('dueno_email', v('email'));
+      set('dueno_telefono', v('phone'));
+      set('dueno_direccion', v('location'));
+
+      // Mascotas
+      set('mascotas', v('petsListHidden'));           // lista de nombres
+      set('mascotas_detalle', v('petsDetail'));       // texto plano
+      set('mascotas_detalle_json', v('petsDetailJson')); // JSON
+
+      // Reserva
+      set('servicio', selText('service'));
+      set('fecha_inicio', v('startDate'));
+      set('fecha_fin', v('endDate'));
+      set('hora_inicio', v('start'));
+      set('hora_fin', v('end'));
+      set('subtotal', (document.getElementById('sumSubtotal')?.textContent||'').trim());
+      set('deposito', (document.getElementById('sumDeposit')?.textContent||'').trim());
+      set('resumen', v('summaryField'));
+      if (!form.querySelector('[name="reserva_id"]').value) set('reserva_id', shortId());
+      set('_estado', 'enviada');
+
+      // Guardar snapshot local para que aparezca en perfil.html
+      try{
+        var uid = localStorage.getItem('tpl.currentUser') || localStorage.getItem('tpl_auth_uid') ||
+                  (window.firebase && firebase.auth && firebase.auth().currentUser && firebase.auth().currentUser.uid) ||
+                  'default';
+        var key = 'tpl.udb.'+uid+'.lastReservation';
+        var snap = {
+          Servicio: selText('service'),
+          Fecha_inicio: v('startDate'),
+          Fecha_fin: v('endDate'),
+          Mascotas_lista: v('petsListHidden'),
+          _estado: 'enviada'
+        };
+        localStorage.setItem(key, JSON.stringify(snap));
+        localStorage.setItem('tpl.udb.lastChange', String(Date.now()));
+      }catch(_){}
+    }, true); // capture:true para que corra antes del guardado/envío existente
+  });
+})();
+</script>
 
 </body>
 </html>
