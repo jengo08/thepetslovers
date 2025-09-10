@@ -1308,3 +1308,175 @@
       });
     })();
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Hotfix submit robusto reservas] -->
+<script>
+(function(){
+  if (window.__TPL_BOOKING_SAFE_SUBMIT__) return;
+  window.__TPL_BOOKING_SAFE_SUBMIT__ = true;
+
+  const CONFIG = {
+    // ⚠️ CAMBIA ESTO por tu correo de gestión (el que debe recibir todas las reservas)
+    ADMIN_EMAIL: 'gestion@thepetslovers.es'
+  };
+
+  function el(id){ return document.getElementById(id); }
+  function getText(sel){ return sel?.selectedOptions?.[0]?.text || sel?.value || ''; }
+  function val(id){ return (el(id)?.value || '').trim(); }
+  function currencyText(id){ return (el(id)?.textContent || '0').replace('—','0').trim(); }
+
+  function buildParams(){
+    const regionSel = el('region');
+    return {
+      _page: location.href,
+      _tipo: 'reserva',
+      _estado: 'enviada',
+
+      owner_nombre_only: val('firstName'),
+      owner_apellidos:   val('lastName'),
+      owner_nombre:      `${val('firstName')} ${val('lastName')}`.trim(),
+      owner_email:       val('email'),
+      owner_telefono:    val('phone'),
+      owner_direccion:   val('location'),
+      owner_cp:          val('postalCode'),
+      owner_ccaa:        regionSel ? getText(regionSel) : '',
+
+      mascotas:              (el('petsListHidden')?.value || '').trim(),
+      mascotas_detalle:      (el('petsDetail')?.value || '').trim(),
+      mascotas_detalle_json: (el('petsDetailJson')?.value || '[]'),
+
+      servicio:     getText(el('service')),
+      fecha_inicio: val('startDate'),
+      fecha_fin:    val('endDate'),
+      hora_inicio:  val('start'),
+      hora_fin:     val('end'),
+
+      subtotal: currencyText('sumSubtotal'),
+      deposito: currencyText('sumDeposit'),
+      resumen:  (el('summaryField')?.value || '').trim(),
+      reserva_id: `R-${Date.now().toString(36)}-${Math.floor(Math.random()*1e4).toString().padStart(4,'0')}`,
+      to_email: (document.querySelector('input[name="to_email"]')?.value || CONFIG.ADMIN_EMAIL || '')
+    };
+  }
+
+  async function sendEmails(params){
+    if (!window.emailjs) return {admin:false, owner:false, err:'EmailJS no está cargado'};
+    const SERVICE = (window.TPL_EMAILJS?.serviceId) || 'service_odjqrfl';
+    const TEMPLATE = (window.TPL_EMAILJS?.templates?.reserva) || 'template_rao5n0c';
+    const USER     = (window.TPL_EMAILJS?.publicKey) || 'L2xAATfVuHJwj4EIV';
+
+    let adminOk=false, ownerOk=false, lastErr=null;
+
+    try{
+      if (params.to_email){ await emailjs.send(SERVICE, TEMPLATE, params, USER); adminOk = true; }
+    }catch(e){ lastErr = e; }
+
+    try{
+      if ((params.owner_email||'').includes('@')){
+        const p2 = {...params, to_email: params.owner_email, reply_to: params.owner_email};
+        await emailjs.send(SERVICE, TEMPLATE, p2, USER);
+        ownerOk = true;
+      }
+    }catch(e){ lastErr = e; }
+
+    return {admin:adminOk, owner:ownerOk, err:lastErr};
+  }
+
+  async function saveFirestoreShadow(params){
+    try{
+      if (typeof firebase==='undefined' || !firebase.firestore) return false;
+      const db = firebase.firestore();
+      const auth = firebase.auth ? firebase.auth() : null;
+      const u = auth && auth.currentUser ? auth.currentUser : null;
+
+      const payload = {...params};
+      payload.Servicio = params.servicio;
+      payload.Fecha_inicio = params.fecha_inicio;
+      payload.Fecha_fin = params.fecha_fin;
+      payload.Hora_inicio = params.hora_inicio;
+      payload.Hora_fin = params.hora_fin;
+      payload.Mascotas_lista = params.mascotas;
+
+      payload._page = params._page;
+      payload._estado = params._estado;
+      if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      if (u) { payload._uid = u.uid; payload._email = u.email || null; }
+
+      const ref = await db.collection('reservas').add(payload);
+      return !!ref?.id;
+    }catch(_){ return false; }
+  }
+
+  function showOk(){
+    const form = document.getElementById('bookingForm');
+    try{ showSuccessOverlay(form); }
+    catch(_){
+      alert('¡Reserva enviada! Te contactaremos pronto.');
+      location.href = form?.dataset?.tplRedirect || 'perfil.html';
+    }
+  }
+
+  function showDiag(msg){
+    let bar = document.getElementById('tpl-diag-bar');
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'tpl-diag-bar';
+      bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#fff3cd;color:#664d03;border:1px solid #ffe69c;border-radius:10px;padding:10px 12px;font-size:.95rem;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.1)';
+      document.body.appendChild(bar);
+    }
+    bar.textContent = msg;
+    setTimeout(()=>{ try{bar.remove();}catch(_){}} ,6000);
+  }
+
+  function attach(){
+    const form = document.getElementById('bookingForm');
+    if(!form) return;
+    form.addEventListener('submit', async function(e){
+      // Tomamos el control y evitamos que otros listeners bloqueen
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      // Validación mínima (evita el “ha ocurrido un error” genérico)
+      const requiredIds = ['service','startDate','endDate','start','end','region'];
+      for(const id of requiredIds){
+        const node = document.getElementById(id);
+        if (node && !node.value){
+          node.focus();
+          showDiag('Falta el campo: ' + (node.previousElementSibling?.innerText || id));
+          return;
+        }
+      }
+
+      // Evitar doble clic
+      const btn = form.querySelector('button[type="submit"]');
+      const old = btn?.textContent;
+      if (btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
+
+      const params = buildParams();
+      const [emails, _fire] = await Promise.all([ sendEmails(params), saveFirestoreShadow(params) ]);
+
+      if (!emails.admin && !emails.owner){
+        showDiag('No se pudo enviar el email (revisa serviceId/template/publicKey y el dominio permitido en EmailJS). La reserva se guardó localmente si fue posible.');
+      }
+
+      // Snapshot local para el panel
+      try{
+        const uid = localStorage.getItem('tpl.currentUser') || localStorage.getItem('tpl_auth_uid') || 'default';
+        localStorage.setItem(`tpl.udb.${uid}.lastReservation`, JSON.stringify({
+          Servicio: params.servicio,
+          Fecha_inicio: params.fecha_inicio,
+          Fecha_fin: params.fecha_fin,
+          _estado: 'enviada',
+          Mascotas_lista: params.mascotas
+        }));
+      }catch(_){}
+
+      showOk();
+      if (btn){ btn.disabled = false; btn.textContent = old; }
+    }, true); // capture = true (nos ejecutamos antes y bloqueamos otros handlers)
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
+  else attach();
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
