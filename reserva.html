@@ -1556,6 +1556,148 @@
     else init();
   })();
   </script>
+<!-- ====== TPL: pegado simple al final (EmailJS + autorelleno + doble envío) ====== -->
+<script>
+  // 1) Config EmailJS (tus datos)
+  window.TPL_EMAILJS = {
+    publicKey:  'L2xAATfVuHJwj4EIV',
+    serviceId:  'service_odjqrfl',
+    templates:  { reserva: 'template_rao5n0c' }
+  };
+</script>
+
+<script>
+/* 2) Autorrellenar datos de la dueña desde tu “perfil” local si no los rellenó Firebase */
+(function(){
+  function byId(id){ return document.getElementById(id); }
+  function getOwnerFromUdb(){
+    try{
+      const uid = localStorage.getItem('tpl.currentUser') || localStorage.getItem('tpl_auth_uid') || 'default';
+      const raw = localStorage.getItem(`tpl.udb.${uid}.owner`);
+      return raw ? JSON.parse(raw) : null;
+    }catch(_){ return null; }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    const f = document.getElementById('bookingForm'); if(!f) return;
+    const o = getOwnerFromUdb(); if(!o) return; // si no hay datos guardados, no tocamos nada
+    const set = (id,val)=>{ const el=byId(id); if(el && !el.value) el.value=val||''; };
+    set('firstName', o.nombre?.split(' ')?.[0] || '');
+    set('lastName',  (o.nombre?.split(' ')?.slice(1).join(' ') || o.apellidos) || '');
+    set('email',     o.email || '');
+    set('phone',     o.telefono || '');
+    set('location',  o.direccion || '');
+    set('postalCode',o.cp || '');
+    if(byId('region') && o.ccaa){
+      const val = String(o.ccaa).toLowerCase();
+      [...byId('region').options].forEach(op=>{ if(op.value === val) byId('region').value = val; });
+    }
+  });
+})();
+</script>
+
+<script>
+/* 3) Mapeo COMPLETO de variables + segundo envío al propietario (mismo template) */
+(function(){
+  // 👇 CAMBIA SOLO ESTO: el correo donde queréis recibir la reserva
+  const ADMIN_EMAIL = 'TU-EMAIL-DE-GESTION@dominio.com';
+
+  const TEMPLATE_ID = (window.TPL_EMAILJS?.templates?.reserva) || 'template_rao5n0c';
+  const SERVICE_ID  = (window.TPL_EMAILJS?.serviceId) || 'service_odjqrfl';
+  const USER_ID     = (window.TPL_EMAILJS?.publicKey) || 'L2xAATfVuHJwj4EIV';
+
+  function ensureHidden(form, name){
+    let el=form.querySelector(`input[name="${name}"]`);
+    if(!el){ el=document.createElement('input'); el.type='hidden'; el.name=name; form.appendChild(el); }
+    return el;
+  }
+  function g(id){ return document.getElementById(id)?.value?.trim()||''; }
+
+  function fillTemplateParams(form){
+    const H = {
+      owner_nombre:           ensureHidden(form,'owner_nombre'),
+      owner_nombre_only:      ensureHidden(form,'owner_nombre_only'),
+      owner_apellidos:        ensureHidden(form,'owner_apellidos'),
+      owner_email:            ensureHidden(form,'owner_email'),
+      owner_telefono:         ensureHidden(form,'owner_telefono'),
+      owner_direccion:        ensureHidden(form,'owner_direccion'),
+      owner_cp:               ensureHidden(form,'owner_cp'),
+      owner_ccaa:             ensureHidden(form,'owner_ccaa'),
+
+      mascotas:               ensureHidden(form,'mascotas'),
+      mascotas_detalle:       ensureHidden(form,'mascotas_detalle'),
+      mascotas_detalle_json:  ensureHidden(form,'mascotas_detalle_json'),
+
+      servicio:               ensureHidden(form,'servicio'),
+      fecha_inicio:           ensureHidden(form,'fecha_inicio'),
+      fecha_fin:              ensureHidden(form,'fecha_fin'),
+      hora_inicio:            ensureHidden(form,'hora_inicio'),
+      hora_fin:               ensureHidden(form,'hora_fin'),
+
+      subtotal:               ensureHidden(form,'subtotal'),
+      deposito:               ensureHidden(form,'deposito'),
+      resumen:                ensureHidden(form,'resumen'),
+      reserva_id:             ensureHidden(form,'reserva_id'),
+      _estado:                ensureHidden(form,'_estado'),
+
+      // clave para EmailJS: usa {{to_email}} en el campo "To" de tu template
+      to_email:               ensureHidden(form,'to_email')
+    };
+
+    H.owner_nombre.value       = `${g('firstName')} ${g('lastName')}`.trim();
+    H.owner_nombre_only.value  = g('firstName');
+    H.owner_apellidos.value    = g('lastName');
+    H.owner_email.value        = g('email');
+    H.owner_telefono.value     = g('phone');
+    H.owner_direccion.value    = g('location');
+    H.owner_cp.value           = g('postalCode');
+    H.owner_ccaa.value         = document.getElementById('region')?.selectedOptions?.[0]?.text || '';
+
+    H.mascotas.value              = document.getElementById('petsListHidden')?.value || '';
+    H.mascotas_detalle.value      = document.getElementById('petsDetail')?.value || '';
+    H.mascotas_detalle_json.value = document.getElementById('petsDetailJson')?.value || '[]';
+
+    H.servicio.value      = document.getElementById('service')?.selectedOptions?.[0]?.text || '';
+    H.fecha_inicio.value  = g('startDate');
+    H.fecha_fin.value     = g('endDate');
+    H.hora_inicio.value   = g('start');
+    H.hora_fin.value      = g('end');
+
+    H.subtotal.value      = document.getElementById('sumSubtotal')?.textContent || '';
+    H.deposito.value      = document.getElementById('sumDeposit')?.textContent || '';
+    H.resumen.value       = document.getElementById('summaryField')?.value || '';
+
+    H.reserva_id.value    = H.reserva_id.value || '';
+    H._estado.value       = 'enviada';
+
+    // MUY IMPORTANTE: ponemos aquí el destinatario de GESTIÓN para el envío "automático" que ya hace tu script
+    H.to_email.value      = ADMIN_EMAIL;
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('bookingForm'); if(!form) return;
+
+    // 1) Siempre mapeamos primero (phase: capture) para que el otro script envíe con todo listo
+    form.addEventListener('submit', function(){ fillTemplateParams(form); }, true);
+
+    // 2) Enviamos TAMBIÉN al propietario (segundo email con el mismo template)
+    form.addEventListener('submit', async function(){
+      try{
+        if(!window.emailjs) return;
+        const params = Object.fromEntries(new FormData(form).entries());
+        const owner = (document.getElementById('email')?.value || '').trim();
+        if (!owner) return; // si no hay email, no enviamos el 2º
+
+        // Enviar al propietario usando el mismo template y todos los datos
+        params.to_email = owner;
+        await emailjs.send(SERVICE_ID, TEMPLATE_ID, params, USER_ID);
+      }catch(err){
+        console.warn('[TPL] Email a propietario (no bloqueante):', err);
+      }
+    }, true); // capture para ir por delante del overlay
+  });
+})();
+</script>
+<!-- ====== /TPL: pegado simple al final ====== -->
 
 </body>
 </html>
