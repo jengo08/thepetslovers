@@ -220,13 +220,12 @@
         <div class="booking-grid" id="petsContainer"></div>
         <datalist id="tplPetNamesList"></datalist>
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Botón selector de mascotas] -->
+        <!-- Selector de mascotas -->
         <div class="booking-actions" style="justify-content:flex-start;margin-top:6px">
           <button type="button" class="tpl-btn-outline" id="tpl-open-petpicker">
             <i class="fa-solid fa-list-check"></i> Elegir de mis mascotas
           </button>
         </div>
-        <!-- TPL: FIN BLOQUE NUEVO -->
       </section>
 
       <!-- =================== DATOS DE LA PERSONA =================== -->
@@ -278,8 +277,8 @@
           </div>
           <div class="booking-field">
             <label for="postalCode">Código Postal</label>
-           <input type="text" id="postalCode" name="CP" placeholder="Ej. 28001"
-       inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code" required>
+            <input type="text" id="postalCode" name="CP" placeholder="Ej. 28001"
+                   inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code" required>
           </div>
 
           <div class="booking-field">
@@ -384,11 +383,10 @@
       <input type="hidden" name="Desglose" id="summaryField">
       <input type="hidden" name="Mascotas_lista" id="petsListHidden">
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Campos ocultos: detalle propietaria + mascotas] -->
+      <!-- Detalle propietario + mascotas -->
       <input type="hidden" name="Owner_detalle" id="ownerDetail">
       <input type="hidden" name="Mascotas_detalle" id="petsDetail">
       <input type="hidden" name="Mascotas_detalle_json" id="petsDetailJson">
-      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <!-- Acciones: submit centrado + ayuda derecha -->
       <div class="booking-actions tpl-actions">
@@ -684,7 +682,7 @@
       }
       return { festivo, senalado, nDias: days.length };
     }
-    function calcPetSupplements(service, species, n){
+    async function calcPetSupplements(service, species, n){
       if(n <= 1) return 0;
       if(service === 'visitas'){
         const extra = n - 1;
@@ -746,10 +744,10 @@
         visit1 = perDay.price1 * nDias;
         visit2 = perDay.price2 * nDias;
         base = 0;
-        pets = calcPetSupplements(svc, 'gato', nMasc);
+        pets = await calcPetSupplements(svc, 'gato', nMasc);
       } else {
         base = getBasePrice(svc, species, isPuppy) * nDias;
-        pets = calcPetSupplements(svc, species, nMasc);
+        pets = await calcPetSupplements(svc, species, nMasc);
         if(svc === 'guarderia'){ bono = calcBonoGuarderia(nDias, isPuppy); }
       }
 
@@ -1000,14 +998,14 @@
 
   <!-- EmailJS (envío directo) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>
-    // Opcional: define tu config aquí o en un JS aparte
-    // window.TPL_EMAILJS = {
-    //   publicKey: "TU_PUBLIC_KEY",
-    //   serviceId: "tu_service_id",
-    //   templates: { reserva: "tu_template_id" }
-    // };
 
+  <!-- Config EmailJS (usa tus IDs; si ya defines window.TPL_EMAILJS en otro JS, esto no pisa) -->
+  <script>
+    window.TPL_EMAILJS = window.TPL_EMAILJS || {
+      serviceId: 'service_odjqrfl',           // <- tu service id
+      templateReserva: 'template_rao5n0c',     // <- tu template id de reservas
+      publicKey: 'L2xAATfVuHJwj4EIV'          // <- tu public key
+    };
     (function(){
       const cfg = window.TPL_EMAILJS || {};
       if (window.emailjs) {
@@ -1100,6 +1098,90 @@
 
   <!-- Guardado en Firestore + EmailJS + Overlay éxito -->
   <script>
+    // === Mapeo completo hacia EmailJS (envía TODAS las variables que necesitas) ===
+    async function tryEmailJS(fd, extra){
+      if(!window.emailjs) return false;
+      try{
+        var cfg = window.TPL_EMAILJS || {};
+        var service  = cfg.serviceId || cfg.service;
+        var template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
+        var pubKey   = cfg.publicKey || cfg.userId;
+
+        if(!service || !template) return false;
+
+        // Valores del form
+        const get = (k) => (fd.get(k) || '').toString().trim();
+
+        // Texto legible para servicio y CCAA
+        var svcSel = document.getElementById('service');
+        var servicioLabel = svcSel && svcSel.options && svcSel.selectedIndex >= 0
+          ? svcSel.options[svcSel.selectedIndex].text
+          : (get('Servicio') || '');
+
+        var regionSel = document.getElementById('region');
+        var ccaaLabel = regionSel && regionSel.options && regionSel.selectedIndex >= 0
+          ? regionSel.options[regionSel.selectedIndex].text
+          : (get('CCAA') || '');
+
+        // Importes
+        var subtotalTxt = (document.getElementById('sumSubtotal')?.textContent || '').trim();
+        var depositoTxt = (document.getElementById('sumDeposit')?.textContent || '').trim();
+
+        // Detalle mascotas
+        var mascotasDetalleTxt  = document.getElementById('petsDetail')?.value || '';
+        var mascotasDetalleJSON = document.getElementById('petsDetailJson')?.value || '';
+
+        // Construcción del payload
+        var tplVars = {
+          // Dueña / Dueño
+          owner_nombre:        (get('Nombre') + ' ' + get('Apellidos')).trim(),
+          owner_nombre_only:   get('Nombre'),
+          owner_apellidos:     get('Apellidos'),
+          owner_email:         get('Email'),
+          owner_telefono:      get('Telefono'),
+          owner_direccion:     get('Direccion'),
+          owner_cp:            get('CP'),
+          owner_ccaa:          ccaaLabel,
+
+          // Sinónimos comunes
+          dueno_nombre:        (get('Nombre') + ' ' + get('Apellidos')).trim(),
+          dueno_email:         get('Email'),
+          dueno_telefono:      get('Telefono'),
+          dueno_direccion:     get('Direccion'),
+
+          // Mascotas
+          mascotas:               get('Mascotas_lista'),
+          mascotas_detalle:       mascotasDetalleTxt,
+          mascotas_detalle_json:  mascotasDetalleJSON,
+
+          // Reserva
+          servicio:     servicioLabel,
+          fecha_inicio: get('Fecha_inicio'),
+          fecha_fin:    get('Fecha_fin'),
+          hora_inicio:  get('Hora_inicio'),
+          hora_fin:     get('Hora_fin'),
+          subtotal:     subtotalTxt,
+          deposito:     depositoTxt,
+          resumen:      document.getElementById('summaryField')?.value || '',
+
+          // Metadatos
+          _page:   location.href,
+          _tipo:   'reserva',
+          _estado: (extra && extra._estado) || 'enviada',
+          reserva_id: (extra && extra.reserva_id) || ('R-' + Date.now())
+        };
+
+        if (extra && typeof extra === 'object') Object.assign(tplVars, extra);
+
+        if (pubKey) { await emailjs.send(service, template, tplVars, pubKey); }
+        else { await emailjs.send(service, template, tplVars); }
+        return true;
+      }catch(err){
+        console.warn('EmailJS error', err);
+      }
+      return false;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       var form = document.getElementById('bookingForm');
       if (!form) return;
@@ -1120,92 +1202,10 @@
         wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
       }
 
-      function getText(id){
-        var el = document.getElementById(id);
-        return (el && el.textContent || '').trim();
-      }
-
-      // Mapea datos del formulario a las variables que espera tu plantilla EmailJS
-      function buildTemplateVars(fd, extra){
-        var payload = Object.fromEntries(fd.entries());
-        var f = document.getElementById('bookingForm');
-
-        var serviceText = (f.querySelector('#service')?.selectedOptions?.[0]?.text || payload['Servicio'] || '').trim();
-        var regionText  = (f.querySelector('#region')?.selectedOptions?.[0]?.text || payload['CCAA'] || '').trim();
-
-        var ownerNombre    = [payload['Nombre']||'', payload['Apellidos']||''].join(' ').trim();
-        var mascotasLista  = payload['Mascotas_lista'] || '';
-        var mascotasDet    = payload['Mascotas_detalle'] || (document.getElementById('petsDetail')?.value || '');
-        var mascotasDetJSON= payload['Mascotas_detalle_json'] || (document.getElementById('petsDetailJson')?.value || '');
-
-        var subtotal  = getText('sumSubtotal').replace('—','').trim();
-        var deposito  = getText('sumDeposit').replace('—','').trim();
-        var resumen   = payload['Desglose'] || (document.getElementById('summaryField')?.value || '');
-
-        var tv = {
-          owner_nombre: ownerNombre,
-          owner_nombre_only: (payload['Nombre']||'').trim(),
-          owner_apellidos: (payload['Apellidos']||'').trim(),
-          owner_email: (payload['Email']||'').trim(),
-          owner_telefono: (payload['Telefono']||'').trim(),
-          owner_direccion: (payload['Direccion']||'').trim(),
-          owner_cp: (payload['CP']||'').trim(),
-          owner_ccaa: regionText,
-
-          // Sinónimos por si prefieres estos
-          dueno_nombre: ownerNombre,
-          dueno_email: (payload['Email']||'').trim(),
-          dueno_telefono: (payload['Telefono']||'').trim(),
-          dueno_direccion: (payload['Direccion']||'').trim(),
-
-          mascotas: mascotasLista,
-          mascotas_detalle: mascotasDet,
-          mascotas_detalle_json: mascotasDetJSON,
-
-          servicio: serviceText,
-          fecha_inicio: (payload['Fecha_inicio']||'').trim(),
-          fecha_fin: (payload['Fecha_fin']||'').trim(),
-          hora_inicio: (payload['Hora_inicio']||'').trim(),
-          hora_fin: (payload['Hora_fin']||'').trim(),
-
-          subtotal: subtotal,
-          deposito: deposito,
-          resumen: resumen,
-
-          _estado: (extra && extra._estado) || 'enviada'
-        };
-
-        if (extra && extra.reserva_id) tv.reserva_id = extra.reserva_id;
-        return tv;
-      }
-
-      async function tryEmailJS(fd, extra){
-        if(!window.emailjs) return false;
-        try{
-          var cfg = window.TPL_EMAILJS || {};
-          var service  = cfg.serviceId || cfg.service;
-          var template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
-          var pubKey   = cfg.publicKey || cfg.userId;
-
-          if(service && template){
-            var basePayload = Object.fromEntries(fd.entries());
-            var templateVars = buildTemplateVars(fd, extra);
-
-            var finalPayload = Object.assign({}, basePayload, templateVars, (extra||{}));
-            if (pubKey) { await emailjs.send(service, template, finalPayload, pubKey); }
-            else { await emailjs.send(service, template, finalPayload); }
-            return true;
-          }
-        }catch(err){
-          console.warn('EmailJS error', err);
-        }
-        return false;
-      }
-
       form.addEventListener('submit', async function (e) {
         e.preventDefault(); // no navegamos; mostramos overlay + redirigimos a perfil.html
 
-        // Guardar en Firestore y enviar correo
+        // Guardar en Firestore y enviar email
         try {
           if (typeof firebase !== 'undefined' && firebase.firestore) {
             var db   = firebase.firestore();
@@ -1217,32 +1217,28 @@
             fd.forEach(function (v, k) { payload[k] = v; });
 
             payload._page = location.href;
-            payload._tipo = 'reserva';
             payload._estado = 'enviada';
-            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
             if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
 
-            // Creamos docId antes para poder incluirlo en EmailJS como reserva_id
-            var docRef = db.collection('reservas').doc();
-            payload.reserva_id = docRef.id;
-            await docRef.set(payload);
-            console.log('TPL: reserva guardada en Firestore con id', docRef.id);
+            // Guardar y obtener ID
+            var docRef = await db.collection('reservas').add(payload);
+            var reservaId = docRef && docRef.id ? docRef.id : ('R-' + Date.now());
+            console.log('TPL: reserva guardada en Firestore con id', reservaId);
 
-            // Enviar correo vía EmailJS (ya con reserva_id)
-            await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: docRef.id });
+            // Enviar correo vía EmailJS con ID real
+            await tryEmailJS(fd, { _estado: 'enviada', reserva_id: reservaId });
           } else {
-            // Si no hay Firestore, al menos intentamos el email con un id local
-            var fdNoFS = new FormData(form);
-            var fakeId = 'R-' + Math.random().toString(36).slice(2,10).toUpperCase();
-            await tryEmailJS(fdNoFS, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: fakeId });
+            // Sin Firestore, al menos envía el email con ID fallback
+            var fdNF = new FormData(form);
+            await tryEmailJS(fdNF, { _estado: 'enviada', reserva_id: ('R-' + Date.now()) });
           }
         } catch (err) {
           console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
-          // Aunque falle Firestore, intentamos el email igualmente
+          // Aunque falle Firestore, intenta el email con un ID de emergencia
           try {
             var fd2 = new FormData(form);
-            var backupId = 'R-' + Math.random().toString(36).slice(2,10).toUpperCase();
-            await tryEmailJS(fd2, { _page: location.href, _tipo: 'reserva', _estado: 'enviada', reserva_id: backupId });
+            await tryEmailJS(fd2, { _estado: 'enviada', reserva_id: ('R-' + Date.now()) });
           } catch(_){}
         }
 
@@ -1252,7 +1248,7 @@
     });
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Modal selector de mascotas] -->
+  <!-- Modal selector de mascotas -->
   <div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
     <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
       <h3 id="tpl-petpicker-title" style="margin-top:0">Elige tus mascotas</h3>
@@ -1263,9 +1259,8 @@
       </div>
     </div>
   </div>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Reservas: selector + validación (>=2 mascotas) + adjuntar detalle propietario/mascotas] -->
+  <!-- Selector + validación + adjuntar detalle propietario/mascotas -->
   <script>
   (function(){
     'use strict';
@@ -1500,7 +1495,6 @@
     else init();
   })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
