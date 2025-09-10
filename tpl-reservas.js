@@ -1,14 +1,16 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-reservas.js — Reserva end-to-end: UI, festivos, autorrelleno, Firestore + EmailJS] */
+/* TPL: INICIO ARCHIVO - tpl-reservas.js (Reserva end-to-end: UI, festivos, autorrelleno, Firestore + EmailJS) */
 (function(){
   if (window.__TPL_RESERVAS_LOADED__) return;
   window.__TPL_RESERVAS_LOADED__ = true;
 
   'use strict';
 
-  /* ===== Config y guardas ===== */
+  /* =========================
+   *  Config y constantes
+   * ========================= */
   const W = window;
 
-  // Constantes de precios (si no existen ya en la página)
+  // Precios (si no están definidos por la página)
   if (!W.PRICES) {
     W.PRICES = {
       base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 0, exoticos: 0 },
@@ -26,7 +28,9 @@
     };
   }
 
-  /* ===== Helpers comunes ===== */
+  /* =========================
+   *  Helpers comunes
+   * ========================= */
   const byId = (id) => document.getElementById(id);
   const qs = (k) => new URLSearchParams(location.search).get(k);
   const currency = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
@@ -43,7 +47,9 @@
     return res;
   }
 
-  /* ===== UID + udb (base por usuario en localStorage) ===== */
+  /* =========================
+   *  UDB (perfil local)
+   * ========================= */
   function getCurrentUserId(){
     try{
       const explicit = localStorage.getItem('tpl.currentUser');
@@ -75,7 +81,9 @@
     return { first: parts[0], last: parts.slice(1).join(' ') };
   }
 
-  /* ===== Firestore helpers: owners + pets ===== */
+  /* =========================
+   *  Firestore loaders (opcionales)
+   * ========================= */
   async function loadOwnerFromFirestore(uid){
     try{
       if (!W.firebase || !firebase.firestore) return null;
@@ -98,12 +106,14 @@
     names.forEach(n=>{
       const found = allPets.find(p => norm(p.nombre) === norm(n));
       if (found) out.push(found);
-      else out.push({ nombre: n }); // dejamos al menos el nombre
+      else out.push({ nombre: n }); // al menos el nombre
     });
     return out;
   }
 
-  /* ===== Festivos (local json -> Nager -> básico) ===== */
+  /* =========================
+   *  Festivos
+   * ========================= */
   const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01'];
   const REGION_TO_COUNTY = {
     andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
@@ -196,7 +206,9 @@
     return { festivo, senalado, nDias: days.length };
   }
 
-  /* ===== Cálculos de servicio ===== */
+  /* =========================
+   *  Cálculos de servicio
+   * ========================= */
   function calcPetSupplements(service, species, n){
     if(n <= 1) return 0;
     if(service === 'visitas'){
@@ -238,7 +250,9 @@
     return Math.max(0, normalTotal - bundlePrice);
   }
 
-  /* ===== UI principal ===== */
+  /* =========================
+   *  UI principal
+   * ========================= */
   function main(){
     const form = byId('bookingForm');
     const wall = byId('authWall');
@@ -325,7 +339,7 @@
         }catch(_){}
         return null;
       })();
-      if(val && els.service){ els.service.value = val; els.service.disabled = true; }
+      if(val && els.service){ els.service.value = val; els.service.disabled = false; }
     })();
 
     function toggleFields(){
@@ -357,12 +371,14 @@
       }
     }
 
+    // Datalist de nombres de mascotas
     let PROFILE_PET_NAMES = [];
     function fillPetDatalist(){
       if(!els.petNamesList) return;
       els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
         .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
     }
+
     function renderPetNameFields(n){
       n = Math.max(1, n|0);
       const wrap = els.petsContainer; if(!wrap) return;
@@ -459,7 +475,7 @@
     els.needTravel && els.needTravel.addEventListener('change', travelSync);
     travelSync();
 
-    // Autocomplete dirección (OpenStreetMap Nominatim)
+    // Autocomplete dirección (Nominatim)
     async function searchAddresses(q){
       const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
       const r = await fetch(url, { headers: { 'Accept':'application/json' }});
@@ -497,7 +513,7 @@
       document.addEventListener('click', (e)=>{ if(els.addrSuggest && !els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Autorrelleno desde perfil (local + Firestore)
+    // ===== Autorrelleno (nombre/apellidos bien) =====
     async function autoPuppyFromProfile(){
       try{
         const uid = getCurrentUserId();
@@ -509,7 +525,7 @@
         }
         if (!refPet) return;
 
-        // Heurística: "edad" con "mes" y <= 6 -> cachorro
+        // Heurística: “X meses” <= 6 -> cachorro
         let isP = false;
         const raw = String(refPet.edad || '').toLowerCase();
         const m = raw.match(/(\d+)\s*mes/);
@@ -524,36 +540,46 @@
     async function autoContactFromProfile(user){
       try{
         const uid = getCurrentUserId();
-        // Owner local
         let owner = readLocalOwner(uid);
-        // Si hay sesión, intento Firestore
+
+        // Si falta info, intenta Firestore
         if ((!owner || !owner.email) && user && W.firebase && firebase.firestore){
           const fsOwner = await loadOwnerFromFirestore(uid);
-          if (fsOwner) owner = {
-            nombre: fsOwner.nombre || fsOwner.nombreCompleto || '',
-            dni: fsOwner.dni || '',
-            direccion: fsOwner.direccion || '',
-            cp: fsOwner.cp || '',
-            provincia: fsOwner.provincia || '',
-            localidad: fsOwner.localidad || '',
-            email: fsOwner.email || '',
-            telefono: fsOwner.telefono || '',
-            contacto: fsOwner.contacto || 'whatsapp',
-            contactoHorario: fsOwner.contactoHorario || '',
-            zona: fsOwner.zona || ''
-          };
+          if (fsOwner) {
+            owner = {
+              nombre:    fsOwner.nombre || fsOwner.nombreCompleto || (user.displayName || ''),
+              apellidos: fsOwner.apellidos || '',
+              email:     fsOwner.email || user.email || '',
+              telefono:  fsOwner.telefono || user.phoneNumber || '',
+              direccion: fsOwner.direccion || '',
+              cp:        fsOwner.cp || '',
+              ccaa:      fsOwner.ccaa || '',
+              contacto:  fsOwner.contacto || 'whatsapp',
+              contactoHorario: fsOwner.contactoHorario || ''
+            };
+          }
         }
-        // Pintar datos de contacto
-        if (owner){
-          const n = splitNombreCompleto(owner.nombre);
-          if (els.firstName && !els.firstName.value) els.firstName.value = n.first || '';
-          if (els.lastName  && !els.lastName.value)  els.lastName.value  = n.last || '';
-          if (els.email     && !els.email.value)     els.email.value     = owner.email || user?.email || '';
-          if (els.phone     && !els.phone.value)     els.phone.value     = owner.telefono || user?.phoneNumber || '';
-          if (els.address   && !els.address.value)   els.address.value   = owner.direccion || '';
-          if (els.postalCode&& !els.postalCode.value)els.postalCode.value= owner.cp || '';
-        }
-        // Datalist de mascotas
+
+        // Nombre/apellidos correctos
+        const nameFromUser = (user && (user.displayName || '')).trim();
+        const fullName = (owner?.nombre || nameFromUser || '').trim();
+        const parts = splitNombreCompleto(fullName);
+
+        const fn = els.firstName;
+        const ln = els.lastName;
+        const currentFirst = (fn?.value || '').trim();
+        const currentLast  = (ln?.value || '').trim();
+
+        const looksMerged  = currentFirst.includes(' ') && !currentLast;
+        if (fn) fn.value = looksMerged ? splitNombreCompleto(currentFirst).first || parts.first : (currentFirst || parts.first);
+        if (ln) ln.value = looksMerged ? splitNombreCompleto(currentFirst).last  || parts.last  : (currentLast  || parts.last);
+
+        if (els.email && !els.email.value) els.email.value = owner?.email || user?.email || '';
+        if (els.phone && !els.phone.value) els.phone.value = owner?.telefono || user?.phoneNumber || '';
+        if (els.address && !els.address.value) els.address.value = owner?.direccion || '';
+        if (els.postalCode && !els.postalCode.value) els.postalCode.value = owner?.cp || '';
+
+        // Mascotas -> datalist
         PROFILE_PET_NAMES = (readLocalPets(uid).map(p=>p?.nombre||'').filter(Boolean));
         if (user && W.firebase && firebase.firestore){
           const petsFS = await loadPetsFromFirestore(uid);
@@ -561,7 +587,8 @@
           PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...namesFS]));
         }
         fillPetDatalist();
-        // Precarga primera mascota si no hay nada escrito
+
+        // Precargar 1ª mascota si procede
         const firstInput = els.petsContainer?.querySelector('input[id^="petName_"]');
         if (firstInput && !firstInput.value && PROFILE_PET_NAMES.length){
           firstInput.value = PROFILE_PET_NAMES[0];
@@ -570,10 +597,10 @@
       }catch(_){}
     }
 
-    // Muro/auth + login inline
+    // Muro/auth + login inline básico
     function renderInlineLogin(){
       const host = byId('tpl-inline-login');
-      if(!host) return;
+      if(!host || !W.firebase || !firebase.auth) return;
       host.innerHTML = `
         <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
           <h3 class="tpl-login-title">Accede aquí mismo</h3>
@@ -595,7 +622,6 @@
           </form>
         </div>
       `;
-      if (!W.firebase || !firebase.auth) return;
       const auth = firebase.auth();
       const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -658,7 +684,7 @@
         if(!u) renderInlineLogin();
       });
     }else{
-      // Sin Firebase: prefill desde local, pero formulario se queda deshabilitado
+      // Sin Firebase: prefill local, pero se muestra el muro
       autoContactFromProfile(null);
     }
 
@@ -675,7 +701,7 @@
       return true;
     }
 
-    // Preparar campo resumen antes de enviar (para email y admin)
+    // Resumen para email/admin
     function buildSummaryIntoHidden(){
       const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
       let petsVal = els.numPets?.value || '1';
@@ -711,7 +737,7 @@
       if (els.summaryField) els.summaryField.value = lines.join(' | ');
     }
 
-    // Overlay éxito
+    // Overlay éxito (reusa si ya existe)
     function showSuccessOverlay(){
       const msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
       const go  = form?.dataset?.tplRedirect || 'perfil.html';
@@ -728,7 +754,7 @@
       wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
     }
 
-    // EmailJS envío opcional
+    // EmailJS (opcional)
     async function tryEmailJS(fd, extra){
       if(!W.emailjs) return false;
       try{
@@ -739,6 +765,8 @@
         if(service && template){
           const payload = Object.fromEntries(fd.entries());
           Object.assign(payload, extra || {});
+          // reply_to para que gestión pueda responder a la clienta
+          if (!payload.reply_to && payload.owner_email) payload.reply_to = payload.owner_email;
           if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
           else { await emailjs.send(service, template, payload); }
           return true;
@@ -747,20 +775,66 @@
       return false;
     }
 
-    // Submit → Firestore + EmailJS + overlay + persist lastReservation
+    // Guardado en lista local para perfil (además de lastReservation)
+    function saveLocalReservationForProfile(){
+      try{
+        const uid = getCurrentUserId();
+        const listKey = udbKey(uid,'reservas');
+        const arr = JSON.parse(localStorage.getItem(listKey) || '[]');
+
+        const servicio = (els.service?.selectedOptions?.[0]?.text || '').trim();
+        const fechaIni = (els.startDate?.value || '').trim();
+        const fechaFin = (els.endDate?.value || '').trim();
+        const mascotas = (els.petsListHidden?.value || '').trim();
+
+        const row = {
+          id: `R-${Date.now().toString(36)}`,
+          estado: 'enviada',
+          servicio,
+          fecha_inicio: fechaIni,
+          fecha_fin: fechaFin,
+          mascotas,
+          createdAt: Date.now()
+        };
+        arr.unshift(row);
+        localStorage.setItem(listKey, JSON.stringify(arr.slice(0,30)));
+
+        // lastReservation para compatibilidad
+        localStorage.setItem(udbKey(uid,'lastReservation'), JSON.stringify({
+          Servicio: servicio,
+          Fecha_inicio: fechaIni,
+          Fecha_fin: fechaFin,
+          _estado: 'enviada',
+          Mascotas_lista: mascotas,
+          createdAt: Date.now()
+        }));
+      }catch(_){}
+    }
+
+    // SUBMIT → Firestore + EmailJS + overlay + persist local
     form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       if(!validateContactPreference(e)) return;
       buildSummaryIntoHidden();
 
-      // Guardar en Firestore
+      // Copy bajo el botón (sin “visita gratuita”)
+      (function patchNote(){
+        var notes = form.querySelectorAll('p.note');
+        if (notes.length){
+          notes[notes.length - 1].textContent =
+            'Tras enviar, te contactaremos para confirmar detalles y asignarte a la persona cuidadora adecuada.';
+        }
+      })();
+
+      // Guardar en Firestore + EmailJS
       try{
+        const fd = new FormData(form);
+
         if (W.firebase && firebase.firestore){
           const db   = firebase.firestore();
           const auth = firebase.auth ? firebase.auth() : null;
           const u    = auth && auth.currentUser ? auth.currentUser : null;
 
-          const fd = new FormData(form);
           const payload = {};
           fd.forEach((v,k)=>{ payload[k]=v; });
 
@@ -820,7 +894,7 @@
             }))
           };
 
-          // Extras útiles para admin
+          // Extras útiles
           payload._serviceType = payload.Servicio || '';
           payload._startDate = payload.Fecha_inicio || '';
           payload._endDate   = payload.Fecha_fin || '';
@@ -832,36 +906,24 @@
 
           await db.collection('reservas').add(payload);
           console.log('[TPL reservas] Guardado en Firestore');
-
-          // Email opcional
-          await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
-
-          // Persistir última reserva (para perfil.html)
-          try{
-            const localUid = uid || 'default';
-            const last = {
-              createdAt: Date.now(),
-              estado: 'enviada',
-              service: payload._serviceType,
-              startDate: payload._startDate,
-              endDate: payload._endDate
-            };
-            localStorage.setItem(udbKey(localUid,'lastReservation'), JSON.stringify(last));
-          }catch(_){}
-        } else {
-          // Sin Firestore: intentamos al menos email
-          const fd = new FormData(form);
-          await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
         }
+
+        // Email (aunque no haya Firestore)
+        await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
+
       }catch(err){
-        console.warn('[TPL reservas] Error al guardar', err);
-        // Intento de email aunque falle
+        console.warn('[TPL reservas] Error al guardar/envíar', err);
+        // Intento de email si falló Firestore o lo anterior
         try{
           const fd = new FormData(form);
           await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
         }catch(_){}
       }
 
+      // Guardado local para el perfil
+      saveLocalReservationForProfile();
+
+      // Éxito visual
       showSuccessOverlay();
     });
   }
@@ -872,12 +934,17 @@
     main();
   }
 })();
-/* TPL: FIN BLOQUE NUEVO */
-/* TPL: INICIO BLOQUE NUEVO [Reservas: selector de mascotas + adjuntar detalle propietario/mascotas a la reserva] */
+
+/* =========================
+ *  Selector de mascotas + detalle propietario/mascotas
+ * ========================= */
 (function(){
+  if (window.__TPL_PETPICKER_LOADED__) return;
+  window.__TPL_PETPICKER_LOADED__ = true;
+
   'use strict';
 
-  // ===== Helpers UDB coherentes con tus scripts =====
+  // Helpers UDB
   function getCurrentUserId(){
     try{
       const explicit = localStorage.getItem('tpl.currentUser');
@@ -898,14 +965,12 @@
   function norm(s){ return String(s||'').trim(); }
   function nkey(s){ return norm(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-  // ===== Cargar owner + mascotas del usuario =====
   function getOwner(){ return udbGet(getCurrentUserId(), 'owner', null); }
   function getPets(){
     const uid = getCurrentUserId();
     const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
     let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
     if (!Array.isArray(arr)) arr = [];
-    // dedupe suave por nombre+microchip+especie
     const seen = new Set(), out=[];
     arr.forEach(p=>{
       const key = `${nkey(p?.nombre)}|${nkey(p?.microchip)}|${nkey(p?.especie||p?.tipo||'')}`;
@@ -914,7 +979,6 @@
     return out;
   }
 
-  // ===== UI: modal selector =====
   function openPetPicker(){
     const pets = getPets();
     if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
@@ -952,14 +1016,12 @@
       const checks = list.querySelectorAll('.tpl-petpick:checked');
       if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
 
-      // Rellenar los inputs "Mascota_#" existentes
       const names = [];
       checks.forEach(ch=>{
         const p = pets[parseInt(ch.value,10)];
         if (p && p.nombre) names.push(norm(p.nombre));
       });
 
-      // Ajusta nº de mascotas si hace falta
       const numSel = document.getElementById('numPets');
       if (numSel){
         const n = Math.min(5, Math.max(1, names.length));
@@ -967,7 +1029,6 @@
         numSel.dispatchEvent(new Event('change', { bubbles:true }));
       }
 
-      // Volcar nombres en petName_#
       setTimeout(()=>{
         names.forEach((n, idx)=>{
           const inp = document.getElementById('petName_'+(idx+1));
@@ -979,9 +1040,7 @@
     };
   }
 
-  // ===== Build detalles a enviar (propietaria + mascotas) =====
   function buildOwnerDetail(){
-    // Preferimos lo que haya escrito en el form (si existe); si no, owner UDB
     const f = {
       nombre: norm(document.getElementById('firstName')?.value)+' '+norm(document.getElementById('lastName')?.value),
       telefono: norm(document.getElementById('phone')?.value),
@@ -1004,25 +1063,20 @@
       Preferencia_contacto: f.pref || fallback.contacto || '',
       Hora_preferida: f.hora || fallback.contactoHorario || ''
     };
-    // Texto plano compacto para plantillas
     const text = `Nombre: ${row.Nombre} | Teléfono: ${row.Telefono} | Email: ${row.Email} | Dirección: ${row.Direccion} | CP: ${row.CP} | CCAA: ${row.CCAA} | Preferencia: ${row.Preferencia_contacto || 'cualquiera'}${row.Hora_preferida ? ' | Hora: '+row.Hora_preferida : ''}`;
     return { row, text };
   }
 
   function buildPetsDetail(){
     const uid = getCurrentUserId();
-    const pets = getPets(); // del UDB
-    // Obtén nombres que el usuario finalmente va a reservar (inputs petName_#)
+    const pets = getPets();
     const inputs = Array.from(document.querySelectorAll('input[id^="petName_"]'));
     const wantNames = inputs.map(i=>nkey(i.value)).filter(Boolean);
-    // Si está vacío, intenta hidden ya calculado
     if (!wantNames.length){
       const raw = document.getElementById('petsListHidden')?.value || '';
       raw.split(',').forEach(x=>{ const k=nkey(x); if(k) wantNames.push(k); });
     }
-    // Emparejar por nombre normalizado
     const selected = pets.filter(p => wantNames.includes(nkey(p?.nombre))).slice(0, Math.max(1, wantNames.length||1));
-    // Formateos
     const toRow = (p)=>({
       Nombre: norm(p?.nombre),
       Especie: norm(p?.especie || p?.tipo),
@@ -1047,14 +1101,12 @@
     return { rows, text };
   }
 
-  // ===== Wire: botón abrir selector =====
   function attachPickerButton(){
     const btn = document.getElementById('tpl-open-petpicker');
     if (!btn) return;
     btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
   }
 
-  // ===== Antes de enviar: adjuntar detalle a los hidden =====
   function attachSubmitEnrichment(){
     const form = document.getElementById('bookingForm');
     if (!form) return;
@@ -1068,12 +1120,10 @@
         if (fOwner) fOwner.value = od.text;
         if (fPets)  fPets.value  = pd.text;
         if (fPetsJ) fPetsJ.value = JSON.stringify(pd.rows);
-        // Nota: tus listeners existentes (Firestore + EmailJS) ya tomarán estos campos
       }catch(err){ console.warn('[TPL reservas] enrich submit warn:', err); }
     }, { capture:true });
   }
 
-  // ===== Init =====
   function init(){
     attachPickerButton();
     attachSubmitEnrichment();
@@ -1081,4 +1131,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
- /* TPL: FIN BLOQUE NUEVO */
+/* TPL: FIN ARCHIVO - tpl-reservas.js */
