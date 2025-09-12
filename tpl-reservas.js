@@ -1,10 +1,14 @@
-/* TPL: INICIO BLOQUE NUEVO [reservas.js — v3 estable con auto-relleno + EmailJS + Firestore] */
+/* TPL: INICIO BLOQUE NUEVO [reservas.js — login robusto + auto-relleno + EmailJS + Firestore] */
 (function(){
   const $  = (s,c)=> (c||document).querySelector(s);
   const $$ = (s,c)=> Array.from((c||document).querySelectorAll(s));
   const t  = (id)=> (document.getElementById(id)?.value||'').trim();
   const st = (id)=> (document.getElementById(id)?.selectedOptions?.[0]?.text || document.getElementById(id)?.value || '').trim();
   const set = (id,v)=>{ const el=document.getElementById(id); if(el && v!=null && v!==''){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
+
+  // UA helpers para login Google
+  const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   function overlay(msg, href){
     let ov = $('#tpl-overlay');
@@ -39,15 +43,28 @@
       </div>
     `;
     const form=$('#tpl-inline-form'), msg=$('.tpl-login-msg',host);
-    $('#tpl-google-btn').addEventListener('click', async ()=>{
-      try{ await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
-      catch(e){ msg.textContent = e?.message || 'No se pudo iniciar con Google.'; }
-    });
+
+    // Email + pass
     form.addEventListener('submit', async (e)=>{
       e.preventDefault(); msg.textContent='Accediendo…';
-      try{ await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value); location.reload(); }
-      catch(e){ msg.textContent=e?.message||'No se pudo iniciar sesión.'; }
+      try{
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value);
+        location.reload();
+      }catch(e){ msg.textContent=e?.message||'No se pudo iniciar sesión.'; }
     });
+
+    // Google (popup o redirect según iOS/Safari)
+    $('#tpl-google-btn').addEventListener('click', async ()=>{
+      try{
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        const provider = new firebase.auth.GoogleAuthProvider();
+        if (isIOS || isSafari) { await firebase.auth().signInWithRedirect(provider); }
+        else { await firebase.auth().signInWithPopup(provider); }
+      }catch(e){ msg.textContent = e?.message || 'No se pudo iniciar con Google.'; }
+    });
+
+    // Reset
     $('#tpl-reset').addEventListener('click', async ()=>{
       const email=form.email.value.trim(); if(!email){ msg.textContent='Escribe tu email arriba.'; return; }
       try{ await firebase.auth().sendPasswordResetEmail(email); msg.textContent='Te enviamos un enlace para restablecer.'; }
@@ -201,7 +218,7 @@
   }
 
   // -------- Arranque --------
-  document.addEventListener('DOMContentLoaded', ()=>{
+  document.addEventListener('DOMContentLoaded', async ()=>{
     const wall=document.getElementById('tpl-auth-wall'), form=document.getElementById('bookingForm');
 
     // Recalcular en cambios
@@ -213,7 +230,16 @@
       wall?.classList.remove('tpl-hide'); form?.classList.add('tpl-hide'); renderInlineLogin(); return;
     }
 
-    firebase.auth().onAuthStateChanged(async (user)=>{
+    // Persistencia LOCAL garantizada
+    try{ await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(_){}
+
+    const auth = firebase.auth();
+
+    // Si venimos de Google Redirect, recoge el resultado (Safari/iOS)
+    try{ await auth.getRedirectResult(); }catch(_){}
+
+    auth.onAuthStateChanged(async (user)=>{
+      console.log('TPL: auth state @reserva →', user?.email || 'no logueado');
       if(user){
         wall?.classList.add('tpl-hide'); form?.classList.remove('tpl-hide');
         try{
