@@ -96,6 +96,330 @@
     <!-- TPL: FIN BLOQUE NUEVO -->
   </style>
 </head>
+  <!-- TPL: INICIO BLOQUE NUEVO [Diagnóstico en vivo RESERVAS] -->
+<script>
+(function(){
+  if (window.__TPL_DIAG_RESERVAS__) return; window.__TPL_DIAG_RESERVAS__ = true;
+
+  const css = `
+  #tpl-rdiag-toggle{position:fixed;right:12px;bottom:12px;z-index:99999;background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;font-weight:700;box-shadow:0 4px 16px rgba(0,0,0,.2);cursor:pointer}
+  #tpl-rdiag{position:fixed;right:12px;bottom:60px;z-index:99999;background:#fff;border:1px solid #e7e7e7;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);width:min(420px,calc(100vw - 24px));max-height:60vh;display:none;overflow:auto}
+  #tpl-rdiag.on{display:block}
+  #tpl-rdiag .hd{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid #eee}
+  #tpl-rdiag .hd strong{color:#58425a}
+  #tpl-rdiag .bd{padding:10px 12px;display:grid;gap:10px}
+  .tpl-kv{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:.95rem}
+  .tpl-kv b{color:#666}
+  .tpl-ok{color:#1b8c59;font-weight:700}
+  .tpl-bad{color:#b00020;font-weight:700}
+  .tpl-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tpl-actions button{border:1px solid #ddd;border-radius:10px;padding:8px 10px;background:#fff;cursor:pointer}
+  .tpl-log{font-family:ui-monospace,Consolas,monospace;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:8px;max-height:160px;overflow:auto;font-size:.85rem}
+  `;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+  const toggle = document.createElement('button');
+  toggle.id = 'tpl-rdiag-toggle';
+  toggle.type = 'button';
+  toggle.textContent = 'Diagnóstico reservas';
+  document.body.appendChild(toggle);
+
+  const panel = document.createElement('div');
+  panel.id = 'tpl-rdiag';
+  panel.innerHTML = `
+    <div class="hd"><strong>Diagnóstico · Reservas</strong><button type="button" id="tpl-rdiag-close">✕</button></div>
+    <div class="bd">
+      <div class="tpl-kv">
+        <b>Firebase cargado:</b><span id="r-fb">—</span>
+        <b>App inicializada:</b><span id="r-app">—</span>
+        <b>Auth disponible:</b><span id="r-auth">—</span>
+        <b>Usuario logueado:</b><span id="r-user">—</span>
+        <b>Firestore disponible:</b><span id="r-fs">—</span>
+        <b>EmailJS cargado:</b><span id="r-ejs">—</span>
+        <b>Cfg EmailJS (service/template/key):</b><span id="r-ejscfg">—</span>
+      </div>
+      <div class="tpl-actions">
+        <button id="r-test-fs">Probar Firestore</button>
+        <button id="r-test-ejs">Probar EmailJS</button>
+        <button id="r-test-google">Probar Login Google</button>
+        <button id="r-signout">Cerrar sesión</button>
+      </div>
+      <div class="tpl-log" id="r-log"></div>
+      <p style="margin:0;color:#666;font-size:.85rem">⚠️ Si algo sale en rojo, suele ser: <u>dominio no autorizado</u> (Firebase Auth o EmailJS) o <u>falta configurar service/template/publicKey</u>.</p>
+    </div>`;
+  document.body.appendChild(panel);
+
+  const $ = (id)=> document.getElementById(id);
+  const logBox = $('r-log');
+  function log(msg){ const t = `[${new Date().toLocaleTimeString()}] ${msg}\n`; logBox.textContent = t + logBox.textContent; }
+  function mark(id, ok, extra){
+    const el = $(id);
+    if (!el) return;
+    if (ok === true) el.innerHTML = '<span class="tpl-ok">OK</span>' + (extra?` — ${extra}`:'');
+    else if (ok === false) el.innerHTML = '<span class="tpl-bad">ERROR</span>' + (extra?` — ${extra}`:'');
+    else el.textContent = extra || '—';
+  }
+
+  toggle.onclick = ()=> panel.classList.toggle('on');
+  $('tpl-rdiag-close').onclick = ()=> panel.classList.remove('on');
+
+  function baseChecks(){
+    const fb = typeof firebase !== 'undefined';
+    mark('r-fb', fb);
+    mark('r-app', fb ? (firebase.apps.length>0) : false, fb?`apps=${firebase.apps.length}`:'firebase undef');
+    mark('r-auth', fb ? !!firebase.auth : false);
+    mark('r-fs',   fb ? !!firebase.firestore : false);
+    const ejs = !!window.emailjs;
+    mark('r-ejs', ejs);
+    const cfg = window.TPL_EMAILJS || {};
+    const hasCfg = !!(cfg.serviceId || cfg.service) && !!(cfg.templateId || (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.template) && !!(cfg.publicKey || cfg.userId);
+    mark('r-ejscfg', ejs ? hasCfg : false, ejs ? (hasCfg ? 'config detectada' : 'falta service/template/publicKey') : 'SDK no cargado');
+    if (!fb) log('Firebase no cargado en esta página.');
+    if (fb && firebase.apps.length===0) log('Firebase cargado pero no inicializado (falta initializeApp).');
+    if (!ejs) log('EmailJS no cargado (revisa el script CDN).');
+    if (ejs && !hasCfg) log('EmailJS sin configuración (añade serviceId, templateId y publicKey en window.TPL_EMAILJS).');
+  }
+  async function checkUser(){
+    try{
+      if (!firebase || !firebase.auth){ mark('r-user', false, 'auth no disponible'); return; }
+      const u = firebase.auth().currentUser;
+      if (u){ mark('r-user', true, u.email || u.uid); }
+      else { mark('r-user', false, 'no logueado'); }
+    }catch(e){ mark('r-user', false, e.code||e.message||'error'); }
+  }
+
+  $('r-test-fs').onclick = async ()=>{
+    try{
+      if (!firebase || !firebase.firestore) throw new Error('firestore-no-disponible');
+      const db = firebase.firestore();
+      const ref = await db.collection('tpl_tests').add({ kind:'reserva', at:new Date().toISOString(), page:location.href });
+      log('Firestore OK. Doc id: '+(ref && ref.id));
+    }catch(e){
+      log('Firestore ERROR: '+(e.message||e.code||e));
+      if (String(e).includes('Missing or insufficient permissions') || String(e).includes('permission-denied')) log('⚠️ Reglas Firestore bloquean escritura. Revisa reglas para colecciones "reservas" y "tpl_tests".');
+    }
+  };
+
+  $('r-test-ejs').onclick = async ()=>{
+    try{
+      const cfg = window.TPL_EMAILJS || {};
+      const SERVICE = cfg.serviceId || cfg.service;
+      const TEMPLATE = cfg.templateId || (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.template;
+      const USER = cfg.publicKey || cfg.userId;
+      if (!window.emailjs) throw new Error('EmailJS SDK no cargado');
+      if (!SERVICE || !TEMPLATE || !USER) throw new Error('Falta serviceId/templateId/publicKey en window.TPL_EMAILJS');
+      await emailjs.send(SERVICE, TEMPLATE, {
+        _tipo:'test-reserva', _page:location.href, to_email:(cfg.admin||cfg.adminEmail||'gestion@thepetslovers.es'), subject:'TEST EmailJS RESERVAS', message:'Prueba desde diagnóstico'
+      }, USER);
+      log('EmailJS OK (test enviado).');
+    }catch(e){
+      log('EmailJS ERROR: '+(e.text||e.message||e));
+      if (String(e).toLowerCase().includes('origin')) log('⚠️ Añade tu dominio en EmailJS → Account → Domains (https://www.thepetslovers.es y https://thepetslovers.es).');
+    }
+  };
+
+  $('r-test-google').onclick = async ()=>{
+    try{
+      if (!firebase || !firebase.auth) throw new Error('auth-no-disponible');
+      const auth = firebase.auth();
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+      log('Login Google: disparado (si falla, mira consola).');
+    }catch(e){
+      log('Google Login ERROR: '+(e.code||e.message||e));
+      if (String(e.code).includes('auth/unauthorized-domain')) log('⚠️ Añade tu dominio en Firebase Auth → Dominios autorizados.');
+      if (String(e.code).includes('auth/popup')) log('ℹ️ Popup bloqueado/cerrado: prueba con redirect.');
+    } finally { checkUser(); }
+  };
+
+  $('r-signout').onclick = async ()=>{
+    try{ if (firebase && firebase.auth) await firebase.auth().signOut(); log('Sesión cerrada.'); }
+    catch(e){ log('SignOut ERROR: '+(e.message||e)); }
+    checkUser();
+  };
+
+  baseChecks(); checkUser();
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- TPL: INICIO BLOQUE NUEVO [RESERVAS: handler v3 opcional] -->
+<script>
+(function(){
+  if (window.__TPL_RESERVAS_V3__) return; window.__TPL_RESERVAS_V3__ = true;
+
+  function form(){ 
+    return document.querySelector('form#bookingForm[data-tpl-type="reserva"], form#bookingForm[data-tpl-handler="v3"], form[data-tpl-handler="v3"]') 
+           || null; 
+  }
+  function msgBox(f){
+    let box = f.querySelector('#tpl-booking-msg');
+    if (!box){ box = document.createElement('div'); box.id='tpl-booking-msg'; box.style.cssText='margin-top:10px;color:#58425a;font-weight:600'; f.appendChild(box); }
+    return box;
+  }
+  function say(f, text, type){ const b = msgBox(f); b.textContent = text; b.style.color = (type==='ok')?'#1b8c59':(type==='error'?'#b00020':'#58425a'); }
+  function t(el){ return (el && el.textContent || '').replace('—','0').trim(); }
+  function v(el){ return (el && el.value || '').trim(); }
+  function optTxt(sel){ return (sel && sel.selectedOptions && sel.selectedOptions[0] && sel.selectedOptions[0].text) || (sel && sel.value) || ''; }
+
+  async function saveFirestore(payload){
+    try{
+      if (!firebase || !firebase.firestore) return false;
+      const db = firebase.firestore();
+      if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const auth = firebase.auth ? firebase.auth() : null;
+      const u = auth && auth.currentUser ? auth.currentUser : null;
+      if (u){ payload._uid = u.uid; payload._email = u.email || null; }
+      const ref = await db.collection('reservas').add(payload);
+      return !!ref && !!ref.id;
+    }catch(e){ console.warn('Firestore reservas error:', e); return false; }
+  }
+
+  async function sendEmailJS(payload){
+    const cfg = window.TPL_EMAILJS || {};
+    if (!window.emailjs) throw new Error('EmailJS SDK no cargado');
+    const SERVICE  = cfg.serviceId || cfg.service;
+    const TEMPLATE = cfg.templateId || (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.template;
+    const USER     = cfg.publicKey || cfg.userId;
+    if (!SERVICE || !TEMPLATE || !USER) throw new Error('Falta serviceId/templateId/publicKey en window.TPL_EMAILJS');
+
+    const adminTo = cfg.admin || cfg.adminEmail || 'gestion@thepetslovers.es';
+    const payloadAdmin = { ...payload, to_email: payload.to_email || adminTo };
+    await emailjs.send(SERVICE, TEMPLATE, payloadAdmin, USER);
+
+    if ((payload.owner_email||'').includes('@')){
+      const copy = { ...payload, to_email: payload.owner_email, reply_to: payload.owner_email };
+      await emailjs.send(SERVICE, TEMPLATE, copy, USER);
+    }
+    return true;
+  }
+
+  function ensureOverlay(msg, href){
+    var wrap = document.getElementById('tpl-overlay');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.id='tpl-overlay';
+      wrap.className='tpl-overlay on';
+      wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button></div>';
+      document.body.appendChild(wrap);
+    }
+    wrap.querySelector('p').textContent = msg || 'Tu reserva se ha enviado correctamente.';
+    wrap.classList.add('on');
+    wrap.querySelector('#tpl-ov-accept').onclick = ()=>{ location.href = href || 'perfil.html'; };
+  }
+
+  function attach(){
+    const f = form();
+    if (!f) return;
+
+    // 🔒 Solo activamos si el formulario lleva data-tpl-handler="v3" (tu confirmación explícita)
+    const enabled = f.hasAttribute('data-tpl-handler') && f.getAttribute('data-tpl-handler') === 'v3';
+    if (!enabled) return;
+
+    // Nos adelantamos a otros listeners, pero no tocamos tu diseño
+    f.addEventListener('submit', async function(ev){
+      ev.preventDefault(); ev.stopImmediatePropagation();
+
+      // Validación mínima
+      const required = ['service','startDate','endDate','start','end','region','firstName','lastName'];
+      for (const id of required){
+        const el = document.getElementById(id);
+        if (el && !el.value){ el.focus(); say(f, 'Falta: ' + (el.previousElementSibling?.innerText || id), 'error'); return; }
+      }
+
+      const btn = f.querySelector('button[type="submit"]'); const oldText = btn && btn.textContent;
+      if (btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
+      say(f, 'Enviando…', 'info');
+
+      // Construimos payload desde tu DOM actual
+      const payload = {
+        _tipo: 'reserva',
+        _estado: 'enviada',
+        _page: location.href,
+
+        servicio:          optTxt(document.getElementById('service')),
+        servicio_val:      v(document.getElementById('service')),
+        fecha_inicio:      v(document.getElementById('startDate')),
+        fecha_fin:         v(document.getElementById('endDate')),
+        hora_inicio:       v(document.getElementById('start')),
+        hora_fin:          v(document.getElementById('end')),
+
+        tipo_animal:       v(document.getElementById('species')),
+        cachorro:          (document.getElementById('isPuppy')?.value || 'no'),
+
+        n_mascotas:        (document.getElementById('numPets')?.value || '1'),
+        n_mascotas_exactas:(document.getElementById('numPetsExact')?.value || ''),
+        mascotas:          (document.getElementById('petsListHidden')?.value || '').trim(),
+
+        owner_nombre_only: v(document.getElementById('firstName')),
+        owner_apellidos:   v(document.getElementById('lastName')),
+        owner_nombre:      `${v(document.getElementById('firstName'))} ${v(document.getElementById('lastName'))}`.trim(),
+        owner_email:       v(document.getElementById('email')),
+        owner_telefono:    v(document.getElementById('phone')),
+        owner_direccion:   v(document.getElementById('location')),
+        owner_cp:          v(document.getElementById('postalCode')),
+        owner_ccaa:        optTxt(document.getElementById('region')),
+
+        preferencia_contacto: (new FormData(f).get('Preferencia_contacto') || 'cualquiera'),
+        hora_preferida_contacto: v(document.getElementById('contactTime')),
+
+        visitas_duracion:  v(document.getElementById('visitDuration')),
+        visitas_diarias:   v(document.getElementById('visitDaily')),
+        desplazamiento:    v(document.getElementById('needTravel')),
+        notas:             v(document.getElementById('notes')),
+
+        sum_base:      t(document.getElementById('sumBase')),
+        sum_visit1:    t(document.getElementById('sumVisit1')),
+        sum_visit2:    t(document.getElementById('sumVisit2')),
+        sum_pets:      t(document.getElementById('sumPets')),
+        sum_festivo:   t(document.getElementById('sumFestivo')),
+        sum_senalado:  t(document.getElementById('sumSenalado')),
+        sum_bono:      t(document.getElementById('sumBono')),
+        subtotal:      t(document.getElementById('sumSubtotal')),
+        deposito:      t(document.getElementById('sumDeposit')),
+        resumen:       v(document.getElementById('summaryField')),
+
+        reserva_id:    `R-${Date.now().toString(36)}-${Math.floor(Math.random()*1e4).toString().padStart(4,'0')}`
+      };
+
+      // Guardado Firestore (best-effort)
+      let fsOK = false;
+      try{ fsOK = await saveFirestore({...payload,
+        Servicio: payload.servicio, Fecha_inicio: payload.fecha_inicio, Fecha_fin: payload.fecha_fin,
+        Hora_inicio: payload.hora_inicio, Hora_fin: payload.hora_fin, Mascotas_lista: payload.mascotas
+      }); }catch(_){}
+
+      // EmailJS
+      let mailOK = false, mailErr=null;
+      try{ mailOK = await sendEmailJS(payload); }catch(e){ mailErr = e; }
+
+      // Mensaje final
+      if (!mailOK){
+        say(f, 'No se pudo enviar el email de reserva. Abre “Diagnóstico reservas” y pulsa “Probar EmailJS”.', 'error');
+        console.warn('EmailJS reservas error:', mailErr);
+      } else {
+        say(f, '¡Reserva enviada! Te hemos mandado una copia por email.', 'ok');
+      }
+
+      // Overlay + redirección
+      ensureOverlay(f.dataset.tplSuccess || 'Tu reserva se ha enviado correctamente.', f.dataset.tplRedirect || 'perfil.html');
+
+      // Snapshot local para tu panel
+      try{
+        const uid = localStorage.getItem('tpl.currentUser') || localStorage.getItem('tpl_auth_uid') || 'default';
+        localStorage.setItem(`tpl.udb.${uid}.lastReservation`, JSON.stringify({
+          Servicio: payload.servicio, Fecha_inicio: payload.fecha_inicio, Fecha_fin: payload.fecha_fin, _estado:'enviada', Mascotas_lista: payload.mascotas
+        }));
+      }catch(_){}
+
+      if (btn){ btn.disabled = false; btn.textContent = oldText; }
+    }, true); // capture=true
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
+  else attach();
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 <body>
 
   <!-- Navbar (inyectada) -->
