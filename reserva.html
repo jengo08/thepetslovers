@@ -81,6 +81,19 @@
     .tpl-overlay.on{ display:flex; }
     .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
     .tpl-modal p{ margin:0 0 12px; }
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Estilos selector de mascotas] -->
+    .tpl-petpicker-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
+    .tpl-petpicker-overlay.on{ display:flex; }
+    .tpl-petpicker{ background:#fff; padding:16px; border-radius:12px; max-width:560px; width:92%; box-shadow:0 8px 30px rgba(0,0,0,.18); }
+    .tpl-petpicker h3{ margin:0 0 8px; color:#58425a; font-size:1.05rem; }
+    .tpl-petpicker-list{ max-height:260px; overflow:auto; border:1px solid #eee; border-radius:10px; padding:8px; }
+    .tpl-pet-item{ display:flex; align-items:center; gap:10px; padding:8px 6px; border-bottom:1px dashed #eee; }
+    .tpl-pet-item:last-child{ border-bottom:none; }
+    .tpl-pet-name{ font-weight:700; color:#58425a; }
+    .tpl-pet-meta{ color:#666; font-size:.9rem; }
+    .tpl-petpicker-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:10px; }
+    <!-- TPL: FIN BLOQUE NUEVO -->
   </style>
 </head>
 <body>
@@ -576,7 +589,7 @@
 
     async function autoContactFromProfile(u){
       try{
-        // 1) Firebase profile (si existe)
+        // Firebase profile
         if(u && typeof firebase !== 'undefined'){
           const db = firebase.firestore();
           const doc = await db.collection('users').doc(u.uid).get();
@@ -594,7 +607,7 @@
             }
           }
         }
-        // 2) Fallback local (udb) si falta algo
+        // fallback local
         const fb = getOwnerLocal() || {};
         els.firstName.value = els.firstName.value || fb.nombre || '';
         els.lastName.value  = els.lastName.value  || fb.apellidos || '';
@@ -609,12 +622,12 @@
       }catch(_){}
     }
 
-    // ======= Datalist nombres mascotas (perfil Firestore si existe) =======
-    let PROFILE_PET_NAMES = [];
+    // ======= Datalist + Selector de mascotas =======
+    let PROFILE_PETS = []; // {id,nombre,raza,edad,tamano,peso,birthdate,...}
     function fillPetDatalist(){
       if(!els.petNamesList) return;
-      els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
-        .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
+      const names = PROFILE_PETS.map(p => (p?.nombre||'').trim()).filter(Boolean);
+      els.petNamesList.innerHTML = names.map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
     }
 
     function renderPetNameFields(n){
@@ -639,6 +652,88 @@
       const names = [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].map(i=>i.value.trim()).filter(Boolean);
       els.petsListHidden.value = names.join(', ');
     }
+
+    // <!-- TPL: INICIO BLOQUE NUEVO [UI Selector de mascotas] -->
+    (function setupPetPicker(){
+      const btn = document.getElementById('tpl-open-petpicker');
+      if(!btn) return;
+      let overlay;
+      function ensureOverlay(){
+        if (overlay) return overlay;
+        overlay = document.createElement('div');
+        overlay.className = 'tpl-petpicker-overlay';
+        overlay.innerHTML = `
+          <div class="tpl-petpicker" role="dialog" aria-label="Selecciona mascotas">
+            <h3>Elige tus mascotas</h3>
+            <div class="tpl-petpicker-list" id="tpl-petpicker-list"></div>
+            <div class="tpl-petpicker-actions">
+              <button type="button" class="tpl-btn-outline" id="tpl-petpicker-cancel">Cancelar</button>
+              <button type="button" class="tpl-btn" id="tpl-petpicker-apply">Aplicar</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.classList.remove('on'); });
+        overlay.querySelector('#tpl-petpicker-cancel').addEventListener('click', ()=> overlay.classList.remove('on'));
+        overlay.querySelector('#tpl-petpicker-apply').addEventListener('click', ()=>{
+          const checks = overlay.querySelectorAll('input[type="checkbox"]:checked');
+          const names = [...checks].map(c=>c.dataset.name).filter(Boolean);
+          if (!names.length && PROFILE_PETS.length===1){
+            names.push(PROFILE_PETS[0].nombre);
+          }
+          if (names.length){
+            // Ajusta nº mascotas según selección
+            if (names.length >= 6){ els.numPets.value = '6+'; els.numPetsExact.value = names.length; }
+            else { els.numPets.value = String(names.length); }
+            renderPetNameFields(getNumMascotas());
+            // Volcar nombres
+            [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].forEach((inp, i)=>{ inp.value = names[i] || ''; });
+            updatePetsListHidden();
+          }
+          overlay.classList.remove('on');
+        });
+        return overlay;
+      }
+      function renderList(){
+        const host = ensureOverlay().querySelector('#tpl-petpicker-list');
+        if(!host) return;
+        if(!PROFILE_PETS.length){
+          host.innerHTML = `<div class="tpl-pet-item">No encontramos mascotas guardadas en tu perfil.</div>`;
+          return;
+        }
+        host.innerHTML = PROFILE_PETS.map((p,idx)=>{
+          const meta = [
+            p.especie || p.species || '',
+            p.raza || '',
+            p.edad ? `${p.edad} años` : '',
+            p.tamano || p.tamaño || '',
+            p.peso ? `${p.peso} kg` : ''
+          ].filter(Boolean).join(' · ');
+          const n = (p.nombre || `Mascota ${idx+1}`).replace(/"/g,'&quot;');
+          return `
+            <label class="tpl-pet-item">
+              <input type="checkbox" data-name="${n}">
+              <span class="tpl-pet-name">${n}</span>
+              <span class="tpl-pet-meta">${meta}</span>
+            </label>
+          `;
+        }).join('');
+      }
+      btn.addEventListener('click', ()=>{
+        renderList();
+        ensureOverlay().classList.add('on');
+      });
+      // Autoselección si solo hay 1
+      document.addEventListener('tpl-pets-ready', ()=>{
+        if (PROFILE_PETS.length === 1){
+          els.numPets.value = '1';
+          renderPetNameFields(1);
+          const input = document.getElementById('petName_1');
+          if (input){ input.value = PROFILE_PETS[0].nombre || ''; updatePetsListHidden(); }
+        }
+      });
+    })();
+    // <!-- TPL: FIN BLOQUE NUEVO -->
 
     function travelSync(){
       if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
@@ -689,7 +784,7 @@
           const parsed = JSON.parse(raw);
           if(parsed?.t && Date.now() - parsed.t <= 24*3600*1000){
             const nacional = new Set(parsed.d || []);
-            const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
+            const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k,[...arr]]).map(([k,arr])=>[k,new Set(arr)]));
             const cached = {nacional, porCcaa, _src:'localStorage'};
             _festivosCache.set(year, cached); return cached;
           }
@@ -861,7 +956,7 @@
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Auto-cachorro (si hay mascota con <6m en perfil)
+    // Auto-cachorro desde perfil
     async function autoPuppyFromProfile(){
       try{
         if(typeof firebase === 'undefined') return;
@@ -887,7 +982,7 @@
       }catch(_){}
     }
 
-    // Prefill propietario al cargar
+    // Prefill propietario + carga mascotas
     if (typeof firebase !== 'undefined') {
       const auth = firebase.auth();
       function updateAuthUI(user){
@@ -896,10 +991,22 @@
         if (wall) wall.style.display = logged ? 'none' : 'block';
         autoContactFromProfile(user);
         if (logged) autoPuppyFromProfile();
+
+        // Cargar mascotas del perfil
+        (async ()=>{
+          try{
+            if (!logged) return;
+            const db = firebase.firestore();
+            const petsSnap = await db.collection('users').doc(user.uid).collection('mascotas').get();
+            PROFILE_PETS = petsSnap.docs.map(d=>({ id:d.id, ...d.data() }));
+            fillPetDatalist();
+            document.dispatchEvent(new CustomEvent('tpl-pets-ready'));
+          }catch(_){}
+        })();
       }
       auth.onAuthStateChanged(updateAuthUI);
     } else {
-      // sin Firebase, al menos el fallback local
+      // sin Firebase, fallback local
       autoContactFromProfile(null);
     }
 
@@ -917,8 +1024,7 @@
     }
 
     // ========= Antes de enviar: resumen (para el correo) =========
-    form.addEventListener('submit', async (e)=>{
-      if(!validateContactPreference(e)) return;
+    function buildSummaryLines(){
       const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
       let petsVal = els.numPets?.value || '1';
       if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
@@ -950,7 +1056,12 @@
       }
       lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
       lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
-      document.getElementById('summaryField').value = lines.join(' | ');
+      return lines;
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      if(!validateContactPreference(e)) return;
+      els.summaryField.value = buildSummaryLines().join(' | ');
     });
 
     // Hooks
@@ -959,18 +1070,6 @@
     els.needTravel && els.needTravel.addEventListener('change', travelSync);
     travelSync();
 
-    // ====== Datalist con mascotas desde Firestore (nombres) ======
-    (async function fillNamesFromFirestore(){
-      try{
-        if(typeof firebase === 'undefined') return;
-        const auth = firebase.auth(), db = firebase.firestore();
-        const u = auth.currentUser;
-        if(!u) return;
-        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-        PROFILE_PET_NAMES = petsSnap.docs.map(x=> (x.data()?.nombre || '').trim()).filter(Boolean);
-        fillPetDatalist();
-      }catch(_){}
-    })();
   });
   </script>
 
@@ -1043,9 +1142,9 @@
   <script>
     // OPCIONAL: déjalo vacío si ya configuras window.TPL_EMAILJS en otro sitio
     window.TPL_EMAILJS = window.TPL_EMAILJS || {
-      // serviceId: 'service_odjqrfl',
-      // templateId: 'template_rao5n0c',
-      // publicKey:  'L2xAATfVuHJwj4EIV'
+      // serviceId: 'TU_SERVICE_ID',
+      // templateId: 'TU_TEMPLATE_ID',
+      // publicKey:  'TU_PUBLIC_KEY'
     };
     (function(){
       const cfg = window.TPL_EMAILJS || {};
@@ -1199,285 +1298,8 @@
         return false;
       }
 
+      // (Este bloque mantiene compatibilidad, pero la lógica real de submit la gestiona el "Hotfix" de abajo)
       document.addEventListener('DOMContentLoaded', function () {
         var form = document.getElementById('bookingForm');
         if (!form) return;
-
-        form.addEventListener('submit', async function (e) {
-          e.preventDefault();
-
-          const fd = new FormData(form);
-
-        <!-- TPL: INICIO BLOQUE NUEVO [Reserva · continuación “Datos bonitos → envío”] -->
-          const owner_cp          = (document.getElementById('postalCode')?.value || '').trim();
-          const owner_ccaa        = regionText;
-
-          const mascotas              = (document.getElementById('petsListHidden')?.value || '').trim();
-          const mascotas_detalle      = (document.getElementById('petsDetail')?.value || '').trim();
-          const mascotas_detalle_json = (document.getElementById('petsDetailJson')?.value || '');
-
-          const fecha_inicio = (document.getElementById('startDate')?.value || '').trim();
-          const fecha_fin    = (document.getElementById('endDate')?.value || '').trim();
-          const hora_inicio  = (document.getElementById('start')?.value || '').trim();
-          const hora_fin     = (document.getElementById('end')?.value || '').trim();
-
-          const subtotal = (document.getElementById('sumSubtotal')?.textContent || '0').replace('—','0').trim();
-          const deposito = (document.getElementById('sumDeposit')?.textContent || '0').replace('—','0').trim();
-          const resumen  = (document.getElementById('summaryField')?.value || '').trim();
-
-          // Estado inicial
-          const _estado = 'enviada';
-
-          // Guardar en Firestore (si está disponible) y obtener ID para reserva_id
-          let reserva_id = `R-${Date.now().toString(36)}-${Math.floor(Math.random()*1e4).toString().padStart(4,'0')}`;
-          try {
-            if (typeof firebase !== 'undefined' && firebase.firestore) {
-              var db   = firebase.firestore();
-              var auth = firebase.auth ? firebase.auth() : null;
-              var u    = auth && auth.currentUser ? auth.currentUser : null;
-
-              var payload = {};
-              fd.forEach(function (v, k) { payload[k] = v; });
-              payload._page = location.href;
-              payload._estado = _estado;
-              if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-              if (u) { payload._uid = u.uid; payload._email = u.email || null; }
-
-              // Alias útiles para el perfil/panel
-              payload.Mascotas_lista = mascotas;
-              payload.Servicio_texto = svcText;
-
-              const docRef = await db.collection('reservas').add(payload);
-              if (docRef && docRef.id) reserva_id = docRef.id;
-
-              // Snapshot local (para mostrar en perfil)
-              saveLastReservationLocally({
-                Servicio: svcText,
-                Fecha_inicio: fecha_inicio,
-                Fecha_fin: fecha_fin,
-                _estado,
-                Mascotas_lista: mascotas
-              });
-
-              console.log('TPL: reserva guardada en Firestore', reserva_id);
-            }
-          } catch (err) {
-            console.warn('TPL: no se pudo guardar la reserva en Firestore', err);
-          }
-
-          // Envío EmailJS con todas las variables que tu template necesita
-          const extraForEmail = {
-            _page: location.href,
-            _tipo: 'reserva',
-            _estado,
-
-            // Dueña
-            owner_nombre,
-            owner_nombre_only,
-            owner_apellidos,
-            owner_email,
-            owner_telefono,
-            owner_direccion,
-            owner_cp,
-            owner_ccaa,
-
-            // Mascotas
-            mascotas,
-            mascotas_detalle,
-            mascotas_detalle_json,
-
-            // Reserva
-            servicio: svcText,
-            fecha_inicio,
-            fecha_fin,
-            hora_inicio,
-            hora_fin,
-            subtotal,
-            deposito,
-            resumen,
-            reserva_id
-          };
-
-          try {
-            await tryEmailJS(fd, extraForEmail);
-          } catch(_){}
-
-          // Éxito visual + redirección a perfil
-          showSuccessOverlay(form);
-        }, {passive:false});
-      });
-    })();
-<!-- TPL: FIN BLOQUE NUEVO -->
-<!-- TPL: INICIO BLOQUE NUEVO [Hotfix submit robusto reservas] -->
-<script>
-(function(){
-  if (window.__TPL_BOOKING_SAFE_SUBMIT__) return;
-  window.__TPL_BOOKING_SAFE_SUBMIT__ = true;
-
-  const CONFIG = {
-    // ⚠️ CAMBIA ESTO por tu correo de gestión (el que debe recibir todas las reservas)
-    ADMIN_EMAIL: 'gestion@thepetslovers.es'
-  };
-
-  function el(id){ return document.getElementById(id); }
-  function getText(sel){ return sel?.selectedOptions?.[0]?.text || sel?.value || ''; }
-  function val(id){ return (el(id)?.value || '').trim(); }
-  function currencyText(id){ return (el(id)?.textContent || '0').replace('—','0').trim(); }
-
-  function buildParams(){
-    const regionSel = el('region');
-    return {
-      _page: location.href,
-      _tipo: 'reserva',
-      _estado: 'enviada',
-
-      owner_nombre_only: val('firstName'),
-      owner_apellidos:   val('lastName'),
-      owner_nombre:      `${val('firstName')} ${val('lastName')}`.trim(),
-      owner_email:       val('email'),
-      owner_telefono:    val('phone'),
-      owner_direccion:   val('location'),
-      owner_cp:          val('postalCode'),
-      owner_ccaa:        regionSel ? getText(regionSel) : '',
-
-      mascotas:              (el('petsListHidden')?.value || '').trim(),
-      mascotas_detalle:      (el('petsDetail')?.value || '').trim(),
-      mascotas_detalle_json: (el('petsDetailJson')?.value || '[]'),
-
-      servicio:     getText(el('service')),
-      fecha_inicio: val('startDate'),
-      fecha_fin:    val('endDate'),
-      hora_inicio:  val('start'),
-      hora_fin:     val('end'),
-
-      subtotal: currencyText('sumSubtotal'),
-      deposito: currencyText('sumDeposit'),
-      resumen:  (el('summaryField')?.value || '').trim(),
-      reserva_id: `R-${Date.now().toString(36)}-${Math.floor(Math.random()*1e4).toString().padStart(4,'0')}`,
-      to_email: (document.querySelector('input[name="to_email"]')?.value || CONFIG.ADMIN_EMAIL || '')
-    };
-  }
-
-  async function sendEmails(params){
-    if (!window.emailjs) return {admin:false, owner:false, err:'EmailJS no está cargado'};
-    const SERVICE = (window.TPL_EMAILJS?.serviceId) || 'service_odjqrfl';
-    const TEMPLATE = (window.TPL_EMAILJS?.templates?.reserva) || 'template_rao5n0c';
-    const USER     = (window.TPL_EMAILJS?.publicKey) || 'L2xAATfVuHJwj4EIV';
-
-    let adminOk=false, ownerOk=false, lastErr=null;
-
-    try{
-      if (params.to_email){ await emailjs.send(SERVICE, TEMPLATE, params, USER); adminOk = true; }
-    }catch(e){ lastErr = e; }
-
-    try{
-      if ((params.owner_email||'').includes('@')){
-        const p2 = {...params, to_email: params.owner_email, reply_to: params.owner_email};
-        await emailjs.send(SERVICE, TEMPLATE, p2, USER);
-        ownerOk = true;
-      }
-    }catch(e){ lastErr = e; }
-
-    return {admin:adminOk, owner:ownerOk, err:lastErr};
-  }
-
-  async function saveFirestoreShadow(params){
-    try{
-      if (typeof firebase==='undefined' || !firebase.firestore) return false;
-      const db = firebase.firestore();
-      const auth = firebase.auth ? firebase.auth() : null;
-      const u = auth && auth.currentUser ? auth.currentUser : null;
-
-      const payload = {...params};
-      payload.Servicio = params.servicio;
-      payload.Fecha_inicio = params.fecha_inicio;
-      payload.Fecha_fin = params.fecha_fin;
-      payload.Hora_inicio = params.hora_inicio;
-      payload.Hora_fin = params.hora_fin;
-      payload.Mascotas_lista = params.mascotas;
-
-      payload._page = params._page;
-      payload._estado = params._estado;
-      if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      if (u) { payload._uid = u.uid; payload._email = u.email || null; }
-
-      const ref = await db.collection('reservas').add(payload);
-      return !!ref?.id;
-    }catch(_){ return false; }
-  }
-
-  function showOk(){
-    const form = document.getElementById('bookingForm');
-    try{ showSuccessOverlay(form); }
-    catch(_){
-      alert('¡Reserva enviada! Te contactaremos pronto.');
-      location.href = form?.dataset?.tplRedirect || 'perfil.html';
-    }
-  }
-
-  function showDiag(msg){
-    let bar = document.getElementById('tpl-diag-bar');
-    if(!bar){
-      bar = document.createElement('div');
-      bar.id = 'tpl-diag-bar';
-      bar.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#fff3cd;color:#664d03;border:1px solid #ffe69c;border-radius:10px;padding:10px 12px;font-size:.95rem;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.1)';
-      document.body.appendChild(bar);
-    }
-    bar.textContent = msg;
-    setTimeout(()=>{ try{bar.remove();}catch(_){}} ,6000);
-  }
-
-  function attach(){
-    const form = document.getElementById('bookingForm');
-    if(!form) return;
-    form.addEventListener('submit', async function(e){
-      // Tomamos el control y evitamos que otros listeners bloqueen
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      // Validación mínima (evita el “ha ocurrido un error” genérico)
-      const requiredIds = ['service','startDate','endDate','start','end','region'];
-      for(const id of requiredIds){
-        const node = document.getElementById(id);
-        if (node && !node.value){
-          node.focus();
-          showDiag('Falta el campo: ' + (node.previousElementSibling?.innerText || id));
-          return;
-        }
-      }
-
-      // Evitar doble clic
-      const btn = form.querySelector('button[type="submit"]');
-      const old = btn?.textContent;
-      if (btn){ btn.disabled = true; btn.textContent = 'Enviando…'; }
-
-      const params = buildParams();
-      const [emails, _fire] = await Promise.all([ sendEmails(params), saveFirestoreShadow(params) ]);
-
-      if (!emails.admin && !emails.owner){
-        showDiag('No se pudo enviar el email (revisa serviceId/template/publicKey y el dominio permitido en EmailJS). La reserva se guardó localmente si fue posible.');
-      }
-
-      // Snapshot local para el panel
-      try{
-        const uid = localStorage.getItem('tpl.currentUser') || localStorage.getItem('tpl_auth_uid') || 'default';
-        localStorage.setItem(`tpl.udb.${uid}.lastReservation`, JSON.stringify({
-          Servicio: params.servicio,
-          Fecha_inicio: params.fecha_inicio,
-          Fecha_fin: params.fecha_fin,
-          _estado: 'enviada',
-          Mascotas_lista: params.mascotas
-        }));
-      }catch(_){}
-
-      showOk();
-      if (btn){ btn.disabled = false; btn.textContent = old; }
-    }, true); // capture = true (nos ejecutamos antes y bloqueamos otros handlers)
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
-  else attach();
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
-<script src="tpl-reservas.js" defer></script>
+        //
