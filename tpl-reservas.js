@@ -1,12 +1,14 @@
-/* TPL: INICIO BLOQUE NUEVO [reservas.js — login robusto + auto-relleno + EmailJS + Firestore] */
+/* reservas.js — login robusto + auto-relleno + EmailJS + Firestore */
 (function(){
+  // Bandera para diagnóstico (?debug=1)
+  window.__TPL_RESERVAS_V3__ = true;
+
   const $  = (s,c)=> (c||document).querySelector(s);
   const $$ = (s,c)=> Array.from((c||document).querySelectorAll(s));
   const t  = (id)=> (document.getElementById(id)?.value||'').trim();
   const st = (id)=> (document.getElementById(id)?.selectedOptions?.[0]?.text || document.getElementById(id)?.value || '').trim();
   const set = (id,v)=>{ const el=document.getElementById(id); if(el && v!=null && v!==''){ el.value=v; el.dispatchEvent(new Event('input',{bubbles:true})); } };
 
-  // UA helpers para login Google
   const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
@@ -24,7 +26,7 @@
     ov.querySelector('#tpl-ov-accept').onclick = ()=> location.href = href || 'perfil.html';
   }
 
-  // -------- Login inline (si no hay sesión) --------
+  // ---------- Login inline (si no hay sesión) ----------
   function renderInlineLogin(){
     const host = $('#tpl-inline-login'); if(!host) return;
     host.innerHTML = `
@@ -44,7 +46,6 @@
     `;
     const form=$('#tpl-inline-form'), msg=$('.tpl-login-msg',host);
 
-    // Email + pass
     form.addEventListener('submit', async (e)=>{
       e.preventDefault(); msg.textContent='Accediendo…';
       try{
@@ -54,7 +55,6 @@
       }catch(e){ msg.textContent=e?.message||'No se pudo iniciar sesión.'; }
     });
 
-    // Google (popup o redirect según iOS/Safari)
     $('#tpl-google-btn').addEventListener('click', async ()=>{
       try{
         await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
@@ -64,7 +64,6 @@
       }catch(e){ msg.textContent = e?.message || 'No se pudo iniciar con Google.'; }
     });
 
-    // Reset
     $('#tpl-reset').addEventListener('click', async ()=>{
       const email=form.email.value.trim(); if(!email){ msg.textContent='Escribe tu email arriba.'; return; }
       try{ await firebase.auth().sendPasswordResetEmail(email); msg.textContent='Te enviamos un enlace para restablecer.'; }
@@ -72,7 +71,7 @@
     });
   }
 
-  // -------- Leer perfil + mascotas (Firestore) --------
+  // ---------- Leer perfil + mascotas (Firestore) ----------
   async function readOwner(uid){
     const db=firebase.firestore();
     const tries=[['users',uid],['tpl_propietarios',uid],['propietarios',uid],['owners',uid]];
@@ -126,16 +125,15 @@
     document.getElementById('petName_1')?.addEventListener('input', ()=>{ const h=document.getElementById('petsListHidden'); if(h) h.value=document.getElementById('petName_1').value.trim(); });
   }
 
-  // -------- Resumen rápido --------
+  // ---------- Resumen rápido ----------
   function recalc(){
     const ok = !!t('startDate') && !!t('endDate');
-    const base = ok ? 30 : 0; // placeholder
+    const base = ok ? 30 : 0; // placeholder simple
     const dep  = base * 0.2;
     const f = (n)=> n ? n.toFixed(2)+' €' : '—';
     const sub = document.getElementById('sumSubtotal'), de = document.getElementById('sumDeposit');
     if(sub) sub.value = f(base);
     if(de)  de.value  = f(dep);
-    // Para correo
     const lines=[];
     lines.push(`Servicio: ${st('service')}`);
     lines.push(`Fechas: ${t('startDate')} a ${t('endDate')}`);
@@ -145,7 +143,7 @@
     if(document.getElementById('summaryField')) document.getElementById('summaryField').value = lines.join(' | ');
   }
 
-  // -------- Envío --------
+  // ---------- Envío ----------
   async function sendEmailJS(payload){
     const cfg=window.TPL_EMAILJS||{};
     if(!window.emailjs) return false;
@@ -217,7 +215,7 @@
     }, true);
   }
 
-  // -------- Arranque --------
+  // ---------- Arranque ----------
   document.addEventListener('DOMContentLoaded', async ()=>{
     const wall=document.getElementById('tpl-auth-wall'), form=document.getElementById('bookingForm');
 
@@ -230,15 +228,10 @@
       wall?.classList.remove('tpl-hide'); form?.classList.add('tpl-hide'); renderInlineLogin(); return;
     }
 
-    // Persistencia LOCAL garantizada
     try{ await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(_){}
+    try{ await firebase.auth().getRedirectResult(); }catch(_){}
 
-    const auth = firebase.auth();
-
-    // Si venimos de Google Redirect, recoge el resultado (Safari/iOS)
-    try{ await auth.getRedirectResult(); }catch(_){}
-
-    auth.onAuthStateChanged(async (user)=>{
+    firebase.auth().onAuthStateChanged(async (user)=>{
       console.log('TPL: auth state @reserva →', user?.email || 'no logueado');
       if(user){
         wall?.classList.add('tpl-hide'); form?.classList.remove('tpl-hide');
@@ -255,4 +248,3 @@
     attachSubmit();
   });
 })();
-/* TPL: FIN BLOQUE NUEVO */
