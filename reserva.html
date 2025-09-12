@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de apoyo (no cambian tu look&feel)] -->
+  <!-- Estilos mínimos de apoyo (no cambian tu look&feel) -->
   <style>
     :root{ --color-principal:#339496; --color-texto:#58425a; }
     .tpl-hide{display:none!important}
@@ -33,7 +33,6 @@
     .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
     .tpl-modal p{ margin:0 0 12px; }
   </style>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -215,12 +214,10 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase compat (misma app que ya usas) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase init] -->
   <script>
   (function(){
     const firebaseConfig = {
@@ -234,10 +231,8 @@
     if (typeof firebase !== 'undefined' && firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
   })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- EmailJS SDK + Config (tus IDs) -->
-  <!-- TPL: INICIO BLOQUE NUEVO [EmailJS producción] -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
@@ -254,9 +249,60 @@
       }catch(_){}
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas -->
   <script src="reservas.js" defer></script>
+
+  <!-- Panel de diagnóstico (solo se muestra con ?debug=1) -->
+  <script>
+  (function(){
+    if (!location.search.includes('debug=1')) return;
+    function el(tag, attrs, parent){
+      const n = document.createElement(tag);
+      Object.entries(attrs||{}).forEach(([k,v])=> (k==='style') ? (n.style.cssText=v) : (n[k]=v));
+      if(parent) parent.appendChild(n);
+      return n;
+    }
+    const box = el('div', {
+      id:'tpl-diag',
+      style: 'position:fixed;right:16px;bottom:16px;z-index:999999;background:#fff;border:1px solid #e4e4e7;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.12);max-width:360px;width:calc(100% - 32px);font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto; color:#333;'
+    }, document.body);
+    const head = el('div', {style:'padding:10px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;gap:8px;'}, box);
+    el('strong', {textContent:'Diagnóstico reservas'}, head);
+    const btn = el('button', {textContent:'Cerrar', style:'border:1px solid #ddd;background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer'}, head);
+    btn.onclick = ()=> box.remove();
+    const body = el('div', {style:'padding:10px 12px;'}, box);
+    const list = el('ol', {style:'margin:0;padding-left:18px;display:grid;gap:6px'}, body);
+    function row(txt, ok, extra){
+      const li = el('li', {style:'list-style:decimal'}, list);
+      el('div', {innerHTML: (ok? '✅':'❌')+' <strong>'+txt+'</strong>'+(extra? ' — <span style="color:#555">'+extra+'</span>':'')}, li);
+    }
+    (async function run(){
+      const want = 'www.thepetslovers.es';
+      const isHostOk = location.hostname === want;
+      row('Dominio correcto (www)', isHostOk, location.hostname);
+      const hasFb = typeof window.firebase !== 'undefined';
+      row('Firebase SDK cargado', hasFb, hasFb ? 'OK' : 'No');
+      let appInit = false;
+      try { appInit = !!firebase.apps && firebase.apps.length>0; } catch(_) {}
+      row('Firebase app inicializada', appInit, appInit? firebase.apps[0]?.name : '—');
+      let user = null;
+      try{
+        if (hasFb) {
+          try { await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(_){}
+          try { await firebase.auth().getRedirectResult(); }catch(_){}
+          user = firebase.auth().currentUser;
+        }
+      }catch(_){}
+      row('Usuario logueado', !!user, user ? (user.email||user.uid) : 'No');
+      const hasE = !!window.emailjs;
+      row('EmailJS SDK cargado', hasE, hasE ? 'OK' : 'No');
+      const cfg = window.TPL_EMAILJS || {};
+      const cfgOk = !!(cfg.serviceId && cfg.templateId && cfg.publicKey);
+      row('Cfg EmailJS (serviceId/templateId/publicKey)', cfgOk, cfgOk ? (cfg.serviceId+' · '+cfg.templateId) : 'Falta alguna clave');
+      row('Handler reservas v3 activo', !!window.__TPL_RESERVAS_V3__, window.__TPL_RESERVAS_V3__?'OK':'No');
+    })();
+  })();
+  </script>
 </body>
 </html>
