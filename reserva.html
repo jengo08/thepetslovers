@@ -163,6 +163,12 @@
       <input type="hidden" name="to_email" value="gestion@thepetslovers.es">
       <input type="hidden" name="to_name" value="Gestión The Pets Lovers">
 
+      <!-- TPL: INICIO BLOQUE NUEVO [Campos ocultos para EmailJS + tracking] -->
+      <input type="hidden" name="_replyto" id="tpl-replyto">
+      <input type="hidden" name="uid" id="tpl-uid">
+      <input type="hidden" name="perfil_url" id="tpl-perfil-url">
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <div class="booking-actions">
         <button type="submit" class="cta-button">Solicitar reserva</button>
       </div>
@@ -377,6 +383,123 @@
       if (user && !user.isAnonymous) {
         location.replace(NEXT);
       }
+    });
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 1: Autocomplete titular + hidden reply_to/uid + forzar login] -->
+  <script>
+  (function(){
+    'use strict';
+
+    // ✅ Siempre requiere login en reservas (tal y como pediste)
+    window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;
+
+    // Helpers DOM
+    var $ = function(sel, root){ return (root||document).querySelector(sel); };
+
+    // Perfil URL desde el navbar (si existe), con fallback
+    function getProfileHref(){
+      var a = document.getElementById('tpl-login-link');
+      if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
+      return 'perfil.html';
+    }
+
+    // UDB helpers (por si existe tu almacenamiento local)
+    function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
+    function udbGet(uid, key){
+      try{
+        var raw = localStorage.getItem(udbKey(uid, key));
+        return raw ? JSON.parse(raw) : null;
+      }catch(_){ return null; }
+    }
+
+    // Rellenar inputs si están vacíos
+    function setIfEmpty(input, val){
+      if (!input) return;
+      if (!input.value && val) input.value = val;
+    }
+
+    function fillFromOwner(owner){
+      if (!owner) return;
+      setIfEmpty($('#firstName'), owner.nombre || owner.name || '');
+      setIfEmpty($('#lastName'),  owner.apellidos || owner.surnames || '');
+      setIfEmpty($('#email'),     owner.email || '');
+      setIfEmpty($('#phone'),     owner.telefono || owner.phone || '');
+    }
+
+    // Sincroniza los hidden para EmailJS y panel
+    function syncHidden(user){
+      var hidReply = $('#tpl-replyto');
+      var hidUid   = $('#tpl-uid');
+      var hidProf  = $('#tpl-perfil-url');
+      if (hidUid && user && user.uid) hidUid.value = user.uid;
+      if (hidProf) hidProf.value = getProfileHref();
+      // reply_to: si hay email en input, prioriza ese
+      var inputEmail = $('#email');
+      var emailVal = (inputEmail && inputEmail.value) ? inputEmail.value : (user && user.email) || '';
+      if (hidReply) hidReply.value = emailVal;
+    }
+
+    // Si la usuaria cambia su email manualmente, reflejarlo en _replyto
+    function bindReplySync(){
+      var email = $('#email');
+      var hidReply = $('#tpl-replyto');
+      if (!email || !hidReply) return;
+      email.addEventListener('input', function(){
+        hidReply.value = email.value || '';
+      });
+    }
+
+    // Arranque cuando Auth está listo (lo emite tu bootstrap de arriba)
+    function onAuthReady(cb){
+      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
+        window.__TPL_AUTH__.ready.then(cb);
+      } else {
+        window.addEventListener('tpl-auth-ready', function(ev){
+          cb(ev.detail && ev.detail.user ? ev.detail.user : null);
+        }, { once:true });
+      }
+    }
+
+    onAuthReady(function(user){
+      // 1) Completar desde UDB si existe
+      try{
+        var uid = user && user.uid;
+        if (uid){
+          // probamos varias keys habituales: 'owner' y 'propietario'
+          var owner = udbGet(uid, 'owner') || udbGet(uid, 'propietario');
+          if (owner) fillFromOwner(owner);
+        }
+      }catch(_){}
+
+      // 2) Fallback desde Firebase Auth
+      try{
+        if (user){
+          if (user.email) setIfEmpty($('#email'), user.email);
+          if (user.displayName){
+            var dn = String(user.displayName).trim();
+            if (dn){
+              var parts = dn.split(' ');
+              setIfEmpty($('#firstName'), parts[0] || dn);
+              if (parts.length > 1){
+                setIfEmpty($('#lastName'), parts.slice(1).join(' '));
+              }
+            }
+          }
+        }
+      }catch(_){}
+
+      // 3) Sincronizar hidden fields
+      syncHidden(user);
+      bindReplySync();
+    });
+
+    // Por si el estado de auth cambia después
+    window.addEventListener('tpl-auth-change', function(ev){
+      var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
+      syncHidden(user);
     });
   })();
   </script>
