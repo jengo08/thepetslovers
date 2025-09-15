@@ -1035,6 +1035,204 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Fix Nombre/Apellidos - normalizador] -->
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function splitSmart(text){
+    if (!text) return {nombre:'', apellidos:''};
+    var s = String(text).trim().replace(/\s+/g,' ');
+    // Formato "Apellidos, Nombre"
+    if (s.includes(',')){
+      var a = s.split(',');
+      var left  = (a[0]||'').trim();
+      var right = (a.slice(1).join(',')||'').trim();
+      return { nombre: right || '', apellidos: left || '' };
+    }
+    var parts = s.split(' ');
+    if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
+    return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
+  }
+  function normalizeNameFields(){
+    var f = $('firstName'), l = $('lastName');
+    if (!f || !l) return;
+    var fv = (f.value||'').trim(), lv = (l.value||'').trim();
+    // Si nombre contiene espacios y apellidos está vacío o es igual al nombre → dividir
+    if (fv && (!lv || lv === fv || /\s/.test(fv))){
+      var s = splitSmart(fv);
+      if (s.nombre) f.value = s.nombre;
+      if (s.apellidos && !lv) l.value = s.apellidos;
+    }
+  }
+  // Ejecuta al cargar, al cambiar auth y al salir de los campos
+  document.addEventListener('DOMContentLoaded', normalizeNameFields);
+  window.addEventListener('tpl-auth-ready', normalizeNameFields);
+  window.addEventListener('tpl-auth-change', normalizeNameFields);
+  var f = document.getElementById('firstName');
+  var l = document.getElementById('lastName');
+  if (f) f.addEventListener('blur', normalizeNameFields);
+  if (l) l.addEventListener('blur', normalizeNameFields);
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Mascotas - puente y rehidratación + seed opcional] -->
+<script>
+(function(){
+  'use strict';
+  var DEBUG = /[?&]debugReservas=1\b/.test(location.search);
+  function $(s, r){ return (r||document).querySelector(s); }
+  function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
+  function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+  function udbSet(uid,key,val){ try{ localStorage.setItem(udbKey(uid,key), JSON.stringify(val)); }catch(e){} }
+  function toArrayMaybe(x){ if(!x) return []; return Array.isArray(x) ? x : Object.keys(x).map(function(k){ return Object.assign({id:k}, x[k]); }); }
+  function normalizePet(p){
+    if (!p) return null;
+    var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
+    var nombre = p.nombre || p.name || p.petName || '';
+    var especie = p.especie || p.tipo || p.species || p.type || '';
+    var raza = p.raza || p.breed || '';
+    var tam = p.tamano || p['tamaño'] || p.size || '';
+    var meds = p.medicacion || p['medicación'] || p.medication || '';
+    var needs = p.necesidades || p.needs || p.specialNeeds || '';
+    return { id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs };
+  }
+  function labelFor(p){
+    var meta = [p.especie||'', p.raza||''].filter(Boolean).join(', ');
+    return (p.nombre || 'Mascota') + (meta ? ' ('+meta+')' : '');
+  }
+  function applyPetHidden(p){
+    var map = {
+      'tpl-pet-id': p.id||'',
+      'tpl-pet-name': p.nombre||'',
+      'tpl-pet-species': p.especie||'',
+      'tpl-pet-breed': p.raza||'',
+      'tpl-pet-size': p.tamano||'',
+      'tpl-pet-med': p.medicacion||'',
+      'tpl-pet-needs': p.necesidades||''
+    };
+    Object.keys(map).forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.value = map[id];
+    });
+  }
+  function renderPets(uid, pets){
+    var sec = $('#tpl-pet-section');
+    var sel = $('#tpl-pet-select');
+    pets = (pets||[]).map(normalizePet).filter(Boolean);
+    if (!pets.length){ if (sec) sec.hidden = true; return false; }
+    if (pets.length === 1){
+      if (sec) sec.hidden = true;
+      applyPetHidden(pets[0]);
+      if (DEBUG) console.log('[TPL][Mascotas] aplicada única', pets[0]);
+      return true;
+    }
+    if (!sec || !sel) return false;
+    sec.hidden = false; sel.innerHTML = '';
+    pets.forEach(function(p){
+      var opt = new Option(labelFor(p), p.id || p.nombre || '');
+      try{ opt.dataset.pet = JSON.stringify(p); }catch(e){}
+      sel.appendChild(opt);
+    });
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex]; if (!o) return;
+      var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
+      if (p) applyPetHidden(p);
+    };
+    sel.onchange();
+    if (DEBUG) console.log('[TPL][Mascotas] selector con', pets.length, 'opciones');
+    return true;
+  }
+  function rehydrateFromUdb(uid){
+    var raw = udbGet(uid,'mascotas') || udbGet(uid,'pets') || [];
+    var list = toArrayMaybe(raw).map(normalizePet).filter(Boolean);
+    if (list.length) renderPets(uid, list);
+    return list.length>0;
+  }
+  function bridgeFromOtherKeys(uid){
+    // Busca en localStorage objetos que tengan {mascotas:...} o {pets:...}
+    try{
+      var found = null;
+      for (var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        // ignora nuestro UDB
+        if (/^tpl\.udb\./.test(k)) continue;
+        var raw = localStorage.getItem(k);
+        if (!raw || raw.length < 5) continue;
+        try{
+          var obj = JSON.parse(raw);
+          if (obj && (obj.mascotas || obj.pets)){
+            found = obj.mascotas || obj.pets;
+            break;
+          }
+        }catch(e){}
+      }
+      if (found){
+        udbSet(uid, 'mascotas', found);
+        if (DEBUG) console.log('[TPL][Mascotas] puenteadas desde', k);
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  async function bridgeFromFirestoreRoot(uid){
+    // Extra: por si usas colección raíz 'mascotas' con ownerUid/uid
+    try{
+      if (typeof firebase === 'undefined' || !firebase.firestore) return false;
+      var db = firebase.firestore();
+      var list = [];
+      var q1 = await db.collection('mascotas').where('ownerUid','==',uid).get().catch(()=>null);
+      if (q1 && !q1.empty){ q1.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
+      if (!list.length){
+        var q2 = await db.collection('mascotas').where('uid','==',uid).get().catch(()=>null);
+        if (q2 && !q2.empty){ q2.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
+      }
+      if (list.length){
+        udbSet(uid, 'mascotas', list);
+        if (DEBUG) console.log('[TPL][Mascotas] puenteadas desde FS raíz');
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  function onAuth(cb){
+    if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) window.__TPL_AUTH__.ready.then(cb);
+    else window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail ? ev.detail.user : null); }, {once:true});
+  }
+  onAuth(async function(user){
+    if (!user || user.isAnonymous) return;
+    var uid = user.uid;
+
+    // 1) Rehidrata desde nuestro UDB
+    if (rehydrateFromUdb(uid)) return;
+
+    // 2) Puentea desde otras claves locales (si existían en tu perfil) y rehidrata
+    if (bridgeFromOtherKeys(uid) && rehydrateFromUdb(uid)) return;
+
+    // 3) Puenteo extra desde Firestore raíz (si lo usas)
+    if (await bridgeFromFirestoreRoot(uid)) { rehydrateFromUdb(uid); return; }
+
+    if (DEBUG) console.log('[TPL][Mascotas] sin datos detectados en UDB/puentes');
+
+    // 4) Seed opcional (solo si añades ?seedPet=1 en la URL)
+    if (/[?&]seedPet=1\b/.test(location.search)) {
+      var demo = [{ id:'demo', nombre:'Luna', especie:'Perro', raza:'Mestizo', size:'M', medicacion:'', necesidades:'' }];
+      udbSet(uid, 'mascotas', demo);
+      rehydrateFromUdb(uid);
+      if (DEBUG) console.log('[TPL][Mascotas] sembrada demo en UDB');
+    }
+  });
+
+  // Si otra pestaña escribe UDB, reintentamos pintar
+  window.addEventListener('storage', function(ev){
+    if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
+    var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
+    if (!user || user.isAnonymous) return;
+    rehydrateFromUdb(user.uid);
+  });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
