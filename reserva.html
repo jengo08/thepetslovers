@@ -204,6 +204,10 @@
   <!-- (Opcional) Forzar login en esta página -->
   <!-- <script>window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;</script> -->
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Config fija de página de login] -->
+  <script>window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';</script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Auth unificado + builder de login URL + muro] -->
   <script>
   (function(){
@@ -212,16 +216,12 @@
 
     function $(sel, root){ return (root||document).querySelector(sel); }
 
-    // ===== Builder de URL de login (configurable) =====
-    /* Puedes forzar el archivo exacto así, en cualquier <script> antes de este:
-       window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';
-    */
-    var LOGIN_CANDIDATES = ['iniciar-sesión.html','iniciar-sesion.html','login.html'];
+    // ===== Builder de URL de login (usa config fija arriba) =====
+    var LOGIN_CANDIDATES = ['iniciar-sesion.html','iniciar-sesión.html','login.html'];
     function getLoginBase(){
       return window.TPL_LOGIN_PAGE || LOGIN_CANDIDATES[0];
     }
     function buildNext(){
-      // next = ruta actual (sin dominio) + query + hash
       var p = (location.pathname || '').replace(/^\//,'');
       return p + (location.search || '') + (location.hash || '');
     }
@@ -296,7 +296,7 @@
         wall.style.display = 'block';
         form.classList.add('disabled');
 
-        // CTA de login: ahora apunta a iniciar-sesión.html?next=...
+        // CTA de login: ahora apunta a iniciar-sesion.html?next=...
         if (slot && !slot.hasChildNodes()) {
           var loginUrl = buildLoginUrl();
           slot.innerHTML =
