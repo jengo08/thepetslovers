@@ -88,13 +88,6 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [DESACTIVADO: Modo seguro + HUD] -->
-    <!--
-    BLOQUE DESACTIVADO A PETICIÓN: no queremos “modo seguro” visible ni HUD.
-    (Se mantiene comentado por trazabilidad)
-    -->
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
     <!-- TPL: INICIO BLOQUE NUEVO [Hardening anti-overlay (solo si están ocultos)] -->
     <style>
       /* Si estos overlays NO están activos, no deben capturar clics */
@@ -106,6 +99,13 @@
       .tpl-overlay:not(.on){
         pointer-events:none !important;
       }
+    </style>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Forzar clics base con !important] -->
+    <style>
+      html, body { pointer-events: auto !important; }
+      a, button { pointer-events: auto !important; }
     </style>
     <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
@@ -340,13 +340,13 @@
           if (ov) ov.classList.remove('show');
           // TPL: Además ocultamos cookie overlay si algún CSS lo dejase tapando
           var cov = document.getElementById('cookie-modal-overlay');
-          if (cov){ cov.hidden = true; cov.style.display = 'none'; }
+          if (cov){ cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
           window.addEventListener('load', function(){
             document.documentElement.classList.remove('tpl-auth-boot');
             var ov2 = document.getElementById('tpl-form-overlay');
             if (ov2) ov2.classList.remove('show');
             var cov2 = document.getElementById('cookie-modal-overlay');
-            if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; }
+            if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; cov2.setAttribute('aria-hidden','true'); }
           });
         }catch(_){}
       })();
@@ -409,55 +409,51 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo avanzado: detecta y neutraliza pantallas que cubren todo] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Desbloqueo definitivo anti-overlay desconocido] -->
     <script>
       (function(){
-        function off(el){
-          try{
-            el.style.pointerEvents = 'none';
-            // Si es overlay típico, también lo ocultamos
-            if (!el.classList.contains('on') && !el.classList.contains('show')) {
-              el.style.display = 'none';
-              el.setAttribute('aria-hidden','true');
-            }
-          }catch(_){}
+        function isCover(el){
+          if (!el || !el.getBoundingClientRect) return false;
+          var r = el.getBoundingClientRect(), w = innerWidth, h = innerHeight;
+          var cs = getComputedStyle(el), zi = parseInt(cs.zIndex||'0',10);
+          var pos = cs.position;
+          return ( (pos==='fixed'||pos==='absolute') &&
+                   (r.width >= w*0.9 && r.height >= h*0.9) &&
+                   zi >= 10 &&
+                   cs.visibility !== 'hidden' &&
+                   cs.display !== 'none' &&
+                   cs.pointerEvents !== 'none' );
         }
-        function hide(sel){
-          var el = document.querySelector(sel);
-          if (el && getComputedStyle(el).display !== 'none') off(el);
-        }
-        function scan(){
-          // Neutraliza overlays conocidos si no están activados
-          hide('#cookie-modal-overlay');
-          hide('#tpl-form-overlay');
-          document.querySelectorAll('.tpl-overlay').forEach(function(el){
-            var cs = getComputedStyle(el);
-            if (!el.classList.contains('on') && cs.display !== 'none') off(el);
-          });
+        function killCovers(){
+          // Rehabilita documento por si algún CSS usa !important
+          document.documentElement.style.setProperty('pointer-events','auto','important');
+          document.body.style.setProperty('pointer-events','auto','important');
+          document.body.removeAttribute('inert');
 
-          // Si algo cubre toda la pantalla y no es el body/html, lo desactivamos
-          var topEl = document.elementFromPoint(window.innerWidth/2, window.innerHeight/2);
-          if (topEl && topEl !== document.body && topEl !== document.documentElement) {
-            var cs = getComputedStyle(topEl);
-            var w = topEl.offsetWidth, h = topEl.offsetHeight;
-            var looksLikeCover = (/(overlay|modal|backdrop|loader|loading|screen)/i.test(topEl.id + ' ' + topEl.className)) &&
-                                  (w >= window.innerWidth*0.9 && h >= window.innerHeight*0.9) &&
-                                  (cs.position === 'fixed' || cs.position === 'absolute') &&
-                                  cs.pointerEvents !== 'none';
-            if (looksLikeCover) off(topEl);
+          // Neutraliza overlays a pantalla completa
+          var nodes = Array.from(document.body.querySelectorAll('*'));
+          var killed = 0;
+          for (var i = nodes.length - 1; i >= 0; i--){
+            var el = nodes[i];
+            try{
+              if (isCover(el)){
+                el.style.setProperty('pointer-events','none','important');
+                // Si no está marcado como "activo", también lo ocultamos
+                if (!/(^|\s)(on|show|active)(\s|$)/i.test(el.className||'')) {
+                  el.style.setProperty('display','none','important');
+                  el.setAttribute('aria-hidden','true');
+                }
+                if (++killed > 3) break;
+              }
+            }catch(_){}
           }
-
-          // Garantiza clics
-          document.body && document.body.removeAttribute('inert');
-          document.documentElement.style.pointerEvents = 'auto';
-          document.body.style.pointerEvents = 'auto';
         }
-        // Ejecuta varias veces por si otros scripts reactivan overlays
-        scan();
-        window.addEventListener('load', scan);
-        setTimeout(scan, 300);
-        setTimeout(scan, 1000);
-        document.addEventListener('click', function once(){ scan(); document.removeEventListener('click', once); });
+        // Ejecuta varias veces para cubrir re-inyecciones
+        if (document.readyState !== 'loading') killCovers();
+        else document.addEventListener('DOMContentLoaded', killCovers);
+        addEventListener('load', killCovers);
+        setTimeout(killCovers, 300);
+        setTimeout(killCovers, 1000);
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
