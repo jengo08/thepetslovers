@@ -339,6 +339,29 @@
   })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Login → redirección por ?next=] -->
+<script>
+(function(){
+  'use strict';
+  if (typeof firebase === 'undefined' || !firebase.auth) return;
+  var auth = firebase.auth();
+  function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(_){ return null; } }
+  var NEXT = qs('next') || 'perfil.html';
+
+  // Si ya hay sesión, redirige directo
+  auth.onAuthStateChanged(function(user){
+    if (user && !user.isAnonymous) {
+      // Usa replace para no dejar la página de login en el historial
+      location.replace(NEXT);
+    }
+  });
+
+  // Si tu botón de login dispara signInWithPopup/redirect/email…
+  // no hace falta tocar nada: al completar, onAuthStateChanged hará la redirección.
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 
   <!-- Lógica de reservas -->
   <script src="reservas.js" defer></script>
