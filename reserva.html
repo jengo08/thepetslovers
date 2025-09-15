@@ -85,7 +85,14 @@
     <!-- Formulario -->
     <form id="bookingForm" class="disabled" novalidate
       data-tpl-success="Tu solicitud se ha enviado correctamente."
-      data-tpl-redirect="perfil.html">
+      data-tpl-redirect="perfil.html"
+      <!-- TPL: INICIO BLOQUE NUEVO [Forzar EmailJS con tu servicio/plantilla/clave] -->
+      data-tpl-emailjs="true"
+      data-service-id="service_odjqrfl"
+      data-template-id="template_rao5n0c"
+      data-public-key="L2xAATfVuHJwj4EIV"
+      <!-- TPL: FIN BLOQUE NUEVO -->
+    >
       <section class="tpl-section" aria-labelledby="sec-servicio">
         <h2 id="sec-servicio">Datos del servicio</h2>
         <div class="booking-grid">
