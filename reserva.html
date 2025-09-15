@@ -10,7 +10,6 @@
   (function(){
     var CANON = 'www.thepetslovers.es';
     var host = location.hostname || '';
-    // No redirigimos si estás en desarrollo o GitHub Pages
     var IS_DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host) || /github\.io$/i.test(host);
     if (host && host !== CANON && !IS_DEV) {
       location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
@@ -83,7 +82,6 @@
     </div>
 
     <!-- Formulario -->
-    <!-- Nota: atributos data-* para EmailJS y destino explícito -->
     <form
       id="bookingForm"
       class="disabled"
@@ -147,7 +145,7 @@
           </div>
           <div class="booking-field">
             <label for="phone">Teléfono</label>
-            <input type="tel" id="phone" name="Telefono" required autocomplete="tel">
+            <input type="tel" id="phone" name="Telefono" required autocomplete="tel" inputmode="tel">
           </div>
           <div class="booking-field" style="grid-column:1/-1">
             <label for="notes">Notas (opcional)</label>
@@ -213,7 +211,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
-  <!-- Inicialización de Firebase: crea la app y fija la persistencia -->
+  <!-- Inicialización de Firebase -->
   <script>
     (function(){
       const firebaseConfig = {
@@ -238,7 +236,6 @@
       serviceId: 'service_odjqrfl',
       templateId: 'template_rao5n0c',
       publicKey:  'L2xAATfVuHJwj4EIV',
-      // destinos explícitos (fallback global por si otro bloque los usa)
       toEmail: 'gestion@thepetslovers.es',
       toName:  'Gestión The Pets Lovers'
     };
@@ -250,9 +247,6 @@
     })();
   </script>
 
-  <!-- (Opcional) Forzar login en esta página -->
-  <!-- <script>window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;</script> -->
-
   <!-- TPL: INICIO BLOQUE NUEVO [Config fija de página de login] -->
   <script>window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';</script>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -262,37 +256,22 @@
   (function(){
     'use strict';
     var DEBUG = /[?&]debugAuth=1\b/.test(location.search);
-
     function $(sel, root){ return (root||document).querySelector(sel); }
-
-    // ===== Builder de URL de login (usa config fija arriba) =====
     var LOGIN_CANDIDATES = ['iniciar-sesion.html','iniciar-sesión.html','login.html'];
-    function getLoginBase(){
-      return window.TPL_LOGIN_PAGE || LOGIN_CANDIDATES[0];
-    }
-    function buildNext(){
-      var p = (location.pathname || '').replace(/^\//,'');
-      return p + (location.search || '') + (location.hash || '');
-    }
-    function buildLoginUrl(nextOverride){
-      var base = getLoginBase();
-      var next = nextOverride || buildNext();
-      return base + '?next=' + encodeURIComponent(next);
-    }
+    function getLoginBase(){ return window.TPL_LOGIN_PAGE || LOGIN_CANDIDATES[0]; }
+    function buildNext(){ var p=(location.pathname||'').replace(/^\//,''); return p+(location.search||'')+(location.hash||''); }
+    function buildLoginUrl(nextOverride){ var base=getLoginBase(); var next=nextOverride||buildNext(); return base+'?next='+encodeURIComponent(next); }
 
-    // ===== Estado global de Auth =====
     window.__TPL_AUTH__ = window.__TPL_AUTH__ || { user:null, ready:null };
 
     function setupAuthBridge(){
       if (typeof firebase === 'undefined' || !firebase.auth) return;
       var auth = firebase.auth();
-
       if (!window.__TPL_AUTH__.ready) {
         window.__TPL_AUTH__.ready = new Promise(function(resolve){
           var first = true;
           function handle(user){
             window.__TPL_AUTH__.user = user || null;
-
             try {
               document.body.setAttribute('data-auth', user ? 'in' : 'out');
               if (user && !user.isAnonymous){
@@ -303,18 +282,11 @@
                 localStorage.removeItem('tpl_auth_uid');
               }
             } catch(_e){}
-
             try { window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: user ? (user.email||null) : null } })); } catch(_e){}
-            if (first) {
-              first = false;
-              try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user:user||null } })); } catch(_e){}
-              resolve(user || null);
-            }
-
+            if (first) { first=false; try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user:user||null } })); } catch(_e){} resolve(user||null); }
             if (DEBUG) console.log('[TPL][Auth] Estado:', user ? user.uid : null);
             updateUI(user);
           }
-
           auth.onAuthStateChanged(handle);
           handle(auth.currentUser);
         });
@@ -323,18 +295,15 @@
       }
     }
 
-    // ===== UI del muro + redirecciones =====
     function updateUI(user){
       var wall = $('#authWall');
       var form = $('#bookingForm');
       var slot = $('#tpl-inline-login');
-
       if (!wall || !form) return;
 
       if (user) {
         wall.style.display = 'none';
         form.classList.remove('disabled');
-
         var email = $('#email'); if (user.email && email && !email.value) email.value = user.email;
         var name  = $('#firstName');
         if (user.displayName && name && !name.value) {
@@ -344,25 +313,20 @@
       } else {
         wall.style.display = 'block';
         form.classList.add('disabled');
-
-        // CTA de login: ahora apunta a iniciar-sesion.html?next=...
         if (slot && !slot.hasChildNodes()) {
           var loginUrl = buildLoginUrl();
           slot.innerHTML =
             '<a class="tpl-btn" href="'+ loginUrl +'">Iniciar sesión</a> '+
             '<a class="tpl-btn-outline" href="index.html#iniciar-sesion">Volver al inicio</a>';
         }
-
-        // Redirección opcional si se fuerza login
         if (window.TPL_REQUIRE_LOGIN_ON_RESERVAS === true) {
           location.href = buildLoginUrl();
         }
       }
     }
 
-    // Arranque
     setupAuthBridge();
-    var tries = 0, t = setInterval(function(){
+    var tries=0, t=setInterval(function(){
       tries++;
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) { clearInterval(t); return; }
       setupAuthBridge();
@@ -372,16 +336,15 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Auto-recovery para recursos 404 comunes] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Auto-recovery IMG *.png.png → *.png] -->
   <script>
   (function(){
-    // Si alguna IMG falla con *.png*.png, reintenta con *.png (no cambia tu diseño)
     window.addEventListener('error', function(e){
       var el = e.target;
       if (!el || !el.tagName) return;
       if (el.tagName === 'IMG' && /(\.png\.png)(\?.*)?$/i.test(el.src||'')) {
         var fixed = el.src.replace(/\.png\.png/i, '.png');
-        el.onerror = null; // evita bucles
+        el.onerror = null;
         el.src = fixed;
       }
     }, true);
@@ -389,22 +352,16 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Login → redirección por ?next= — AJUSTE: solo en página de login] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Login page redirect por ?next= (solo en iniciar-sesion.html)] -->
   <script>
   (function(){
-    'use strict';
-    // ✅ Este bloque solo debe ejecutarse en iniciar-sesion.html.
     if (!/\/iniciar-sesion\.html$/i.test((location.pathname||''))) return;
-
     if (typeof firebase === 'undefined' || !firebase.auth) return;
     var auth = firebase.auth();
     function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(_){ return null; } }
     var NEXT = qs('next') || 'perfil.html';
-
     auth.onAuthStateChanged(function(user){
-      if (user && !user.isAnonymous) {
-        location.replace(NEXT);
-      }
+      if (user && !user.isAnonymous) { location.replace(NEXT); }
     });
   })();
   </script>
@@ -414,67 +371,65 @@
   <script>
   (function(){
     'use strict';
+    window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true; // siempre requiere login
 
-    // ✅ Siempre requiere login en reservas (tal y como pediste)
-    window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;
-
-    // Helpers DOM
     var $ = function(sel, root){ return (root||document).querySelector(sel); };
 
-    // Perfil URL desde el navbar (si existe), con fallback
     function getProfileHref(){
       var a = document.getElementById('tpl-login-link');
       if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
       return 'perfil.html';
     }
 
-    // UDB helpers (por si existe tu almacenamiento local)
     function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
     function udbGet(uid, key){
-      try{
-        var raw = localStorage.getItem(udbKey(uid, key));
-        return raw ? JSON.parse(raw) : null;
-      }catch(_){ return null; }
+      try{ var raw = localStorage.getItem(udbKey(uid, key)); return raw ? JSON.parse(raw) : null; }catch(_){ return null; }
     }
 
-    // Rellenar inputs si están vacíos
-    function setIfEmpty(input, val){
-      if (!input) return;
-      if (!input.value && val) input.value = val;
+    // 🧠 Split robusto: "Nombre Apellido(s)" → nombre = primer bloque; apellidos = resto
+    function splitFullName(full){
+      if (!full) return { nombre:'', apellidos:'' };
+      var s = String(full).trim().replace(/\s+/g,' ');
+      if (!s) return { nombre:'', apellidos:'' };
+      var parts = s.split(' ');
+      if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
+      return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
     }
+
+    function setIfEmpty(input, val){ if (input && !input.value && val) input.value = val; }
 
     function fillFromOwner(owner){
       if (!owner) return;
-      setIfEmpty($('#firstName'), owner.nombre || owner.name || '');
-      setIfEmpty($('#lastName'),  owner.apellidos || owner.surnames || '');
+      // Si trae nombre/apellidos separados, perfecto
+      var n = owner.nombre || owner.name || owner.nombreCompleto || owner.fullName || '';
+      var a = owner.apellidos || owner.surnames || '';
+      if (!a && n && (n.includes(' ') || /,/.test(n))) {
+        var sp = splitFullName(n); n = sp.nombre; a = sp.apellidos;
+      }
+      setIfEmpty($('#firstName'), n || '');
+      setIfEmpty($('#lastName'),  a || '');
       setIfEmpty($('#email'),     owner.email || '');
       setIfEmpty($('#phone'),     owner.telefono || owner.phone || '');
     }
 
-    // Sincroniza los hidden para EmailJS y panel
     function syncHidden(user){
       var hidReply = $('#tpl-replyto');
       var hidUid   = $('#tpl-uid');
       var hidProf  = $('#tpl-perfil-url');
       if (hidUid && user && user.uid) hidUid.value = user.uid;
       if (hidProf) hidProf.value = getProfileHref();
-      // reply_to: si hay email en input, prioriza ese
       var inputEmail = $('#email');
       var emailVal = (inputEmail && inputEmail.value) ? inputEmail.value : (user && user.email) || '';
       if (hidReply) hidReply.value = emailVal;
     }
 
-    // Si la usuaria cambia su email manualmente, reflejarlo en _replyto
     function bindReplySync(){
       var email = $('#email');
       var hidReply = $('#tpl-replyto');
       if (!email || !hidReply) return;
-      email.addEventListener('input', function(){
-        hidReply.value = email.value || '';
-      });
+      email.addEventListener('input', function(){ hidReply.value = email.value || ''; });
     }
 
-    // Arranque cuando Auth está listo (lo emite tu bootstrap de arriba)
     function onAuthReady(cb){
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
         window.__TPL_AUTH__.ready.then(cb);
@@ -486,40 +441,30 @@
     }
 
     onAuthReady(function(user){
-      // 1) Completar desde UDB si existe
       try{
         var uid = user && user.uid;
         if (uid){
-          // probamos varias keys habituales: 'owner' y 'propietario'
           var owner = udbGet(uid, 'owner') || udbGet(uid, 'propietario');
           if (owner) fillFromOwner(owner);
         }
       }catch(_){}
 
-      // 2) Fallback desde Firebase Auth
       try{
         if (user){
           if (user.email) setIfEmpty($('#email'), user.email);
           if (user.displayName){
-            var dn = String(user.displayName).trim();
-            if (dn){
-              var parts = dn.split(' ');
-              setIfEmpty($('#firstName'), parts[0] || dn);
-              if (parts.length > 1){
-                setIfEmpty($('#lastName'), parts.slice(1).join(' '));
-              }
-            }
+            var sp = splitFullName(user.displayName);
+            setIfEmpty($('#firstName'), sp.nombre);
+            setIfEmpty($('#lastName'),  sp.apellidos);
           }
         }
       }catch(_){}
 
-      // 3) Sincronizar hidden fields
       syncHidden(user);
       bindReplySync();
     });
 
-    // Por si el estado de auth cambia después
-    window.addEventListener('tpl-auth-change', function(ev){
+    window.addEventListener('tpl-auth-change', function(){
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
       syncHidden(user);
     });
@@ -535,13 +480,9 @@
 
     function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
     function udbGet(uid, key){
-      try{
-        var raw = localStorage.getItem(udbKey(uid, key));
-        return raw ? JSON.parse(raw) : null;
-      }catch(_){ return null; }
+      try{ var raw = localStorage.getItem(udbKey(uid, key)); return raw ? JSON.parse(raw) : null; }catch(_){ return null; }
     }
 
-    // Normaliza objeto mascota de distintas estructuras
     function normalizePet(p){
       if (!p) return null;
       var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
@@ -557,13 +498,11 @@
     function toArrayMaybe(objOrArr){
       if (!objOrArr) return [];
       if (Array.isArray(objOrArr)) return objOrArr;
-      // si viene como objeto map {id: {...}}
       return Object.keys(objOrArr).map(function(k){ return Object.assign({id:k}, objOrArr[k]); });
     }
 
     function loadPetsFor(uid){
       var arr = [];
-      // probamos varias claves típicas
       var p1 = udbGet(uid, 'pets');
       var p2 = udbGet(uid, 'mascotas');
       var raw = p1 || p2 || [];
@@ -574,10 +513,8 @@
       return arr;
     }
 
-    // Pinta/oculta sección y sincroniza hidden fields
     function applySinglePet(p){
-      $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true); // no mostrar sección si solo hay una
-      // rellenar hidden
+      $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
       $('#tpl-pet-id')      && ($('#tpl-pet-id').value = p.id || '');
       $('#tpl-pet-name')    && ($('#tpl-pet-name').value = p.nombre || '');
       $('#tpl-pet-species') && ($('#tpl-pet-species').value = p.especie || '');
@@ -606,11 +543,8 @@
       var sec = $('#tpl-pet-section');
       var sel = $('#tpl-pet-select');
       if (!sec || !sel) return;
-
-      // limpiar
       sel.innerHTML = '';
 
-      // opción inicial si quieres (no requerida): sel.appendChild(new Option('Elige tu mascota…',''));
       var last = recallLast(uid);
       pets.forEach(function(p){
         var opt = new Option(labelFor(p), p.id || p.nombre || '');
@@ -619,21 +553,18 @@
         if (last && (last === (p.id || p.nombre))) opt.selected = true;
       });
 
-      // mostrar sección
       sec.hidden = false;
 
-      // setear hidden del seleccionado
       function syncFromSelect(){
         var o = sel.options[sel.selectedIndex];
         if (!o) return;
         var p = null;
         try{ p = JSON.parse(o.dataset.pet || '{}'); }catch(_){}
         if (!p) return;
-        applySinglePet(p); // reutilizamos para rellenar hidden
+        applySinglePet(p);
         rememberLast(uid, p.id || p.nombre || '');
       }
       sel.addEventListener('change', syncFromSelect);
-      // primera sincronización
       syncFromSelect();
     }
 
@@ -649,26 +580,18 @@
 
     onAuthReady(function(user){
       var uid = user && user.uid;
-      if (!uid) return; // no hay sesión → ya controlado por Paso 1
-
+      if (!uid) return;
       var pets = loadPetsFor(uid);
       if (!pets.length){
-        // limpia hidden si no hay mascotas
         ['tpl-pet-id','tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-pet-size','tpl-pet-med','tpl-pet-needs'].forEach(function(id){
-          var el = $('#'+id); if (el) el.value = '';
+          var el = document.getElementById(id); if (el) el.value = '';
         });
         $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
         return;
       }
-
-      if (pets.length === 1){
-        applySinglePet(pets[0]);
-      } else {
-        applyMultiplePets(uid, pets);
-      }
+      if (pets.length === 1){ applySinglePet(pets[0]); } else { applyMultiplePets(uid, pets); }
     });
 
-    // Si otra pestaña cambia las mascotas en UDB, podríamos refrescar (suave)
     window.addEventListener('storage', function(ev){
       if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
@@ -682,7 +605,159 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Lógica de reservas -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 3: Validaciones suaves + Desglose vivo + Teléfono ES] -->
+  <script>
+  (function(){
+    'use strict';
+    var $ = function(sel, root){ return (root||document).querySelector(sel); };
+    var form = $('#bookingForm');
+    if (!form) return;
+
+    // Config preaviso (horas)
+    var LEAD_HOURS = (typeof window.TPL_RESERVAS_LEAD_HOURS === 'number') ? window.TPL_RESERVAS_LEAD_HOURS : 24;
+
+    // ==== Utilidades ====
+    function parseDate(d){ if(!d) return null; var p=d.split('-'); if(p.length!==3) return null; return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0, 0); }
+    function parseTime(t){ if(!t) return null; var p=t.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
+    function combine(dt, tm){ if(!dt||!tm) return null; var d=new Date(dt); d.setHours(tm.h, tm.m, 0, 0); return d; }
+    function fmtDate(d){ return d.toLocaleDateString('es-ES', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}); }
+    function fmtTime(d){ return d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); }
+
+    function cleanPhone(s){
+      if (!s) return '';
+      return String(s).replace(/[\s\-().]/g,'').replace(/^(\+34)(34)/,'$1');
+    }
+    function validPhoneES(s){
+      var x = cleanPhone(s);
+      if (/^\+34\d{9}$/.test(x)) return true;
+      if (/^\d{9}$/.test(x))     return true;
+      return false;
+    }
+
+    // ==== Campos ====
+    var elService   = $('#service');
+    var elSD        = $('#startDate');
+    var elED        = $('#endDate');
+    var elST        = $('#start');
+    var elET        = $('#end');
+    var elPhone     = $('#phone');
+    var elEmail     = $('#email');
+    var elNotes     = $('#notes');
+    var elSummary   = $('#summaryField');
+
+    // ==== Validaciones reactivas (para que reportValidity de EmailJS las vea) ====
+    function validateDates(){
+      elSD.setCustomValidity('');
+      elED.setCustomValidity('');
+      elST.setCustomValidity('');
+      elET.setCustomValidity('');
+
+      var sd = parseDate(elSD.value);
+      var ed = parseDate(elED.value);
+      var st = parseTime(elST.value);
+      var et = parseTime(elET.value);
+      if (!sd || !ed || !st || !et) return true;
+
+      var sDT = combine(sd, st);
+      var eDT = combine(ed, et);
+
+      // fin >= inicio
+      if (eDT < sDT){
+        elED.setCustomValidity('La fecha/hora de fin debe ser posterior a la de inicio.');
+        elET.setCustomValidity('La fecha/hora de fin debe ser posterior a la de inicio.');
+        return false;
+      }
+
+      // si mismo día → hora fin > hora inicio
+      if (sd.getFullYear()===ed.getFullYear() && sd.getMonth()===ed.getMonth() && sd.getDate()===ed.getDate()){
+        if (eDT <= sDT){
+          elET.setCustomValidity('Para el mismo día, la hora fin debe ser mayor que la hora inicio.');
+          return false;
+        }
+      }
+
+      // preaviso
+      var now = new Date();
+      var minStart = new Date(now.getTime() + LEAD_HOURS*3600*1000);
+      if (sDT < minStart){
+        elSD.setCustomValidity('La reserva debe pedirse con al menos '+LEAD_HOURS+'h de antelación.');
+        elST.setCustomValidity('La reserva debe pedirse con al menos '+LEAD_HOURS+'h de antelación.');
+        return false;
+      }
+      return true;
+    }
+
+    function validatePhone(){
+      elPhone.setCustomValidity('');
+      var val = elPhone.value.trim();
+      if (!val) return true; // el required ya lo gestiona el navegador
+      if (!validPhoneES(val)){
+        elPhone.setCustomValidity('Introduce un teléfono válido (9 dígitos, admite prefijo +34).');
+        return false;
+      }
+      return true;
+    }
+
+    // ==== Desglose vivo para el correo ====
+    function currentPetText(){
+      var name  = $('#tpl-pet-name')?.value || '';
+      var spec  = $('#tpl-pet-species')?.value || '';
+      var breed = $('#tpl-pet-breed')?.value || '';
+      var bits = [];
+      if (name) bits.push(name);
+      var meta = [spec, breed].filter(Boolean).join(', ');
+      if (meta) bits.push('('+meta+')');
+      return bits.join(' ');
+    }
+
+    function buildSummary(){
+      var sd = parseDate(elSD.value), ed=parseDate(elED.value);
+      var st = parseTime(elST.value), et=parseTime(elET.value);
+      var sDT = (sd && st) ? combine(sd, st) : null;
+      var eDT = (ed && et) ? combine(ed, et) : null;
+
+      var parts = [];
+      var svc = elService.value ? elService.options[elService.selectedIndex].text : '';
+      if (svc) parts.push('Servicio: '+svc);
+      if (sDT) parts.push('Inicio: ' + fmtDate(sDT) + ' ' + fmtTime(sDT));
+      if (eDT) parts.push('Fin: '    + fmtDate(eDT) + ' ' + fmtTime(eDT));
+
+      var pet = currentPetText(); if (pet) parts.push('Mascota: ' + pet);
+      var notes = (elNotes && elNotes.value.trim()) ? ('Notas: ' + elNotes.value.trim()) : '';
+      if (notes) parts.push(notes);
+
+      elSummary.value = parts.join(' • ');
+    }
+
+    // Listeners reactivos
+    [elService, elSD, elED, elST, elET, elNotes].forEach(function(el){
+      if (!el) return;
+      el.addEventListener('change', function(){ validateDates(); buildSummary(); });
+      el.addEventListener('input',  function(){ validateDates(); buildSummary(); });
+    });
+    if (elPhone){
+      elPhone.addEventListener('input', validatePhone);
+      elPhone.addEventListener('blur',  validatePhone);
+    }
+    // Si cambian los hidden de mascota (por Paso 2), rehacer resumen
+    window.addEventListener('storage', function(ev){
+      if (!ev) return;
+      buildSummary();
+    });
+    document.addEventListener('DOMContentLoaded', buildSummary);
+
+    // Validación en submit: ponemos las customValidity para que el reportValidity del bloque EmailJS las muestre
+    form.addEventListener('submit', function(){
+      validatePhone();
+      validateDates();
+      buildSummary();
+    }, true); // captura, para correr antes posible
+
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
 </body>
 </html>
