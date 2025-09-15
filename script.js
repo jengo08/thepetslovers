@@ -589,34 +589,68 @@
 /* ===========================================================
    TPL: FIN BLOQUE NUEVO
    =========================================================== */
+
+
 /* TPL: INICIO BLOQUE NUEVO [Banner de cookies a prueba de fallos] */
 (function cookieBannerSafe(){
   try{
     var wrap = document.getElementById('cookie-modal-overlay');
     if (!wrap) return;
 
-    // Siempre empezamos oculto para evitar bloqueo si el CSS o JS principal falla
+    /* TPL: INICIO BLOQUE NUEVO [SIEMPRE empieza oculto e inerte] */
+    wrap.hidden = true;
+    wrap.setAttribute('aria-hidden','true');
     wrap.style.display = 'none';
+    wrap.style.pointerEvents = 'none';
+    /* TPL: FIN BLOQUE NUEVO */
 
     var KEY = 'tplCookies';
     var accepted = false;
     try{ accepted = localStorage.getItem(KEY) === '1'; }catch(_){}
 
+    function fullyHide(){
+      wrap.hidden = true;
+      wrap.setAttribute('aria-hidden','true');
+      wrap.style.display = 'none';
+      wrap.style.pointerEvents = 'none';
+    }
     function close(){
       try{ localStorage.setItem(KEY,'1'); }catch(_){}
-      wrap.style.display = 'none';
+      fullyHide();
     }
 
-    // Si no se aceptó antes, lo mostramos y conectamos botones (sin bloquear la página)
+    // Si no se aceptó antes, lo mostramos como BARRA inferior NO intrusiva
     if (!accepted){
       var btnAccept = document.getElementById('accept-cookies');
       var btnDeny   = document.getElementById('deny-cookies');
-      // Modo barra no intrusiva en caso extremo (por si tu CSS del overlay tapa toda la pantalla)
-      wrap.style.display = 'block';
+
+      /* TPL: INICIO BLOQUE NUEVO [Barra inferior no bloqueante] */
+      wrap.hidden = false;
+      wrap.removeAttribute('aria-hidden');
+
+      // El WRAPPER no captura clics → solo el contenido
       wrap.style.position = 'fixed';
-      wrap.style.inset = 'auto 0 0 0';
-      wrap.style.background = 'rgba(255,255,255,.98)';
+      wrap.style.left = '0';
+      wrap.style.right = '0';
+      wrap.style.bottom = '0';
+      wrap.style.top = 'auto';
+      wrap.style.height = 'auto';
+      wrap.style.maxHeight = '45vh';
+      wrap.style.display = 'block';
+      wrap.style.background = 'transparent';     // transparente para no tapar
       wrap.style.zIndex = '9999';
+      wrap.style.pointerEvents = 'none';         // NO intercepta clics
+
+      var content = wrap.querySelector('.cookie-modal-content') || wrap.firstElementChild;
+      if (content){
+        content.style.pointerEvents = 'auto';    // solo el contenido es clicable
+        content.style.margin = '0 auto';
+        content.style.maxWidth = '980px';
+        // No tocamos tu estética, solo aseguramos que no tape la página:
+        content.style.boxShadow = content.style.boxShadow || '0 8px 24px rgba(0,0,0,.08)';
+        content.style.borderRadius = content.style.borderRadius || '12px';
+      }
+      /* TPL: FIN BLOQUE NUEVO */
 
       if (btnAccept) btnAccept.addEventListener('click', close);
       if (btnDeny)   btnDeny.addEventListener('click', close);
@@ -624,6 +658,7 @@
   }catch(_){}
 })();
 /* TPL: FIN BLOQUE NUEVO */
+
 
 /* TPL: INICIO BLOQUE NUEVO [Desbloqueo fuerte en Home (index)] */
 (function hardUnblockHome(){
@@ -650,6 +685,7 @@
             el.classList.remove('show');
             el.hidden = true;
             el.style.display = 'none';
+            el.style.pointerEvents = 'none';
           }
         });
 
@@ -671,10 +707,9 @@
   try{
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(function(regs){
-        regs.forEach(function(r){ /* r.unregister(); */ /* ← déjalo comentado salvo que veas bloqueos recurrentes por cache */ });
+        regs.forEach(function(r){ /* r.unregister(); */ /* ← deja comentado salvo que veas bloqueos por cache */ });
       });
     }
   }catch(_){}
 })();
 /* TPL: FIN BLOQUE NUEVO */
-
