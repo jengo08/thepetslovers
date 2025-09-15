@@ -1,6 +1,21 @@
-/* TPL: INICIO BLOQUE NUEVO [reservas.js — UI + cálculo + envío + diagnóstico] */
+/* TPL: INICIO BLOQUE NUEVO [reservas.js — login obligatorio + Firestore (opcional) + EmailJS] */
 (function(){
   'use strict';
+
+  // ——— Canonical (opcional, no visual)
+  (function(){
+    var CANON = 'www.thepetslovers.es';
+    if (location.hostname && location.hostname !== CANON) {
+      location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
+    }
+  })();
+
+  // ====== CONFIG GLOBAL ======
+  const CFG = {
+    REQUIRE_LOGIN: true,          // Login SIEMPRE obligatorio
+    REQUIRE_EMAIL_OK: true,       // Éxito requiere EmailJS OK (lo que tú quieres)
+    REQUIRE_FIRESTORE_OK: false,  // Firestore es deseable, pero no imprescindible para mostrar éxito
+  };
 
   // ===== Helpers =====
   const byId = (id) => document.getElementById(id);
@@ -9,7 +24,6 @@
   const debounce = (fn, wait=300) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; };
   const mmdd = (d) => `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const ymd  = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-
   function eachDate(from,to){
     const res=[]; if(!from||!to) return res;
     const d1=new Date(from), d2=new Date(to);
@@ -19,7 +33,7 @@
     return res;
   }
 
-  // ===== Constantes de precios (auto-contenido) =====
+  // ===== Precios =====
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 0, exoticos: 0 },
     puppyBase: { guarderia: 20, alojamiento: 35 },
@@ -166,10 +180,9 @@
     return Math.max(0, normalTotal - bundlePrice);
   }
 
-  // ===== Estado global UI =====
+  // ===== Estado UI =====
   let els = {};
   let PROFILE_PET_NAMES = [];
-
   function cacheEls(){
     els = {
       form: byId('bookingForm'),
@@ -227,11 +240,11 @@
     try{
       const u = new URL(document.referrer || '');
       const p = (u.pathname || '').toLowerCase();
-      if(p.includes('servicio-guarderia') || p.includes('guarderia')) return 'guarderia';
-      if(p.includes('servicio-estancias') || p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
-      if(p.includes('servicio-paseos') || p.includes('paseos')) return 'paseos';
-      if(p.includes('servicio-visitas') || p.includes('visitas')) return 'visitas';
-      if(p.includes('servicio-bodas')   || p.includes('bodas')) return 'bodas';
+      if(p.includes('guarderia')) return 'guarderia';
+      if(p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
+      if(p.includes('paseos')) return 'paseos';
+      if(p.includes('visitas')) return 'visitas';
+      if(p.includes('bodas'))   return 'bodas';
       if(p.includes('postquir')) return 'postquirurgico';
       if(p.includes('transporte')) return 'transporte';
       if(p.includes('exotico')) return 'exoticos';
@@ -407,10 +420,10 @@
     catch(_){ renderAddrSuggestions([]); }
   }, 380);
 
-  // ===== Perfil auto (si hay Firebase) =====
+  // ===== Perfil auto (si tienes Firestore) =====
   async function autoPuppyFromProfile(){
     try{
-      if(typeof firebase === 'undefined') return;
+      if(typeof firebase === 'undefined' || !firebase.firestore) return;
       const auth = firebase.auth();
       const db = firebase.firestore();
       const u = auth.currentUser;
@@ -434,7 +447,7 @@
   }
   async function autoContactFromProfile(u){
     try{
-      if(!u || typeof firebase === 'undefined') return;
+      if(!u || typeof firebase === 'undefined' || !firebase.firestore) return;
       const db = firebase.firestore();
       const doc = await db.collection('users').doc(u.uid).get();
       const d = doc.exists ? doc.data() : {};
@@ -454,7 +467,7 @@
     }catch(_){}
   }
 
-  // ===== Inline login (si no hay usuario) =====
+  // ===== Inline login (si no has iniciado sesión) =====
   function renderInlineLogin(){
     if(!els.inlineLoginHost || typeof firebase === 'undefined') return;
     const host = els.inlineLoginHost;
@@ -613,6 +626,16 @@
 
   // ===== EmailJS =====
   let __tplSendDebug = { lastEmailOk:false, lastFirestoreOk:false, lastError:null };
+  function applyEmailJsFieldMap(payload){
+    const cfg = window.TPL_EMAILJS || {};
+    const map = cfg.fieldsMap || cfg.map || null; // ejemplo: { from_name: 'Nombre', phone: 'Telefono' }
+    if(!map) return payload;
+    const out = { ...payload };
+    Object.entries(map).forEach(([target, source])=>{
+      if(source in payload) out[target] = payload[source];
+    });
+    return out;
+  }
   async function tryEmailJS(fd, extra){
     if(!window.emailjs) { console.warn('EmailJS no disponible'); return false; }
     try{
@@ -625,8 +648,9 @@
         console.warn('EmailJS incompleto: falta serviceId o templateId en window.TPL_EMAILJS');
         return false;
       }
-      const payload = Object.fromEntries(fd.entries());
-      Object.assign(payload, extra || {});
+      const base = Object.fromEntries(fd.entries());
+      const payload = applyEmailJsFieldMap(Object.assign(base, extra || {}));
+
       if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
       else { await emailjs.send(service, template, payload); }
       return true;
@@ -637,7 +661,7 @@
     return false;
   }
 
-  // ===== Validación de campos obligatorios =====
+  // ===== Validación de obligatorios =====
   function validateRequiredFields(){
     const ids = ['service','startDate','endDate','start','end','firstName','lastName','location','postalCode'];
     const missing = [];
@@ -658,29 +682,16 @@
     const ok = (t)=>`<span class="tpl-chip ok">✔ ${t}</span>`;
     const ko = (t)=>`<span class="tpl-chip ko">✖ ${t}</span>`;
 
-    // Host
     out.push(ok(`Host: ${location.hostname}`));
+    const hasFirebase = (typeof firebase !== 'undefined');
+    const hasAuth = hasFirebase && !!firebase.auth;
+    const hasFirestore = hasFirebase && !!firebase.firestore;
 
-    // Firebase
-    if(typeof firebase === 'undefined'){
-      out.push(ko('Firebase no cargado'));
-    }else{
-      out.push(ok('Firebase cargado'));
-      try{
-        const auth = firebase.auth();
-        out.push(auth?.currentUser ? ok('Usuario autenticado') : ko('Sin usuario autenticado'));
-      }catch(e){
-        out.push(ko('Auth no disponible'));
-      }
-      try{
-        const db = firebase.firestore();
-        out.push(db ? ok('Firestore disponible') : ko('Firestore no disponible'));
-      }catch(e){
-        out.push(ko('Firestore no disponible'));
-      }
-    }
+    out.push(hasFirebase ? ok('Firebase cargado') : ko('Firebase no cargado'));
+    out.push(hasAuth ? ok('Auth disponible') : ko('Auth no disponible'));
+    out.push(hasFirestore ? ok('Firestore disponible') : ko('Firestore no disponible'));
+    out.push(CFG.REQUIRE_LOGIN ? ok('Login requerido (ON)') : ko('Login requerido (OFF)'));
 
-    // EmailJS
     if(!window.emailjs) out.push(ko('EmailJS no cargado'));
     else{
       const cfg = window.TPL_EMAILJS || {};
@@ -693,10 +704,9 @@
       out.push(hasTpl ? ok('EmailJS template OK') : ko('EmailJS template ausente'));
     }
 
-    // Form
     out.push(els.form ? ok('Formulario encontrado') : ko('Formulario no encontrado'));
     const req = validateRequiredFields();
-    out.push(req.length===0 ? ok('Campos obligatorios completos (si hubieran valores)') : ko('Faltan obligatorios: '+req.join(', ')));
+    out.push(req.length===0 ? ok('Obligatorios OK (si hay datos)') : ko('Faltan: '+req.join(', ')));
 
     els.diagOut.innerHTML = out.join(' ');
   }
@@ -704,30 +714,31 @@
   // ===== Submit =====
   function attachSubmit(){
     if(!els.form) return;
+    if(els.form.dataset.tplBound === '1') return; // evitar doble binding si había otro script
+    els.form.dataset.tplBound = '1';
+
     els.form.addEventListener('submit', async (e)=>{
       e.preventDefault();
 
-      // Anti-doble-submit
       const submitBtn = els.form.querySelector('button[type="submit"]');
       if(submitBtn){ submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true'); }
 
       try{
-        // Login requerido
+        // Login obligatorio
         let u = null;
         if(typeof firebase !== 'undefined' && firebase.auth){
           const auth = firebase.auth();
           u = auth.currentUser || null;
         }
-        if(!u){
+        if(CFG.REQUIRE_LOGIN && !u){
           showErrorOverlay('Para enviar la reserva debes iniciar sesión.');
           if(submitBtn){ submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy'); }
           return;
         }
 
-        // Validación campos + preferencia contacto
+        // Validaciones
         const missing = validateRequiredFields();
         if(missing.length){
-          console.warn('Faltan campos:', missing);
           const first = byId(missing[0]); if(first) first.focus();
           showErrorOverlay('Faltan campos obligatorios por completar.');
           if(submitBtn){ submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy'); }
@@ -738,10 +749,10 @@
           return;
         }
 
-        // Resumen para email
+        // Resumen para el correo
         buildSummaryIntoHidden();
 
-        // Envío
+        // Preparar payload
         const fd = new FormData(els.form);
         const payload = {};
         fd.forEach((v,k)=> payload[k]=v);
@@ -753,6 +764,7 @@
         }
         if(u){ payload._uid = u.uid; payload._email = u.email || null; }
 
+        // Guardar en Firestore (si disponible)
         __tplSendDebug.lastFirestoreOk = false;
         try{
           if(typeof firebase !== 'undefined' && firebase.firestore){
@@ -766,6 +778,7 @@
           __tplSendDebug.lastError = errFs;
         }
 
+        // Envío EmailJS (obligatorio para éxito)
         __tplSendDebug.lastEmailOk = false;
         try{
           __tplSendDebug.lastEmailOk = await tryEmailJS(fd, { _page: location.href, _tipo: 'reserva', _estado: 'enviada' });
@@ -774,11 +787,16 @@
           __tplSendDebug.lastError = errMail;
         }
 
-        if(__tplSendDebug.lastFirestoreOk || __tplSendDebug.lastEmailOk){
-          showSuccessOverlay();
-        }else{
-          showErrorOverlay('No se pudo enviar la solicitud (servidor o correo). Revisa conexión, permisos o la configuración de EmailJS.');
+        // Condición de éxito final (lo crítico es EmailJS OK)
+        const ok =
+          (!CFG.REQUIRE_EMAIL_OK || __tplSendDebug.lastEmailOk) &&
+          (!CFG.REQUIRE_FIRESTORE_OK || __tplSendDebug.lastFirestoreOk);
+
+        if(ok){ showSuccessOverlay(); }
+        else{
+          showErrorOverlay('No se pudo enviar la solicitud. Revisa la configuración de EmailJS o los permisos de Firestore.');
         }
+
       }finally{
         const submitBtn = els.form.querySelector('button[type="submit"]');
         if(submitBtn){ submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy'); }
@@ -791,27 +809,29 @@
   document.addEventListener('DOMContentLoaded', ()=>{
     cacheEls();
 
-    // Reglas de activación por auth
+    // Auth UI (login obligatorio)
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const updateAuthUI = (user)=>{
         const logged = !!user;
         if(els.form) els.form.classList.toggle('disabled', !logged);
         if(els.wall) els.wall.style.display = logged ? 'none' : 'block';
-        if (logged){ autoContactFromProfile(user); autoPuppyFromProfile(); }
+        if (logged && firebase.firestore){ autoContactFromProfile(user); autoPuppyFromProfile(); }
         else { renderInlineLogin(); }
       };
       auth.onAuthStateChanged(updateAuthUI);
+    }else{
+      // Si por lo que sea no carga Firebase, bloqueamos el envío
+      if(els.form) els.form.classList.add('disabled');
+      if(els.wall) els.wall.style.display = 'block';
     }
 
-    // Preselección servicio + listeners
+    // UI y cálculo
     presetService();
     ['change','input'].forEach(ev=>{
       ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
         .forEach(id=>{ const el = byId(id); if(el) el.addEventListener(ev, recalcAll); });
     });
-
-    // Pets + travel
     renderPetNameFields(1);
     recalcAll();
     if(els.numPets) els.numPets.addEventListener('change', ()=>{ syncPetsExact(); renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
