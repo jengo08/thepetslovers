@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reserva · The Pets Lovers</title>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Host canónico para que EmailJS no bloquee por origen] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Host canónico para EmailJS y sesión consistente] -->
   <script>
   (function(){
-    var CANON = 'www.thepetslovers.es'; /* usa el host que diste de alta en EmailJS */
+    var CANON = 'www.thepetslovers.es';
     if (location.hostname && location.hostname !== CANON) {
       location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
     }
@@ -22,10 +22,7 @@
 
   <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de la página] -->
   <style>
-    :root{
-      --color-principal:#339496;
-      --color-texto:#58425a;
-    }
+    :root{ --color-principal:#339496; --color-texto:#58425a; }
     .booking-wrapper{max-width:980px;margin:120px auto 60px;padding:20px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
     .booking-header{text-align:center;margin-bottom:18px}
     .booking-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
@@ -145,7 +142,6 @@
         </div>
       </section>
 
-      <!-- Campo oculto para resumen que se envía por email -->
       <input type="hidden" name="Desglose" id="summaryField">
 
       <div class="booking-actions">
@@ -175,11 +171,10 @@
   <!-- TPL: INICIO BLOQUE NUEVO [EmailJS] -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
-    /* Rellena con tus datos de EmailJS */
     window.TPL_EMAILJS = {
-      serviceId: 'service_odjqrfl',   // <-- tu service_id
-      templateId: 'template_rao5n0c', // <-- tu template_id
-      publicKey:  'L2xAATfVuHJwj4EIV' // <-- tu public key
+      serviceId: 'service_odjqrfl',
+      templateId: 'template_rao5n0c',
+      publicKey:  'L2xAATfVuHJwj4EIV'
     };
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
@@ -187,7 +182,6 @@
   <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase + init EmailJS] -->
   <script>
     (function(){
-      // Firebase (tu proyecto)
       const firebaseConfig = {
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
         authDomain: "thepetslovers-c1111.firebaseapp.com",
@@ -200,7 +194,6 @@
         if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
         try{ firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(_){}
       }
-      // EmailJS
       const cfg = window.TPL_EMAILJS || {};
       if (window.emailjs && (cfg.publicKey||cfg.userId)) {
         try{ emailjs.init({ publicKey: cfg.publicKey || cfg.userId }); }catch(_){}
