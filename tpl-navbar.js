@@ -1,3 +1,5 @@
+<!-- Pega TODO este contenido en tpl-navbar.js -->
+
 /* TPL: INICIO BLOQUE NUEVO [Guard HOME sin redirecciones] */
 (function(){
   // Si estamos en HOME o en modo seguro, otros scripts pueden leer esta señal para NO redirigir.
@@ -10,7 +12,10 @@
 })();
 /* TPL: FIN BLOQUE NUEVO */
 
-/* TPL Navbar — estable, idempotente y sin bucles */
+
+/* ===========================
+   TPL Navbar — estable, idempotente y sin bucles
+   =========================== */
 (function(){
   if (window.__TPL_NAVBAR_RUNNING__) return;
   window.__TPL_NAVBAR_RUNNING__ = true;
@@ -102,7 +107,6 @@
   /* TPL: FIN BLOQUE NUEVO */
 
   function updateBtn(user){
-    // Mantengo tu lógica original
     if (!user || user.isAnonymous){
       setDefaultBtn();
       /* TPL: INICIO BLOQUE NUEVO [Sin sesión → limpiar storage] */
@@ -130,12 +134,11 @@
     });
   }
 
-  // ⬇️⬇️ FIX 1: solo retornar si TAMBIÉN existe firebase.auth
+  // Solo retornamos si TAMBIÉN existe firebase.auth
   async function ensureFirebase(){
     if (typeof firebase !== 'undefined' && firebase.app && firebase.auth) return;
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js');
-    // (opcional, se dejan por compatibilidad con el resto del archivo)
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js');
     await loadOnce('https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js');
   }
@@ -162,7 +165,6 @@
     setDefaultBtn();
 
     /* TPL: INICIO BLOQUE NUEVO [Pintado inmediato según localStorage] */
-    // Si vienes ya logueada de otra página, el botón cambia sin esperar a Firebase.
     renderFromStoredEmail();
     /* TPL: FIN BLOQUE NUEVO */
 
@@ -172,20 +174,18 @@
         var auth = initFirebase();
         if (!auth) return;
 
-        // ========= 💥 AQUI VA EL LOGOUT REAL =============
+        // ========= LOGOUT REAL (para tu <a id="tpl-logout">) =========
         /* TPL: INICIO BLOQUE NUEVO [Logout unificado Firebase] */
         (function setupUnifiedLogout(){
-          // Define/reescribe el handler global que usa tu <a id="tpl-logout"> en perfil.html
           window.__TPL_LOGOUT__ = async function(){
             try {
               if (auth && typeof auth.signOut === 'function'){
-                await auth.signOut();                   // 1) cerrar sesión REAL en Firebase
+                await auth.signOut(); // cerrar sesión REAL
               }
             } catch(e){ /* silencioso */ }
 
             try { syncStorageFromUser(null); } catch(_){}
 
-            // 2) limpiar tus claves de estado UI (exactamente las que usas)
             try{ sessionStorage.clear(); }catch(_){}
             try{
               localStorage.removeItem('tpl.session');
@@ -198,13 +198,12 @@
             }catch(_){}
 
             try{ document.body && document.body.setAttribute('data-auth','out'); }catch(_){}
-            setDefaultBtn();                            // 3) botón vuelve a “Iniciar sesión”
-            location.assign('index.html');              // 4) ir a home ya deslogueada
-            return false;                               // evita navegación doble del <a>
+            setDefaultBtn();
+            location.assign('index.html');
+            return false;
           };
         })();
         /* TPL: FIN BLOQUE NUEVO */
-        // ========= 💥 FIN LOGOUT REAL ====================
 
         // Estado inicial
         updateBtn(auth.currentUser);
@@ -217,12 +216,10 @@
           }
         });
 
-        // ⬇️⬇️ FIX 2: escuchar también cambios de token (casos de rehidratación lenta)
+        // Refrescos extra
         if (auth.onIdTokenChanged){
           auth.onIdTokenChanged(function(u){ updateBtn(u); });
         }
-
-        // Fallback tardío por si los scripts de Firebase tardan más en hidratar el usuario
         setTimeout(function(){
           if (!auth.currentUser) return;
           var a = document.getElementById('tpl-login-link');
@@ -231,9 +228,8 @@
           }
         }, 1200);
 
-        /* TPL: INICIO BLOQUE NUEVO [Re-chequeo robusto + eventos de foco/visibilidad] */
+        /* TPL: INICIO BLOQUE NUEVO [Re-chequeo robusto + foco/visibilidad] */
         (function(){
-          // Reintenta durante ~18s (60 intentos x 300ms) o hasta que vea usuario no anónimo
           var tries = 0;
           var iv = setInterval(function(){
             tries++;
@@ -242,8 +238,6 @@
               clearInterval(iv);
             }
           }, 300);
-
-          // Al volver a la pestaña o ganar foco tras login con redirect/popups, refrescar botón
           window.addEventListener('visibilitychange', function(){
             if (!document.hidden) updateBtn(auth.currentUser);
           });
@@ -256,7 +250,7 @@
       }catch(_){}
     })();
 
-    /* TPL: INICIO BLOQUE NUEVO [Escuchar cambios en localStorage desde otras páginas/pestañas] */
+    /* TPL: INICIO BLOQUE NUEVO [Escuchar cambios en localStorage desde otras pestañas] */
     window.addEventListener('storage', function(ev){
       if (!ev || (ev.key!=='tpl_auth_email' && ev.key!=='tpl_auth_uid')) return;
       renderFromStoredEmail();
@@ -270,6 +264,7 @@
     start();
   }
 })();
+
 
 /* ===========================
    TPL: INICIO BLOQUE NUEVO [EmailJS unificado + modal + progreso + subida condicionada a Firebase]
@@ -333,7 +328,7 @@
     btn.focus();
   }
 
-  // TPL: INICIO BLOQUE NUEVO [UI progreso de subida]
+  // UI progreso de subida
   function beginUploadUI(totalFiles){
     injectStyles();
     const backdrop = document.createElement('div');
@@ -357,18 +352,12 @@
         bar.style.width = p + '%';
         msg.textContent = `(${fileIndex}/${total}) ${fileName} — ${p}%`;
       },
-      done(){
-        const bd = document.getElementById('tpl-upload-backdrop');
-        if (bd) bd.remove();
-      },
-      error(text){
-        msg.textContent = text || 'No se pudo subir.';
-      }
+      done(){ const bd = document.getElementById('tpl-upload-backdrop'); if (bd) bd.remove(); },
+      error(text){ msg.textContent = text || 'No se pudo subir.'; }
     };
   }
-  // TPL: FIN BLOQUE NUEVO
 
-  /* ===== EmailJS ===== */
+  /* ===== EmailJS loader ===== */
   function loadEmailJS(publicKey){
     return new Promise((resolve, reject)=>{
       if (window.emailjs && window.emailjs.send){
@@ -383,6 +372,7 @@
     });
   }
 
+  /* ===== Utilidades ===== */
   function buildHTMLFromForm(form){
     const fd = new FormData(form);
     const rows = [];
@@ -428,16 +418,12 @@
   }
 
   /* ===== Auth helpers ===== */
-  function currentAuth(){
-    try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; }
-  }
+  function currentAuth(){ try{ return firebase && firebase.auth ? firebase.auth() : null; }catch(_){ return null; } }
   function isLoggedNonAnonymous(){
     const auth = currentAuth();
     const u = auth && auth.currentUser;
     return !!(u && !u.isAnonymous);
   }
-
-  // TPL: INICIO BLOQUE NUEVO [esperar a auth listo]
   async function waitForAuth(timeoutMs = 6000){
     const auth = currentAuth();
     if (!auth) return null;
@@ -450,7 +436,6 @@
       });
     });
   }
-  // TPL: FIN BLOQUE NUEVO
 
   /* ===== Loader Firebase local para este bloque ===== */
   async function ensureFirebaseEmailLayer(){
@@ -473,7 +458,7 @@
     }
   }
 
-  // TPL: INICIO BLOQUE NUEVO [Guardar doc en 'candidaturas' para el panel]
+  /* ===== Guardado en panel (solo candidaturas) ===== */
   async function saveCandidaturaRecord(fields, filesMeta){
     try{
       await ensureFirebaseEmailLayer();
@@ -484,7 +469,6 @@
       const tit  = byField('titulo');
 
       const data = {
-        // Datos personales
         nombre: fields.nombre||'',
         ciudad: fields.ciudad||'',
         cp: fields.cp||'',
@@ -494,7 +478,6 @@
         vehiculo: fields.vehiculo||'',
         descripcionPersonal: fields.descripcionPersonal||'',
 
-        // Formación
         atvTitulado: fields.atvTitulado||'',
         otrasFormaciones: fields.otrasFormaciones||'',
         experienciaLaboral: fields.experienciaLaboral||'',
@@ -502,7 +485,6 @@
         links: fields.links||'',
         descFormacion: fields.descFormacion||'',
 
-        // Experiencia
         hasCuidado: fields.hasCuidado||'',
         tiposAnimales: fields.tiposAnimales||'',
         comunicacionPropietarios: fields.comunicacionPropietarios||'',
@@ -510,7 +492,6 @@
         necesidadesEspeciales: fields.necesidadesEspeciales||'',
         medicacion: fields.medicacion||'',
 
-        // Entorno
         vivienda: fields.vivienda||'',
         seguridadCasa: fields.seguridadCasa||'',
         otrosAnimales: fields.otrosAnimales||'',
@@ -521,17 +502,14 @@
         ofrecerPaseos: fields.ofrecerPaseos||'',
         cachorrosSenior: fields.cachorrosSenior||'',
 
-        // Disponibilidad
         disponibilidad: fields.disponibilidad||'',
         tiempoLibre: fields.tiempoLibre||'',
         finesFestivos: fields.finesFestivos||'',
         zonasCobertura: fields.zonasCobertura||'',
 
-        // Archivos
         cvUrl: cv ? cv.url : '',
         tituloUrl: tit ? tit.url : '',
 
-        // Meta
         estado: 'pendiente',
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
@@ -541,24 +519,18 @@
       console.warn('TPL: no se pudo guardar candidatura en panel:', e);
     }
   }
-  // TPL: FIN BLOQUE NUEVO
 
-  // ===== Util =====
-  function normalizeType(t){
-    if (!t) return 'generico';
-    t = String(t).toLowerCase();
-    if (t === 'candidatura') return 'cuestionario';
-    return t;
-  }
+  // ===== Detección & defaults =====
+  function normalizeType(t){ if (!t) return 'generico'; t = String(t).toLowerCase(); if (t==='candidatura') return 'cuestionario'; return t; }
 
   function shouldHandle(form){
-    /* TPL: FIX — No interceptar el formulario local del cuestionario,
-       ni ninguna forma si esta página contiene el cuestionario */
-    if (form && form.id === 'tpl-form-auxiliares') return false;        // <-- FIX
-    if (document.getElementById('tpl-form-auxiliares')) return false;   // <-- FIX
+    // No interceptar el formulario local del cuestionario ni páginas que lo contengan
+    if (form && form.id === 'tpl-form-auxiliares') return false;
+    if (document.getElementById('tpl-form-auxiliares')) return false;
 
     if (form.matches('[data-tpl-emailjs="false"]')) return false;
     if (form.querySelector('input[type="password"], [type="password"]')) return false;
+
     const path = (location.pathname || '').toLowerCase();
     const txt  = (form.textContent || '').toLowerCase();
     if (form.matches('[data-tpl-emailjs="true"]')) return true;
@@ -593,7 +565,7 @@
           success: 'Tu candidatura está subida. Te avisaremos por email. Una vez que te aceptemos, podrás entrar para gestionar tu perfil.',
           cta: 'Volver al inicio',
           redirect: 'index.html',
-          templateId: TEMPLATE_CANDIDATURAS_REGISTROS // TPL: FIX del identificador (antes estaba mal escrito)
+          templateId: TEMPLATE_CANDIDATURAS_REGISTROS
         };
       case 'perfil':
         return {
@@ -624,13 +596,10 @@
 
   function hasSelectedFiles(form){
     let n = 0;
-    form.querySelectorAll('input[type="file"]').forEach(i=>{
-      n += (i.files ? i.files.length : 0);
-    });
+    form.querySelectorAll('input[type="file"]').forEach(i=>{ n += (i.files ? i.files.length : 0); });
     return n > 0;
   }
 
-  // TPL: INICIO BLOQUE NUEVO [mapa de errores de Storage]
   function storageErrorMsg(err){
     const code = err && (err.code || err.error || '').toString();
     if (code.includes('unauthorized'))   return 'Permisos insuficientes en Storage. Revisa las reglas.';
@@ -639,9 +608,8 @@
     if (code.includes('timeout'))        return 'La subida no progresa (timeout). Revisa reglas o conexión.';
     return (err && err.message) || 'Ha ocurrido un error.';
   }
-  // TPL: FIN BLOQUE NUEVO
 
-  // TPL: INICIO BLOQUE NUEVO [subida con progreso + watchdog + auth sólido + RUTA CON UID]
+  // Subida con progreso + watchdog + auth sólido + ruta con UID
   async function uploadAndSaveToFirebase(form, type, onProgress){
     try{
       await ensureFirebaseEmailLayer();
@@ -649,7 +617,6 @@
       return { error: 'firebase', message: 'No se pudo cargar Firebase en esta página.' };
     }
 
-    // Espera real a que el usuario esté disponible
     const user = await waitForAuth(6000);
     if (!user || user.isAnonymous){
       return { error: 'auth', message: 'Debes iniciar sesión para adjuntar archivos.' };
@@ -661,7 +628,6 @@
     const id = `${type}_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     const fields = formToObject(form);
 
-    // Preparar archivos seleccionados
     const fileInputs = form.querySelectorAll('input[type="file"]');
     const filesFlat = [];
     fileInputs.forEach(input=>{
@@ -672,7 +638,6 @@
     });
 
     if (!filesFlat.length){
-      // Si no hay archivos, aun así guardamos candidatura si aplica (sin URLs)
       if (type === 'cuestionario'){
         await saveCandidaturaRecord(fields, []);
       }
@@ -689,15 +654,12 @@
     const filesMeta = [];
     let uploadedBytesSoFar = 0;
 
-    // Watchdog: cancela si un archivo no progresa en 25 s
     const NO_PROGRESS_MS = 25000;
 
     for (let i=0;i<filesFlat.length;i++){
       const { field, file } = filesFlat[i];
       const safeName = String(file.name||'file').replace(/[^\w.\-]+/g,'_').slice(0,120);
-
-      // ⚠️ RUTA NUEVA CON UID para cumplir reglas tipo tpl/{uid}/...
-      const path = `tpl/${user.uid}/${type}/${id}/${(field||'archivo')}__${safeName}`;
+      const path = `tpl/${(firebase.auth().currentUser||{}).uid}/${type}/${id}/${(field||'archivo')}__${safeName}`;
       const ref = storage.ref().child(path);
 
       await new Promise((resolve, reject)=>{
@@ -746,11 +708,10 @@
       });
     }
 
-    // Registro histórico (opcional)
     try{
       await firebase.firestore().collection('tpl_submissions').doc(id).set({
         type,
-        uid: user.uid || null,
+        uid: (firebase.auth().currentUser||{}).uid || null,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         page: location.href,
         fields,
@@ -759,36 +720,66 @@
       });
     }catch(e){ /* opcional */ }
 
-    // Si es candidatura → crear registro para tu panel (con urls)
     if (type === 'cuestionario'){
-      await saveCandidaturaRecord(fields, filesMeta);
+      await saveCandidaturaRecord(formToObject(form), filesMeta);
     }
 
     return { id, files: filesMeta, fields };
   }
-  // TPL: FIN BLOQUE NUEVO
 
-  function defaultsForType(type){
-    return defaultsFor(type);
+  /* ===== Helpers de destino (EmailJS NUEVO) ===== */
+  function pickValue(form, names){
+    for (const n of names){
+      const el = form.querySelector(`[name="${n}"]`);
+      if (el && String(el.value||'').trim()) return String(el.value).trim();
+    }
+    return '';
+  }
+  function resolveDest(form){
+    const ds = form.dataset || {};
+    const glob = window.TPL_EMAILJS || {};
+    const toEmail =
+      ds.toEmail || ds.toemail || ds.to ||                          // data-to-email="..."
+      pickValue(form, ['to_email','to','destino','destinatario']) || // campos ocultos
+      glob.toEmail || glob.to_email ||                               // global
+      'gestion@thepetslovers.es';                                    // fallback seguro
+
+    const toName =
+      ds.toName || ds.toname ||
+      pickValue(form, ['to_name','destinatario_nombre']) ||
+      glob.toName || glob.to_name ||
+      'Gestión The Pets Lovers';
+
+    return { toEmail, toName };
+  }
+  function resolveReply(form){
+    const fromForm = pickValue(form, ['Email','_replyto','email','correo']);
+    if (fromForm) return fromForm;
+    const auth = currentAuth();
+    const u = auth && auth.currentUser;
+    return (u && u.email) || '';
+  }
+  function resolveFromName(form){
+    const nombre = pickValue(form, ['Nombre','nombre','firstName','first_name','name']);
+    const apellidos = pickValue(form, ['Apellidos','apellidos','lastName','last_name']);
+    const full = [nombre, apellidos].filter(Boolean).join(' ').trim();
+    return full || nombre || '';
   }
 
-  /* TPL: INICIO FIX — detectar sesión por el botón del navbar si Firebase tarda */
+  /* ===== Auxiliares Navbar (fallback login rápido) ===== */
   function looksLoggedFromNavbar(){
     var a = document.getElementById('tpl-login-link');
     if (!a) return false;
     var t = (a.textContent || '').toLowerCase();
     return t.includes('mi perfil') || t.includes('mi panel');
   }
-  /* TPL: FIN FIX */
-
-  /* TPL: INICIO FIX [helper para perfíl al finalizar] */
   function getProfileHref(){
     var a = document.getElementById('tpl-login-link');
     if (a && /perfil/.test((a.getAttribute('href')||''))) return a.getAttribute('href');
     return 'perfil.html';
   }
-  /* TPL: FIN FIX */
 
+  /* ===== ENVÍO ===== */
   async function handleSubmit(ev){
     const form = ev.currentTarget;
     if (!shouldHandle(form)) return;
@@ -797,15 +788,14 @@
     ev.stopImmediatePropagation();
     ev.stopPropagation();
 
-    /* 👉 CAMBIO: respetar validación nativa del HTML antes de seguir */
     if (typeof form.reportValidity === 'function' && !form.reportValidity()){
-      return; // el navegador mostrará qué campo falla (CP/teléfono, etc.)
+      return;
     }
 
     const ds = form.dataset || {};
     const rawType = detectType(form);
     const type = normalizeType(ds.type ? ds.type.toLowerCase() : rawType);
-    const base = defaultsForType(type);
+    const base = defaultsFor(type);
     const cfg = Object.assign({}, base, {
       subject: ds.subject || base.subject,
       success: ds.success || base.success,
@@ -817,15 +807,14 @@
     });
 
     try{ await ensureFirebaseEmailLayer(); }catch(_){}
-    await waitForAuth(9000); // ⬅️ esperamos un poco más
+    await waitForAuth(9000);
 
-    // 🔒 Exigir sesión en Candidaturas y Reservas SIEMPRE (con fallback visual del navbar)
-    const loggedIn = isLoggedNonAnonymous() || looksLoggedFromNavbar(); /* TPL: FIX aplicado */
+    const loggedIn = isLoggedNonAnonymous() || looksLoggedFromNavbar();
     if ((type === 'cuestionario' || type === 'reserva') && !loggedIn){
       const next = location.pathname + location.search + location.hash;
       showModal({
         title:'Inicia sesión para continuar',
-        message:'Para enviar tu candidatura o solicitar una reserva, primero inicia sesión. Te llevamos y volverás aquí automáticamente.',
+        message:'Para enviar tu candidatura o solicitar una reserva, primero inicia sesión.',
         ctaText:'Iniciar sesión',
         redirect: 'iniciar-sesion.html?next='+encodeURIComponent(next)
       });
@@ -836,7 +825,6 @@
     if (filesSelected) {
       form.setAttribute('enctype','multipart/form-data');
       form.setAttribute('method','POST');
-      // Validación tamaño
       let total = 0, oversize = false;
       form.querySelectorAll('input[type="file"]').forEach(input=>{
         Array.from(input.files||[]).forEach(f=>{
@@ -844,11 +832,7 @@
         });
       });
       if (oversize || total > 20*1024*1024){
-        showModal({
-          title: 'Archivos demasiado pesados',
-          message: 'Cada archivo debe pesar ≤ 10MB y el total ≤ 20MB.',
-          ctaText: 'Entendido'
-        });
+        showModal({ title: 'Archivos demasiado pesados', message: 'Cada archivo ≤ 10MB y el total ≤ 20MB.', ctaText: 'Entendido' });
         return;
       }
     }
@@ -858,9 +842,7 @@
 
     const html = buildHTMLFromForm(form);
     const pageUrl = location.href;
-
     const ui = filesSelected ? beginUploadUI(form.querySelectorAll('input[type="file"]').length) : null;
-
     const fieldsForRecord = formToObject(form);
 
     try{
@@ -871,19 +853,35 @@
           showModal({ title:'No se pudo subir archivos', message: storageErrorMsg(up), ctaText:'Cerrar' });
           return;
         }
-      } else {
-        if (type === 'cuestionario'){
-          await saveCandidaturaRecord(fieldsForRecord, []);
-        }
+      } else if (type === 'cuestionario'){
+        await saveCandidaturaRecord(fieldsForRecord, []);
       }
 
       ui && ui.done();
 
       await loadEmailJS(cfg.publicKey);
+
+      // Resolver destinatario y remitente → evita 422 en EmailJS
+      const dest = resolveDest(form);
+      const replyTo = resolveReply(form);
+      const fromName = resolveFromName(form);
+      const auth = currentAuth();
+      const user = auth && auth.currentUser;
+
       await window.emailjs.send(cfg.serviceId, cfg.templateId, {
         subject: cfg.subject,
         message_html: html,
-        page_url: pageUrl
+        page_url: pageUrl,
+
+        to_email: dest.toEmail,
+        to_name: dest.toName,
+
+        reply_to: replyTo || dest.toEmail,
+        from_name: fromName || '',
+        reply_name: fromName || '',
+
+        user_email: replyTo || '',
+        user_uid: (user && user.uid) || ''
       });
 
       try { form.reset(); } catch(_){}
@@ -902,7 +900,7 @@
     } catch(err){
       console.error('TPL envío error:', err);
       ui && ui.error('No se pudo subir.');
-      const msg = storageErrorMsg(err);
+      const msg = (err && err.text) || (err && err.message) || storageErrorMsg(err);
       showModal({ title:'No se pudo enviar', message: msg, ctaText:'Cerrar' });
     } finally {
       ui && ui.done();
@@ -914,7 +912,7 @@
     document.querySelectorAll('form').forEach(form=>{
       if (form.__tplBound) return;
       form.__tplBound = true;
-      // Importante: seguimos en captura, pero ahora shouldHandle() descarta el cuestionario local
+      // Importante: seguimos en captura, pero shouldHandle() descarta el cuestionario local
       form.addEventListener('submit', handleSubmit, { passive:false, capture:true });
     });
   }
@@ -933,13 +931,13 @@
    TPL: FIN BLOQUE NUEVO
    =========================== */
 
+
 /* TPL: INICIO BLOQUE NUEVO [Fix CP en Reservas desde navbar] */
 (function(){
   function fixCp(){
     var pc = document.getElementById('postalCode');
     if (!pc) return;
-    // Fuerza validación HTML correcta: 5 dígitos
-    pc.setAttribute('type','text');        // evita problemas si era number
+    pc.setAttribute('type','text');        // evita issues si era number
     pc.setAttribute('pattern','[0-9]{5}');
     pc.setAttribute('inputmode','numeric');
     pc.setAttribute('maxlength','5');
