@@ -80,7 +80,7 @@
     .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
     .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
 
-    /* Overlay éxito */
+    /* Overlay éxito / error */
     .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
     .tpl-overlay.on{ display:flex; }
     .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
@@ -988,6 +988,17 @@
 
   <!-- EmailJS (envío directo) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Config EmailJS: service, template, publicKey] -->
+  <script>
+    window.TPL_EMAILJS = {
+      serviceId: 'service_odjqrfl',
+      templateId: 'template_rao5n0c',
+      publicKey:  'L2xAATfVuHJwj4EIV'
+    };
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <script>
     (function(){
       const cfg = window.TPL_EMAILJS || {};
@@ -1101,7 +1112,7 @@
         wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
       }
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Overlay de error de envío] -->
+      /* TPL: INICIO BLOQUE NUEVO [Overlay de error de envío] */
       function showErrorOverlay(msg){
         var wrap = document.getElementById('tpl-overlay');
         if(!wrap){
@@ -1116,11 +1127,11 @@
         var btn = document.getElementById('tpl-ov-close');
         if(btn){ btn.onclick = function(){ wrap.classList.remove('on'); }; }
       }
-      /* TPL: FIN BLOQUE NUEVO -->
+      /* TPL: FIN BLOQUE NUEVO */
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Flags diagnóstico envío] -->
+      /* TPL: INICIO BLOQUE NUEVO [Flags diagnóstico envío] */
       var __tplSendDebug = { lastEmailOk:false, lastFirestoreOk:false, lastError:null };
-      /* TPL: FIN BLOQUE NUEVO -->
+      /* TPL: FIN BLOQUE NUEVO */
 
       async function tryEmailJS(fd, extra){
         if(!window.emailjs) { console.warn('EmailJS no disponible'); return false; }
@@ -1147,7 +1158,7 @@
         return false;
       }
 
-      <!-- TPL: INICIO BLOQUE NUEVO [Validación mínima + anti-doble-submit + éxito real] -->
+      /* TPL: INICIO BLOQUE NUEVO [Validación mínima + anti-doble-submit + éxito real] */
       function validateRequiredFields(){
         var requiredIds = ['service','startDate','endDate','start','end','firstName','lastName','location','postalCode'];
         var missing = [];
@@ -1155,7 +1166,6 @@
           var el = document.getElementById(id);
           if(el && !String(el.value||'').trim()) missing.push(id);
         });
-        // Extra para visitas
         var svc = (document.getElementById('service')||{}).value;
         if(svc === 'visitas'){
           if(!String((document.getElementById('visitDuration')||{}).value||'').trim()) missing.push('visitDuration');
@@ -1163,15 +1173,15 @@
         }
         return missing;
       }
-      /* TPL: FIN BLOQUE NUEVO -->
+      /* TPL: FIN BLOQUE NUEVO */
 
       form.addEventListener('submit', async function (e) {
         e.preventDefault(); // control total del envío
 
-        <!-- TPL: INICIO BLOQUE NUEVO [Anti-doble-submit] -->
+        /* TPL: INICIO BLOQUE NUEVO [Anti-doble-submit] */
         var submitBtn = form.querySelector('button[type="submit"]');
         if(submitBtn){ submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true'); }
-        /* TPL: FIN BLOQUE NUEVO -->
+        /* TPL: FIN BLOQUE NUEVO */
 
         // Guardar en Firestore + EmailJS
         try {
