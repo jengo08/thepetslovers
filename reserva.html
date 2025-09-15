@@ -156,6 +156,18 @@
         </div>
       </section>
 
+      <!-- TPL: INICIO BLOQUE NUEVO [Paso 2: contenedor del selector de mascota (solo visible si >1)] -->
+      <section class="tpl-section" id="tpl-pet-section" aria-labelledby="sec-mascota" hidden>
+        <h2 id="sec-mascota">Tu mascota</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="tpl-pet-select">Selecciona la mascota</label>
+            <select id="tpl-pet-select" name="Mascota"></select>
+          </div>
+        </div>
+      </section>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <!-- Resumen para el correo (lo rellena JS) -->
       <input type="hidden" name="Desglose" id="summaryField">
 
@@ -167,6 +179,16 @@
       <input type="hidden" name="_replyto" id="tpl-replyto">
       <input type="hidden" name="uid" id="tpl-uid">
       <input type="hidden" name="perfil_url" id="tpl-perfil-url">
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
+      <!-- TPL: INICIO BLOQUE NUEVO [Hidden con datos de la mascota elegida] -->
+      <input type="hidden" name="Mascota_nombre" id="tpl-pet-name">
+      <input type="hidden" name="Mascota_especie" id="tpl-pet-species">
+      <input type="hidden" name="Mascota_raza" id="tpl-pet-breed">
+      <input type="hidden" name="Mascota_tamano" id="tpl-pet-size">
+      <input type="hidden" name="Mascota_medicacion" id="tpl-pet-med">
+      <input type="hidden" name="Mascota_necesidades" id="tpl-pet-needs">
+      <input type="hidden" name="Mascota_id" id="tpl-pet-id">
       <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="booking-actions">
@@ -500,6 +522,161 @@
     window.addEventListener('tpl-auth-change', function(ev){
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
       syncHidden(user);
+    });
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 2: Selector de mascota con UDB (auto si 1; select si >1)] -->
+  <script>
+  (function(){
+    'use strict';
+    var $ = function(sel, root){ return (root||document).querySelector(sel); };
+
+    function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
+    function udbGet(uid, key){
+      try{
+        var raw = localStorage.getItem(udbKey(uid, key));
+        return raw ? JSON.parse(raw) : null;
+      }catch(_){ return null; }
+    }
+
+    // Normaliza objeto mascota de distintas estructuras
+    function normalizePet(p){
+      if (!p) return null;
+      var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
+      var nombre = p.nombre || p.name || p.petName || '';
+      var especie = p.especie || p.tipo || p.species || p.type || '';
+      var raza = p.raza || p.breed || '';
+      var tam = p.tamano || p.tamaño || p.size || '';
+      var meds = p.medicacion || p.medicación || p.medication || '';
+      var needs = p.necesidades || p.needs || p.specialNeeds || '';
+      return { id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs, _raw:p };
+    }
+
+    function toArrayMaybe(objOrArr){
+      if (!objOrArr) return [];
+      if (Array.isArray(objOrArr)) return objOrArr;
+      // si viene como objeto map {id: {...}}
+      return Object.keys(objOrArr).map(function(k){ return Object.assign({id:k}, objOrArr[k]); });
+    }
+
+    function loadPetsFor(uid){
+      var arr = [];
+      // probamos varias claves típicas
+      var p1 = udbGet(uid, 'pets');
+      var p2 = udbGet(uid, 'mascotas');
+      var raw = p1 || p2 || [];
+      toArrayMaybe(raw).forEach(function(p){
+        var n = normalizePet(p);
+        if (n && (n.nombre || n.id)) arr.push(n);
+      });
+      return arr;
+    }
+
+    // Pinta/oculta sección y sincroniza hidden fields
+    function applySinglePet(p){
+      $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true); // no mostrar sección si solo hay una
+      // rellenar hidden
+      $('#tpl-pet-id')      && ($('#tpl-pet-id').value = p.id || '');
+      $('#tpl-pet-name')    && ($('#tpl-pet-name').value = p.nombre || '');
+      $('#tpl-pet-species') && ($('#tpl-pet-species').value = p.especie || '');
+      $('#tpl-pet-breed')   && ($('#tpl-pet-breed').value = p.raza || '');
+      $('#tpl-pet-size')    && ($('#tpl-pet-size').value = p.tamano || '');
+      $('#tpl-pet-med')     && ($('#tpl-pet-med').value = p.medicacion || '');
+      $('#tpl-pet-needs')   && ($('#tpl-pet-needs').value = p.necesidades || '');
+    }
+
+    function labelFor(p){
+      var bits = [];
+      if (p.especie) bits.push(p.especie);
+      if (p.raza) bits.push(p.raza);
+      var meta = bits.length ? ' (' + bits.join(', ') + ')' : '';
+      return (p.nombre || 'Mascota') + meta;
+    }
+
+    function rememberLast(uid, petId){
+      try{ localStorage.setItem(udbKey(uid,'lastPetId'), String(petId||'')); }catch(_){}
+    }
+    function recallLast(uid){
+      try{ return localStorage.getItem(udbKey(uid,'lastPetId')) || null; }catch(_){ return null; }
+    }
+
+    function applyMultiplePets(uid, pets){
+      var sec = $('#tpl-pet-section');
+      var sel = $('#tpl-pet-select');
+      if (!sec || !sel) return;
+
+      // limpiar
+      sel.innerHTML = '';
+
+      // opción inicial si quieres (no requerida): sel.appendChild(new Option('Elige tu mascota…',''));
+      var last = recallLast(uid);
+      pets.forEach(function(p){
+        var opt = new Option(labelFor(p), p.id || p.nombre || '');
+        opt.dataset.pet = JSON.stringify(p);
+        sel.appendChild(opt);
+        if (last && (last === (p.id || p.nombre))) opt.selected = true;
+      });
+
+      // mostrar sección
+      sec.hidden = false;
+
+      // setear hidden del seleccionado
+      function syncFromSelect(){
+        var o = sel.options[sel.selectedIndex];
+        if (!o) return;
+        var p = null;
+        try{ p = JSON.parse(o.dataset.pet || '{}'); }catch(_){}
+        if (!p) return;
+        applySinglePet(p); // reutilizamos para rellenar hidden
+        rememberLast(uid, p.id || p.nombre || '');
+      }
+      sel.addEventListener('change', syncFromSelect);
+      // primera sincronización
+      syncFromSelect();
+    }
+
+    function onAuthReady(cb){
+      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
+        window.__TPL_AUTH__.ready.then(cb);
+      } else {
+        window.addEventListener('tpl-auth-ready', function(ev){
+          cb(ev.detail && ev.detail.user ? ev.detail.user : null);
+        }, { once:true });
+      }
+    }
+
+    onAuthReady(function(user){
+      var uid = user && user.uid;
+      if (!uid) return; // no hay sesión → ya controlado por Paso 1
+
+      var pets = loadPetsFor(uid);
+      if (!pets.length){
+        // limpia hidden si no hay mascotas
+        ['tpl-pet-id','tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-pet-size','tpl-pet-med','tpl-pet-needs'].forEach(function(id){
+          var el = $('#'+id); if (el) el.value = '';
+        });
+        $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
+        return;
+      }
+
+      if (pets.length === 1){
+        applySinglePet(pets[0]);
+      } else {
+        applyMultiplePets(uid, pets);
+      }
+    });
+
+    // Si otra pestaña cambia las mascotas en UDB, podríamos refrescar (suave)
+    window.addEventListener('storage', function(ev){
+      if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
+      var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
+      if (!user) return;
+      var uid = user.uid;
+      var pets = loadPetsFor(uid);
+      if (pets.length === 1) applySinglePet(pets[0]);
+      if (pets.length > 1)  applyMultiplePets(uid, pets);
     });
   })();
   </script>
