@@ -66,7 +66,37 @@
     }catch(_){ return String(e||''); }
   }
 
+  /* TPL: INICIO BLOQUE NUEVO [Helper: construir message_html a partir del formulario] */
+  function buildHTMLFromForm(form){
+    if (!form) return '';
+    const fd = new FormData(form);
+    const rows = [];
+    const seen = new Set();
+    fd.forEach((val, key)=>{
+      if (seen.has(key)) return; seen.add(key);
+      // buscar label
+      const inputs = form.querySelectorAll(`[name="${(window.CSS && CSS.escape)?CSS.escape(key):key}"]`);
+      let label = '';
+      if (inputs[0] && inputs[0].id){
+        const lab = form.querySelector(`label[for="${(window.CSS && CSS.escape)?CSS.escape(inputs[0].id):inputs[0].id}"]`);
+        if (lab) label = lab.textContent.trim();
+      }
+      const prettyKey = label || key.replace(/[_-]+/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+      const vals = fd.getAll(key).map(v => (v instanceof File) ? (v.name ? `Archivo: ${v.name}` : '') : String(v).trim()).filter(Boolean);
+      const prettyVal = vals.join(', ');
+      rows.push(`<tr><th align="left" style="padding:6px 8px;border-bottom:1px solid #eee">${prettyKey}</th><td style="padding:6px 8px;border-bottom:1px solid #eee">${prettyVal || '-'}</td></tr>`);
+    });
+    return `
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,sans-serif;line-height:1.45;color:#222">
+        <p><strong>Nueva reserva desde The Pets Lovers</strong></p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:8px">${rows.join('')}</table>
+      </div>
+    `;
+  }
+  /* TPL: FIN BLOQUE NUEVO */
+
   // ---------- EmailJS ----------
+  /* TPL: INICIO BLOQUE NUEVO [Ajuste crítico: enviar subject + message_html + page_url] */
   async function sendEmailJS(fd, extra){
     if(!window.emailjs) return false;
     const cfg = window.TPL_EMAILJS || {};
@@ -74,12 +104,23 @@
     const template = cfg.templateId || (cfg.templates && (cfg.templates.reserva || cfg.templates.booking));
     const pubKey   = cfg.publicKey || cfg.userId;
     if(!service || !template){ console.warn('EmailJS: falta serviceId/templateId'); return false; }
+
+    // Construimos el payload base desde el form:
     const payload = Object.fromEntries(fd.entries());
-    Object.assign(payload, extra || {});
+
+    // Sujetos/HTML estándar que tu plantilla espera (como en el handler unificado):
+    const form = document.getElementById('bookingForm');
+    const message_html = buildHTMLFromForm(form);
+    const subject = '[TPL] Nueva reserva';
+    const page_url = location.href;
+
+    Object.assign(payload, extra || {}, { subject, message_html, page_url });
+
     if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
     else { await emailjs.send(service, template, payload); }
     return true;
   }
+  /* TPL: FIN BLOQUE NUEVO */
 
   // ---------- Firestore (opcional) ----------
   async function saveToFirestore(payload){
