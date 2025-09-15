@@ -117,7 +117,6 @@
   function getUserFromGlobals(){
     try{
       const candidates = [
-        // Convenciones típicas de NAVBAR/APP
         window.TPL_USER,
         window.__TPL_USER,
         window.NAVAR_USER,
@@ -129,7 +128,6 @@
       ].filter(Boolean);
       if(!candidates.length) return null;
       const u = candidates[0];
-      // Normalizamos un mínimo (solo usamos uid/email para UI y payload):
       return {
         uid: u.uid || u.id || u._id || u.uidUser || null,
         email: u.email || u.mail || null,
@@ -139,7 +137,6 @@
     }catch(_){ return null; }
   }
 
-  // Espera a que Firebase esté listo (SDK + app inicializada)
   async function waitForFirebaseReady(timeoutMs=6000){
     const t0 = Date.now();
     while(Date.now() - t0 < timeoutMs){
@@ -149,66 +146,51 @@
     return !!(window.firebase && firebase.auth);
   }
 
-  // Rechequeo de sesión combinando Firebase + globales
   async function recheckAuthNow(){
-    const hasFb = await waitForFirebaseReady(1); // no bloquear si no está
+    const hasFb = await waitForFirebaseReady(1);
     const fbUser = (hasFb && firebase.auth) ? firebase.auth().currentUser : null;
     const glUser = getUserFromGlobals();
-    // Mostramos UI como logueada si alguna de las dos fuentes nos da usuario.
     setAuthUI(!!(fbUser || glUser), fbUser || glUser);
   }
 
-  // Suscribirse a señales globales comunes sin tocar NAVAR
   function subscribeToGlobalAuthSignals(){
-    // Cambios en localStorage (p.ej. NAVAR guarda user; o Firebase actualiza claves)
     window.addEventListener('storage', (e)=>{
       try{
         if(!e || !e.key) return;
-        // Cualquier cambio típico de auth dispara re-chequeo
         if (e.key.startsWith('firebase:authUser') || /user|auth|tpl/i.test(e.key)) {
           recheckAuthNow();
         }
       }catch(_){}
     });
-
-    // Escucha eventos de app si existen (no rompemos si no existen)
     ['tpl:auth','tpl:auth-changed','nav:auth','auth:changed','user:changed'].forEach(ev=>{
       window.addEventListener(ev, recheckAuthNow, { passive:true });
     });
-
-    // Primer tanteo desde global
     const glUser = getUserFromGlobals();
     if (glUser) setAuthUI(true, glUser);
   }
   /* TPL: FIN BLOQUE NUEVO */
 
   function attachAuthWall(){
-    /* TPL: INICIO BLOQUE NUEVO [Arranque tolerante al orden de carga] */
     (async function boot(){
-      subscribeToGlobalAuthSignals(); // por si el NAVAR ya tiene user
+      subscribeToGlobalAuthSignals();
       const ready = await waitForFirebaseReady();
       if (!ready){
         console.warn('Firebase aún no listo; se usará detección global hasta hidratar.');
         recheckAuthNow();
         return;
       }
-      /* TPL: FIN BLOQUE NUEVO */
 
       const auth = firebase.auth();
-
-      // 1) Eventos principales
       auth.onAuthStateChanged((u)=> setAuthUI(!!u, u || null));
       auth.onIdTokenChanged((u)=> setAuthUI(!!u, u || null));
 
-      // 2) Fallback: polling corto por si tarda en hidratar la sesión
       let tries = 0;
       const iv = setInterval(()=>{
         const u = auth.currentUser;
         if (u){ setAuthUI(true, u); clearInterval(iv); }
-        if (++tries > 20){ clearInterval(iv); } // ~3s máximo (20 * 150ms)
+        if (++tries > 20){ clearInterval(iv); }
       }, 150);
 
-      // 3) Chequeo combinado (por si NAVAR ya puso el user global antes)
       recheckAuthNow();
     })();
   }
@@ -245,19 +227,16 @@
       const hasFb = await waitForFirebaseReady(2000);
       const auth = (hasFb && firebase.auth) ? firebase.auth() : null;
 
-      // Preferimos usuario Firebase (reglas/seguridad). Si no, miramos global.
+      // Requisito: login Firebase real
       let u = auth && auth.currentUser;
       if(!u){
         const g = getUserFromGlobals();
         if (g) {
-          // Si solo existe usuario global, mostramos UI como logueada pero pedimos abrir sesión real si Firestore es obligatorio.
-          console.warn('Sesión global detectada pero Firebase.currentUser es null. Es probable que el login esté en otro host/subdominio.');
-          // Mostramos error para mantener el requisito de "logueo 100%" con Firebase:
+          console.warn('Sesión global detectada pero Firebase.currentUser es null. Probable login en otro host/subdominio.');
           showErrorOverlay('Parece que tu sesión no está activa en este dominio. Inicia sesión aquí mismo (botón superior) y vuelve a intentarlo.');
           return;
         }
       }
-
       if(!u){
         showErrorOverlay('Para enviar la reserva debes iniciar sesión.');
         return;
@@ -270,7 +249,6 @@
         return;
       }
 
-      // Construye summary para el correo
       const summary = buildSummary();
       const summaryField = $('summaryField');
       if(summaryField) summaryField.value = summary;
