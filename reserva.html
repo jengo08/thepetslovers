@@ -1351,6 +1351,76 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<script>
+(function(){
+  'use strict';
+  function id(x){ return document.getElementById(x); }
+
+  // 1) Asegurar como mínimo 1 input de mascota visible y que "Mascotas_lista" se mantenga actualizado
+  function ensureOnePetField(){
+    var wrap = id('petsContainer'); if(!wrap) return;
+    if(!wrap.querySelector('input[id^="petName_"]')){
+      var row = document.createElement('div');
+      row.className = 'booking-field';
+      row.innerHTML =
+        '<label for="petName_1">Nombre de la mascota</label>' +
+        '<input type="text" id="petName_1" name="Mascota_1" list="tplPetNamesList" autocomplete="off">';
+      wrap.appendChild(row);
+    }
+    var hidden = id('petsListHidden');
+    var sync = function(){
+      if(!hidden) return;
+      var names = Array.from(wrap.querySelectorAll('input[id^="petName_"]'))
+        .map(i=>i.value.trim()).filter(Boolean);
+      hidden.value = names.join(', ');
+    };
+    wrap.addEventListener('input', sync, {capture:true});
+    sync();
+  }
+
+  // Ejecuta al cargar y de nuevo tras un pequeño delay (por si tu otro script tarda en arrancar)
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureOnePetField);
+  else ensureOnePetField();
+  setTimeout(ensureOnePetField, 800);
+
+  // 2) Prefill de nombre(s) desde Firestore -> users/{uid}/mascotas (campo "nombre")
+  function prefillFromFirestore(){
+    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore) return;
+    var user = (firebase.auth().currentUser)||null;
+    if (!user) return;
+
+    firebase.firestore()
+      .collection('users').doc(user.uid).collection('mascotas')
+      .limit(3).get()
+      .then(function(snap){
+        var list = [];
+        snap.forEach(function(doc){
+          var n = (doc.data()||{}).nombre;
+          if (n && list.indexOf(n) === -1) list.push(n);
+        });
+
+        // Cargar datalist
+        var dl = id('tplPetNamesList');
+        if (dl) dl.innerHTML = list.map(function(n){
+          return '<option value="'+ String(n).replace(/"/g,'&quot;') +'"></option>';
+        }).join('');
+
+        // Prefill el primer input si está vacío
+        var inp = document.querySelector('#petsContainer input[id^="petName_"]');
+        if (inp && !inp.value && list.length){
+          inp.value = list[0];
+          inp.dispatchEvent(new Event('input', { bubbles:true }));
+        }
+      })
+      .catch(function(){ /* silencio */ });
+  }
+
+  if (typeof firebase !== 'undefined' && firebase.auth){
+    // Cuando el usuario esté logueado, intenta el prefill
+    firebase.auth().onAuthStateChanged(function(u){ if (u) prefillFromFirestore(); });
+  }
+})();
+</script>
 
   <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
