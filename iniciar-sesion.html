@@ -157,12 +157,13 @@
     })();
   </script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Redirección inmediata post-login sin mensajes] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Redirección inmediata post-login respetando ?next= (con saneado y soporte redirect)] -->
   <script>
     (function(){
-      // Admin ⇒ panel, resto ⇒ perfil
-      const PANEL_URL = 'tpl-candidaturas-admin.html';
+      // Rutas por defecto si NO viene ?next=
+      const PANEL_URL   = 'tpl-candidaturas-admin.html';
       const PROFILE_URL = 'perfil.html';
+
       const ADMIN_EMAILS = ['4b.jenny.gomez@gmail.com'];
       const ADMIN_SET = new Set(ADMIN_EMAILS.map(x =>
         String(x).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -173,21 +174,56 @@
       };
 
       const $ = (s,p=document)=>p.querySelector(s);
-      const form = $('#formAuth');
-      const email = $('#email');
-      const pass  = $('#password');
+      const form      = $('#formAuth');
+      const email     = $('#email');
+      const pass      = $('#password');
       const btnForgot = $('#btnForgot');
       const btnGoogle = $('#btnGoogle');
-      const btnLogin = $('#btnLogin');
-      const msg = $('#msg');
+      const btnLogin  = $('#btnLogin');
+      const btnSignup = $('#btnSignup');
+      const msg       = $('#msg');
 
       const auth = () => (typeof firebase!=='undefined' && firebase.auth) ? firebase.auth() : null;
 
-      async function go(url){
-        // Redirección directa; sin mensajes
-        location.href = url;
+      function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(_){ return null; } }
+
+      // --- Sanea NEXT: quita dominio, evita bucle al propio login y vacíos
+      function sanitizeNext(n){
+        n = String(n||'').trim();
+        if (!n) return '';
+        // Quita dominio si viniera absoluto
+        n = n.replace(/^https?:\/\/[^/]+/i, '');
+        // Evita apuntar a esta misma página de login
+        if (/^\/?iniciar-sesion\.html/i.test(n)) return '';
+        // Asegura ruta relativa "limpia"
+        if (!/^[\/A-Za-z0-9._\-?&=#%]+$/.test(n)) return '';
+        return n.replace(/^\//,''); // sin slash inicial
       }
+
+      // Lee next desde URL o ss (para Google redirect)
+      function getRawNext(){
+        try {
+          return qs('next') || sessionStorage.getItem('tpl_next') || '';
+        } catch(_){ return ''; }
+      }
+
+      let RAW_NEXT = getRawNext();
+      let NEXT = sanitizeNext(RAW_NEXT);
+
+      // Propaga ?next= al enlace de registro
+      if (btnSignup && NEXT){
+        try { btnSignup.href = 'registro.html?next=' + encodeURIComponent(NEXT); } catch(_){}
+      }
+
+      async function go(url){
+        // Redirección sin dejar rastro en historial
+        location.replace(url);
+      }
+
       async function decideNext(user){
+        // 1) Si hay NEXT válido, priorízalo SIEMPRE
+        if (NEXT) return NEXT;
+        // 2) Sin NEXT: admin → panel, resto → perfil
         return (user && isAdminEmail(user.email)) ? PANEL_URL : PROFILE_URL;
       }
 
@@ -199,7 +235,10 @@
           a.onAuthStateChanged(async function(u){
             if (u && !u.isAnonymous){
               // cache ligero para navbar (opcional)
-              try{ localStorage.setItem('tplAuth','1'); if(u.email) localStorage.setItem('tplEmail', String(u.email)); }catch(e){}
+              try{
+                localStorage.setItem('tplAuth','1');
+                if(u.email) localStorage.setItem('tplEmail', String(u.email));
+              }catch(e){}
               await go(await decideNext(u));
             }
           });
@@ -224,7 +263,10 @@
         try{
           setBusy(true);
           const cred = await a.signInWithEmailAndPassword(em, pw);
-          try{ localStorage.setItem('tplAuth','1'); if(cred.user && cred.user.email) localStorage.setItem('tplEmail', String(cred.user.email)); }catch(e){}
+          try{
+            localStorage.setItem('tplAuth','1');
+            if(cred.user && cred.user.email) localStorage.setItem('tplEmail', String(cred.user.email));
+          }catch(e){}
           await go(await decideNext(cred.user));
         }catch(err){
           let m = (err && err.code) ? err.code : (err && err.message) || 'Error';
@@ -242,14 +284,19 @@
         const provider = new firebase.auth.GoogleAuthProvider();
         setBusy(true);
         try{
+          // Guarda NEXT por si salimos de la página (redirect)
+          try { sessionStorage.setItem('tpl_next', NEXT || ''); } catch(_){}
           const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
           const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
           if (isIOS && isSafari){
             await a.signInWithRedirect(provider);
-            return; // vuelve con getRedirectResult
+            return; // volverá aquí con getRedirectResult
           } else {
             const res = await a.signInWithPopup(provider);
-            try{ localStorage.setItem('tplAuth','1'); if(res.user && res.user.email) localStorage.setItem('tplEmail', String(res.user.email)); }catch(e){}
+            try{
+              localStorage.setItem('tplAuth','1');
+              if(res.user && res.user.email) localStorage.setItem('tplEmail', String(res.user.email));
+            }catch(e){}
             await go(await decideNext(res.user));
           }
         }catch(err){
@@ -266,7 +313,18 @@
           const a = auth(); if (!a) return;
           const res = await a.getRedirectResult();
           if (res && res.user){
-            try{ localStorage.setItem('tplAuth','1'); if(res.user.email) localStorage.setItem('tplEmail', String(res.user.email)); }catch(e){}
+            // Recupera NEXT si hizo falta
+            try {
+              if (!NEXT) {
+                RAW_NEXT = sessionStorage.getItem('tpl_next') || '';
+                NEXT = sanitizeNext(RAW_NEXT);
+              }
+              sessionStorage.removeItem('tpl_next');
+            } catch(_){}
+            try{
+              localStorage.setItem('tplAuth','1');
+              if(res.user.email) localStorage.setItem('tplEmail', String(res.user.email));
+            }catch(e){}
             await go(await decideNext(res.user));
           }
         }catch(e){}
