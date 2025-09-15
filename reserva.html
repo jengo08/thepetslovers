@@ -5,15 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reserva · The Pets Lovers</title>
 
-  <!-- Host canónico: unifica sesión y evita problemas de EmailJS -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Host canónico con guard para desarrollo] -->
   <script>
   (function(){
     var CANON = 'www.thepetslovers.es';
-    if (location.hostname && location.hostname !== CANON) {
+    var host = location.hostname || '';
+    // No redirigimos si estás en desarrollo o GitHub Pages
+    var IS_DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host) || /github\.io$/i.test(host);
+    if (host && host !== CANON && !IS_DEV) {
       location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
     }
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
@@ -200,7 +204,7 @@
   <!-- (Opcional) Forzar login en esta página -->
   <!-- <script>window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;</script> -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Auth unificado + muro de autenticación] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Auth unificado + builder de login URL + muro] -->
   <script>
   (function(){
     'use strict';
@@ -208,7 +212,26 @@
 
     function $(sel, root){ return (root||document).querySelector(sel); }
 
-    // Estado global de Auth para todos los módulos de la página
+    // ===== Builder de URL de login (configurable) =====
+    /* Puedes forzar el archivo exacto así, en cualquier <script> antes de este:
+       window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';
+    */
+    var LOGIN_CANDIDATES = ['iniciar-sesión.html','iniciar-sesion.html','login.html'];
+    function getLoginBase(){
+      return window.TPL_LOGIN_PAGE || LOGIN_CANDIDATES[0];
+    }
+    function buildNext(){
+      // next = ruta actual (sin dominio) + query + hash
+      var p = (location.pathname || '').replace(/^\//,'');
+      return p + (location.search || '') + (location.hash || '');
+    }
+    function buildLoginUrl(nextOverride){
+      var base = getLoginBase();
+      var next = nextOverride || buildNext();
+      return base + '?next=' + encodeURIComponent(next);
+    }
+
+    // ===== Estado global de Auth =====
     window.__TPL_AUTH__ = window.__TPL_AUTH__ || { user:null, ready:null };
 
     function setupAuthBridge(){
@@ -219,10 +242,8 @@
         window.__TPL_AUTH__.ready = new Promise(function(resolve){
           var first = true;
           function handle(user){
-            // Guarda usuario global
             window.__TPL_AUTH__.user = user || null;
 
-            // Señales útiles para otros scripts + depuración
             try {
               document.body.setAttribute('data-auth', user ? 'in' : 'out');
               if (user && !user.isAnonymous){
@@ -234,7 +255,6 @@
               }
             } catch(_e){}
 
-            // Eventos globales (compat hacia atrás)
             try { window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: user ? (user.email||null) : null } })); } catch(_e){}
             if (first) {
               first = false;
@@ -246,18 +266,15 @@
             updateUI(user);
           }
 
-          // Listener principal
           auth.onAuthStateChanged(handle);
-          // Disparo inicial por si ya está disponible
           handle(auth.currentUser);
         });
       } else {
-        // Si ya existía, sincroniza UI con el estado presente
         window.__TPL_AUTH__.ready.then(updateUI);
       }
     }
 
-    // Control simple del “muro” y del formulario
+    // ===== UI del muro + redirecciones =====
     function updateUI(user){
       var wall = $('#authWall');
       var form = $('#bookingForm');
@@ -269,7 +286,6 @@
         wall.style.display = 'none';
         form.classList.remove('disabled');
 
-        // Prefill ligero sin tocar tu diseño
         var email = $('#email'); if (user.email && email && !email.value) email.value = user.email;
         var name  = $('#firstName');
         if (user.displayName && name && !name.value) {
@@ -279,30 +295,47 @@
       } else {
         wall.style.display = 'block';
         form.classList.add('disabled');
+
+        // CTA de login: ahora apunta a iniciar-sesión.html?next=...
         if (slot && !slot.hasChildNodes()) {
-          // CTA mínima (sin cambiar tu navbar)
+          var loginUrl = buildLoginUrl();
           slot.innerHTML =
-            '<a class="tpl-btn" href="#iniciar-sesion">Iniciar sesión</a> '+
+            '<a class="tpl-btn" href="'+ loginUrl +'">Iniciar sesión</a> '+
             '<a class="tpl-btn-outline" href="index.html#iniciar-sesion">Volver al inicio</a>';
         }
 
         // Redirección opcional si se fuerza login
         if (window.TPL_REQUIRE_LOGIN_ON_RESERVAS === true) {
-          var next = location.pathname + location.search + location.hash;
-          location.href = 'index.html#iniciar-sesion&next=' + encodeURIComponent(next);
+          location.href = buildLoginUrl();
         }
       }
     }
 
     // Arranque
     setupAuthBridge();
-    // Si por cualquier motivo Firebase tarda, reintenta un poco
     var tries = 0, t = setInterval(function(){
       tries++;
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) { clearInterval(t); return; }
       setupAuthBridge();
-      if (tries > 30) clearInterval(t); // ~3s
+      if (tries > 30) clearInterval(t);
     }, 100);
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Auto-recovery para recursos 404 comunes] -->
+  <script>
+  (function(){
+    // Si alguna IMG falla con *.png*.png, reintenta con *.png (no cambia tu diseño)
+    window.addEventListener('error', function(e){
+      var el = e.target;
+      if (!el || !el.tagName) return;
+      if (el.tagName === 'IMG' && /(\.png\.png)(\?.*)?$/i.test(el.src||'')) {
+        var fixed = el.src.replace(/\.png\.png/i, '.png');
+        el.onerror = null; // evita bucles
+        el.src = fixed;
+      }
+    }, true);
   })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
