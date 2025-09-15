@@ -367,12 +367,13 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Paso 1: Autocomplete titular + hidden reply_to/uid + forzar login] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 1: Autocomplete titular + hidden reply_to/uid + forzar login (+ Fallback Firestore)] -->
   <script>
   (function(){
     'use strict';
     window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true; // siempre requiere login
 
+    var DEBUG = /[?&]debugReservas=1\b/.test(location.search);
     var $ = function(sel, root){ return (root||document).querySelector(sel); };
 
     function getProfileHref(){
@@ -386,7 +387,7 @@
       try{ var raw = localStorage.getItem(udbKey(uid, key)); return raw ? JSON.parse(raw) : null; }catch(_){ return null; }
     }
 
-    // 🧠 Split robusto: "Nombre Apellido(s)" → nombre = primer bloque; apellidos = resto
+    // 🧠 Split robusto
     function splitFullName(full){
       if (!full) return { nombre:'', apellidos:'' };
       var s = String(full).trim().replace(/\s+/g,' ');
@@ -400,7 +401,6 @@
 
     function fillFromOwner(owner){
       if (!owner) return;
-      // Si trae nombre/apellidos separados, perfecto
       var n = owner.nombre || owner.name || owner.nombreCompleto || owner.fullName || '';
       var a = owner.apellidos || owner.surnames || '';
       if (!a && n && (n.includes(' ') || /,/.test(n))) {
@@ -410,6 +410,7 @@
       setIfEmpty($('#lastName'),  a || '');
       setIfEmpty($('#email'),     owner.email || '');
       setIfEmpty($('#phone'),     owner.telefono || owner.phone || '');
+      if (DEBUG) console.log('[TPL][Perfil] Rellenado desde', owner.__src || 'desconocido', owner);
     }
 
     function syncHidden(user){
@@ -430,6 +431,29 @@
       email.addEventListener('input', function(){ hidReply.value = email.value || ''; });
     }
 
+    // ===== Fallback Firestore (perfil) =====
+    /* TPL: INICIO SUBBLOQUE NUEVO [Firestore perfil] */
+    async function loadOwnerFromFirestore(uid){
+      try{
+        if (typeof firebase === 'undefined' || !firebase.firestore) return null;
+        var db = firebase.firestore();
+        var candidates = ['owners','propietarios','profiles','usuarios'];
+        for (var i=0;i<candidates.length;i++){
+          var col = candidates[i];
+          try{
+            var snap = await db.collection(col).doc(uid).get();
+            if (snap.exists){
+              var d = snap.data() || {};
+              d.__src = 'fs:'+col;
+              return d;
+            }
+          }catch(e){ /* silencio */ }
+        }
+      }catch(e){ /* silencio */ }
+      return null;
+    }
+    /* TPL: FIN SUBBLOQUE NUEVO */
+
     function onAuthReady(cb){
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
         window.__TPL_AUTH__.ready.then(cb);
@@ -440,24 +464,34 @@
       }
     }
 
-    onAuthReady(function(user){
+    onAuthReady(async function(user){
       try{
         var uid = user && user.uid;
+        var filled = false;
+
+        // 1) UDB local
         if (uid){
           var owner = udbGet(uid, 'owner') || udbGet(uid, 'propietario');
-          if (owner) fillFromOwner(owner);
+          if (owner){ fillFromOwner(owner); filled = true; }
         }
-      }catch(_){}
 
-      try{
+        // 2) Firebase Auth
         if (user){
           if (user.email) setIfEmpty($('#email'), user.email);
-          if (user.displayName){
-            var sp = splitFullName(user.displayName);
-            setIfEmpty($('#firstName'), sp.nombre);
-            setIfEmpty($('#lastName'),  sp.apellidos);
+          if ($('#firstName') && !$('#firstName').value || $('#lastName') && !$('#lastName').value){
+            var sp = splitFullName(user.displayName || '');
+            if (sp.nombre || sp.apellidos){ setIfEmpty($('#firstName'), sp.nombre); setIfEmpty($('#lastName'), sp.apellidos); filled = true; }
           }
         }
+
+        // 3) Firestore (si sigue faltando algo)
+        if (uid && (!$('#firstName').value || !$('#lastName').value || !$('#email').value || !$('#phone').value)){
+          var fsOwner = await loadOwnerFromFirestore(uid);
+          if (fsOwner){ fillFromOwner(fsOwner); filled = true; }
+        }
+
+        if (DEBUG) console.log('[TPL][Perfil] filled?', filled);
+
       }catch(_){}
 
       syncHidden(user);
@@ -472,10 +506,11 @@
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Paso 2: Selector de mascota con UDB (auto si 1; select si >1)] -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 2: Selector de mascota con UDB (auto si 1; select si >1) + Fallback Firestore] -->
   <script>
   (function(){
     'use strict';
+    var DEBUG = /[?&]debugReservas=1\b/.test(location.search);
     var $ = function(sel, root){ return (root||document).querySelector(sel); };
 
     function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
@@ -494,14 +529,13 @@
       var needs = p.necesidades || p.needs || p.specialNeeds || '';
       return { id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs, _raw:p };
     }
-
     function toArrayMaybe(objOrArr){
       if (!objOrArr) return [];
       if (Array.isArray(objOrArr)) return objOrArr;
       return Object.keys(objOrArr).map(function(k){ return Object.assign({id:k}, objOrArr[k]); });
     }
 
-    function loadPetsFor(uid){
+    function loadPetsFromUdb(uid){
       var arr = [];
       var p1 = udbGet(uid, 'pets');
       var p2 = udbGet(uid, 'mascotas');
@@ -513,6 +547,42 @@
       return arr;
     }
 
+    // ===== Fallback Firestore (mascotas) =====
+    /* TPL: INICIO SUBBLOQUE NUEVO [Firestore mascotas] */
+    async function loadPetsFromFirestore(uid){
+      var list = [];
+      try{
+        if (typeof firebase === 'undefined' || !firebase.firestore) return list;
+        var db = firebase.firestore();
+        var profileCols = ['owners','propietarios','profiles','usuarios'];
+        // 1) subcolecciones 'mascotas' o 'pets' dentro del perfil
+        for (var i=0;i<profileCols.length;i++){
+          var col = profileCols[i];
+          try{
+            var docRef = db.collection(col).doc(uid);
+            var sub1 = await docRef.collection('mascotas').get().catch(()=>null);
+            if (sub1 && !sub1.empty){
+              sub1.forEach(function(doc){ var n=normalizePet(Object.assign({id:doc.id}, doc.data())); if(n) list.push(n); });
+            }
+            var sub2 = await docRef.collection('pets').get().catch(()=>null);
+            if (sub2 && !sub2.empty){
+              sub2.forEach(function(doc){ var n=normalizePet(Object.assign({id:doc.id}, doc.data())); if(n) list.push(n); });
+            }
+            // 2) arrays/campos en el doc
+            var main = await docRef.get().catch(()=>null);
+            if (main && main.exists){
+              var d = main.data()||{};
+              toArrayMaybe(d.mascotas).forEach(function(p){ var n=normalizePet(p); if(n) list.push(n); });
+              toArrayMaybe(d.pets).forEach(function(p){ var n=normalizePet(p); if(n) list.push(n); });
+            }
+            if (list.length) return list;
+          }catch(e){ /* silencio */ }
+        }
+      }catch(e){ /* silencio */ }
+      return list;
+    }
+    /* TPL: FIN SUBBLOQUE NUEVO */
+
     function applySinglePet(p){
       $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
       $('#tpl-pet-id')      && ($('#tpl-pet-id').value = p.id || '');
@@ -522,6 +592,9 @@
       $('#tpl-pet-size')    && ($('#tpl-pet-size').value = p.tamano || '');
       $('#tpl-pet-med')     && ($('#tpl-pet-med').value = p.medicacion || '');
       $('#tpl-pet-needs')   && ($('#tpl-pet-needs').value = p.necesidades || '');
+      if (DEBUG) console.log('[TPL][Mascota] única aplicada:', p);
+      // Intento suave de refrescar el resumen
+      try{ document.getElementById('summaryField') && document.getElementById('summaryField').dispatchEvent(new Event('change')); }catch(_){}
     }
 
     function labelFor(p){
@@ -566,6 +639,7 @@
       }
       sel.addEventListener('change', syncFromSelect);
       syncFromSelect();
+      if (DEBUG) console.log('[TPL][Mascotas] selector pintado con', pets.length, 'opciones');
     }
 
     function onAuthReady(cb){
@@ -578,26 +652,40 @@
       }
     }
 
-    onAuthReady(function(user){
+    onAuthReady(async function(user){
       var uid = user && user.uid;
       if (!uid) return;
-      var pets = loadPetsFor(uid);
+
+      // 1) UDB
+      var pets = loadPetsFromUdb(uid);
+
+      // 2) Firestore si no hay
       if (!pets.length){
+        var fsPets = await loadPetsFromFirestore(uid);
+        if (fsPets && fsPets.length) pets = fsPets;
+      }
+
+      if (!pets.length){
+        // Limpia hidden y oculta sección
         ['tpl-pet-id','tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-pet-size','tpl-pet-med','tpl-pet-needs'].forEach(function(id){
           var el = document.getElementById(id); if (el) el.value = '';
         });
         $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
+        if (DEBUG) console.log('[TPL][Mascotas] no hay datos');
         return;
       }
-      if (pets.length === 1){ applySinglePet(pets[0]); } else { applyMultiplePets(uid, pets); }
+
+      if (pets.length === 1){ applySinglePet(pets[0]); }
+      else { applyMultiplePets(uid, pets); }
     });
 
+    // Si otra pestaña cambia las mascotas en UDB
     window.addEventListener('storage', function(ev){
       if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
       if (!user) return;
       var uid = user.uid;
-      var pets = loadPetsFor(uid);
+      var pets = loadPetsFromUdb(uid);
       if (pets.length === 1) applySinglePet(pets[0]);
       if (pets.length > 1)  applyMultiplePets(uid, pets);
     });
@@ -613,10 +701,8 @@
     var form = $('#bookingForm');
     if (!form) return;
 
-    // Config preaviso (horas)
     var LEAD_HOURS = (typeof window.TPL_RESERVAS_LEAD_HOURS === 'number') ? window.TPL_RESERVAS_LEAD_HOURS : 24;
 
-    // ==== Utilidades ====
     function parseDate(d){ if(!d) return null; var p=d.split('-'); if(p.length!==3) return null; return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0, 0); }
     function parseTime(t){ if(!t) return null; var p=t.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
     function combine(dt, tm){ if(!dt||!tm) return null; var d=new Date(dt); d.setHours(tm.h, tm.m, 0, 0); return d; }
@@ -634,7 +720,6 @@
       return false;
     }
 
-    // ==== Campos ====
     var elService   = $('#service');
     var elSD        = $('#startDate');
     var elED        = $('#endDate');
@@ -645,7 +730,6 @@
     var elNotes     = $('#notes');
     var elSummary   = $('#summaryField');
 
-    // ==== Validaciones reactivas (para que reportValidity de EmailJS las vea) ====
     function validateDates(){
       elSD.setCustomValidity('');
       elED.setCustomValidity('');
@@ -661,14 +745,12 @@
       var sDT = combine(sd, st);
       var eDT = combine(ed, et);
 
-      // fin >= inicio
       if (eDT < sDT){
         elED.setCustomValidity('La fecha/hora de fin debe ser posterior a la de inicio.');
         elET.setCustomValidity('La fecha/hora de fin debe ser posterior a la de inicio.');
         return false;
       }
 
-      // si mismo día → hora fin > hora inicio
       if (sd.getFullYear()===ed.getFullYear() && sd.getMonth()===ed.getMonth() && sd.getDate()===ed.getDate()){
         if (eDT <= sDT){
           elET.setCustomValidity('Para el mismo día, la hora fin debe ser mayor que la hora inicio.');
@@ -676,7 +758,6 @@
         }
       }
 
-      // preaviso
       var now = new Date();
       var minStart = new Date(now.getTime() + LEAD_HOURS*3600*1000);
       if (sDT < minStart){
@@ -690,7 +771,7 @@
     function validatePhone(){
       elPhone.setCustomValidity('');
       var val = elPhone.value.trim();
-      if (!val) return true; // el required ya lo gestiona el navegador
+      if (!val) return true;
       if (!validPhoneES(val)){
         elPhone.setCustomValidity('Introduce un teléfono válido (9 dígitos, admite prefijo +34).');
         return false;
@@ -698,11 +779,10 @@
       return true;
     }
 
-    // ==== Desglose vivo para el correo ====
     function currentPetText(){
-      var name  = $('#tpl-pet-name')?.value || '';
-      var spec  = $('#tpl-pet-species')?.value || '';
-      var breed = $('#tpl-pet-breed')?.value || '';
+      var name  = document.getElementById('tpl-pet-name')?.value || '';
+      var spec  = document.getElementById('tpl-pet-species')?.value || '';
+      var breed = document.getElementById('tpl-pet-breed')?.value || '';
       var bits = [];
       if (name) bits.push(name);
       var meta = [spec, breed].filter(Boolean).join(', ');
@@ -729,7 +809,6 @@
       elSummary.value = parts.join(' • ');
     }
 
-    // Listeners reactivos
     [elService, elSD, elED, elST, elET, elNotes].forEach(function(el){
       if (!el) return;
       el.addEventListener('change', function(){ validateDates(); buildSummary(); });
@@ -739,19 +818,13 @@
       elPhone.addEventListener('input', validatePhone);
       elPhone.addEventListener('blur',  validatePhone);
     }
-    // Si cambian los hidden de mascota (por Paso 2), rehacer resumen
-    window.addEventListener('storage', function(ev){
-      if (!ev) return;
-      buildSummary();
-    });
     document.addEventListener('DOMContentLoaded', buildSummary);
 
-    // Validación en submit: ponemos las customValidity para que el reportValidity del bloque EmailJS las muestre
     form.addEventListener('submit', function(){
       validatePhone();
       validateDates();
       buildSummary();
-    }, true); // captura, para correr antes posible
+    }, true);
 
   })();
   </script>
