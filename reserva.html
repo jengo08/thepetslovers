@@ -197,31 +197,115 @@
     })();
   </script>
 
-  <!-- Puente de sesión: refleja el login en esta página (sin tocar tu navbar) -->
+  <!-- (Opcional) Forzar login en esta página -->
+  <!-- <script>window.TPL_REQUIRE_LOGIN_ON_RESERVAS = true;</script> -->
+
+  <!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Auth unificado + muro de autenticación] -->
   <script>
-    document.addEventListener('DOMContentLoaded', function(){
+  (function(){
+    'use strict';
+    var DEBUG = /[?&]debugAuth=1\b/.test(location.search);
+
+    function $(sel, root){ return (root||document).querySelector(sel); }
+
+    // Estado global de Auth para todos los módulos de la página
+    window.__TPL_AUTH__ = window.__TPL_AUTH__ || { user:null, ready:null };
+
+    function setupAuthBridge(){
       if (typeof firebase === 'undefined' || !firebase.auth) return;
-      const auth = firebase.auth();
-      function emit(u){
-        try{
-          if (u && !u.isAnonymous){
-            localStorage.setItem('tpl_auth_email', u.email || '');
-            localStorage.setItem('tpl_auth_uid',   u.uid   || '');
-            document.body.setAttribute('data-auth','in');
-            window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: u.email || null } }));
-          } else {
-            localStorage.removeItem('tpl_auth_email');
-            localStorage.removeItem('tpl_auth_uid');
-            document.body.setAttribute('data-auth','out');
-            window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: null } }));
+      var auth = firebase.auth();
+
+      if (!window.__TPL_AUTH__.ready) {
+        window.__TPL_AUTH__.ready = new Promise(function(resolve){
+          var first = true;
+          function handle(user){
+            // Guarda usuario global
+            window.__TPL_AUTH__.user = user || null;
+
+            // Señales útiles para otros scripts + depuración
+            try {
+              document.body.setAttribute('data-auth', user ? 'in' : 'out');
+              if (user && !user.isAnonymous){
+                localStorage.setItem('tpl_auth_email', user.email || '');
+                localStorage.setItem('tpl_auth_uid',   user.uid   || '');
+              } else {
+                localStorage.removeItem('tpl_auth_email');
+                localStorage.removeItem('tpl_auth_uid');
+              }
+            } catch(_e){}
+
+            // Eventos globales (compat hacia atrás)
+            try { window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: user ? (user.email||null) : null } })); } catch(_e){}
+            if (first) {
+              first = false;
+              try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user:user||null } })); } catch(_e){}
+              resolve(user || null);
+            }
+
+            if (DEBUG) console.log('[TPL][Auth] Estado:', user ? user.uid : null);
+            updateUI(user);
           }
-        }catch(_){}
+
+          // Listener principal
+          auth.onAuthStateChanged(handle);
+          // Disparo inicial por si ya está disponible
+          handle(auth.currentUser);
+        });
+      } else {
+        // Si ya existía, sincroniza UI con el estado presente
+        window.__TPL_AUTH__.ready.then(updateUI);
       }
-      emit(auth.currentUser);
-      auth.onAuthStateChanged(emit);
-      if (auth.onIdTokenChanged) auth.onIdTokenChanged(emit);
-    });
+    }
+
+    // Control simple del “muro” y del formulario
+    function updateUI(user){
+      var wall = $('#authWall');
+      var form = $('#bookingForm');
+      var slot = $('#tpl-inline-login');
+
+      if (!wall || !form) return;
+
+      if (user) {
+        wall.style.display = 'none';
+        form.classList.remove('disabled');
+
+        // Prefill ligero sin tocar tu diseño
+        var email = $('#email'); if (user.email && email && !email.value) email.value = user.email;
+        var name  = $('#firstName');
+        if (user.displayName && name && !name.value) {
+          var dn = String(user.displayName).trim();
+          name.value = dn.split(' ')[0] || dn;
+        }
+      } else {
+        wall.style.display = 'block';
+        form.classList.add('disabled');
+        if (slot && !slot.hasChildNodes()) {
+          // CTA mínima (sin cambiar tu navbar)
+          slot.innerHTML =
+            '<a class="tpl-btn" href="#iniciar-sesion">Iniciar sesión</a> '+
+            '<a class="tpl-btn-outline" href="index.html#iniciar-sesion">Volver al inicio</a>';
+        }
+
+        // Redirección opcional si se fuerza login
+        if (window.TPL_REQUIRE_LOGIN_ON_RESERVAS === true) {
+          var next = location.pathname + location.search + location.hash;
+          location.href = 'index.html#iniciar-sesion&next=' + encodeURIComponent(next);
+        }
+      }
+    }
+
+    // Arranque
+    setupAuthBridge();
+    // Si por cualquier motivo Firebase tarda, reintenta un poco
+    var tries = 0, t = setInterval(function(){
+      tries++;
+      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) { clearInterval(t); return; }
+      setupAuthBridge();
+      if (tries > 30) clearInterval(t); // ~3s
+    }, 100);
+  })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas -->
   <script src="reservas.js" defer></script>
