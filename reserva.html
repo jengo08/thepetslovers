@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Reserva · The Pets Lovers</title>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Host canónico para EmailJS y sesión consistente] -->
+  <!-- Host canónico: unifica sesión y evita problemas de EmailJS -->
   <script>
   (function(){
     var CANON = 'www.thepetslovers.es';
@@ -14,13 +14,12 @@
     }
   })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Estilos mínimos de la página] -->
+  <!-- Estilos mínimos locales -->
   <style>
     :root{ --color-principal:#339496; --color-texto:#58425a; }
     .booking-wrapper{max-width:980px;margin:120px auto 60px;padding:20px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
@@ -43,7 +42,6 @@
     .tpl-inline-login .tpl-btn{background:var(--color-principal);color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .tpl-inline-login .tpl-btn-outline{background:#fff;color:var(--color-principal);border:1px solid var(--color-principal);border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
   </style>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
@@ -72,14 +70,13 @@
       <p>Para reservar debes iniciar sesión. Tras enviar, recibirás confirmación por email.</p>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Muro de autenticación + login inline] -->
+    <!-- Muro de autenticación + login inline -->
     <div id="authWall" class="auth-wall" aria-live="polite">
       <p><strong>Debes iniciar sesión para enviar una reserva.</strong></p>
       <div id="tpl-inline-login" class="tpl-inline-login"></div>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Formulario mínimo] -->
+    <!-- Formulario -->
     <form id="bookingForm" class="disabled" novalidate
       data-tpl-success="Tu solicitud se ha enviado correctamente."
       data-tpl-redirect="perfil.html">
@@ -150,7 +147,6 @@
 
       <p class="note">El envío requiere sesión iniciada. Te confirmaremos por email.</p>
     </form>
-    <!-- TPL: FIN BLOQUE NUEVO -->
   </div>
 
   <!-- Footer unificado (inyectado) -->
@@ -162,24 +158,12 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- TPL: INICIO BLOQUE NUEVO [Firebase SDK compat] -->
+  <!-- Firebase SDKs (SIN defer, antes del init y del reservas.js) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- TPL: INICIO BLOQUE NUEVO [EmailJS] -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>
-    window.TPL_EMAILJS = {
-      serviceId: 'service_odjqrfl',
-      templateId: 'template_rao5n0c',
-      publicKey:  'L2xAATfVuHJwj4EIV'
-    };
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Config Firebase + init EmailJS] -->
+  <!-- Inicialización de Firebase: crea la app y fija la persistencia -->
   <script>
     (function(){
       const firebaseConfig = {
@@ -188,21 +172,58 @@
         projectId: "thepetslovers-c1111",
         storageBucket: "thepetslovers-c1111.appspot.com",
         messagingSenderId: "415914577533",
-        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14"
       };
       if (typeof firebase !== 'undefined') {
         if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-        try{ firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(_){}
+        try { firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(_){}
       }
+    })();
+  </script>
+
+  <!-- EmailJS + init -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script>
+    window.TPL_EMAILJS = {
+      serviceId: 'service_odjqrfl',
+      templateId: 'template_rao5n0c',
+      publicKey:  'L2xAATfVuHJwj4EIV'
+    };
+    (function(){
       const cfg = window.TPL_EMAILJS || {};
       if (window.emailjs && (cfg.publicKey||cfg.userId)) {
         try{ emailjs.init({ publicKey: cfg.publicKey || cfg.userId }); }catch(_){}
       }
     })();
   </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Lógica de reservas (externo) -->
+  <!-- Puente de sesión: refleja el login en esta página (sin tocar tu navbar) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      if (typeof firebase === 'undefined' || !firebase.auth) return;
+      const auth = firebase.auth();
+      function emit(u){
+        try{
+          if (u && !u.isAnonymous){
+            localStorage.setItem('tpl_auth_email', u.email || '');
+            localStorage.setItem('tpl_auth_uid',   u.uid   || '');
+            document.body.setAttribute('data-auth','in');
+            window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: u.email || null } }));
+          } else {
+            localStorage.removeItem('tpl_auth_email');
+            localStorage.removeItem('tpl_auth_uid');
+            document.body.setAttribute('data-auth','out');
+            window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ email: null } }));
+          }
+        }catch(_){}
+      }
+      emit(auth.currentUser);
+      auth.onAuthStateChanged(emit);
+      if (auth.onIdTokenChanged) auth.onIdTokenChanged(emit);
+    });
+  </script>
+
+  <!-- Lógica de reservas -->
   <script src="reservas.js" defer></script>
 </body>
 </html>
