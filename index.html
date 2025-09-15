@@ -88,32 +88,25 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo DURO por CSS — sin tocar tu diseño] -->
-    <style>
-      /* Si el CSS del sitio forzó el overlay con !important, lo anulamos aquí con !important */
-      #cookie-modal-overlay[hidden],
-      #cookie-modal-overlay[aria-hidden="true"]{
-        display:none !important; visibility:hidden !important; pointer-events:none !important;
-      }
-      #tpl-form-overlay{
-        display:none !important; visibility:hidden !important; pointer-events:none !important;
-      }
-      html.tpl-auth-boot, body[inert]{
-        pointer-events:auto !important; overflow:auto !important;
-      }
-      /* Cualquier overlay genérico con clase común */
-      .cookie-modal-overlay[hidden],
-      .tpl-overlay[hidden]{
-        display:none !important; pointer-events:none !important;
-      }
-    </style>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
     <!-- TPL: INICIO BLOQUE NUEVO [DESACTIVADO: Modo seguro + HUD] -->
     <!--
     BLOQUE DESACTIVADO A PETICIÓN: no queremos “modo seguro” visible ni HUD.
     (Se mantiene comentado por trazabilidad)
     -->
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Hardening anti-overlay (solo si están ocultos)] -->
+    <style>
+      /* Si estos overlays NO están activos, no deben capturar clics */
+      #cookie-modal-overlay[hidden],
+      #cookie-modal-overlay[aria-hidden="true"]{
+        display:none !important; visibility:hidden !important; pointer-events:none !important;
+      }
+      #tpl-form-overlay:not(.show),
+      .tpl-overlay:not(.on){
+        pointer-events:none !important;
+      }
+    </style>
     <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
@@ -367,8 +360,8 @@
         var overlay = document.getElementById('cookie-modal-overlay');
         if (!overlay) return;
 
-        function hide(){ overlay.hidden = true; overlay.style.display = 'none'; }
-        function show(){ overlay.hidden = false; overlay.style.display = 'flex'; }
+        function hide(){ overlay.hidden = true; overlay.style.display = 'none'; overlay.setAttribute('aria-hidden','true'); }
+        function show(){ overlay.hidden = false; overlay.style.display = 'flex'; overlay.removeAttribute('aria-hidden'); }
 
         // TPL: DESACTIVADO auto-mostrar para evitar bloqueo en primera carga
         // var val = null;
@@ -404,7 +397,7 @@
           var ov = document.getElementById('tpl-form-overlay');
           if (ov) ov.style.display = 'none';
           var cov = document.getElementById('cookie-modal-overlay');
-          if (cov) { cov.hidden = true; cov.style.display = 'none'; }
+          if (cov) { cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
           document.querySelectorAll('a,button').forEach(function(el){
             if (!el.style.pointerEvents) el.style.pointerEvents = 'auto';
           });
@@ -416,6 +409,57 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Desbloqueo REFORZADO: quita overlays si siguen encima] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo avanzado: detecta y neutraliza pantallas que cubren todo] -->
     <script>
-      (
+      (function(){
+        function off(el){
+          try{
+            el.style.pointerEvents = 'none';
+            // Si es overlay típico, también lo ocultamos
+            if (!el.classList.contains('on') && !el.classList.contains('show')) {
+              el.style.display = 'none';
+              el.setAttribute('aria-hidden','true');
+            }
+          }catch(_){}
+        }
+        function hide(sel){
+          var el = document.querySelector(sel);
+          if (el && getComputedStyle(el).display !== 'none') off(el);
+        }
+        function scan(){
+          // Neutraliza overlays conocidos si no están activados
+          hide('#cookie-modal-overlay');
+          hide('#tpl-form-overlay');
+          document.querySelectorAll('.tpl-overlay').forEach(function(el){
+            var cs = getComputedStyle(el);
+            if (!el.classList.contains('on') && cs.display !== 'none') off(el);
+          });
+
+          // Si algo cubre toda la pantalla y no es el body/html, lo desactivamos
+          var topEl = document.elementFromPoint(window.innerWidth/2, window.innerHeight/2);
+          if (topEl && topEl !== document.body && topEl !== document.documentElement) {
+            var cs = getComputedStyle(topEl);
+            var w = topEl.offsetWidth, h = topEl.offsetHeight;
+            var looksLikeCover = (/(overlay|modal|backdrop|loader|loading|screen)/i.test(topEl.id + ' ' + topEl.className)) &&
+                                  (w >= window.innerWidth*0.9 && h >= window.innerHeight*0.9) &&
+                                  (cs.position === 'fixed' || cs.position === 'absolute') &&
+                                  cs.pointerEvents !== 'none';
+            if (looksLikeCover) off(topEl);
+          }
+
+          // Garantiza clics
+          document.body && document.body.removeAttribute('inert');
+          document.documentElement.style.pointerEvents = 'auto';
+          document.body.style.pointerEvents = 'auto';
+        }
+        // Ejecuta varias veces por si otros scripts reactivan overlays
+        scan();
+        window.addEventListener('load', scan);
+        setTimeout(scan, 300);
+        setTimeout(scan, 1000);
+        document.addEventListener('click', function once(){ scan(); document.removeEventListener('click', once); });
+      })();
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+</body>
+</html>
