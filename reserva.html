@@ -63,7 +63,9 @@
           <li><a href="index.html#contactanos">Contáctanos</a></li>
           <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
         </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+        <!-- TPL: INICIO BLOQUE NUEVO [Fix noscript login → iniciar-sesion con next] -->
+        <a class="login-button" href="iniciar-sesion.html?next=reservas.html">Iniciar sesión</a>
+        <!-- TPL: FIN BLOQUE NUEVO -->
       </nav>
     </noscript>
   </div>
@@ -339,29 +341,32 @@
   })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
-  <!-- TPL: INICIO BLOQUE NUEVO [Login → redirección por ?next=] -->
-<script>
-(function(){
-  'use strict';
-  if (typeof firebase === 'undefined' || !firebase.auth) return;
-  var auth = firebase.auth();
-  function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(_){ return null; } }
-  var NEXT = qs('next') || 'perfil.html';
 
-  // Si ya hay sesión, redirige directo
-  auth.onAuthStateChanged(function(user){
-    if (user && !user.isAnonymous) {
-      // Usa replace para no dejar la página de login en el historial
-      location.replace(NEXT);
-    }
-  });
+  <!-- TPL: INICIO BLOQUE NUEVO [Login → redirección por ?next= — AJUSTE: solo en página de login] -->
+  <script>
+  (function(){
+    'use strict';
+    // ✅ AJUSTE: este bloque solo debe ejecutarse en iniciar-sesion.html.
+    // Si no estamos en esa página, salimos sin hacer nada (evita sacar al usuario de Reservas).
+    if (!/\/iniciar-sesion\.html$/i.test((location.pathname||''))) return;
 
-  // Si tu botón de login dispara signInWithPopup/redirect/email…
-  // no hace falta tocar nada: al completar, onAuthStateChanged hará la redirección.
-})();
-</script>
-<!-- TPL: FIN BLOQUE NUEVO -->
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    var auth = firebase.auth();
+    function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(_){ return null; } }
+    var NEXT = qs('next') || 'perfil.html';
 
+    // Si ya hay sesión, redirige directo
+    auth.onAuthStateChanged(function(user){
+      if (user && !user.isAnonymous) {
+        // Usa replace para no dejar la página de login en el historial
+        location.replace(NEXT);
+      }
+    });
+    // Si tu botón de login dispara signInWithPopup/redirect/email…
+    // no hace falta tocar nada: al completar, onAuthStateChanged hará la redirección.
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas -->
   <script src="reservas.js" defer></script>
