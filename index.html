@@ -13,7 +13,6 @@
     <!-- TPL: INICIO BLOQUE NUEVO [Canónico robusto + kill-switch HOME] -->
     <script>
       (function(){
-        // Permite desactivar cualquier redirección con ?safe=1
         try{
           var qs = new URLSearchParams(location.search||'');
           if (qs.get('safe') === '1') {
@@ -21,18 +20,13 @@
             window.__TPL_DISABLE_CANON__ = true;
           }
         }catch(_){}
-
         var CANON = 'www.thepetslovers.es';
         var host  = location.hostname || '';
         var IS_DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host) || /github\.io$/i.test(host);
-
-        // Redirección canónica solo si procede (evita bucles y respeta modo seguro)
         if (!window.__TPL_DISABLE_CANON__ && !IS_DEV && host && host !== CANON) {
           location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
-          return; // detenemos ejecución aquí tras redirección
+          return;
         }
-
-        // Kill-switch: en HOME desactiva cualquier auto-redirect del navbar/otros
         var IS_HOME = /(\/|^)index\.html?$/i.test(location.pathname) || location.pathname === '/';
         if (IS_HOME) {
           window.__TPL_ON_HOME__ = true;
@@ -76,42 +70,30 @@
         apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
         authDomain: "thepetslovers-c1111.firebaseapp.com",
         projectId: "thepetslovers-c1111",
-        /* TPL: INICIO BLOQUE NUEVO [FIX storageBucket correcto] */
         storageBucket: "thepetslovers-c1111.appspot.com",
-        /* TPL: FIN BLOQUE NUEVO */
         messagingSenderId: "415914577533",
         appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
         measurementId: "G-FXPD69KXBG"
       };
-      // Señal silenciosa para otros scripts: estamos en HOME (no muestra nada en pantalla)
       window.__TPL_ON_HOME__ = true;
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Hardening anti-overlay (solo si están ocultos)] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Hardening anti-overlay] -->
     <style>
-      /* Si estos overlays NO están activos, no deben capturar clics */
+      /* Overlays ocultos NO capturan clics */
       #cookie-modal-overlay[hidden],
-      #cookie-modal-overlay[aria-hidden="true"]{
-        display:none !important; visibility:hidden !important; pointer-events:none !important;
-      }
-      #tpl-form-overlay:not(.show),
-      .tpl-overlay:not(.on){
-        pointer-events:none !important;
-      }
-    </style>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Forzar clics base con !important] -->
-    <style>
-      html, body { pointer-events: auto !important; }
-      a, button { pointer-events: auto !important; }
+      #cookie-modal-overlay[aria-hidden="true"]{display:none !important;visibility:hidden !important;pointer-events:none !important;}
+      #tpl-form-overlay:not(.show), .tpl-overlay:not(.on){pointer-events:none !important;}
+      /* Fuerza clics base */
+      html, body { pointer-events:auto !important; }
+      a, button { pointer-events:auto !important; }
     </style>
     <!-- TPL: FIN BLOQUE NUEVO -->
 </head>
 <body>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Placeholder navbar unificada] -->
+    <!-- Navbar (inyectada por tu JS, SIN CAMBIOS) -->
     <div id="tpl-navbar">
       <noscript>
         <nav class="navbar">
@@ -129,7 +111,6 @@
         </nav>
       </noscript>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
     <header class="hero-section">
         <div class="hero-content">
@@ -166,7 +147,7 @@
     <section id="servicios" class="services-section">
         <div class="container">
             <h2>Nuestros Servicios</h2>
-            <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
+        <p class="subtitle">Encuentra la opción perfecta para tu mejor amigo.</p>
             <div class="services-grid">
                 <div class="service-card">
                     <div class="service-icon"><i class="fa-solid fa-house"></i></div>
@@ -189,13 +170,11 @@
                     <p>Atención completa en casa de un cuidador, como en familia.</p>
                 </div>
 
-                <!-- TPL: INICIO BLOQUE NUEVO [“Más servicios” enlaza a servicios.html] -->
                 <a class="service-card" href="servicios.html" aria-label="Ver todos los servicios disponibles">
                     <div class="service-icon"><i class="fa-solid fa-circle-plus"></i></div>
                     <h3>Más servicios</h3>
                     <p>Explora todas las opciones de cuidado que ofrecemos.</p>
                 </a>
-                <!-- TPL: FIN BLOQUE NUEVO -->
 
             </div>
         </div>
@@ -248,7 +227,7 @@
     <!-- Modal de cookies -->
     <div id="cookie-modal-overlay" class="cookie-modal-overlay" hidden>
         <div class="cookie-modal-content" role="dialog" aria-modal="true" aria-labelledby="cookie-title">
-            <p id="cookie-title">Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario. 
+            <p id="cookie-title">Este sitio web utiliza cookies para ofrecer una mejor experiencia de usuario.
                <a href="cookies.html">Política de cookies</a>
             </p>
             <div class="cookie-buttons">
@@ -258,7 +237,7 @@
         </div>
     </div>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Placeholder footer unificado] -->
+    <!-- Footer (inyectado cuando no hay JS) -->
     <div id="tpl-footer">
       <noscript>
         <footer class="site-footer">
@@ -294,166 +273,119 @@
         </footer>
       </noscript>
     </div>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <script>
-      document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());
-    </script>
+    <script>document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());</script>
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Accesibilidad details/summary] -->
-    <script>
-      document.querySelectorAll('.service-details').forEach(function(det){
-        var sum = det.querySelector('summary');
-        if(sum){
-          sum.setAttribute('role','button');
-          sum.setAttribute('aria-controls', (sum.textContent.trim().toLowerCase().replace(/\s+/g,'-') + '-content'));
-          function sync(){ sum.setAttribute('aria-expanded', det.hasAttribute('open') ? 'true' : 'false'); }
-          det.addEventListener('toggle', sync);
-          sync();
-        }
-        var content = det.querySelector('.content');
-        if(content){
-          var id = sum ? sum.getAttribute('aria-controls') : '';
-          if(id) content.setAttribute('id', id);
-        }
-      });
-    </script>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
+    <!-- Scripts existentes -->
     <script src="script.js"></script>
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Cargar mini-injectors navbar y footer] -->
     <script src="tpl-navbar.js" defer></script>
     <script src="tpl-footer.js" defer></script>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Cargar auth unificado navbar] -->
     <script src="tpl-auth.js" defer></script>
-    <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo: limpiar estados que pudieran tapar la página] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo base] -->
     <script>
       (function(){
         try{
           document.documentElement.classList.remove('tpl-auth-boot');
-          var ov = document.getElementById('tpl-form-overlay');
-          if (ov) ov.classList.remove('show');
-          // TPL: Además ocultamos cookie overlay si algún CSS lo dejase tapando
-          var cov = document.getElementById('cookie-modal-overlay');
-          if (cov){ cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
+          var ov = document.getElementById('tpl-form-overlay'); if (ov) ov.classList.remove('show');
+          var cov = document.getElementById('cookie-modal-overlay'); if (cov){ cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
           window.addEventListener('load', function(){
             document.documentElement.classList.remove('tpl-auth-boot');
-            var ov2 = document.getElementById('tpl-form-overlay');
-            if (ov2) ov2.classList.remove('show');
-            var cov2 = document.getElementById('cookie-modal-overlay');
-            if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; cov2.setAttribute('aria-hidden','true'); }
+            var ov2 = document.getElementById('tpl-form-overlay'); if (ov2) ov2.classList.remove('show');
+            var cov2 = document.getElementById('cookie-modal-overlay'); if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; cov2.setAttribute('aria-hidden','true'); }
           });
         }catch(_){}
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Cookie modal: mantener oculto (no auto-mostrar)] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Cookie modal: sin auto-mostrar] -->
     <script>
       (function(){
-        var LS_KEY = 'tplCookieConsent';
-        var overlay = document.getElementById('cookie-modal-overlay');
-        if (!overlay) return;
-
-        function hide(){ overlay.hidden = true; overlay.style.display = 'none'; overlay.setAttribute('aria-hidden','true'); }
-        function show(){ overlay.hidden = false; overlay.style.display = 'flex'; overlay.removeAttribute('aria-hidden'); }
-
-        // TPL: DESACTIVADO auto-mostrar para evitar bloqueo en primera carga
-        // var val = null;
-        // try{ val = localStorage.getItem(LS_KEY); }catch(_){}
-        // if (!val) show();
-
-        // Botones (por si alguna vez lo activas manualmente)
-        var btnAccept = document.getElementById('accept-cookies');
-        var btnDeny   = document.getElementById('deny-cookies');
-        if (btnAccept) btnAccept.addEventListener('click', function(){
-          try{ localStorage.setItem(LS_KEY, 'accept'); }catch(_){}
-          hide();
-        });
-        if (btnDeny) btnDeny.addEventListener('click', function(){
-          try{ localStorage.setItem(LS_KEY, 'deny'); }catch(_){}
-          hide();
-        });
-
-        // Cerrar con ESC o clic fuera (si llegara a abrirse)
-        overlay.addEventListener('click', function(e){ if (e.target === overlay) hide(); });
-        document.addEventListener('keydown', function onEsc(e){
-          if (e.key === 'Escape'){ hide(); document.removeEventListener('keydown', onEsc); }
-        });
+        var LS_KEY='tplCookieConsent';
+        var overlay=document.getElementById('cookie-modal-overlay'); if(!overlay) return;
+        function hide(){ overlay.hidden=true; overlay.style.display='none'; overlay.setAttribute('aria-hidden','true'); }
+        var btnAccept=document.getElementById('accept-cookies');
+        var btnDeny=document.getElementById('deny-cookies');
+        if(btnAccept) btnAccept.addEventListener('click', function(){ try{localStorage.setItem(LS_KEY,'accept');}catch(_){ } hide();});
+        if(btnDeny) btnDeny.addEventListener('click', function(){ try{localStorage.setItem(LS_KEY,'deny');}catch(_){ } hide();});
+        overlay.addEventListener('click', function(e){ if(e.target===overlay) hide(); });
+        document.addEventListener('keydown', function onEsc(e){ if(e.key==='Escape'){ hide(); document.removeEventListener('keydown', onEsc); }});
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
-    <!-- TPL: INICIO BLOQUE NUEVO [Último salvavidas: asegura clics] -->
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo ULTRA: detecta y neutraliza cualquier capa que tape la pantalla] -->
     <script>
       (function(){
-        try{
-          document.documentElement.classList.remove('tpl-auth-boot');
-          var ov = document.getElementById('tpl-form-overlay');
-          if (ov) ov.style.display = 'none';
-          var cov = document.getElementById('cookie-modal-overlay');
-          if (cov) { cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
-          document.querySelectorAll('a,button').forEach(function(el){
-            if (!el.style.pointerEvents) el.style.pointerEvents = 'auto';
-          });
-          document.body && document.body.removeAttribute('inert');
-          document.documentElement.style.overflow = '';
-          document.body && (document.body.style.overflow = '');
-        }catch(_){}
-      })();
-    </script>
-    <!-- TPL: FIN BLOQUE NUEVO -->
-
-    <!-- TPL: INICIO BLOQUE NUEVO [Desbloqueo definitivo anti-overlay desconocido] -->
-    <script>
-      (function(){
+        function off(el){
+          try{
+            el.style.setProperty('pointer-events','none','important');
+            if (!/(^|\s)(on|show|active)(\s|$)/i.test(el.className||'')) {
+              el.style.setProperty('display','none','important');
+              el.setAttribute('aria-hidden','true');
+            }
+          }catch(_){}
+        }
         function isCover(el){
           if (!el || !el.getBoundingClientRect) return false;
           var r = el.getBoundingClientRect(), w = innerWidth, h = innerHeight;
-          var cs = getComputedStyle(el), zi = parseInt(cs.zIndex||'0',10);
-          var pos = cs.position;
-          return ( (pos==='fixed'||pos==='absolute') &&
-                   (r.width >= w*0.9 && r.height >= h*0.9) &&
-                   zi >= 10 &&
-                   cs.visibility !== 'hidden' &&
-                   cs.display !== 'none' &&
-                   cs.pointerEvents !== 'none' );
+          var cs = getComputedStyle(el), pos = cs.position;
+          // Sin límite de z-index: algunos covers usan z bajo/auto
+          var big = (r.width >= w*0.85 && r.height >= h*0.85);
+          var covering = (pos==='fixed' || pos==='absolute') && big && cs.display!=='none' && cs.visibility!=='hidden';
+          // No tocar la navbar ni el footer
+          var id = (el.id||'') + ' ' + (el.className||'');
+          var isNav = /navbar/.test(id) || el.closest && el.closest('.navbar');
+          return covering && !isNav;
         }
-        function killCovers(){
-          // Rehabilita documento por si algún CSS usa !important
+        function topAt(x,y){
+          var el = document.elementFromPoint(x,y);
+          // Subimos si pilla un texto dentro, para evaluar el contenedor real
+          return el && el.nodeType===3 ? el.parentElement : el;
+        }
+        function scan(){
+          // Garantiza que el documento acepte clics
           document.documentElement.style.setProperty('pointer-events','auto','important');
           document.body.style.setProperty('pointer-events','auto','important');
           document.body.removeAttribute('inert');
 
-          // Neutraliza overlays a pantalla completa
-          var nodes = Array.from(document.body.querySelectorAll('*'));
-          var killed = 0;
-          for (var i = nodes.length - 1; i >= 0; i--){
-            var el = nodes[i];
-            try{
-              if (isCover(el)){
-                el.style.setProperty('pointer-events','none','important');
-                // Si no está marcado como "activo", también lo ocultamos
-                if (!/(^|\s)(on|show|active)(\s|$)/i.test(el.className||'')) {
-                  el.style.setProperty('display','none','important');
-                  el.setAttribute('aria-hidden','true');
-                }
-                if (++killed > 3) break;
+          // Neutraliza overlays conocidos si no están activos
+          var cov = document.getElementById('cookie-modal-overlay');
+          if (cov && cov.getAttribute('aria-hidden')==='true') off(cov);
+          var ov = document.getElementById('tpl-form-overlay');
+          if (ov && !ov.classList.contains('show')) off(ov);
+          document.querySelectorAll('.tpl-overlay').forEach(function(el){
+            if (!el.classList.contains('on')) off(el);
+          });
+
+          // Puntos críticos: arriba (navbar), centro, abajo
+          var pts = [
+            [8,8],
+            [innerWidth/2, 56],
+            [innerWidth/2, innerHeight/2],
+            [innerWidth-8, 8],
+            [innerWidth/2, innerHeight-8]
+          ];
+          pts.forEach(function(p){
+            var el = topAt(p[0], p[1]);
+            if (el){
+              // Si el top es un hijo, subimos hasta contenedor sospechoso
+              var cur = el;
+              for (var i=0;i<5 && cur;i++){
+                if (isCover(cur)) { off(cur); break; }
+                cur = cur.parentElement;
               }
-            }catch(_){}
-          }
+            }
+          });
         }
-        // Ejecuta varias veces para cubrir re-inyecciones
-        if (document.readyState !== 'loading') killCovers();
-        else document.addEventListener('DOMContentLoaded', killCovers);
-        addEventListener('load', killCovers);
-        setTimeout(killCovers, 300);
-        setTimeout(killCovers, 1000);
+        // Ejecuta repetido por si otro script reinyecta la capa
+        if (document.readyState!=='loading') scan(); else document.addEventListener('DOMContentLoaded', scan);
+        addEventListener('load', scan);
+        setTimeout(scan, 200);
+        setTimeout(scan, 700);
+        setTimeout(scan, 1500);
+        document.addEventListener('click', function once(){ scan(); document.removeEventListener('click', once); });
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
