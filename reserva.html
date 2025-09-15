@@ -1233,6 +1233,124 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Mascota — Fallback UI y sincronización] -->
+<script>
+(function(){
+  'use strict';
+  if (window.__TPL_PET_FALLBACK_INJECTED__) return;
+  window.__TPL_PET_FALLBACK_INJECTED__ = true;
+
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function val(id){ var el=document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+  function set(id, v){ var el=document.getElementById(id); if (el) el.value = v; }
+  function hasPetHidden(){
+    return !!(val('tpl-pet-name') || val('tpl-pet-species') || val('tpl-pet-breed'));
+  }
+
+  function injectManualUI(){
+    var sec = document.getElementById('tpl-pet-section');
+    if (!sec) return;
+    // No dupliques
+    if (sec.querySelector('[data-tpl-pet-manual]')) return;
+
+    // Si el selector existe y está vacío, mantenlo; añadimos la UI debajo
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-tpl-pet-manual','');
+    wrap.className = 'booking-grid';
+    wrap.innerHTML = [
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-name">Nombre de la mascota</label>',
+        '<input type="text" id="tpl-pet-visible-name" placeholder="Luna / Coco / Nala">',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-species">Especie</label>',
+        '<select id="tpl-pet-visible-species">',
+          '<option value="">Elige…</option>',
+          '<option>Perro</option>',
+          '<option>Gato</option>',
+          '<option>Otro</option>',
+        '</select>',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-breed">Raza (opcional)</label>',
+        '<input type="text" id="tpl-pet-visible-breed" placeholder="Mestizo, Labrador…">',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-size">Tamaño</label>',
+        '<select id="tpl-pet-visible-size">',
+          '<option value="">Elige…</option>',
+          '<option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option>',
+        '</select>',
+      '</div>',
+      '<div class="booking-field" style="grid-column:1/-1">',
+        '<label for="tpl-pet-visible-med">Medicación (si aplica)</label>',
+        '<input type="text" id="tpl-pet-visible-med" placeholder="Nombre y pauta…">',
+      '</div>',
+      '<div class="booking-field" style="grid-column:1/-1">',
+        '<label for="tpl-pet-visible-needs">Necesidades especiales (si aplica)</label>',
+        '<textarea id="tpl-pet-visible-needs" rows="2" placeholder="Ansiedad, alergias, alimentación…"></textarea>',
+      '</div>'
+    ].join('');
+    sec.appendChild(wrap);
+    sec.hidden = false;
+
+    // Sincroniza visibles → ocultos (los ocultos ya existen en tu HTML)
+    function sync(){
+      set('tpl-pet-name',    $('#tpl-pet-visible-name').value.trim());
+      set('tpl-pet-species', $('#tpl-pet-visible-species').value.trim());
+      set('tpl-pet-breed',   $('#tpl-pet-visible-breed').value.trim());
+      set('tpl-pet-size',    $('#tpl-pet-visible-size').value.trim());
+      set('tpl-pet-med',     $('#tpl-pet-visible-med').value.trim());
+      set('tpl-pet-needs',   $('#tpl-pet-visible-needs').value.trim());
+
+      // Intenta refrescar el resumen (si tu otro bloque lo escucha)
+      try {
+        var sf = document.getElementById('summaryField');
+        if (sf) sf.dispatchEvent(new Event('change', {bubbles:true}));
+      } catch(_) {}
+    }
+
+    ['tpl-pet-visible-name','tpl-pet-visible-species','tpl-pet-visible-breed',
+     'tpl-pet-visible-size','tpl-pet-visible-med','tpl-pet-visible-needs'
+    ].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', sync);
+      el.addEventListener('change', sync);
+    });
+  }
+
+  // Lógica: espera a que Auth/JS intenten rellenar la mascota; si no hay datos → muestra fallback
+  function maybeShowFallback(){
+    // Si ya tenemos mascota oculta, no hacemos nada
+    if (hasPetHidden()) return;
+    // Si el selector de mascotas se pintó con opciones (lo hace reservas.js), tampoco
+    var sel = document.getElementById('tpl-pet-select');
+    if (sel && sel.options && sel.options.length > 0) return;
+    // Caso: no hay datos → muestra editor manual
+    injectManualUI();
+  }
+
+  // Espera a que se intente hidratar (reservas.js + auth); luego decide
+  // 1) al estar lista la auth
+  window.addEventListener('tpl-auth-ready', function(){
+    setTimeout(maybeShowFallback, 800); // margen para que intenten pintar mascotas
+  });
+  // 2) por si llegan cambios tarde
+  window.addEventListener('tpl-auth-change', function(){
+    setTimeout(maybeShowFallback, 800);
+  });
+  // 3) y un último intento al cargar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowFallback, 1000); });
+  } else {
+    setTimeout(maybeShowFallback, 1000);
+  }
+
+  // Si otra pestaña escribe en UDB y reservas.js pinta mascotas, ocultamos el fallback en futuras cargas automáticamente.
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
