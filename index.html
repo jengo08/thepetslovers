@@ -88,6 +88,27 @@
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
 
+    <!-- TPL: INICIO BLOQUE NUEVO [Antibloqueo DURO por CSS — sin tocar tu diseño] -->
+    <style>
+      /* Si el CSS del sitio forzó el overlay con !important, lo anulamos aquí con !important */
+      #cookie-modal-overlay[hidden],
+      #cookie-modal-overlay[aria-hidden="true"]{
+        display:none !important; visibility:hidden !important; pointer-events:none !important;
+      }
+      #tpl-form-overlay{
+        display:none !important; visibility:hidden !important; pointer-events:none !important;
+      }
+      html.tpl-auth-boot, body[inert]{
+        pointer-events:auto !important; overflow:auto !important;
+      }
+      /* Cualquier overlay genérico con clase común */
+      .cookie-modal-overlay[hidden],
+      .tpl-overlay[hidden]{
+        display:none !important; pointer-events:none !important;
+      }
+    </style>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <!-- TPL: INICIO BLOQUE NUEVO [DESACTIVADO: Modo seguro + HUD] -->
     <!--
     BLOQUE DESACTIVADO A PETICIÓN: no queremos “modo seguro” visible ni HUD.
@@ -394,5 +415,7 @@
       })();
     </script>
     <!-- TPL: FIN BLOQUE NUEVO -->
-</body>
-</html>
+
+    <!-- TPL: INICIO BLOQUE NUEVO [Desbloqueo REFORZADO: quita overlays si siguen encima] -->
+    <script>
+      (
