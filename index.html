@@ -10,6 +10,38 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
+    <!-- TPL: INICIO BLOQUE NUEVO [Canónico robusto + kill-switch HOME] -->
+    <script>
+      (function(){
+        // Permite desactivar cualquier redirección con ?safe=1
+        try{
+          var qs = new URLSearchParams(location.search||'');
+          if (qs.get('safe') === '1') {
+            window.__TPL_SAFE_MODE__ = true;
+            window.__TPL_DISABLE_CANON__ = true;
+          }
+        }catch(_){}
+
+        var CANON = 'www.thepetslovers.es';
+        var host  = location.hostname || '';
+        var IS_DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host) || /github\.io$/i.test(host);
+
+        // Redirección canónica solo si procede (evita bucles y respeta modo seguro)
+        if (!window.__TPL_DISABLE_CANON__ && !IS_DEV && host && host !== CANON) {
+          location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
+          return; // detenemos ejecución aquí tras redirección
+        }
+
+        // Kill-switch: en HOME desactiva cualquier auto-redirect del navbar/otros
+        var IS_HOME = /(\/|^)index\.html?$/i.test(location.pathname) || location.pathname === '/';
+        if (IS_HOME) {
+          window.__TPL_ON_HOME__ = true;
+          window.__TPL_NAVBAR_NO_REDIRECTS__ = true;
+        }
+      })();
+    </script>
+    <!-- TPL: FIN BLOQUE NUEVO -->
+
     <!-- TPL: INICIO BLOQUE NUEVO [SEO on-page] -->
     <meta name="description" content="The Pets Lovers: guardería de mascotas, visitas a domicilio, paseos, estancias y bodas. Equipo de auxiliares veterinarios titulados en toda España.">
     <meta property="og:title" content="The Pets Lovers - Cuidamos a tu mascota con amor">
