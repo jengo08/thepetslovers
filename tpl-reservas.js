@@ -1,15 +1,29 @@
-/* TPL: INICIO BLOQUE NUEVO [Lógica reservas reforzada: login obligatorio + envío EmailJS + Firestore opcional] */
+/* TPL: RESERVAS — login obligatorio + EmailJS + Firestore opcional
+   - Habilita UI con señal del NAVBAR (localStorage + evento 'tpl-auth-change')
+   - Exige usuario Firebase real para ENVIAR
+   - EmailJS configurable vía window.TPL_EMAILJS { serviceId, templateId, publicKey }
+*/
+
 (function(){
+  'use strict';
+
   const $ = (id) => document.getElementById(id);
 
-  // ---------- Overlays ----------
+  /* ===========================
+     Overlays (éxito / error)
+     =========================== */
   function ensureOverlay(){
     let wrap = document.getElementById('tpl-overlay');
     if(!wrap){
       wrap = document.createElement('div');
       wrap.id = 'tpl-overlay';
       wrap.className = 'tpl-overlay';
-      wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><pre id="tpl-err-detail" style="display:none;white-space:pre-wrap;text-align:left;font-size:.9rem;background:#f7f7f7;padding:8px;border-radius:8px;max-height:200px;overflow:auto"></pre><button type="button" class="cta-button" id="tpl-ov-action">Aceptar</button></div>';
+      wrap.innerHTML = `
+        <div class="tpl-modal" role="dialog" aria-live="polite">
+          <p></p>
+          <pre id="tpl-err-detail" style="display:none;white-space:pre-wrap;text-align:left;font-size:.9rem;background:#f7f7f7;padding:8px;border-radius:8px;max-height:200px;overflow:auto"></pre>
+          <button type="button" class="cta-button" id="tpl-ov-action">Aceptar</button>
+        </div>`;
       document.body.appendChild(wrap);
     }
     return wrap;
@@ -42,7 +56,9 @@
     }catch(_){ return String(e||''); }
   }
 
-  // ---------- EmailJS ----------
+  /* ===========================
+     EmailJS
+     =========================== */
   async function sendEmailJS(fd, extra){
     if(!window.emailjs) return false;
     const cfg = window.TPL_EMAILJS || {};
@@ -57,7 +73,9 @@
     return true;
   }
 
-  // ---------- Firestore (opcional) ----------
+  /* ===========================
+     Firestore (opcional)
+     =========================== */
   async function saveToFirestore(payload){
     if (typeof firebase === 'undefined' || !firebase.firestore) return false;
     const db = firebase.firestore();
@@ -66,7 +84,9 @@
     return true;
   }
 
-  // ---------- Login inline ----------
+  /* ===========================
+     Inline login (muro)
+     =========================== */
   function renderInlineLogin(){
     const host = $('tpl-inline-login'); if(!host) return;
     if (host.dataset.rendered === '1') return; // evitar duplicados
@@ -83,7 +103,7 @@
     const form = $('tpl-login-form');
     const msg  = $('tpl-login-msg');
     const btnG = $('tpl-google');
-    if (typeof firebase !== 'undefined') {
+    if (typeof firebase !== 'undefined' && firebase.auth) {
       const auth = firebase.auth();
       form.addEventListener('submit', async (e)=>{
         e.preventDefault();
@@ -97,105 +117,108 @@
         msg.textContent = 'Conectando con Google…';
         try{
           const provider = new firebase.auth.GoogleAuthProvider();
-          await auth.signInWithPopup(provider);
+          // iOS Safari suele requerir redirect
+          const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+          const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+          if (isIOS && isSafari) await auth.signInWithRedirect(provider);
+          else await auth.signInWithPopup(provider);
         }catch(err){ msg.textContent = err && err.message || 'No se pudo iniciar con Google.'; }
       });
     }
   }
 
-  // ---------- Detección de sesión: robusta ----------
+  /* ===========================
+     Puente con NAVBAR (señal rápida)
+     =========================== */
+  function getUserFromNavbarStorage(){
+    try{
+      const email = localStorage.getItem('tpl_auth_email');
+      const uid   = localStorage.getItem('tpl_auth_uid');
+      if (email || uid) return { uid: uid || null, email: email || null, displayName: null, _from:'navbarStorage' };
+    }catch(_){}
+    return null;
+  }
+
+  /* ===========================
+     UI: muro / formulario
+     =========================== */
   function setAuthUI(logged, user){
     const form = $('bookingForm');
     const wall = $('authWall');
     if(form) form.classList.toggle('disabled', !logged);
     if(wall) wall.style.display = logged ? 'none' : 'block';
-    console.log('TPL auth status =>', { logged, user: user ? {uid:user.uid, email:user.email}:null });
     if(!logged) renderInlineLogin();
+    // Log útil en consola
+    console.log('TPL reservas auth =>', { logged, from: user && user._from || (user?'firebase':'none'), uid: user && user.uid, email: user && user.email });
   }
 
-  /* TPL: INICIO BLOQUE NUEVO [Compat con NAVAR y orígenes: lectura de usuario global + listeners genéricos] */
-  function getUserFromGlobals(){
-    try{
-      const candidates = [
-        window.TPL_USER,
-        window.__TPL_USER,
-        window.NAVAR_USER,
-        window.__NAVAR_USER,
-        window.APP_USER,
-        window.appUser,
-        window.currentUser,
-        window.user
-      ].filter(Boolean);
-      if(!candidates.length) return null;
-      const u = candidates[0];
-      return {
-        uid: u.uid || u.id || u._id || u.uidUser || null,
-        email: u.email || u.mail || null,
-        displayName: u.displayName || u.name || null,
-        _raw: u
-      };
-    }catch(_){ return null; }
+  /* ===========================
+     Firebase: esperar/hidratar
+     =========================== */
+  async function waitForFirebaseReady(waitMs){
+    if (typeof firebase === 'undefined' || !firebase.auth) return false;
+    const auth = firebase.auth();
+    if (auth.currentUser) return true;
+    const ms = Math.max(0, waitMs|0);
+    if (!ms) return !!auth.currentUser;
+    return await new Promise((resolve)=>{
+      let done = false;
+      const to = setTimeout(()=>{ if(!done){ done = true; resolve(!!auth.currentUser); } }, ms);
+      auth.onAuthStateChanged(()=>{ if(!done){ done = true; clearTimeout(to); resolve(!!auth.currentUser); } });
+    });
   }
 
-  async function waitForFirebaseReady(timeoutMs=6000){
-    const t0 = Date.now();
-    while(Date.now() - t0 < timeoutMs){
-      if (window.firebase && firebase.apps && firebase.apps.length > 0 && firebase.auth) return true;
-      await new Promise(r=>setTimeout(r, 120));
-    }
-    return !!(window.firebase && firebase.auth);
+  async function attachFirebaseAuthUI(){
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    const auth = firebase.auth();
+
+    // Estado inicial
+    setAuthUI(!!auth.currentUser, auth.currentUser || null);
+
+    // Cambios de sesión
+    auth.onAuthStateChanged((u)=> setAuthUI(!!u, u || null));
+    if (auth.onIdTokenChanged) auth.onIdTokenChanged((u)=> setAuthUI(!!u, u || null));
+
+    // Fallback: por si tarda en hidratar
+    let tries = 0;
+    const iv = setInterval(()=>{
+      const u = auth.currentUser;
+      if (u){ setAuthUI(true, u); clearInterval(iv); }
+      if (++tries > 20){ clearInterval(iv); }
+    }, 150);
+  }
+
+  /* ===========================
+     Escuchar señales del NAVBAR
+     =========================== */
+  function subscribeToNavbarSignals(){
+    // Evento oficial del NAVBAR
+    window.addEventListener('tpl-auth-change', ()=> recheckAuthNow(), { passive:true });
+
+    // Cambios en localStorage
+    window.addEventListener('storage', (e)=>{
+      if (!e || !e.key) return;
+      if (e.key === 'tpl_auth_email' || e.key === 'tpl_auth_uid') recheckAuthNow();
+    });
+
+    // Pintado inmediato si ya hay datos del NAVBAR
+    const nbUser = getUserFromNavbarStorage();
+    if (nbUser) setAuthUI(true, nbUser);
   }
 
   async function recheckAuthNow(){
-    const hasFb = await waitForFirebaseReady(1);
-    const fbUser = (hasFb && firebase.auth) ? firebase.auth().currentUser : null;
-    const glUser = getUserFromGlobals();
-    setAuthUI(!!(fbUser || glUser), fbUser || glUser);
+    let fbUser = null;
+    if (await waitForFirebaseReady(1) && typeof firebase !== 'undefined' && firebase.auth){
+      fbUser = firebase.auth().currentUser || null;
+    }
+    const nbUser = getUserFromNavbarStorage();
+    const any = fbUser || nbUser || null;
+    setAuthUI(!!any, any);
   }
 
-  function subscribeToGlobalAuthSignals(){
-    window.addEventListener('storage', (e)=>{
-      try{
-        if(!e || !e.key) return;
-        if (e.key.startsWith('firebase:authUser') || /user|auth|tpl/i.test(e.key)) {
-          recheckAuthNow();
-        }
-      }catch(_){}
-    });
-    ['tpl:auth','tpl:auth-changed','nav:auth','auth:changed','user:changed'].forEach(ev=>{
-      window.addEventListener(ev, recheckAuthNow, { passive:true });
-    });
-    const glUser = getUserFromGlobals();
-    if (glUser) setAuthUI(true, glUser);
-  }
-  /* TPL: FIN BLOQUE NUEVO */
-
-  function attachAuthWall(){
-    (async function boot(){
-      subscribeToGlobalAuthSignals();
-      const ready = await waitForFirebaseReady();
-      if (!ready){
-        console.warn('Firebase aún no listo; se usará detección global hasta hidratar.');
-        recheckAuthNow();
-        return;
-      }
-
-      const auth = firebase.auth();
-      auth.onAuthStateChanged((u)=> setAuthUI(!!u, u || null));
-      auth.onIdTokenChanged((u)=> setAuthUI(!!u, u || null));
-
-      let tries = 0;
-      const iv = setInterval(()=>{
-        const u = auth.currentUser;
-        if (u){ setAuthUI(true, u); clearInterval(iv); }
-        if (++tries > 20){ clearInterval(iv); }
-      }, 150);
-
-      recheckAuthNow();
-    })();
-  }
-
-  // ---------- Resumen sencillo ----------
+  /* ===========================
+     Desglose simple para Email
+     =========================== */
   function buildSummary(){
     const svcSel = $('service');
     const svcTxt = svcSel ? (svcSel.options[svcSel.selectedIndex]?.text || '') : '';
@@ -204,7 +227,8 @@
       `Fechas: ${$('startDate')?.value || '-'} a ${$('endDate')?.value || '-'}`,
       `Hora: ${$('start')?.value || '-'} a ${$('end')?.value || '-'}`,
       `Nombre: ${$('firstName')?.value || ''} ${$('lastName')?.value || ''}`,
-      `Email/Tel: ${$('email')?.value || ''} / ${$('phone')?.value || ''}`
+      `Email/Tel: ${$('email')?.value || ''} / ${$('phone')?.value || ''}`,
+      `Notas: ${$('notes')?.value || ''}`
     ].join(' | ');
   }
 
@@ -214,9 +238,15 @@
     return { ok: missing.length===0, missing };
   }
 
-  // ---------- Init ----------
+  /* ===========================
+     INIT
+     =========================== */
   document.addEventListener('DOMContentLoaded', function(){
-    attachAuthWall();
+    // 1) Escuchamos NAVBAR inmediatamente (pinta al vuelo el estado logueado)
+    subscribeToNavbarSignals();
+
+    // 2) Si Firebase está cargado en la página, también nos suscribimos
+    attachFirebaseAuthUI();
 
     const form = $('bookingForm');
     if(!form) return;
@@ -224,58 +254,81 @@
     form.addEventListener('submit', async function(e){
       e.preventDefault();
 
-      const hasFb = await waitForFirebaseReady(2000);
-      const auth = (hasFb && firebase.auth) ? firebase.auth() : null;
+      // Valida HTML nativo (pattern, required, etc.)
+      if (typeof form.reportValidity === 'function' && !form.reportValidity()){
+        return;
+      }
 
-      // Requisito: login Firebase real
-      let u = auth && auth.currentUser;
-      if(!u){
-        const g = getUserFromGlobals();
-        if (g) {
-          console.warn('Sesión global detectada pero Firebase.currentUser es null. Probable login en otro host/subdominio.');
-          showErrorOverlay('Parece que tu sesión no está activa en este dominio. Inicia sesión aquí mismo (botón superior) y vuelve a intentarlo.');
+      // Anti-doble-submit
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if(submitBtn){ submitBtn.disabled = true; submitBtn.setAttribute('aria-busy','true'); }
+
+      try{
+        // ===== Exigir sesión real en Firebase =====
+        const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
+        let u = auth && auth.currentUser;
+
+        // Si el NAVBAR ya marcó sesión, damos un margen para que Firebase hidrate
+        if (!u && getUserFromNavbarStorage()){
+          try{
+            const t0 = Date.now();
+            while(Date.now()-t0 < 2000){
+              if (auth && auth.currentUser){ u = auth.currentUser; break; }
+              await new Promise(r=>setTimeout(r,150));
+            }
+          }catch(_){}
+        }
+
+        if(!u){
+          showErrorOverlay('Para enviar la reserva debes iniciar sesión.');
           return;
         }
-      }
-      if(!u){
-        showErrorOverlay('Para enviar la reserva debes iniciar sesión.');
-        return;
-      }
 
-      const check = validateRequired();
-      if(!check.ok){
-        const first = $(check.missing[0]); if(first) first.focus();
-        showErrorOverlay('Faltan campos obligatorios por completar.');
-        return;
-      }
+        // Validación de campos obligatorios
+        const check = validateRequired();
+        if(!check.ok){
+          const first = $(check.missing[0]); if(first) first.focus();
+          showErrorOverlay('Faltan campos obligatorios por completar.');
+          return;
+        }
 
-      const summary = buildSummary();
-      const summaryField = $('summaryField');
-      if(summaryField) summaryField.value = summary;
+        // Preparar resumen para el correo
+        const summary = buildSummary();
+        const summaryField = $('summaryField');
+        if(summaryField) summaryField.value = summary;
 
-      const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
-      payload._tipo = 'reserva';
-      payload._estado = 'enviada';
-      payload._page = location.href;
-      payload._uid = u.uid;
-      payload._email = u.email || null;
+        // Payload base (para Firestore)
+        const fd = new FormData(form);
+        const payload = Object.fromEntries(fd.entries());
+        payload._tipo = 'reserva';
+        payload._estado = 'enviada';
+        payload._page = location.href;
+        payload._uid = u.uid;
+        payload._email = u.email || null;
 
-      let emailOk = false, fsOk = false, lastErr = null;
-      try{
+        let emailOk = false, fsOk = false, lastErr = null;
+
+        // Guardar en Firestore (opcional) — no bloquea el éxito global si falla
         try{ fsOk = await saveToFirestore(payload); }catch(errFs){ fsOk = false; lastErr = errFs; }
-        try{ emailOk = await sendEmailJS(fd, { _tipo:'reserva', _estado:'enviada', _page: location.href }); }
-        catch(errMail){ emailOk = false; lastErr = errMail; }
+
+        // EmailJS (debe estar correctamente configurado)
+        try{
+          emailOk = await sendEmailJS(fd, { _tipo:'reserva', _estado:'enviada', _page: location.href });
+        } catch(errMail){ emailOk = false; lastErr = errMail; }
 
         if (emailOk || fsOk){
           showSuccessOverlay(form.dataset.tplSuccess || 'Tu solicitud se ha enviado correctamente.', form.dataset.tplRedirect || 'perfil.html');
+          try{ form.reset(); }catch(_){}
         } else {
-          showErrorOverlay('No se pudo enviar la solicitud (correo/servidor). Revisa tu inicio de sesión y el origen permitido en EmailJS.', lastErr);
+          showErrorOverlay('No se pudo enviar la solicitud (correo/servidor). Revisa el inicio de sesión y la configuración de EmailJS.', lastErr);
         }
+
       }catch(err){
         showErrorOverlay('Ocurrió un error inesperado al enviar la solicitud.', err);
+      }finally{
+        if(submitBtn){ submitBtn.disabled = false; submitBtn.removeAttribute('aria-busy'); }
       }
     });
   });
+
 })();
-/* TPL: FIN BLOQUE NUEVO */
