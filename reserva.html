@@ -900,6 +900,141 @@
   })();
   </script>
   <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Watchdog Autocomplete + Mascotas robusto] -->
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function setIfEmpty(el,val){ if (el && !el.value && val) el.value = val; }
+  function splitFullName(full){
+    if (!full) return {nombre:'', apellidos:''};
+    var s = String(full).trim().replace(/\s+/g,' ');
+    var parts = s.split(' ');
+    if (parts.length===1) return {nombre:parts[0], apellidos:''};
+    return {nombre:parts[0], apellidos:parts.slice(1).join(' ')};
+  }
+  function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
+  function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+  function toArrayMaybe(x){ if (!x) return []; if (Array.isArray(x)) return x; return Object.keys(x).map(function(k){ var o=x[k]; o.id=o.id||k; return o; }); }
+  function normalizePet(p){
+    if (!p) return null;
+    var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
+    var nombre = p.nombre || p.name || p.petName || '';
+    var especie = p.especie || p.tipo || p.species || p.type || '';
+    var raza = p.raza || p.breed || '';
+    var tam = p.tamano || p['tamaño'] || p.size || '';
+    var meds = p.medicacion || p['medicación'] || p.medication || '';
+    var needs = p.necesidades || p.needs || p.specialNeeds || '';
+    return {id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs};
+  }
+  function loadPetsFromUdb(uid){
+    var raw = udbGet(uid,'pets') || udbGet(uid,'mascotas') || [];
+    return toArrayMaybe(raw).map(normalizePet).filter(function(p){ return p && (p.nombre||p.id); });
+  }
+  async function loadPetsFromFirestore(uid){
+    var list = [];
+    try{
+      if (typeof firebase === 'undefined' || !firebase.firestore) return list;
+      var db = firebase.firestore();
+      var cols = ['owners','propietarios','profiles','usuarios'];
+      for (var i=0;i<cols.length;i++){
+        var ref = db.collection(cols[i]).doc(uid);
+        // subcolecciones
+        try{
+          var sub1 = await ref.collection('mascotas').get(); 
+          if (sub1 && !sub1.empty){ sub1.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
+        }catch(e){}
+        try{
+          var sub2 = await ref.collection('pets').get();
+          if (sub2 && !sub2.empty){ sub2.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
+        }catch(e){}
+        // arrays en doc
+        try{
+          var doc = await ref.get();
+          if (doc && doc.exists){
+            var data = doc.data() || {};
+            toArrayMaybe(data.mascotas).forEach(function(p){ list.push(normalizePet(p)); });
+            toArrayMaybe(data.pets).forEach(function(p){ list.push(normalizePet(p)); });
+          }
+        }catch(e){}
+        if (list.filter(Boolean).length) break;
+      }
+    }catch(e){}
+    return list.filter(Boolean);
+  }
+  function applyPet(p){
+    var el;
+    el = $('tpl-pet-id');      if (el) el.value = p.id || '';
+    el = $('tpl-pet-name');    if (el) el.value = p.nombre || '';
+    el = $('tpl-pet-species'); if (el) el.value = p.especie || '';
+    el = $('tpl-pet-breed');   if (el) el.value = p.raza || '';
+    el = $('tpl-pet-size');    if (el) el.value = p.tamano || '';
+    el = $('tpl-pet-med');     if (el) el.value = p.medicacion || '';
+    el = $('tpl-pet-needs');   if (el) el.value = p.necesidades || '';
+  }
+  function ensurePetsVisible(uid, pets){
+    var sec = $('tpl-pet-section');
+    var sel = document.getElementById('tpl-pet-select');
+    pets = (pets||[]).filter(Boolean);
+    if (!pets.length){ if (sec) sec.hidden = true; return; }
+    if (pets.length===1){ if (sec) sec.hidden = true; applyPet(pets[0]); return; }
+    if (!sec || !sel) return;
+    sec.hidden = false; sel.innerHTML='';
+    for (var i=0;i<pets.length;i++){
+      var p = pets[i];
+      var label = (p.nombre || 'Mascota') + ( (p.especie||p.raza) ? (' (' + [p.especie||'', p.raza||''].filter(Boolean).join(', ') + ')') : '' );
+      var o = new Option(label, p.id || p.nombre || ('p'+i));
+      try{ o.dataset.pet = JSON.stringify(p); }catch(e){}
+      sel.appendChild(o);
+    }
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex]; if (!o) return;
+      var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
+      if (p) applyPet(p);
+    };
+    sel.onchange();
+  }
+  function hydrateFromUser(u){
+    if (!u || u.isAnonymous) return;
+    // titular
+    var email = $('email'); if (u.email) setIfEmpty(email, u.email);
+    var sp = splitFullName(u.displayName || '');
+    setIfEmpty($('firstName'), sp.nombre);
+    setIfEmpty($('lastName'),  sp.apellidos);
+    // reply-to
+    var hid = $('tpl-replyto'); if (hid){ hid.value = (email && email.value) ? email.value : (u.email || ''); }
+    // UDB perfil
+    var owner = udbGet(u.uid,'owner') || udbGet(u.uid,'propietario');
+    if (owner){
+      setIfEmpty($('firstName'), owner.nombre || owner.name || '');
+      setIfEmpty($('lastName'),  owner.apellidos || '');
+      setIfEmpty($('phone'),     owner.telefono || owner.phone || '');
+    }
+    // Mascotas: UDB → Firestore
+    var pets = loadPetsFromUdb(u.uid);
+    if (pets.length){ ensurePetsVisible(u.uid, pets); }
+    else { loadPetsFromFirestore(u.uid).then(function(fsPets){ if (fsPets && fsPets.length) ensurePetsVisible(u.uid, fsPets); }); }
+  }
+  function watchAuthAndFill(){
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    var auth = firebase.auth();
+    // 1) llamado inmediato si ya está hidratado
+    if (auth.currentUser && !auth.currentUser.isAnonymous){ hydrateFromUser(auth.currentUser); }
+    // 2) evento oficial
+    try{ auth.onAuthStateChanged(function(u){ hydrateFromUser(u); }); }catch(e){}
+    // 3) watchdog por si tarda (hasta ~8s)
+    var tries=0, iv=setInterval(function(){
+      tries++;
+      var u = auth.currentUser;
+      if (u && !u.isAnonymous){ clearInterval(iv); hydrateFromUser(u); }
+      if (tries>40) clearInterval(iv);
+    },200);
+  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', watchAuthAndFill); }
+  else { watchAuthAndFill(); }
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
