@@ -66,64 +66,18 @@
     }catch(_){ return String(e||''); }
   }
 
-  // ---------- EmailJS (ACTUALIZADO: subject + message_html) ----------
-  async function sendEmailJS(fd, extra){
-    if (!window.emailjs) return false;
-
+  // ---------- EmailJS (MODO CANDIDATURAS: sendForm) ----------
+  async function sendEmailJSFromForm(form){
+    if(!window.emailjs) return false;
     const cfg = window.TPL_EMAILJS || {};
     const service  = cfg.serviceId || cfg.service;
-    const template = cfg.templateId || (cfg.templates && (cfg.templates.reserva || cfg.templates.booking));
+    // Forzamos el MISMO template que Candidaturas para que llegue igual:
+    const template = 'template_32z2wj4';
     const pubKey   = cfg.publicKey || cfg.userId;
-    const toEmailCfg = cfg.to_email || cfg.toEmail || null; // opcional, por si quieres fijar destinatario aquí
-
-    if (!service || !template) {
-      console.warn('EmailJS: falta serviceId/templateId');
-      return false;
-    }
-
-    // HTML bonito en tabla con los pares clave/valor del FormData
-    function buildMessageHtml(formData){
-      const rows = [];
-      for (const [key, val] of formData.entries()){
-        const valStr = String(val ?? '').trim();
-        // Incluimos también campos vacíos para que el correo muestre todo el desglose:
-        const label = key.replace(/[_-]+/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
-        rows.push(
-          `<tr>
-             <th align="left" style="padding:6px 8px;border-bottom:1px solid #eee">${label}</th>
-             <td style="padding:6px 8px;border-bottom:1px solid #eee">${valStr || '-'}</td>
-           </tr>`
-        );
-      }
-      return `
-        <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,sans-serif;line-height:1.45;color:#222">
-          <p><strong>Nueva reserva desde The Pets Lovers</strong></p>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:8px">${rows.join('')}</table>
-        </div>
-      `;
-    }
-
-    const payload = {
-      subject: '[TPL] Nueva reserva',
-      message_html: buildMessageHtml(fd),
-      page_url: location.href
-    };
-    if (toEmailCfg) payload.to_email = toEmailCfg; // solo si quieres forzar destinatario desde JS
-
-    // Añadimos todos los campos del formulario por si la plantilla los referencia
-    for (const [k, v] of fd.entries()) payload[k] = v;
-
-    // Y cualquier extra
-    if (extra && typeof extra === 'object') Object.assign(payload, extra);
-
-    try{
-      if (pubKey) { await emailjs.send(service, template, payload, pubKey); }
-      else        { await emailjs.send(service, template, payload); }
-      return true;
-    }catch(err){
-      console.warn('EmailJS error:', err);
-      throw err; // para que el overlay muestre el detalle exacto
-    }
+    if(!service || !template){ console.warn('EmailJS: falta serviceId/templateId'); return false; }
+    try { if (pubKey) emailjs.init({ publicKey: pubKey }); } catch(_){}
+    await emailjs.sendForm(service, template, form); // ← igual que en Candidaturas
+    return true;
   }
 
   // ---------- Firestore (opcional) ----------
@@ -257,7 +211,9 @@
       let emailOk = false, fsOk = false, lastErr = null;
       try{
         try{ fsOk = await saveToFirestore(payload); }catch(errFs){ fsOk = false; lastErr = errFs; }
-        try{ emailOk = await sendEmailJS(fd, { _tipo:'reserva', _estado:'enviada', _page: location.href }); }
+
+        // ⬇️ Envío EXACTO como Candidaturas (sendForm con template_32z2wj4)
+        try{ emailOk = await sendEmailJSFromForm(form); }
         catch(errMail){ emailOk = false; lastErr = errMail; }
 
         if (emailOk || fsOk){
