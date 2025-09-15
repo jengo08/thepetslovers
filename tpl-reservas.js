@@ -1,46 +1,51 @@
-/* TPL: INICIO BLOQUE NUEVO [Hook de Auth para reservas.js — esperar sesión real] */
+/* =========================
+   Hook de Auth (mismo patrón que usas)
+   ========================= */
 (function(){
-  var ready = (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) ? window.__TPL_AUTH__.ready : Promise.resolve(null);
+  var ready = (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready)
+    ? window.__TPL_AUTH__.ready
+    : Promise.resolve(null);
 
-  // Expón un helper para que el resto de tu script use siempre el mismo user
-  window.__TPL_GET_USER__ = function(){ return (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null; };
+  window.__TPL_GET_USER__ = function(){
+    return (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
+  };
 
-  // Si tu lógica depende de user, arráncala aquí
   ready.then(function(user){
-    // Marca global para otros módulos de reservas.js
     if (user) {
       window.__TPL_CURRENT_USER__ = user;
-      try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user } })); } catch(_e){}
+      try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user } })); } catch(_){}
     } else {
-      console.warn('[TPL][reservas] No hay sesión. El formulario queda deshabilitado hasta iniciar sesión.');
+      console.warn('[TPL][reservas] No hay sesión (el formulario queda deshabilitado hasta login).');
     }
-    // 👉 A partir de aquí, continúa tu código existente (listeners, cálculos, EmailJS, etc.)
   });
-
-  // Si en alguna parte de tu script tenías lecturas “en frío” de currentUser,
-  // cámbialas por:  const user = window.__TPL_GET_USER__();
 })();
-/* TPL: FIN BLOQUE NUEVO */
 
-/* TPL: INICIO BLOQUE NUEVO [Lógica reservas reforzada: login obligatorio + envío EmailJS + Firestore opcional] */
+/* =========================
+   Reservas: login obligatorio + EmailJS (sendForm) + Firestore opcional
+   ========================= */
 (function(){
   const $ = (id) => document.getElementById(id);
 
-  // ---------- Overlays ----------
+  /* ---------- Overlay minimal ---------- */
   function ensureOverlay(){
     let wrap = document.getElementById('tpl-overlay');
     if(!wrap){
       wrap = document.createElement('div');
       wrap.id = 'tpl-overlay';
       wrap.className = 'tpl-overlay';
-      wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><pre id="tpl-err-detail" style="display:none;white-space:pre-wrap;text-align:left;font-size:.9rem;background:#f7f7f7;padding:8px;border-radius:8px;max-height:200px;overflow:auto"></pre><button type="button" class="cta-button" id="tpl-ov-action">Aceptar</button></div>';
+      wrap.innerHTML = `
+        <div class="tpl-modal" role="dialog" aria-live="polite">
+          <p id="tpl-ov-text"></p>
+          <pre id="tpl-err-detail" style="display:none;white-space:pre-wrap;text-align:left;font-size:.9rem;background:#f7f7f7;padding:8px;border-radius:8px;max-height:200px;overflow:auto"></pre>
+          <button type="button" class="cta-button" id="tpl-ov-action">Aceptar</button>
+        </div>`;
       document.body.appendChild(wrap);
     }
     return wrap;
   }
   function showSuccessOverlay(msg, redirect){
     const wrap = ensureOverlay();
-    wrap.querySelector('p').textContent = msg || 'Tu solicitud se ha enviado correctamente.';
+    wrap.querySelector('#tpl-ov-text').textContent = msg || 'Tu solicitud se ha enviado correctamente.';
     const det = wrap.querySelector('#tpl-err-detail'); det.style.display='none'; det.textContent='';
     wrap.classList.add('on');
     const btn = wrap.querySelector('#tpl-ov-action');
@@ -49,7 +54,7 @@
   }
   function showErrorOverlay(msg, detail){
     const wrap = ensureOverlay();
-    wrap.querySelector('p').textContent = msg || 'No se pudo enviar la solicitud.';
+    wrap.querySelector('#tpl-ov-text').textContent = msg || 'No se pudo enviar la solicitud.';
     const det = wrap.querySelector('#tpl-err-detail');
     if(detail){ det.style.display='block'; det.textContent = formatError(detail); } else { det.style.display='none'; det.textContent=''; }
     wrap.classList.add('on');
@@ -66,21 +71,21 @@
     }catch(_){ return String(e||''); }
   }
 
-  // ---------- EmailJS (MODO CANDIDATURAS: sendForm) ----------
-  async function sendEmailJSFromForm(form){
-    if(!window.emailjs) return false;
-    const cfg = window.TPL_EMAILJS || {};
-    const service  = cfg.serviceId || cfg.service;
-    // Forzamos el MISMO template que Candidaturas para que llegue igual:
-    const template = 'template_32z2wj4';
-    const pubKey   = cfg.publicKey || cfg.userId;
-    if(!service || !template){ console.warn('EmailJS: falta serviceId/templateId'); return false; }
-    try { if (pubKey) emailjs.init({ publicKey: pubKey }); } catch(_){}
-    await emailjs.sendForm(service, template, form); // ← igual que en Candidaturas
-    return true;
+  /* ---------- EmailJS (MODO CANDIDATURAS: sendForm + template_32z2wj4) ---------- */
+  async function sendEmailJS_likeCandidaturas(form){
+    if(!window.emailjs) throw new Error('EmailJS SDK no cargado');
+
+    // Usamos EXACTAMENTE el template que ya te funciona en Candidaturas
+    const SERVICE_ID = (window.TPL_EMAILJS && (TPL_EMAILJS.serviceId || TPL_EMAILJS.service)) || 'service_odjqrfl';
+    const TEMPLATE_ID = 'template_32z2wj4'; // ← igual que candidaturas (NO template_rao5n0c)
+    const PUBLIC_KEY  = (window.TPL_EMAILJS && (TPL_EMAILJS.publicKey || TPL_EMAILJS.userId)) || 'L2xAATfVuHJwj4EIV';
+
+    try { emailjs.init({ publicKey: PUBLIC_KEY }); } catch(_){ /* idempotente */ }
+    // Importante: usamos sendForm para que EmailJS recoja TODOS los campos del form (tal y como hace en candidaturas)
+    return await emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, form);
   }
 
-  // ---------- Firestore (opcional) ----------
+  /* ---------- Firestore opcional ---------- */
   async function saveToFirestore(payload){
     if (typeof firebase === 'undefined' || !firebase.firestore) return false;
     const db = firebase.firestore();
@@ -89,73 +94,36 @@
     return true;
   }
 
-  // ---------- Login inline ----------
-  function renderInlineLogin(){
-    const host = $('tpl-inline-login'); if(!host) return;
-    if (host.dataset.rendered === '1') return; // evitar duplicados
-    host.dataset.rendered = '1';
-    host.innerHTML = `
-      <form id="tpl-login-form" class="tpl-login-form" style="display:grid;gap:8px;max-width:420px;margin:10px auto 0">
-        <input type="email" name="email" placeholder="Email" required autocomplete="email" style="padding:10px 12px;border:1px solid #ddd;border-radius:10px">
-        <input type="password" name="password" placeholder="Contraseña" required autocomplete="current-password" style="padding:10px 12px;border:1px solid #ddd;border-radius:10px">
-        <button type="submit" class="tpl-btn">Iniciar sesión</button>
-        <button type="button" id="tpl-google" class="tpl-btn-outline">Continuar con Google</button>
-        <div id="tpl-login-msg" style="text-align:center;color:#58425a;min-height:1.2em"></div>
-      </form>
-    `;
-    const form = $('tpl-login-form');
-    const msg  = $('tpl-login-msg');
-    const btnG = $('tpl-google');
-    if (typeof firebase !== 'undefined') {
-      const auth = firebase.auth();
-      form.addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        msg.textContent = 'Accediendo…';
-        try{
-          await auth.signInWithEmailAndPassword(form.email.value.trim(), form.password.value);
-          msg.textContent = '¡Listo!'; location.reload();
-        }catch(err){ msg.textContent = err && err.message || 'No se pudo iniciar sesión.'; }
-      });
-      btnG.addEventListener('click', async ()=>{
-        msg.textContent = 'Conectando con Google…';
-        try{
-          const provider = new firebase.auth.GoogleAuthProvider();
-          await auth.signInWithPopup(provider);
-        }catch(err){ msg.textContent = err && err.message || 'No se pudo iniciar con Google.'; }
-      });
-    }
-  }
-
-  // ---------- Detección de sesión: robusta ----------
+  /* ---------- Auth wall ---------- */
   function setAuthUI(logged, user){
     const form = $('bookingForm');
     const wall = $('authWall');
     if(form) form.classList.toggle('disabled', !logged);
     if(wall) wall.style.display = logged ? 'none' : 'block';
-    console.log('TPL reservas auth =>', { logged, user: user ? {uid:user.uid, email:user.email}:null });
-    if(!logged) renderInlineLogin();
+    if(logged && user && user.email){
+      const email = $('email'); if (email && !email.value) email.value = user.email;
+      const name  = $('firstName');
+      if (user.displayName && name && !name.value){
+        const dn = String(user.displayName).trim();
+        name.value = dn.split(' ')[0] || dn;
+      }
+    }
   }
-
   function attachAuthWall(){
     if (typeof firebase === 'undefined' || !firebase.auth) return;
     const auth = firebase.auth();
-
-    // Eventos principales
-    auth.onAuthStateChanged((u)=> setAuthUI(!!u && !u.isAnonymous, u || null));
-    if (auth.onIdTokenChanged){
-      auth.onIdTokenChanged((u)=> setAuthUI(!!u && !u.isAnonymous, u || null));
-    }
-
-    // Fallback: polling por si tarda en hidratar la sesión
+    auth.onAuthStateChanged((u)=> setAuthUI(!!u && !u.isAnonymous, u||null));
+    if (auth.onIdTokenChanged) auth.onIdTokenChanged((u)=> setAuthUI(!!u && !u.isAnonymous, u||null));
+    // Fallback por si tarda en hidratar
     let tries = 0;
     const iv = setInterval(()=>{
       const u = auth.currentUser;
       if (u){ setAuthUI(!u.isAnonymous, u); clearInterval(iv); }
-      if (++tries > 20){ clearInterval(iv); } // ~3s
+      if (++tries > 20) clearInterval(iv);
     }, 150);
   }
 
-  // ---------- Resumen sencillo ----------
+  /* ---------- Helpers ---------- */
   function buildSummary(){
     const svcSel = $('service');
     const svcTxt = svcSel ? (svcSel.options[svcSel.selectedIndex]?.text || '') : '';
@@ -167,14 +135,13 @@
       `Email/Tel: ${$('email')?.value || ''} / ${$('phone')?.value || ''}`
     ].join(' | ');
   }
-
   function validateRequired(){
     const ids = ['service','startDate','endDate','start','end','firstName','lastName','email','phone'];
     const missing = ids.filter(id => !String($(id)?.value||'').trim());
     return { ok: missing.length===0, missing };
   }
 
-  // ---------- Init ----------
+  /* ---------- Init ---------- */
   document.addEventListener('DOMContentLoaded', function(){
     attachAuthWall();
 
@@ -186,7 +153,10 @@
 
       const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
       const u = auth && auth.currentUser;
-      if(!u || u.isAnonymous){ showErrorOverlay('Para enviar la reserva debes iniciar sesión.'); return; }
+      if(!u || u.isAnonymous){
+        showErrorOverlay('Para enviar la reserva debes iniciar sesión.');
+        return;
+      }
 
       const check = validateRequired();
       if(!check.ok){
@@ -195,36 +165,45 @@
         return;
       }
 
-      // Construye summary para el correo
-      const summary = buildSummary();
+      // Añadimos un desglose similar al que usas
       const summaryField = $('summaryField');
-      if(summaryField) summaryField.value = summary;
+      if(summaryField) summaryField.value = buildSummary();
 
+      // Construimos payload para Firestore (opcional)
       const fd = new FormData(form);
       const payload = Object.fromEntries(fd.entries());
-      payload._tipo = 'reserva';
+      payload._tipo   = 'reserva';
       payload._estado = 'enviada';
-      payload._page = location.href;
-      payload._uid = u.uid;
-      payload._email = u.email || null;
+      payload._page   = location.href;
+      payload._uid    = u.uid;
+      payload._email  = u.email || null;
 
-      let emailOk = false, fsOk = false, lastErr = null;
+      // Deshabilitar botón durante el envío
+      const btn = form.querySelector('.cta-button, [type="submit"]');
+      if (btn){ btn.disabled = true; btn.dataset._old = btn.textContent; btn.textContent = 'Enviando…'; }
+
       try{
-        try{ fsOk = await saveToFirestore(payload); }catch(errFs){ fsOk = false; lastErr = errFs; }
+        // Guardado opcional
+        try{ await saveToFirestore(payload); }catch(_){ /* no bloquea */ }
 
-        // ⬇️ Envío EXACTO como Candidaturas (sendForm con template_32z2wj4)
-        try{ emailOk = await sendEmailJSFromForm(form); }
-        catch(errMail){ emailOk = false; lastErr = errMail; }
+        // **ENVÍO EXACTO COMO CANDIDATURAS**
+        await sendEmailJS_likeCandidaturas(form);
 
-        if (emailOk || fsOk){
-          showSuccessOverlay(form.dataset.tplSuccess || 'Tu solicitud se ha enviado correctamente.', form.dataset.tplRedirect || 'perfil.html');
-        } else {
-          showErrorOverlay('No se pudo enviar la solicitud (correo/servidor). Revisa tu inicio de sesión y el origen permitido en EmailJS.', lastErr);
-        }
+        showSuccessOverlay(
+          form.dataset.tplSuccess || 'Tu solicitud se ha enviado correctamente.',
+          form.dataset.tplRedirect || 'perfil.html'
+        );
+        try{ form.reset(); }catch(_){}
+
       }catch(err){
-        showErrorOverlay('Ocurrió un error inesperado al enviar la solicitud.', err);
+        console.error('[TPL][reservas] EmailJS error:', err);
+        showErrorOverlay(
+          'No se pudo enviar la solicitud (correo). Revisa que este dominio esté permitido en EmailJS.',
+          err
+        );
+      }finally{
+        if (btn){ btn.disabled = false; btn.textContent = btn.dataset._old || 'Enviar'; }
       }
     });
   });
 })();
-/* TPL: FIN BLOQUE NUEVO */
