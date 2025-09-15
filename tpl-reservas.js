@@ -1,3 +1,27 @@
+/* TPL: INICIO BLOQUE NUEVO [Hook de Auth para reservas.js — esperar sesión real] */
+(function(){
+  var ready = (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) ? window.__TPL_AUTH__.ready : Promise.resolve(null);
+
+  // Expón un helper para que el resto de tu script use siempre el mismo user
+  window.__TPL_GET_USER__ = function(){ return (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null; };
+
+  // Si tu lógica depende de user, arráncala aquí
+  ready.then(function(user){
+    // Marca global para otros módulos de reservas.js
+    if (user) {
+      window.__TPL_CURRENT_USER__ = user;
+      try { window.dispatchEvent(new CustomEvent('tpl-auth-ready', { detail:{ user } })); } catch(_e){}
+    } else {
+      console.warn('[TPL][reservas] No hay sesión. El formulario queda deshabilitado hasta iniciar sesión.');
+    }
+    // 👉 A partir de aquí, continúa tu código existente (listeners, cálculos, EmailJS, etc.)
+  });
+
+  // Si en alguna parte de tu script tenías lecturas “en frío” de currentUser,
+  // cámbialas por:  const user = window.__TPL_GET_USER__();
+})();
+/* TPL: FIN BLOQUE NUEVO */
+
 /* TPL: INICIO BLOQUE NUEVO [Lógica reservas reforzada: login obligatorio + envío EmailJS + Firestore opcional] */
 (function(){
   const $ = (id) => document.getElementById(id);
