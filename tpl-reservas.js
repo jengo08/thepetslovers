@@ -821,3 +821,55 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach);
   else attach();
 })();
+/* TPL: FIX ESTRUCTURA Y FAB AYUDA — pegar al final de reservas.js */
+(function(){
+  'use strict';
+  function movePetSection(){
+    var pet = document.getElementById('tpl-pet-section');
+    var serv = document.querySelector('section[aria-labelledby="sec-servicio"]');
+    var titular = document.querySelector('section[aria-labelledby="sec-titular"]');
+    if (pet && serv && titular) {
+      serv.after(pet);           // → queda entre servicio y contacto
+      pet.hidden = pet.hidden && false; // por si estaba hidden por defecto
+    }
+  }
+  function hideFreeNamePets(){
+    var sec = document.querySelector('section[aria-labelledby="sec-mascotas"]');
+    if (sec) sec.style.display = 'none'; // ocultar “Mascotas” (nombres libres)
+  }
+  function ensureHelpFab(){
+    if (document.getElementById('tpl-help-fab')) return;
+    var a = document.createElement('a');
+    a.id='tpl-help-fab';
+    a.href='ayuda.html';
+    a.textContent='Centro de ayuda';
+    a.setAttribute('aria-label','Centro de ayuda');
+    Object.assign(a.style,{
+      position:'fixed', right:'16px', bottom:'16px',
+      background:'#339496', color:'#fff', padding:'10px 14px',
+      borderRadius:'999px', boxShadow:'0 4px 14px rgba(0,0,0,.15)',
+      fontWeight:'600', textDecoration:'none', zIndex:'99999'
+    });
+    document.body.appendChild(a);
+  }
+  function ensureSvcPlaceholder(){
+    var grid = document.getElementById('svc-grid');
+    var box  = document.getElementById('svc-dynamic');
+    if (!box) return;
+    if (!grid || !grid.childElementCount){
+      var p = document.createElement('div');
+      p.style.fontSize='.95rem';
+      p.style.color='#666';
+      p.textContent='Elige un servicio para ver opciones y presupuesto.';
+      (grid||box).appendChild(p);
+    }
+  }
+  function runFixes(){
+    try{ movePetSection(); }catch(_){}
+    try{ hideFreeNamePets(); }catch(_){}
+    try{ ensureHelpFab(); }catch(_){}
+    try{ ensureSvcPlaceholder(); }catch(_){}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', runFixes);
+  else runFixes();
+})();
