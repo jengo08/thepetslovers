@@ -21,9 +21,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- Estilos mínimos locales para la tarjeta de reserva -->
+  <!-- Estilos mínimos locales -->
   <style>
-    :root{ --color-principal:#339496; --color-texto:#58425a; }
+    :root{
+      --color-principal:#339496; --color-texto:#58425a;
+      --ok:#128a57; --warn:#c77d00; --muted:#666;
+      --chip:#eef7f7; --chip-b:#cde6e6;
+    }
     body{background:#fafafa}
     .booking-wrapper{max-width:980px;margin:120px auto 60px;padding:20px;background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
     .booking-header{text-align:center;margin-bottom:18px}
@@ -33,14 +37,18 @@
     .booking-field input,.booking-field select,.booking-field textarea{padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-family:inherit}
     .cta-button{background:var(--color-principal);color:#fff;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
     .cta-button[disabled]{opacity:.6;cursor:not-allowed}
+    .muted{color:var(--muted)}
     .booking-actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
     .tpl-section{margin-top:18px}
     .tpl-section h2{margin:6px 0 8px;font-size:1.15rem}
     .auth-wall{padding:14px;border:1px dashed #bbb;border-radius:10px;text-align:center;background:#fafafa;margin-bottom:16px}
     .auth-wall strong{color:var(--color-texto)}
     .disabled{opacity:.6;pointer-events:none}
+    .inline-note{font-size:.9rem;color:#444;background:#fff4e5;border:1px solid #ffe3b3;border-radius:10px;padding:10px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--chip);border:1px solid var(--chip-b);padding:6px 10px;border-radius:999px;font-weight:600}
 
-    /* Overlay genérico (éxito/error) – usado por reservas.js */
+    /* Overlay genérico (éxito/error) – lo usa reservas.js */
     .tpl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}
     .tpl-overlay.on{display:flex}
     .tpl-modal{background:#fff;padding:20px;border-radius:12px;max-width:520px;box-shadow:0 8px 30px rgba(0,0,0,.2);text-align:center}
@@ -49,6 +57,13 @@
     /* Línea inferior fija dentro de la tarjeta (mini presupuesto + nota login + ayuda) */
     .booking-footer-line{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap}
     .help-link{white-space:nowrap;text-decoration:none;border:1px solid var(--color-principal);border-radius:999px;padding:8px 12px;font-weight:600;color:var(--color-principal)}
+
+    /* Tabla presupuesto */
+    .budget-card{border:1px solid #eee;border-radius:12px;padding:14px}
+    .budget-table{width:100%;border-collapse:collapse}
+    .budget-table th,.budget-table td{padding:8px;border-bottom:1px solid #f1f1f1;text-align:left}
+    .budget-table tfoot th,.budget-table tfoot td{border-top:2px solid #ddd;border-bottom:none}
+    .line-muted{color:#666}
   </style>
 </head>
 <body>
@@ -72,10 +87,14 @@
     </noscript>
   </div>
 
-  <div class="booking-wrapper">
+  <div class="booking-wrapper" aria-live="polite">
     <div class="booking-header">
       <h1>Reserva tu servicio</h1>
       <p>Para reservar debes iniciar sesión. Tras enviar, recibirás confirmación por email.</p>
+      <p class="inline-note" role="note">
+        <strong>Nota importante:</strong> El <em>precio final</em> se confirma contigo tras revisar detalles y disponibilidad.
+        El presupuesto mostrado es una <strong>estimación</strong>.
+      </p>
     </div>
 
     <!-- Muro de autenticación + login inline -->
@@ -130,9 +149,103 @@
             <input type="time" id="end" name="Hora_fin" required>
           </div>
         </div>
+
+        <!-- Chips contexto -->
+        <div class="chips" id="chips-context" aria-hidden="true" style="margin-top:6px">
+          <span class="chip" id="chip-days">—</span>
+          <span class="chip" id="chip-duration">—</span>
+          <span class="chip" id="chip-bundle" hidden>—</span>
+        </div>
       </section>
 
-      <!-- Mascota (entre servicio y contacto) -->
+      <!-- Opciones específicas: VISITAS -->
+      <section class="tpl-section" id="sec-visitas" aria-labelledby="h-visitas" hidden>
+        <h2 id="h-visitas">Opciones de visitas</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="visitCount">Visitas por día</label>
+            <select id="visitCount" name="Visitas_por_dia">
+              <option value="1" selected>1 visita/día</option>
+              <option value="2">2 visitas/día</option>
+              <option value="3">3 visitas/día</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="visitMinutes">Duración por visita</label>
+            <select id="visitMinutes" name="Minutos_por_visita">
+              <option value="30" selected>30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="visitExtras">Extras (opcional)</label>
+            <select id="visitExtras" name="Visitas_extras">
+              <option value="" selected>Sin extras</option>
+              <option value="medicacion">Administración de medicación</option>
+              <option value="limpieza">Limpieza de arenero / zona</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Opciones específicas: PASEOS -->
+      <section class="tpl-section" id="sec-paseos" aria-labelledby="h-paseos" hidden>
+        <h2 id="h-paseos">Opciones de paseos</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="walkMinutes">Duración del paseo</label>
+            <select id="walkMinutes" name="Minutos_por_paseo">
+              <option value="30" selected>30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="walkBundle">Bono</label>
+            <select id="walkBundle" name="Bono_paseos">
+              <option value="" selected>Sin bono (paseo suelto)</option>
+              <option value="5">Bono 5 días</option>
+              <option value="10">Bono 10 días</option>
+              <option value="20">Bono 20 días</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="extraPets">Perros adicionales</label>
+            <select id="extraPets" name="Perros_adicionales">
+              <option value="0" selected>0</option>
+              <option value="1">+1</option>
+              <option value="2">+2</option>
+              <option value="3">+3</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Opciones específicas: GUARDERÍA / ALOJAMIENTO / BODAS -->
+      <section class="tpl-section" id="sec-otros" aria-labelledby="h-otros" hidden>
+        <h2 id="h-otros">Preferencias del servicio</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="needsCare">Necesidades especiales</label>
+            <select id="needsCare" name="Necesidades_especiales">
+              <option value="" selected>Ninguna</option>
+              <option value="medicacion">Requiere medicación</option>
+              <option value="ansiedad">Ansiedad / pautas específicas</option>
+              <option value="cachorro">Cachorro</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="holiday">¿Incluye festivos/días señalados?</label>
+            <select id="holiday" name="Festivo">
+              <option value="" selected>No</option>
+              <option value="si">Sí (recargo)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Mascota -->
       <section class="tpl-section" id="tpl-pet-section" aria-labelledby="sec-mascota" hidden>
         <h2 id="sec-mascota">Tu mascota</h2>
         <div class="booking-grid">
@@ -141,6 +254,31 @@
             <select id="tpl-pet-select" name="Mascota"></select>
           </div>
         </div>
+      </section>
+
+      <!-- Fallback mascota (si Firestore no responde) -->
+      <section class="tpl-section" id="pet-fallback" aria-labelledby="sec-mascota-fb" hidden>
+        <h2 id="sec-mascota-fb">Tu mascota</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="pf-name">Nombre</label>
+            <input type="text" id="pf-name" placeholder="Nombre de la mascota">
+          </div>
+          <div class="booking-field">
+            <label for="pf-species">Especie</label>
+            <select id="pf-species">
+              <option value="">Selecciona…</option>
+              <option>Perro</option>
+              <option>Gato</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="pf-breed">Raza (opcional)</label>
+            <input type="text" id="pf-breed" placeholder="Ej. mestizo">
+          </div>
+        </div>
+        <p class="muted" style="margin-top:6px">*Este bloque solo aparece si no pudimos cargar tus mascotas.</p>
       </section>
 
       <!-- Datos de contacto -->
@@ -172,6 +310,7 @@
             <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, horarios…"></textarea>
           </div>
         </div>
+        <p class="muted" style="margin-top:4px">El precio final puede variar por <em>desplazamiento</em>, horarios especiales, festivos o necesidades específicas.</p>
       </section>
 
       <!-- Resumen (email) -->
@@ -215,28 +354,34 @@
       </div>
     </form>
 
-    <!-- Presupuesto detallado (debajo del formulario) -->
+    <!-- Presupuesto detallado -->
     <section class="tpl-section budget-section" id="tpl-budget-section" aria-labelledby="sec-presupuesto" style="margin-top:24px">
       <h2 id="sec-presupuesto" style="margin:6px 0 8px;font-size:1.15rem">Presupuesto estimado</h2>
-      <div class="budget-card" style="border:1px solid #eee;border-radius:12px;padding:14px">
-        <table class="budget-table" style="width:100%;border-collapse:collapse">
+      <div class="budget-card">
+        <table class="budget-table">
           <tbody>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Servicio</th><td id="tpl-b-svc"      style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Periodo</th><td id="tpl-b-periodo"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Duración</th><td id="tpl-b-duracion" style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Mascota</th><td id="tpl-b-mascota"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Notas</th><td id="tpl-b-notas"    style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+            <tr><th>Servicio</th><td id="tpl-b-svc">—</td></tr>
+            <tr><th>Periodo</th><td id="tpl-b-periodo">—</td></tr>
+            <tr><th>Duración</th><td id="tpl-b-duracion">—</td></tr>
+            <tr><th>Mascota</th><td id="tpl-b-mascota">—</td></tr>
+            <tr><th>Notas</th><td id="tpl-b-notas">—</td></tr>
+            <tr class="line-muted"><th colspan="2">Desglose</th></tr>
+            <tr><th>Base</th><td id="tpl-line-base">—</td></tr>
+            <tr><th>Extras</th><td id="tpl-line-extras">—</td></tr>
+            <tr><th>Recargo festivo</th><td id="tpl-line-festivo">—</td></tr>
+            <tr><th>Zona</th><td id="tpl-line-zona">—</td></tr>
+            <tr><th>Señal</th><td id="tpl-line-senal">—</td></tr>
           </tbody>
           <tfoot>
             <tr class="total">
-              <th style="text-align:left;padding:10px;border-top:2px solid #ddd">Total</th>
-              <td id="tpl-b-total" style="padding:10px;border-top:2px solid #ddd"><strong>—</strong></td>
+              <th>Total</th>
+              <td id="tpl-b-total"><strong>—</strong></td>
             </tr>
           </tfoot>
         </table>
         <div class="budget-actions" style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">
           <button type="button" class="cta-button" id="tpl-pay-btn">Pagar ahora</button>
-          <small class="muted" style="color:#666">El pago es una señal: ajustaremos diferencias si las hay.</small>
+          <small class="muted">El pago es una señal: ajustaremos diferencias si las hay.</small>
         </div>
       </div>
     </section>
@@ -272,7 +417,7 @@
   })();
   </script>
 
-  <!-- EmailJS + init -->
+  <!-- EmailJS + init (se mantiene exactamente igual) -->
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
@@ -293,7 +438,7 @@
   <!-- Página de login por defecto para los next= -->
   <script>window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';</script>
 
-  <!-- Bootstrap Auth unificado: muro, inline login y sincronía básica -->
+  <!-- Bootstrap Auth unificado (igual que tenías) -->
   <script>
   (function(){
     'use strict';
@@ -312,14 +457,10 @@
       var slot = $('#tpl-inline-login');
       if (!wall || !form) return;
 
-      // Oculta/enseña muro + bloquea form
       if (user) {
         wall.style.display = 'none';
         form.classList.remove('disabled');
-        // Ocultar nota de login en la línea inferior
-        var note = document.getElementById('tpl-login-note');
-        if (note) note.style.display = 'none';
-        // Autorrelleno básico
+        var note = document.getElementById('tpl-login-note'); if (note) note.style.display = 'none';
         var email = $('#email'); if (user.email && email && !email.value) email.value = user.email;
         var name  = $('#firstName');
         if (user.displayName && name && !name.value) {
@@ -328,8 +469,7 @@
       } else {
         wall.style.display = 'block';
         form.classList.add('disabled');
-        var note = document.getElementById('tpl-login-note');
-        if (note) note.style.display = '';
+        var note = document.getElementById('tpl-login-note'); if (note) note.style.display = '';
         if (slot && !slot.hasChildNodes()) {
           var loginUrl = buildLoginUrl();
           slot.innerHTML =
@@ -410,24 +550,15 @@
       var emailVal = (inputEmail && inputEmail.value) ? inputEmail.value : (user && user.email) || '';
       if (hidReply) hidReply.value = emailVal;
     }
-
     function bindReplySync(){
-      var email = $('#email');
-      var hidReply = $('#tpl-replyto');
+      var email = $('#email'); var hidReply = $('#tpl-replyto');
       if (!email || !hidReply) return;
       email.addEventListener('input', function(){ hidReply.value = email.value || ''; });
     }
-
     function onAuthReady(cb){
-      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
-        window.__TPL_AUTH__.ready.then(cb);
-      } else {
-        window.addEventListener('tpl-auth-ready', function(ev){
-          cb(ev.detail && ev.detail.user ? ev.detail.user : null);
-        }, { once:true });
-      }
+      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) { window.__TPL_AUTH__.ready.then(cb); }
+      else { window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail && ev.detail.user ? ev.detail.user : null); }, { once:true }); }
     }
-
     onAuthReady(function(user){
       try{
         if (user){
@@ -439,7 +570,6 @@
       syncHidden(user);
       bindReplySync();
     });
-
     window.addEventListener('tpl-auth-change', function(){
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
       syncHidden(user);
@@ -447,7 +577,7 @@
   })();
   </script>
 
-  <!-- Paso 2: Selector de mascota (UDB/Firestore) -->
+  <!-- Paso 2: Selector de mascota (UDB/Firestore) con fallback -->
   <script>
   (function(){
     'use strict';
@@ -518,6 +648,8 @@
       Object.keys(map).forEach(function(id){
         var el = document.getElementById(id); if (el) el.value = map[id];
       });
+      document.getElementById('tpl-b-mascota').textContent =
+        [p.nombre, [p.especie, p.raza].filter(Boolean).join(', ') ? '('+[p.especie,p.raza].filter(Boolean).join(', ')+')':'' ].filter(Boolean).join(' ');
     }
     function labelFor(p){
       var meta = [p.especie||'', p.raza||''].filter(Boolean).join(', ');
@@ -527,10 +659,9 @@
       var sec = $('#tpl-pet-section');
       var sel = $('#tpl-pet-select');
       pets = (pets||[]).map(normalizePet).filter(Boolean);
-      if (!pets.length){ if (sec) sec.hidden = true; return; }
-      if (pets.length === 1){
-        if (sec) sec.hidden = true; applyPetHidden(pets[0]); return;
-      }
+      if (!pets.length){ if (sec) sec.hidden = true; document.getElementById('pet-fallback').hidden=false; return; }
+      document.getElementById('pet-fallback').hidden=true;
+      if (pets.length === 1){ if (sec) sec.hidden = true; applyPetHidden(pets[0]); return; }
       if (!sec || !sel) return;
       sec.hidden = false; sel.innerHTML = '';
       pets.forEach(function(p){
@@ -550,7 +681,8 @@
       else window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail ? ev.detail.user : null); }, {once:true});
     }
     onAuthReady(async function(user){
-      var uid = user && user.uid; if (!uid) return;
+      var uid = user && user.uid; if (!uid){ document.getElementById('pet-fallback').hidden=false; return; }
+      // 1º UDB local
       var udb = (function(){
         try{
           var raw = udbGet(uid,'mascotas') || udbGet(uid,'pets') || [];
@@ -558,26 +690,46 @@
         }catch(_){ return []; }
       })();
       if (udb.length){ renderPets(uid, udb); return; }
+      // 2º Firestore
       var fs = await loadPetsFromFirestore(uid);
       if (fs && fs.length) renderPets(uid, fs);
+      else document.getElementById('pet-fallback').hidden=false;
+    });
+
+    // Fallback: si el usuario rellena manual, volcamos a ocultos
+    ['pf-name','pf-species','pf-breed'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', function(){
+        document.getElementById('tpl-pet-name').value = document.getElementById('pf-name').value || '';
+        document.getElementById('tpl-pet-species').value = document.getElementById('pf-species').value || '';
+        document.getElementById('tpl-pet-breed').value = document.getElementById('pf-breed').value || '';
+        var txt = (document.getElementById('pf-name').value||'') + ' ' + ((document.getElementById('pf-species').value||'')? '('+document.getElementById('pf-species').value+')':'');
+        document.getElementById('tpl-b-mascota').textContent = txt.trim() || '—';
+      });
     });
   })();
   </script>
 
-  <!-- Validaciones suaves + Desglose vivo + Teléfono ES -->
+  <!-- Validaciones suaves + Desglose vivo + Teléfono ES + Url params -->
   <script>
   (function(){
     'use strict';
     var $ = function(sel, root){ return (root||document).querySelector(sel); };
     var form = $('#bookingForm'); if (!form) return;
 
-    var LEAD_HOURS = (typeof window.TPL_RESERVAS_LEAD_HOURS === 'number') ? window.TPL_RESERVAS_LEAD_HOURS : 24;
+    // Lead por servicio
+    var LEAD_HOURS_MAP = { visitas:12, paseos:12, guarderia:24, alojamiento:48, bodas:72 };
+    var DEFAULT_LEAD_HOURS = 24;
+
+    function leadForSvc(key){ return LEAD_HOURS_MAP[key] || DEFAULT_LEAD_HOURS; }
 
     function parseDate(d){ if(!d) return null; var p=d.split('-'); if(p.length!==3) return null; return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0, 0); }
     function parseTime(t){ if(!t) return null; var p=t.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
     function combine(dt, tm){ if(!dt||!tm) return null; var d=new Date(dt); d.setHours(tm.h, tm.m, 0, 0); return d; }
     function fmtDate(d){ return d.toLocaleDateString('es-ES', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}); }
     function fmtTime(d){ return d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); }
+    function daysBetween(a,b){ var D=Math.ceil((b-a)/86400000); return Math.max(1, D); }
 
     function cleanPhone(s){ if (!s) return ''; return String(s).replace(/[\s\-().]/g,'').replace(/^(\+34)(34)/,'$1'); }
     function validPhoneES(s){ var x = cleanPhone(s); if (/^\+34\d{9}$/.test(x)) return true; if (/^\d{9}$/.test(x)) return true; return false; }
@@ -585,8 +737,17 @@
     var elService=$('#service'), elSD=$('#startDate'), elED=$('#endDate'), elST=$('#start'), elET=$('#end');
     var elPhone=$('#phone'), elEmail=$('#email'), elNotes=$('#notes'), elSummary=$('#summaryField');
 
+    // Mostrar secciones según servicio
+    function toggleServiceBlocks(){
+      var v = (elService && elService.value)||'';
+      $('#sec-visitas').hidden = (v!=='visitas');
+      $('#sec-paseos').hidden  = (v!=='paseos');
+      $('#sec-otros').hidden   = (v==='' || v==='paseos' || v==='visitas');
+    }
+
     function validateDates(){
       elSD.setCustomValidity(''); elED.setCustomValidity(''); elST.setCustomValidity(''); elET.setCustomValidity('');
+      var svc=(elService && elService.value)||'';
       var sd=parseDate(elSD.value), ed=parseDate(elED.value), st=parseTime(elST.value), et=parseTime(elET.value);
       if (!sd || !ed || !st || !et) return true;
       var sDT=combine(sd,st), eDT=combine(ed,et);
@@ -594,8 +755,8 @@
       if (sd.getFullYear()===ed.getFullYear() && sd.getMonth()===ed.getMonth() && sd.getDate()===ed.getDate()){
         if (eDT <= sDT){ elET.setCustomValidity('Para el mismo día, la hora fin debe ser mayor que la hora inicio.'); return false; }
       }
-      var now = new Date(); var minStart = new Date(now.getTime() + LEAD_HOURS*3600*1000);
-      if (sDT < minStart){ elSD.setCustomValidity('La reserva debe pedirse con al menos '+LEAD_HOURS+'h de antelación.'); elST.setCustomValidity('La reserva debe pedirse con al menos '+LEAD_HOURS+'h de antelación.'); return false; }
+      var now = new Date(); var minStart = new Date(now.getTime() + (leadForSvc(svc))*3600*1000);
+      if (sDT < minStart){ elSD.setCustomValidity('Este servicio debe pedirse con al menos '+leadForSvc(svc)+'h de antelación.'); elST.setCustomValidity('Este servicio debe pedirse con al menos '+leadForSvc(svc)+'h de antelación.'); return false; }
       return true;
     }
     function validatePhone(){
@@ -605,6 +766,7 @@
       if (!validPhoneES(val)){ elPhone.setCustomValidity('Introduce un teléfono válido (9 dígitos, admite prefijo +34).'); return false; }
       return true;
     }
+
     function currentPetText(){
       var n=document.getElementById('tpl-pet-name')?.value||'';
       var s=document.getElementById('tpl-pet-species')?.value||'';
@@ -622,18 +784,87 @@
       if (sDT) parts.push('Inicio: ' + fmtDate(sDT) + ' ' + fmtTime(sDT));
       if (eDT) parts.push('Fin: '    + fmtDate(eDT) + ' ' + fmtTime(eDT));
       var pet=currentPetText(); if (pet) parts.push('Mascota: ' + pet);
+
+      // Servicio específico
+      if ((elService.value||'')==='visitas'){
+        var c=document.getElementById('visitCount')?.value||'';
+        var m=document.getElementById('visitMinutes')?.value||'';
+        if (c) parts.push('Visitas/día: '+c);
+        if (m) parts.push('Min/visita: '+m);
+        var ex=document.getElementById('visitExtras')?.value||'';
+        if (ex) parts.push('Extra: '+ex);
+      }
+      if ((elService.value||'')==='paseos'){
+        var w=document.getElementById('walkMinutes')?.value||'';
+        var b=document.getElementById('walkBundle')?.value||'';
+        var ap=document.getElementById('extraPets')?.value||'0';
+        if (w) parts.push('Min/paseo: '+w);
+        if (b) parts.push('Bono: '+b+' días');
+        if (ap && ap!=='0') parts.push('Perros adicionales: '+ap);
+      }
+      var hol=document.getElementById('holiday')?.value||'';
+      if (hol==='si') parts.push('Incluye festivo');
+
       var notes=(elNotes && elNotes.value.trim()) ? ('Notas: ' + elNotes.value.trim()) : '';
       if (notes) parts.push(notes);
 
+      // CP/Zona se añaden desde el bloque CP
       elSummary.value = parts.join(' • ');
     }
+
+    // Chips
+    function updateChips(){
+      var chipDays = $('#chip-days'), chipDur = $('#chip-duration'), chipB = $('#chip-bundle');
+      var svc = (elService.value||'');
+      var sd=parseDate(elSD.value), ed=parseDate(elED.value), st=parseTime(elST.value), et=parseTime(elET.value);
+      var sDT=(sd && st)?combine(sd,st):null, eDT=(ed && et)?combine(ed,et):null;
+      var days = (sd && ed) ? daysBetween(sd, ed) : 0;
+
+      chipDays.textContent = days ? (days + (days===1?' día':' días')) : '—';
+      chipDur.textContent = (function(){
+        if (svc==='visitas'){
+          var v = document.getElementById('visitMinutes')?.value||'';
+          var c = document.getElementById('visitCount')?.value||'';
+          return (v? (v+' min/visita'):'—') + (c? (' · '+c+' v/día'):'');
+        }
+        if (svc==='paseos'){
+          var w = document.getElementById('walkMinutes')?.value||'';
+          return w? (w+' min/paseo'):'—';
+        }
+        if (sDT && eDT) return 'Rango: '+sDT.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'–'+eDT.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+        return '—';
+      })();
+      var b=document.getElementById('walkBundle')?.value||'';
+      chipB.hidden = !(svc==='paseos' && b);
+      if (!chipB.hidden) chipB.textContent = 'Bono '+b+' días';
+    }
+
     [elService, elSD, elED, elST, elET, elNotes].forEach(function(el){
       if (!el) return;
-      el.addEventListener('change', function(){ validateDates(); buildSummary(); });
-      el.addEventListener('input',  function(){ validateDates(); buildSummary(); });
+      el.addEventListener('change', function(){ toggleServiceBlocks(); validateDates(); buildSummary(); updateChips(); });
+      el.addEventListener('input',  function(){ toggleServiceBlocks(); validateDates(); buildSummary(); updateChips(); });
     });
+    ['visitCount','visitMinutes','visitExtras','walkMinutes','walkBundle','extraPets','holiday']
+      .forEach(function(id){
+        var el = document.getElementById(id); if (!el) return;
+        el.addEventListener('change', function(){ validateDates(); buildSummary(); updateChips(); window.TPL_BUDGET && TPL_BUDGET.update(); });
+        el.addEventListener('input',  function(){ validateDates(); buildSummary(); updateChips(); window.TPL_BUDGET && TPL_BUDGET.update(); });
+      });
+
     if (elPhone){ elPhone.addEventListener('input', validatePhone); elPhone.addEventListener('blur',  validatePhone); }
-    document.addEventListener('DOMContentLoaded', buildSummary);
+    document.addEventListener('DOMContentLoaded', function(){
+      toggleServiceBlocks(); buildSummary(); updateChips();
+      // Preselección desde query
+      try{
+        var usp=new URLSearchParams(location.search);
+        var svc=usp.get('service'); if (svc && $('#service')){ $('#service').value=svc; }
+        if (usp.get('duration')){ var d=usp.get('duration'); if (svc==='visitas') $('#visitMinutes').value=d; if (svc==='paseos') $('#walkMinutes').value=d; }
+        if (usp.get('bundle') && svc==='paseos'){ $('#walkBundle').value=usp.get('bundle'); }
+        if (usp.get('visits') && svc==='visitas'){ $('#visitCount').value=usp.get('visits'); }
+        ['startDate','endDate','start','end'].forEach(function(k){ if (usp.get(k) && $('#'+k)) $('#'+k).value=usp.get(k); });
+      }catch(_){}
+    });
+
     form.addEventListener('submit', function(){ validatePhone(); validateDates(); buildSummary(); }, true);
   })();
   </script>
@@ -643,7 +874,7 @@
   (function(){
     'use strict';
     var $ = function(s, r){ return (r||document).querySelector(s); };
-    // Define aquí tus zonas (ejemplos comentados):
+    // Define aquí tus zonas (ejemplos):
     // window.TPL_CP_ZONES = [
     //   { prefix:'28', code:'MAD', name:'Madrid' },
     //   { prefix:'36', code:'PO',  name:'Pontevedra' },
@@ -673,6 +904,9 @@
       if (cp) parts.push('CP: ' + cp);
       if (z && (z.code || z.name)) parts.push('Zona: ' + (z.code ? (z.code + (z.name ? ' - '+z.name : '')) : z.name));
       sum.value = parts.join(' • ');
+
+      // refrescar presupuesto
+      try{ window.TPL_BUDGET.update(); }catch(_){}
     }
     var cp = $('#postalCode'); if (!cp) return;
     cp.setAttribute('type','text'); cp.setAttribute('pattern','[0-9]{5}'); cp.setAttribute('inputmode','numeric'); cp.setAttribute('maxlength','5');
@@ -723,10 +957,24 @@
   (function(){
     'use strict';
 
-    // 1) Tarifas (estimación visual, no afecta a Stripe).
+    // 1) Tarifas (puedes ajustar números cuando quieras)
     const PRICING = {
-      visitas:     { mode:'hour',  rate:14, min:1, step:0.5 },
-      paseos:      { mode:'hour',  rate:12, min:1, step:0.5 },
+      // Visitas por visita (según minutos)
+      visitas: {
+        mode:'visit',
+        ratesByMin: { 30: 7, 45: 10.5, 60: 14 }, // € por visita
+        extras: {
+          medicacion: 3,   // € por visita
+          limpieza:   2    // € por visita
+        }
+      },
+      // Paseos por paseo (según minutos) + bonos con descuento
+      paseos: {
+        mode:'walk',
+        ratesByMin: { 30: 6, 45: 9, 60: 12 }, // € por paseo suelto
+        bundleDiscount: { 5: 0.05, 10: 0.10, 20: 0.15 }, // descuentos sobre SUELTO
+        extraPetPerPaseo: 3 // € por perro adicional y paseo
+      },
       guarderia:   { mode:'day',   rate:25, min:1 },
       alojamiento: { mode:'night', rate:28, min:1 },
       bodas:       { mode:'hour',  rate:35, min:2, step:1 }
@@ -735,11 +983,15 @@
     // 2) Multiplicadores por zona (opcional)
     const ZONE_MULTIPLIERS = { /* 'MAD':1.05 */ };
 
-    // 3) Stripe (configurar antes de producción)
+    // 3) Recargos y señal
+    const RECARGO_FESTIVOS = 0.15;     // 15%
+    const SENAL_PORCENTAJE = 0.20;     // 20% de señal
+
+    // 4) Stripe (configurar antes de producción)
     const STRIPE_PK = window.STRIPE_PK || ''; // pk_live_xxx / pk_test_xxx
     const PRICE_IDS = {
-      // visitas:     'price_xxx_30min',
-      // paseos:      'price_xxx_30min',
+      // visitas:     'price_xxx_visita',
+      // paseos:      'price_xxx_paseo',
       // guarderia:   'price_xxx_day',
       // alojamiento: 'price_xxx_night',
       // bodas:       'price_xxx_hour'
@@ -754,7 +1006,7 @@
     function parseTime(s){ if(!s) return null; const p=s.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
     function combine(d,t){ if(!d||!t) return null; const x=new Date(d); x.setHours(t.h, t.m, 0, 0); return x; }
     function spanHours(a,b){ return Math.max(0, (b-a)/36e5); }
-    function spanDays(a,b){ return Math.max(0, Math.ceil((b-a)/86400000)); }
+    function spanDays(a,b){ return Math.max(1, Math.ceil((b-a)/86400000)); }
     function formatEUR(n){
       try{ return n.toLocaleString('es-ES',{style:'currency',currency:'EUR'}); }
       catch(_){ return '€ '+(Math.round(n*100)/100).toFixed(2).replace('.',','); }
@@ -766,18 +1018,32 @@
       const meta=[s,b].filter(Boolean).join(', ');
       return [n, meta?('('+meta+')'):''].filter(Boolean).join(' ');
     }
-    function computeUnits(mode, sdt, edt, step, min){
-      if (!sdt || !edt || edt<=sdt) return null;
-      let u=0;
-      if (mode==='hour'){ u = spanHours(sdt,edt); if (step && step>0) u = Math.ceil(u/step)*step; }
-      else if (mode==='day'){ u = Math.max(1, spanDays(sdt,edt)); }
-      else if (mode==='night'){ u = Math.max(1, spanDays(sdt,edt)); }
-      else if (mode==='flat'){ u = 1; }
-      if (min && u<min) u = min;
-      return u;
+
+    function computeUnitsForRange(mode, sdt, edt){
+      if (!sdt || !edt || edt<=sdt) return { label:'—', units:null, days:null, hours:null };
+      if (mode==='hour'){
+        const hrs = Math.round(spanHours(sdt,edt)*10)/10;
+        return { label: hrs + ' h aprox.', units: hrs, days:null, hours:hrs };
+      }
+      if (mode==='day' || mode==='night'){
+        const d = Math.max(1, spanDays(sdt,edt));
+        const label = d + (mode==='day' ? (d===1?' día':' días') : (d===1?' noche':' noches'));
+        return { label, units:d, days:d, hours:null };
+      }
+      // Para visitas/paseos, la duración se expresa en min/visita o min/paseo
+      return { label: '—', units:null, days: Math.max(1, spanDays(sdt,edt)), hours:null };
     }
 
-    // Presupuesto (mini + desglose)
+    function showLines({base, extras, festivo, zonaMult, senal, total}){
+      $('tpl-line-base').textContent   = base>0   ? formatEUR(base)   : '—';
+      $('tpl-line-extras').textContent = extras>0 ? formatEUR(extras) : '—';
+      $('tpl-line-festivo').textContent= festivo>0? formatEUR(festivo): '—';
+      $('tpl-line-zona').textContent   = (zonaMult && zonaMult!==1) ? ('x '+zonaMult.toFixed(2)) : '—';
+      $('tpl-line-senal').textContent  = senal>0  ? formatEUR(senal)  : '—';
+      $('tpl-b-total').innerHTML       = '<strong>'+formatEUR(total)+'</strong>';
+      $('tpl-budget-amount').textContent = formatEUR(total);
+    }
+
     function updateBudget(){
       const svcSel = $('service');
       const svcKey = svcSel?.value||'';
@@ -789,6 +1055,7 @@
       const et  = parseTime($('end')?.value||'');
       const sdt = (sd&&st)?combine(sd,st):null;
       const edt = (ed&&et)?combine(ed,et):null;
+      const range = computeUnitsForRange(cfg?.mode||'', sdt, edt);
 
       const svcText = (svcSel && svcSel.options[svcSel.selectedIndex]) ? svcSel.options[svcSel.selectedIndex].text.trim() : '';
       const periodo = (sdt&&edt)
@@ -797,43 +1064,100 @@
            edt.toLocaleDateString('es-ES') + ' ' + edt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}))
         : '—';
 
-      const durLabel = (function(){
-        if (!cfg||!sdt||!edt||edt<=sdt) return '—';
-        if (cfg.mode==='hour'){
-          const hrs = Math.round(spanHours(sdt,edt)*10)/10;
-          return hrs + ' h aprox.';
-        }
-        if (cfg.mode==='day'){
-          const d = Math.max(1, spanDays(sdt,edt));
-          return d + (d===1?' día':' días');
-        }
-        if (cfg.mode==='night'){
-          const n = Math.max(1, spanDays(sdt,edt));
-          return n + (n===1?' noche':' noches');
-        }
-        return '—';
-      })();
-
-      let total = null, units = null;
-      if (cfg && sdt && edt && edt>sdt){
-        units = computeUnits(cfg.mode, sdt, edt, cfg.step||0, cfg.min||0);
-        if (units!=null){
-          total = units * (cfg.rate||0);
-          const zc = $('tpl-zone-code')?.value || '';
-          const mult = (ZONE_MULTIPLIERS[zc] ?? 1);
-          total = total * mult;
-        }
-      }
-
       if ($('tpl-b-svc'))      $('tpl-b-svc').textContent = svcText || '—';
       if ($('tpl-b-periodo'))  $('tpl-b-periodo').textContent = periodo;
-      if ($('tpl-b-duracion')) $('tpl-b-duracion').textContent = durLabel;
       if ($('tpl-b-mascota'))  $('tpl-b-mascota').textContent = currentPetText() || '—';
       if ($('tpl-b-notas'))    $('tpl-b-notas').textContent = (q('#notes')?.value.trim() || '—');
 
-      const txt = (total==null) ? '—' : formatEUR(total);
-      if ($('tpl-b-total'))        $('tpl-b-total').innerHTML = '<strong>'+txt+'</strong>';
-      if ($('tpl-budget-amount'))  $('tpl-budget-amount').textContent = txt;
+      let base = 0, extras = 0, festivo = 0, total = 0, units = 0, zonaMultLabel = 1;
+
+      const zc = $('tpl-zone-code')?.value || '';
+      const zonaMult = (ZONE_MULTIPLIERS[zc] ?? 1);
+      zonaMultLabel = zonaMult;
+
+      if (!cfg){ showLines({base,extras,festivo,zonaMult:zonaMultLabel,senal:0,total:0}); $('tpl-b-duracion').textContent='—'; return {svcKey, total:0}; }
+
+      // VISITAS
+      if (cfg.mode==='visit'){
+        const days = range.days || 1;
+        const count = parseInt($('visitCount')?.value||'1',10) || 1;
+        const minutes = parseInt($('visitMinutes')?.value||'30',10) || 30;
+        const rate = (cfg.ratesByMin[minutes] ?? 0);
+        units = days * count; // nº de visitas totales
+        base = units * rate;
+
+        const ex = $('visitExtras')?.value||'';
+        if (ex && cfg.extras[ex]) extras += units * cfg.extras[ex];
+
+        $('tpl-b-duracion').textContent = days+' '+(days===1?'día':'días')+' · '+count+' v/día · '+minutes+' min/visita';
+      }
+
+      // PASEOS
+      else if (cfg.mode==='walk'){
+        const days = range.days || 1;
+        const minutes = parseInt($('walkMinutes')?.value||'30',10) || 30;
+        const rateSuelto = (cfg.ratesByMin[minutes] ?? 0);
+        const bundle = parseInt($('walkBundle')?.value||'',10) || 0;
+        const extraPets = parseInt($('extraPets')?.value||'0',10) || 0;
+
+        if (bundle){
+          units = bundle; // nº de paseos (1 por día de bono)
+          const desc = cfg.bundleDiscount[bundle] || 0;
+          base = units * rateSuelto * (1 - desc);
+        } else {
+          // paseo suelto por cada día seleccionado
+          units = days;
+          base = units * rateSuelto;
+        }
+
+        // Perros adicionales
+        if (extraPets>0){
+          extras += units * (cfg.extraPetPerPaseo||0) * extraPets;
+        }
+
+        $('tpl-b-duracion').textContent = (bundle? ('Bono '+bundle+' días') : (days+' '+(days===1?'día':'días'))) + ' · '+minutes+' min/paseo';
+      }
+
+      // GUARDERÍA
+      else if (cfg.mode==='day'){
+        const d = Math.max(1, range.days||1);
+        units = d;
+        base = units * (cfg.rate||0);
+        $('tpl-b-duracion').textContent = d + (d===1?' día':' días');
+      }
+
+      // ALOJAMIENTO
+      else if (cfg.mode==='night'){
+        const n = Math.max(1, range.days||1);
+        units = n;
+        base = units * (cfg.rate||0);
+        $('tpl-b-duracion').textContent = n + (n===1?' noche':' noches');
+      }
+
+      // BODAS / EXCLUSIVOS
+      else if (cfg.mode==='hour'){
+        let hrs = Math.max(0, range.hours||0);
+        const step = cfg.step || 1;
+        hrs = Math.ceil(hrs/step)*step;
+        if (cfg.min && hrs<cfg.min) hrs = cfg.min;
+        units = hrs;
+        base = units * (cfg.rate||0);
+        $('tpl-b-duracion').textContent = hrs + ' h';
+      }
+
+      // Recargo festivo (si usuario marcó)
+      const hol = $('holiday')?.value||'';
+      if (hol==='si') festivo = (base + extras) * RECARGO_FESTIVOS;
+
+      // Zona
+      const afterZona = (base + extras + festivo) * zonaMult;
+
+      // Señal
+      const senal = afterZona * SENAL_PORCENTAJE;
+
+      total = afterZona;
+
+      showLines({base, extras, festivo, zonaMult:zonaMultLabel, senal, total});
 
       return { svcKey, cfg, units, total, periodo, svcText };
     }
@@ -857,11 +1181,10 @@
     }
     function quantityFor(svcKey, cfg, units){
       if (!cfg || units==null) return 1;
-      if (cfg.mode==='hour'){
-        const step = cfg.step || 1; // 0.5 → medias horas
-        return Math.max(1, Math.round(units/step));
-      }
-      return Math.max(1, Math.round(units));
+      // Para visitas/paseos: 1 línea = 1 “unidad base” → cantidad = nº de visitas/paseos
+      if (cfg.mode==='visit' || cfg.mode==='walk') return Math.max(1, Math.round(units));
+      if (cfg.mode==='hour' || cfg.mode==='day' || cfg.mode==='night') return Math.max(1, Math.round(units));
+      return 1;
     }
     async function handlePay(){
       const calc = updateBudget();
@@ -886,19 +1209,36 @@
       if (result.error) alert(result.error.message || 'No se pudo iniciar el pago.');
     }
 
+    // Enlaces
     ['service','startDate','endDate','start','end','notes',
-     'tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-zone-code'
+     'visitCount','visitMinutes','visitExtras',
+     'walkMinutes','walkBundle','extraPets',
+     'tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-zone-code','holiday'
     ].forEach(function(id){
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('input',  updateBudget);
       el.addEventListener('change', updateBudget);
     });
+
     document.addEventListener('DOMContentLoaded', function(){
       updateBudget();
       toggleLoginNote();
       const payBtn = document.getElementById('tpl-pay-btn');
       if (payBtn) payBtn.addEventListener('click', handlePay);
+
+      // Si no se seleccionó nada, ponemos valores por defecto suaves (mañana 10-12)
+      try{
+        var sd = document.getElementById('startDate'), ed = document.getElementById('endDate');
+        var st = document.getElementById('start'),     et = document.getElementById('end');
+        if (sd && !sd.value){
+          var d = new Date(); d.setDate(d.getDate()+1);
+          var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+          sd.value = y+'-'+m+'-'+day; ed.value = y+'-'+m+'-'+day;
+        }
+        if (st && !st.value) st.value = '10:00';
+        if (et && !et.value) et.value = '12:00';
+      }catch(_){}
     });
     window.addEventListener('tpl-auth-ready', function(){ toggleLoginNote(); updateBudget(); });
     window.addEventListener('tpl-auth-change', function(){ toggleLoginNote(); updateBudget(); });
@@ -907,7 +1247,7 @@
   })();
   </script>
 
-  <!-- Tu lógica de envíos / overlays / EmailJS extra -->
+  <!-- Tu lógica de envíos / overlays / EmailJS extra (se mantiene) -->
   <script src="reservas.js" defer></script>
 </body>
 </html>
