@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-  <!-- Estilos mínimos locales (idéntica estética del anterior) -->
+  <!-- Estética (igual que el formulario antiguo) -->
   <style>
     :root{ --color-principal:#339496; --color-texto:#58425a; }
     body{background:#fafafa}
@@ -39,15 +39,14 @@
     .auth-wall{padding:14px;border:1px dashed #bbb;border-radius:10px;text-align:center;background:#fafafa;margin-bottom:16px}
     .auth-wall strong{color:var(--color-texto)}
     .disabled{opacity:.6;pointer-events:none}
-    /* Overlay genérico (éxito/error) – usado por reservas.js */
+    .help-link{white-space:nowrap;text-decoration:none;border:1px solid var(--color-principal);border-radius:999px;padding:8px 12px;font-weight:600;color:var(--color-principal)}
+    .pet-card{border:1px solid #eee;border-radius:10px;padding:10px}
+    small.muted{color:#666}
+    /* overlay genérico (reservas.js) */
     .tpl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999}
     .tpl-overlay.on{display:flex}
     .tpl-modal{background:#fff;padding:20px;border-radius:12px;max-width:520px;box-shadow:0 8px 30px rgba(0,0,0,.2);text-align:center}
     .tpl-modal p{margin:0 0 12px}
-    /* Línea inferior fija dentro de la tarjeta (mini presupuesto + nota login + ayuda) */
-    .booking-footer-line{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap}
-    .help-link{white-space:nowrap;text-decoration:none;border:1px solid var(--color-principal);border-radius:999px;padding:8px 12px;font-weight:600;color:var(--color-principal)}
-    small.muted{color:#666}
   </style>
 </head>
 <body>
@@ -77,7 +76,7 @@
       <p>Selecciona servicio y fechas para completar la reserva. Tras enviar, te llamaremos para confirmar detalles y asignarte el auxiliar adecuado.</p>
     </div>
 
-    <!-- Muro de autenticación + login inline -->
+    <!-- Muro de autenticación -->
     <div id="authWall" class="auth-wall" aria-live="polite">
       <p><strong>Debes iniciar sesión para enviar una reserva.</strong></p>
       <div id="tpl-inline-login" class="tpl-inline-login"></div>
@@ -110,8 +109,11 @@
               <option value="guarderia">Guardería de día</option>
               <option value="alojamiento">Alojamiento (noche)</option>
               <option value="bodas">Bodas / exclusivos</option>
+              <option value="postq">Postquirúrgicos</option>
+              <option value="exoticos">Exóticos</option>
             </select>
           </div>
+
           <div class="booking-field">
             <label for="startDate">Fecha inicio</label>
             <input type="date" id="startDate" name="Fecha_inicio" required>
@@ -128,6 +130,7 @@
             <label for="end">Hora fin</label>
             <input type="time" id="end" name="Hora_fin" required>
           </div>
+
           <div class="booking-field">
             <label for="petCount">Nº de mascotas</label>
             <select id="petCount" name="Numero_mascotas">
@@ -135,64 +138,67 @@
               <option value="2">2</option>
               <option value="3">3</option>
               <option value="4">4</option>
-              <option value="5">5</option>
             </select>
           </div>
+
           <div class="booking-field">
             <label for="animalType">Tipo de animal</label>
             <select id="animalType" name="Tipo_animal">
-              <option value="perro">Perro</option>
+              <option value="perro" selected>Perro</option>
               <option value="gato">Gato</option>
               <option value="exotico">Exótico</option>
             </select>
           </div>
+
           <div class="booking-field">
             <label for="breed">Raza / Especie</label>
             <select id="breed" name="Raza"></select>
           </div>
+
+          <div class="booking-field" id="puppyWrap" hidden>
+            <label><input type="checkbox" id="isPuppy"> ¿Cachorro (≤ 6 meses)?</label>
+          </div>
+
           <div class="booking-field">
-            <label for="petNameInput">Nombre de la mascota</label>
-            <input type="text" id="petNameInput" name="Mascota_nombre_visible" placeholder="Ej. Luna" autocomplete="off">
+            <label><input type="checkbox" id="needTransport"> ¿Necesito transporte?</label>
+          </div>
+          <div class="booking-field" id="transportFields" hidden>
+            <label for="km">Km estimados (ida/recogida)</label>
+            <input type="number" id="km" min="0" step="1" placeholder="Ej. 12">
+            <small class="muted">Se estima: 20 € + 1 €/km</small>
           </div>
         </div>
       </section>
 
-      <!-- Opciones específicas: GUARDERÍA (solo aparece si se elige Guardería) -->
-      <section class="tpl-section" id="sec-guarderia" aria-labelledby="h-guarderia" hidden>
-        <h2 id="h-guarderia">Opciones de guardería</h2>
-        <div class="booking-grid">
-          <div class="booking-field">
-            <label for="daycareType">Tipo</label>
-            <select id="daycareType" name="Guarderia_tipo">
-              <option value="std" selected>Estándar</option>
-              <option value="puppy">Cachorros (≤ 6 meses)</option>
-            </select>
-          </div>
-          <div class="booking-field">
-            <label for="daycareBundle">Bono</label>
-            <select id="daycareBundle" name="Guarderia_bono">
-              <option value="">Sin bono</option>
-              <option value="10">Bono 10 días</option>
-              <option value="20">Bono 20 días</option>
-              <option value="30">Bono 30 días</option>
-            </select>
-          </div>
-        </div>
-        <p class="muted" style="margin-top:6px">
-          <strong>Nota:</strong> En <strong>bonos</strong> se suma el coste de cada mascota (según días). En <strong>diario</strong>: 2ª mascota +12 €/día; 3ª y más +8 €/día.
-          El precio final puede ajustarse tras hablar contigo.
-        </p>
+      <!-- Mascotas (multi) -->
+      <section class="tpl-section" aria-labelledby="sec-mascotas">
+        <h2 id="sec-mascotas">Mascotas</h2>
+        <div id="petMulti" class="booking-grid"></div>
+        <small class="muted">Puedes seleccionar mascotas de tu perfil (si las tienes guardadas) o escribir el nombre.</small>
       </section>
 
-      <!-- Tu mascota (lista desde tu cuenta si hay varias) -->
-      <section class="tpl-section" id="tpl-pet-section" aria-labelledby="sec-mascota" hidden>
-        <h2 id="sec-mascota">Tu mascota</h2>
+      <!-- Opciones VISITAS -->
+      <section class="tpl-section" id="sec-visitas" aria-labelledby="h-visitas" hidden>
+        <h2 id="h-visitas">Opciones de visitas</h2>
         <div class="booking-grid">
           <div class="booking-field">
-            <label for="tpl-pet-select">Selecciona la mascota</label>
-            <select id="tpl-pet-select" name="Mascota"></select>
+            <label for="visitsPerDay">Visitas por día</label>
+            <select id="visitsPerDay">
+              <option value="1" selected>1 visita/día</option>
+              <option value="2">2 visitas/día</option>
+            </select>
+          </div>
+          <div class="booking-field">
+            <label for="visitType">Duración</label>
+            <select id="visitType">
+              <option value="60" selected>60 min (base 22 €)</option>
+              <option value="90">90 min (base 30 €)</option>
+              <option value="med15">Solo medicación 15 min (12 €)</option>
+            </select>
+            <small class="muted">Desde el día 11: 18 €/60’, 27 €/90’, 10 €/15’.</small>
           </div>
         </div>
+        <p class="muted">Primera visita gratuita: tras crear tu reserva, concertamos una visita inicial en tu hogar.</p>
       </section>
 
       <!-- Datos de contacto -->
@@ -238,7 +244,10 @@
       <input type="hidden" name="uid" id="tpl-uid">
       <input type="hidden" name="perfil_url" id="tpl-perfil-url">
 
-      <!-- Ocultos mascota elegida -->
+      <!-- Ocultos “mascotas” agregados -->
+      <input type="hidden" name="Mascotas_json" id="tpl-pets-json">
+
+      <!-- Ocultos 1ª mascota (compat) -->
       <input type="hidden" name="Mascota_nombre" id="tpl-pet-name">
       <input type="hidden" name="Mascota_especie" id="tpl-pet-species">
       <input type="hidden" name="Mascota_raza" id="tpl-pet-breed">
@@ -254,48 +263,41 @@
       <div class="booking-actions">
         <button type="submit" class="cta-button">Solicitar reserva</button>
       </div>
-
-      <!-- Línea inferior fija dentro de la tarjeta -->
-      <div class="booking-footer-line" id="tpl-booking-footer">
-        <span class="footer-left" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <span id="tpl-budget-mini">Presupuesto estimado: <strong id="tpl-budget-amount">—</strong></span>
-          <span class="footer-note" id="tpl-login-note">• Envío requiere sesión iniciada. Te confirmaremos por email.</span>
-        </span>
-        <a href="ayuda.html" class="help-link" id="tpl-help-link">
-          <i class="fa-regular fa-circle-question"></i> Centro de ayuda
-        </a>
-      </div>
-
       <p style="text-align:center;margin-top:8px">
-        <small class="muted">Al enviar el formulario, te llamaremos para confirmar los detalles y conectarte con el auxiliar adecuado. El precio final puede ajustarse tras hablar contigo.</small>
+        <small class="muted">Al enviar el formulario te llamaremos para confirmar detalles. Al confirmar la reserva, se cobrará el <strong id="depositPctText">30%</strong> del servicio como señal.</small>
       </p>
-    </form>
 
-    <!-- Presupuesto detallado (debajo del formulario) -->
-    <section class="tpl-section budget-section" id="tpl-budget-section" aria-labelledby="sec-presupuesto" style="margin-top:24px">
-      <h2 id="sec-presupuesto" style="margin:6px 0 8px;font-size:1.15rem">Desglose preliminar</h2>
-      <div class="budget-card" style="border:1px solid #eee;border-radius:12px;padding:14px">
-        <table class="budget-table" style="width:100%;border-collapse:collapse">
-          <tbody>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Servicio</th><td id="tpl-b-svc"      style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Periodo</th><td id="tpl-b-periodo"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Duración</th><td id="tpl-b-duracion" style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Mascota</th><td id="tpl-b-mascota"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-            <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Notas</th><td id="tpl-b-notas"    style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
-          </tbody>
-          <tfoot>
-            <tr class="total">
-              <th style="text-align:left;padding:10px;border-top:2px solid #ddd">Total</th>
-              <td id="tpl-b-total" style="padding:10px;border-top:2px solid #ddd"><strong>—</strong></td>
-            </tr>
-          </tfoot>
-        </table>
-        <div class="budget-actions" style="display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap">
-          <button type="button" class="cta-button" id="tpl-pay-btn">Pagar ahora</button>
-          <small class="muted">El pago es una señal: ajustaremos diferencias si las hay.</small>
+      <!-- Desglose -->
+      <section class="tpl-section" id="tpl-budget-section" aria-labelledby="sec-presupuesto" style="margin-top:24px">
+        <h2 id="sec-presupuesto" style="margin:6px 0 8px;font-size:1.15rem">Desglose preliminar</h2>
+        <div class="budget-card" style="border:1px solid #eee;border-radius:12px;padding:14px">
+          <table class="budget-table" style="width:100%;border-collapse:collapse">
+            <tbody>
+              <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Servicio</th><td id="tpl-b-svc"      style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+              <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Periodo</th><td id="tpl-b-periodo"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+              <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Duración</th><td id="tpl-b-duracion" style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+              <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Mascotas</th><td id="tpl-b-mascota"  style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+              <tr id="tpl-b-trans-row" style="display:none"><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Transporte</th><td id="tpl-b-trans" style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+              <tr><th style="text-align:left;padding:8px;border-bottom:1px solid #f1f1f1">Notas</th><td id="tpl-b-notas"    style="padding:8px;border-bottom:1px solid #f1f1f1">—</td></tr>
+            </tbody>
+            <tfoot>
+              <tr class="total">
+                <th style="text-align:left;padding:10px;border-top:2px solid #ddd">Total</th>
+                <td id="tpl-b-total" style="padding:10px;border-top:2px solid #ddd"><strong>—</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div style="margin-top:10px">
+            <span id="tpl-budget-mini">Presupuesto estimado: <strong id="tpl-budget-amount">—</strong></span>
+          </div>
         </div>
+      </section>
+
+      <!-- Línea inferior interna (ayuda) -->
+      <div class="booking-actions" style="margin-top:12px">
+        <a href="ayuda.html" class="help-link" id="tpl-help-link"><i class="fa-regular fa-circle-question"></i> Centro de ayuda</a>
       </div>
-    </section>
+    </form>
   </div>
 
   <!-- Footer unificado (inyectado) -->
@@ -346,10 +348,10 @@
     })();
   </script>
 
-  <!-- Página de login por defecto para los next= -->
+  <!-- Página de login por defecto -->
   <script>window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';</script>
 
-  <!-- Bootstrap Auth unificado -->
+  <!-- Auth bridge (mismo comportamiento de antes) -->
   <script>
   (function(){
     'use strict';
@@ -371,8 +373,6 @@
       if (user) {
         wall.style.display = 'none';
         form.classList.remove('disabled');
-        var note = document.getElementById('tpl-login-note');
-        if (note) note.style.display = 'none';
         var email = $('#email'); if (user.email && email && !email.value) email.value = user.email;
         var name  = $('#firstName');
         if (user.displayName && name && !name.value) {
@@ -381,8 +381,6 @@
       } else {
         wall.style.display = 'block';
         form.classList.add('disabled');
-        var note = document.getElementById('tpl-login-note');
-        if (note) note.style.display = '';
         if (slot && !slot.hasChildNodes()) {
           var loginUrl = buildLoginUrl();
           slot.innerHTML =
@@ -424,20 +422,7 @@
   })();
   </script>
 
-  <!-- Auto-recovery IMG *.png.png → *.png -->
-  <script>
-  (function(){
-    window.addEventListener('error', function(e){
-      var el = e.target;
-      if (!el || !el.tagName) return;
-      if (el.tagName === 'IMG' && /(\.png\.png)(\?.*)?$/i.test(el.src||'')) {
-        var fixed = el.src.replace(/\.png\.png/i, '.png'); el.onerror = null; el.src = fixed;
-      }
-    }, true);
-  })();
-  </script>
-
-  <!-- Paso 1: Autocomplete titular + hidden reply_to/uid -->
+  <!-- Autorrellenar perfil: también teléfono (Firestore) -->
   <script>
   (function(){
     'use strict';
@@ -452,7 +437,26 @@
       if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
       return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
     }
-
+    async function loadProfileData(uid){
+      try{
+        if (typeof firebase==='undefined' || !firebase.firestore) return;
+        var db=firebase.firestore();
+        var cols=['profiles','usuarios','owners','propietarios'];
+        for (var i=0;i<cols.length;i++){
+          var snap = await db.collection(cols[i]).doc(uid).get().catch(()=>null);
+          if (snap && snap.exists){
+            var d = snap.data()||{};
+            var phone = d.phone || d.telefono || d.tel || '';
+            if (phone) setIfEmpty($('#phone'), phone);
+            var name  = d.name || d.nombre || '';
+            var last  = d.lastname || d.apellidos || '';
+            if (name) setIfEmpty($('#firstName'), name);
+            if (last) setIfEmpty($('#lastName'), last);
+            break;
+          }
+        }
+      }catch(_){}
+    }
     function syncHidden(user){
       var hidReply = $('#tpl-replyto');
       var hidUid   = $('#tpl-uid');
@@ -463,14 +467,12 @@
       var emailVal = (inputEmail && inputEmail.value) ? inputEmail.value : (user && user.email) || '';
       if (hidReply) hidReply.value = emailVal;
     }
-
     function bindReplySync(){
       var email = $('#email');
       var hidReply = $('#tpl-replyto');
       if (!email || !hidReply) return;
       email.addEventListener('input', function(){ hidReply.value = email.value || ''; });
     }
-
     function onAuthReady(cb){
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
         window.__TPL_AUTH__.ready.then(cb);
@@ -480,19 +482,18 @@
         }, { once:true });
       }
     }
-
     onAuthReady(function(user){
       try{
         if (user){
           if (user.email) setIfEmpty($('#email'), user.email);
           var sp = splitFullName(user.displayName || '');
           if (sp.nombre || sp.apellidos){ setIfEmpty($('#firstName'), sp.nombre); setIfEmpty($('#lastName'), sp.apellidos); }
+          loadProfileData(user.uid);
         }
       }catch(_){}
       syncHidden(user);
       bindReplySync();
     });
-
     window.addEventListener('tpl-auth-change', function(){
       var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
       syncHidden(user);
@@ -500,20 +501,69 @@
   })();
   </script>
 
-  <!-- Paso 2: Selector de mascota (UDB/Firestore) + sincronía con Tipo/Raza/Nombre -->
+  <!-- IMG *.png.png → *.png -->
+  <script>
+  (function(){
+    window.addEventListener('error', function(e){
+      var el = e.target;
+      if (!el || !el.tagName) return;
+      if (el.tagName === 'IMG' && /(\.png\.png)(\?.*)?$/i.test(el.src||'')) {
+        var fixed = el.src.replace(/\.png\.png/i, '.png'); el.onerror = null; el.src = fixed;
+      }
+    }, true);
+  })();
+  </script>
+
+  <!-- Razas dinámicas -->
   <script>
   (function(){
     'use strict';
-    var $ = function(sel, root){ return (root||document).querySelector(sel); };
-    function udbKey(uid, key){ return 'tpl.udb.' + uid + '.' + key; }
-    function udbGet(uid, key){
-      try{ var raw = localStorage.getItem(udbKey(uid, key)); return raw ? JSON.parse(raw) : null; }catch(_){ return null; }
+    var BREEDS = {
+      perro: ["Mestizo","Labrador","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche (Poodle)","Chihuahua","Beagle","Border Collie","Yorkshire","Shiba Inu","Dálmata","Carlino","Boxer","Husky"],
+      gato:  ["Común europeo","Siames","Persa","Maine Coon","Bengalí","Sphynx","British Shorthair","Ragdoll","Azul ruso","Scottish Fold","Noruego","Angora","Bombay","Savannah"],
+      exotico:["Ave (canario, agapornis…)","Reptil (gecko, pogona…)","Pez","Roedor (hámster, cobaya…)","Hurón","Conejo","Tortuga","Erizo","Iguana","Serpiente"]
+    };
+    function $(id){ return document.getElementById(id); }
+    function populateBreedOptions(){
+      var t = $('animalType')?.value || 'perro';
+      var sel = $('breed'); if (!sel) return;
+      var list = BREEDS[t] || [];
+      var current = sel.value;
+      sel.innerHTML = '';
+      list.forEach(function(name){ sel.add(new Option(name,name)); });
+      if (current && !Array.from(sel.options).some(o=>o.value===current)) sel.add(new Option(current,current));
+      if (current) sel.value=current;
+      // Mostrar “cachorro” solo si perro
+      $('puppyWrap').hidden = (t!=='perro');
     }
-    function toArrayMaybe(objOrArr){
-      if (!objOrArr) return [];
-      if (Array.isArray(objOrArr)) return objOrArr;
-      return Object.keys(objOrArr).map(function(k){ return Object.assign({id:k}, objOrArr[k]); });
+    ['animalType'].forEach(function(id){
+      var el=$(id); if (!el) return;
+      el.addEventListener('change', populateBreedOptions);
+      el.addEventListener('input',  populateBreedOptions);
+    });
+    document.addEventListener('DOMContentLoaded', populateBreedOptions);
+    window.TPL_BREEDS={populateBreedOptions};
+  })();
+  </script>
+
+  <!-- Mascotas: cargar del perfil (Firestore) y UI multi -->
+  <script>
+  (function(){
+    'use strict';
+    var SAVED_PETS = []; // {id, nombre, especie, raza, ...}
+    function $(sel,root){ return (root||document).querySelector(sel); }
+    function h(tag, attrs, children){
+      var el=document.createElement(tag);
+      if (attrs) Object.keys(attrs).forEach(function(k){
+        if (k==='class') el.className=attrs[k];
+        else if (k==='html') el.innerHTML=attrs[k];
+        else el.setAttribute(k, attrs[k]);
+      });
+      (children||[]).forEach(function(c){ el.appendChild(c); });
+      return el;
     }
+    function option(txt,val){ var o=document.createElement('option'); o.textContent=txt; o.value=val; return o; }
+
     function normalizePet(p){
       if (!p) return null;
       var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
@@ -531,7 +581,7 @@
     async function loadPetsFromFirestore(uid){
       var list = [];
       try{
-        if (typeof firebase === 'undefined' || !firebase.firestore) return list;
+        if (typeof firebase==='undefined' || !firebase.firestore) return list;
         var db = firebase.firestore();
         var cols = ['owners','propietarios','profiles','usuarios'];
         for (var i=0;i<cols.length;i++){
@@ -544,12 +594,19 @@
             var main = await ref.get().catch(()=>null);
             if (main && main.exists){
               var data = main.data()||{};
+              var arr = [];
+              function toArrayMaybe(objOrArr){
+                if (!objOrArr) return [];
+                if (Array.isArray(objOrArr)) return objOrArr;
+                return Object.keys(objOrArr).map(function(k){ return Object.assign({id:k}, objOrArr[k]); });
+              }
               toArrayMaybe(data.mascotas).forEach(function(p){ list.push(normalizePet(p)); });
               toArrayMaybe(data.pets).forEach(function(p){ list.push(normalizePet(p)); });
             }
             if (list.length) break;
           }catch(_){}
         }
+        // colecciones sueltas
         if (!list.length){
           var q1 = await db.collection('mascotas').where('ownerUid','==',uid).get().catch(()=>null);
           if (q1 && !q1.empty){ q1.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
@@ -561,95 +618,152 @@
       }catch(_){}
       return list.filter(Boolean);
     }
-    function applyPetHidden(p){
-      var map = {
-        'tpl-pet-id': p.id||'',
-        'tpl-pet-name': p.nombre||'',
-        'tpl-pet-species': p.especie||'',
-        'tpl-pet-breed': p.raza||'',
-        'tpl-pet-size': p.tamano||'',
-        'tpl-pet-med': p.medicacion||'',
-        'tpl-pet-needs': p.necesidades||''
-      };
-      Object.keys(map).forEach(function(id){
-        var el = document.getElementById(id); if (el) el.value = map[id];
+
+    function buildPetRow(idx){
+      var wrap = h('div', {class:'pet-card'});
+      var title = h('div', {class:''}, [document.createTextNode('Mascota '+idx)]);
+      var sel = h('select', {class:'pet-saved'});
+      sel.appendChild(option('— Elegir de tu perfil —',''));
+      SAVED_PETS.forEach(function(p){
+        sel.appendChild(option((p.nombre||'Sin nombre') + (p.especie?(' · '+p.especie):''), p.id||p.nombre||('p'+idx)));
+        try{ sel.lastChild.dataset.pet = JSON.stringify(p); }catch(_){}
       });
-      // Refleja en los visibles
-      var typeSel = $('#animalType'); if (typeSel && p.especie) typeSel.value = p.especie;
-      var nameIn = $('#petNameInput'); if (nameIn && p.nombre) nameIn.value = p.nombre;
-      try{ window.TPL_BREEDS && TPL_BREEDS.populateBreedOptions(); }catch(_){}
-      var breedSel = $('#breed'); if (breedSel && p.raza){
-        // Si existe la opción, selecciónala; si no, añade y selecciona
-        var found = Array.from(breedSel.options).some(function(o){ return o.value===p.raza; });
-        if (!found){ var opt=new Option(p.raza,p.raza); breedSel.add(opt); }
-        breedSel.value = p.raza;
-      }
-    }
-    function labelFor(p){
-      var meta = [p.especie||'', p.raza||''].filter(Boolean).join(', ');
-      return (p.nombre || 'Mascota') + (meta ? ' ('+meta+')' : '');
-    }
-    function renderPets(uid, pets){
-      var sec = $('#tpl-pet-section');
-      var sel = $('#tpl-pet-select');
-      pets = (pets||[]).map(normalizePet).filter(Boolean);
-      if (!pets.length){ if (sec) sec.hidden = true; return; }
-      if (pets.length === 1){
-        if (sec) sec.hidden = true; applyPetHidden(pets[0]); return;
-      }
-      if (!sec || !sel) return;
-      sec.hidden = false; sel.innerHTML = '';
-      pets.forEach(function(p){
-        var opt = new Option(labelFor(p), p.id || p.nombre || '');
-        try{ opt.dataset.pet = JSON.stringify(p); }catch(_){ }
-        sel.appendChild(opt);
-      });
-      sel.onchange = function(){
+      var name = h('input', {type:'text', placeholder:'Nombre (o escribe si no está en tu perfil)', class:'pet-name'});
+      wrap.appendChild(title);
+      wrap.appendChild(h('div',{class:'booking-grid'},[
+        h('div',{class:'booking-field'},[
+          h('label',{},[document.createTextNode('De tu perfil')]),
+          sel
+        ]),
+        h('div',{class:'booking-field'},[
+          h('label',{},[document.createTextNode('Nombre')]),
+          name
+        ])
+      ]));
+      // Eventos
+      sel.addEventListener('change', function(){
         var o = sel.options[sel.selectedIndex]; if (!o) return;
         var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(_){}
-        if (p) applyPetHidden(p);
-      };
-      sel.onchange();
+        if (p){
+          if (!name.value) name.value = p.nombre||'';
+          // reflejar primera mascota en ocultos compatibles
+          if (idx===1){
+            var map = {
+              'tpl-pet-id': p.id||'',
+              'tpl-pet-name': p.nombre||'',
+              'tpl-pet-species': p.especie||'',
+              'tpl-pet-breed': p.raza||'',
+              'tpl-pet-size': p.tamano||'',
+              'tpl-pet-med': p.medicacion||'',
+              'tpl-pet-needs': p.necesidades||''
+            };
+            Object.keys(map).forEach(function(id){
+              var el = document.getElementById(id); if (el) el.value = map[id];
+            });
+            // sincroniza tipo/raza visibles si están vacíos
+            var t = document.getElementById('animalType');
+            if (t && p.especie) t.value = p.especie;
+            window.TPL_BREEDS && TPL_BREEDS.populateBreedOptions();
+            var b = document.getElementById('breed');
+            if (b && p.raza){
+              if (!Array.from(b.options).some(o=>o.value===p.raza)) b.add(new Option(p.raza,p.raza));
+              b.value = p.raza;
+            }
+          }
+        }
+        window.TPL_PETS && TPL_PETS.collect();
+        window.TPL_BUDGET && TPL_BUDGET.update();
+      });
+      name.addEventListener('input', function(){
+        if (idx===1){
+          var nh=document.getElementById('tpl-pet-name'); if (nh) nh.value=name.value||'';
+        }
+        window.TPL_PETS && TPL_PETS.collect();
+        window.TPL_BUDGET && TPL_BUDGET.update();
+      });
+      return wrap;
     }
-    function onAuthReady(cb){
-      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) window.__TPL_AUTH__.ready.then(cb);
-      else window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail ? ev.detail.user : null); }, {once:true});
+
+    function renderPetMulti(){
+      var container = $('#petMulti'); if (!container) return;
+      container.innerHTML = '';
+      var n = parseInt($('#petCount')?.value||'1',10)||1;
+      for (var i=1;i<=n;i++) container.appendChild(buildPetRow(i));
+      window.TPL_PETS && TPL_PETS.collect();
     }
-    onAuthReady(async function(user){
-      var uid = user && user.uid; if (!uid) return;
-      var udb = (function(){
-        try{
-          var raw = udbGet(uid,'mascotas') || udbGet(uid,'pets') || [];
-          return toArrayMaybe(raw).map(normalizePet).filter(Boolean);
-        }catch(_){ return []; }
-      })();
-      if (udb.length){ renderPets(uid, udb); return; }
-      var fs = await loadPetsFromFirestore(uid);
-      if (fs && fs.length) renderPets(uid, fs);
-    });
+
+    function collectPets(){
+      var list=[];
+      var cards = document.querySelectorAll('#petMulti .pet-card');
+      cards.forEach(function(card, i){
+        var name = card.querySelector('.pet-name')?.value?.trim() || '';
+        var sel  = card.querySelector('.pet-saved');
+        var p = null;
+        try{ p = JSON.parse(sel?.options[sel.selectedIndex]?.dataset?.pet || '{}'); }catch(_){}
+        list.push({
+          idx: i+1,
+          nombre: name || p?.nombre || '',
+          especie: p?.especie || (document.getElementById('animalType')?.value||''),
+          raza: p?.raza || (document.getElementById('breed')?.value||'')
+        });
+      });
+      var hid = document.getElementById('tpl-pets-json');
+      if (hid) try{ hid.value = JSON.stringify(list); }catch(_){}
+      // Para el desglose
+      var label = list.map(function(x){ return x.nombre || 'Mascota '+x.idx; }).join(', ');
+      var bm = document.getElementById('tpl-b-mascota');
+      if (bm) bm.textContent = label || '—';
+      return list;
+    }
+
+    async function init(){
+      var uid = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user && window.__TPL_AUTH__.user.uid) || null;
+      if (uid){
+        SAVED_PETS = await loadPetsFromFirestore(uid);
+      }
+      renderPetMulti();
+    }
+
+    document.getElementById('petCount')?.addEventListener('change', renderPetMulti);
+    window.addEventListener('tpl-auth-ready', init);
+    document.addEventListener('DOMContentLoaded', init);
+
+    window.TPL_PETS = { collect: collectPets };
   })();
   </script>
 
-  <!-- Validaciones suaves + Desglose vivo + Teléfono ES -->
+  <!-- Validaciones + resumen + CP → zona -->
   <script>
   (function(){
     'use strict';
-    var $ = function(sel, root){ return (root||document).querySelector(sel); };
+    var $ = (s,r)=> (r||document).querySelector(s);
     var form = $('#bookingForm'); if (!form) return;
 
     var LEAD_HOURS = (typeof window.TPL_RESERVAS_LEAD_HOURS === 'number') ? window.TPL_RESERVAS_LEAD_HOURS : 24;
+    var DEPOSIT_PCT = (typeof window.TPL_DEPOSIT_PCT === 'number') ? window.TPL_DEPOSIT_PCT : 30;
+    (function(){ var t=document.getElementById('depositPctText'); if (t) t.textContent = DEPOSIT_PCT+'%'; })();
 
     function parseDate(d){ if(!d) return null; var p=d.split('-'); if(p.length!==3) return null; return new Date(+p[0], +p[1]-1, +p[2], 12, 0, 0, 0); }
     function parseTime(t){ if(!t) return null; var p=t.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
     function combine(dt, tm){ if(!dt||!tm) return null; var d=new Date(dt); d.setHours(tm.h, tm.m, 0, 0); return d; }
     function fmtDate(d){ return d.toLocaleDateString('es-ES', {weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'}); }
     function fmtTime(d){ return d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); }
-
     function cleanPhone(s){ if (!s) return ''; return String(s).replace(/[\s\-().]/g,'').replace(/^(\+34)(34)/,'$1'); }
-    function validPhoneES(s){ var x = cleanPhone(s); if (/^\+34\d{9}$/.test(x)) return true; if (/^\d{9}$/.test(x)) return true; return false; }
+    function validPhoneES(s){ var x = cleanPhone(s); return (/^\+34\d{9}$/.test(x) || /^\d{9}$/.test(x)); }
 
     var elService=$('#service'), elSD=$('#startDate'), elED=$('#endDate'), elST=$('#start'), elET=$('#end');
     var elPhone=$('#phone'), elEmail=$('#email'), elNotes=$('#notes'), elSummary=$('#summaryField');
+
+    // UI dependiente de servicio
+    function toggleBlocks(){
+      var v = elService?.value || '';
+      $('#sec-visitas').hidden = (v!=='visitas');
+      // Transporte visible si checkbox
+      var needT = $('#needTransport')?.checked;
+      $('#transportFields').hidden = !needT;
+      // “cachorro” solo si perro (lo controla breeds también)
+      $('#puppyWrap').hidden = ($('#animalType')?.value!=='perro');
+    }
 
     function validateDates(){
       elSD.setCustomValidity(''); elED.setCustomValidity(''); elST.setCustomValidity(''); elET.setCustomValidity('');
@@ -671,13 +785,7 @@
       if (!validPhoneES(val)){ elPhone.setCustomValidity('Introduce un teléfono válido (9 dígitos, admite prefijo +34).'); return false; }
       return true;
     }
-    function currentPetText(){
-      var n=document.getElementById('tpl-pet-name')?.value||document.getElementById('petNameInput')?.value||'';
-      var s=document.getElementById('tpl-pet-species')?.value||document.getElementById('animalType')?.value||'';
-      var b=document.getElementById('tpl-pet-breed')?.value||document.getElementById('breed')?.value||'';
-      var meta=[s,b].filter(Boolean).join(', ');
-      return [n, meta?('('+meta+')'):''].filter(Boolean).join(' ');
-    }
+
     function buildSummary(){
       var sd=parseDate(elSD.value), ed=parseDate(elED.value);
       var st=parseTime(elST.value), et=parseTime(elET.value);
@@ -687,33 +795,32 @@
       if (svc) parts.push('Servicio: '+svc);
       if (sDT) parts.push('Inicio: ' + fmtDate(sDT) + ' ' + fmtTime(sDT));
       if (eDT) parts.push('Fin: '    + fmtDate(eDT) + ' ' + fmtTime(eDT));
-      var pet=currentPetText(); if (pet) parts.push('Mascota: ' + pet);
+      // visitas extra
+      if (elService.value==='visitas'){
+        var vpd = $('#visitsPerDay')?.value || '1';
+        var vt  = $('#visitType')?.options[$('#visitType').selectedIndex].text || '';
+        parts.push('Visitas/día: '+vpd);
+        parts.push('Tipo visita: '+vt);
+      }
+      var pets = (function(){
+        try{ return JSON.parse($('#tpl-pets-json')?.value||'[]'); }catch(_){ return []; }
+      })();
+      if (pets.length){
+        parts.push('Mascotas: '+pets.map(p=>p.nombre||('Mascota '+p.idx)).join(', '));
+      }
       var notes=(elNotes && elNotes.value.trim()) ? ('Notas: ' + elNotes.value.trim()) : '';
       if (notes) parts.push(notes);
-
       elSummary.value = parts.join(' • ');
     }
-    [elService, elSD, elED, elST, elET, elNotes].forEach(function(el){
-      if (!el) return;
-      el.addEventListener('change', function(){ validateDates(); buildSummary(); });
-      el.addEventListener('input',  function(){ validateDates(); buildSummary(); });
-    });
-    if (elPhone){ elPhone.addEventListener('input', validatePhone); elPhone.addEventListener('blur',  validatePhone); }
-    document.addEventListener('DOMContentLoaded', buildSummary);
-    form.addEventListener('submit', function(){ validatePhone(); validateDates(); buildSummary(); }, true);
-  })();
-  </script>
 
-  <!-- CP → Zona (rellena ocultos y añade a desglose) -->
-  <script>
-  (function(){
-    'use strict';
-    var $ = function(s, r){ return (r||document).querySelector(s); };
-    // Puedes definir zonas por CP si quieres afinar precios por zona:
-    // window.TPL_CP_ZONES = [
-    //   { prefix:'28', code:'MAD', name:'Madrid' },
-    //   { prefix:'36', code:'PO',  name:'Pontevedra' },
-    // ];
+    ['change','input'].forEach(function(ev){
+      [elService, elSD, elED, elST, elET, elNotes, $('#visitsPerDay'), $('#visitType'), $('#needTransport'), $('#km'), $('#animalType'), $('#breed'), $('#isPuppy'), $('#petCount')].forEach(function(el){
+        if (!el) return;
+        el.addEventListener(ev, function(){ toggleBlocks(); validateDates(); buildSummary(); window.TPL_BUDGET && TPL_BUDGET.update(); });
+      });
+    });
+
+    // CP -> zona (opcional)
     function zoneForCP(cp){
       cp = (cp||'').trim();
       if (!/^[0-9]{5}$/.test(cp)) return null;
@@ -728,144 +835,69 @@
       if (!cpEl || !sum || !code || !name) return;
       var cp = sanitizeCpValue(cpEl.value);
       if (cp !== cpEl.value) cpEl.value = cp;
-
       var z = zoneForCP(cp);
       code.value = z ? z.code : '';
       name.value = z ? z.name : '';
-
-      var parts = (sum.value || '').split(' • ').filter(Boolean);
-      parts = parts.filter(p=> !/^CP:/i.test(p) && !/^Zona:/i.test(p));
-      if (cp) parts.push('CP: ' + cp);
-      if (z && (z.code || z.name)) parts.push('Zona: ' + (z.code ? (z.code + (z.name ? ' - '+z.name : '')) : z.name));
-      sum.value = parts.join(' • ');
+      // no añadimos a resumen para no alargar; si lo quieres lo meto
     }
-    var cp = $('#postalCode'); if (!cp) return;
-    cp.setAttribute('type','text'); cp.setAttribute('pattern','[0-9]{5}'); cp.setAttribute('inputmode','numeric'); cp.setAttribute('maxlength','5');
-    cp.addEventListener('input', updateHiddenAndSummary);
-    cp.addEventListener('blur',  updateHiddenAndSummary);
-    document.addEventListener('DOMContentLoaded', updateHiddenAndSummary);
+    $('#postalCode')?.addEventListener('input', updateHiddenAndSummary);
+    $('#postalCode')?.addEventListener('blur',  updateHiddenAndSummary);
+
+    document.addEventListener('DOMContentLoaded', function(){
+      toggleBlocks(); buildSummary();
+    });
+    form.addEventListener('submit', function(){ validatePhone(); validateDates(); buildSummary(); }, true);
   })();
   </script>
 
-  <!-- Normalizador Nombre/Apellidos -->
-  <script>
-  (function(){
-    'use strict';
-    function $(id){ return document.getElementById(id); }
-    function splitSmart(text){
-      if (!text) return {nombre:'', apellidos:''};
-      var s = String(text).trim().replace(/\s+/g,' ');
-      if (s.includes(',')){
-        var a = s.split(',');
-        var left  = (a[0]||'').trim();
-        var right = (a.slice(1).join(',')||'').trim();
-        return { nombre: right || '', apellidos: left || '' };
-      }
-      var parts = s.split(' ');
-      if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
-      return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
-    }
-    function normalizeNameFields(){
-      var f = $('firstName'), l = $('lastName'); if (!f || !l) return;
-      var fv = (f.value||'').trim(), lv = (l.value||'').trim();
-      if (fv && (!lv || lv === fv || /\s/.test(fv))){
-        var s = splitSmart(fv);
-        if (s.nombre) f.value = s.nombre;
-        if (s.apellidos && !lv) l.value = s.apellidos;
-      }
-    }
-    document.addEventListener('DOMContentLoaded', normalizeNameFields);
-    window.addEventListener('tpl-auth-ready', normalizeNameFields);
-    window.addEventListener('tpl-auth-change', normalizeNameFields);
-    var f = document.getElementById('firstName'); var l = document.getElementById('lastName');
-    if (f) f.addEventListener('blur', normalizeNameFields);
-    if (l) l.addEventListener('blur', normalizeNameFields);
-  })();
-  </script>
-
-  <!-- Catálogo de razas dinámico + sincronía con ocultos -->
-  <script>
-  (function(){
-    'use strict';
-    var BREEDS = {
-      perro: ["Mestizo","Labrador","Golden Retriever","Pastor Alemán","Bulldog Francés","Caniche (Poodle)","Chihuahua","Beagle","Border Collie","Yorkshire","Shiba Inu","Dálmata","Carlino","Boxer","Husky"],
-      gato:  ["Común europeo","Siames","Persa","Maine Coon","Bengalí","Sphynx","British Shorthair","Ragdoll","Azul ruso","Scottish Fold","Noruego","Angora","Bombay","Savannah"],
-      exotico:["Ave (canario, agapornis…)","Reptil (gecko, pogona…)","Pez","Roedor (hámster, cobaya…)","Hurón","Conejo","Tortuga","Erizo","Iguana","Serpiente"]
-    };
-    function $(id){ return document.getElementById(id); }
-    function populateBreedOptions(){
-      var t = $('animalType')?.value || 'perro';
-      var sel = $('breed'); if (!sel) return;
-      var list = BREEDS[t] || [];
-      var currentHidden = $('tpl-pet-breed')?.value || '';
-      var currentSel = sel.value;
-      sel.innerHTML = '';
-      list.forEach(function(name){ sel.add(new Option(name,name)); });
-      // Mantén la selección previa si existe
-      var target = currentHidden || currentSel;
-      if (target){
-        var found = Array.from(sel.options).some(function(o){ return o.value===target; });
-        if (!found){ sel.add(new Option(target,target)); }
-        sel.value = target;
-      }
-      // Espejar en ocultos
-      var sp = $('tpl-pet-species'); if (sp) sp.value = t;
-      var br = $('tpl-pet-breed');   if (br) br.value = sel.value || '';
-      window.TPL_BUDGET && TPL_BUDGET.update();
-    }
-    function bind(){
-      var t = $('animalType'), b = $('breed'), n = $('petNameInput');
-      if (t){ t.addEventListener('change', populateBreedOptions); t.addEventListener('input', populateBreedOptions); }
-      if (b){ b.addEventListener('change', function(){ var br=$('tpl-pet-breed'); if (br) br.value=b.value||''; window.TPL_BUDGET && TPL_BUDGET.update(); }); }
-      if (n){ n.addEventListener('input', function(){ var nh=$('tpl-pet-name'); if (nh) nh.value=n.value||''; window.TPL_BUDGET && TPL_BUDGET.update(); }); }
-      document.addEventListener('DOMContentLoaded', populateBreedOptions);
-      window.TPL_BREEDS = { populateBreedOptions: populateBreedOptions };
-    }
-    bind();
-  })();
-  </script>
-
-  <!-- PRESUPUESTO + PAGOS (Stripe Checkout) -->
+  <!-- PRESUPUESTO (con todas las reglas que has pasado) -->
   <script>
   (function(){
     'use strict';
 
-    // 1) Tarifas (estimación visual; actualizaremos con tus listas completas más adelante)
+    // ======== CONSTANTES / TARIFAS ========
+    const TRANSPORT = { BASE:20, PER_KM:1 };        // transporte estimado
+    const ZONE_MULTIPLIERS = { /* 'MAD':1.05 */ };  // por si quieres zona
+
     const PRICING = {
-      visitas:     { mode:'hour',  rate:14, min:1, step:0.5 },
-      paseos:      { mode:'hour',  rate:12, min:1, step:0.5 },
-
-      // GUARDERÍA (según tus tarifas)
-      guarderia: {
-        mode: 'day',
-        dayRates: {            // precio por día (no bono)
-          std:   15,           // estándar
-          puppy: 20            // cachorros (≤ 6 meses)
-        },
-        bundles: {             // precio TOTAL por bono (1ª mascota)
-          std:   { '10': 135, '20': 250, '30': 315 },
-          puppy: { '10': 185, '20': 350, '30': 465 }
-        },
-        // Suplementos por más mascotas en modalidad DIARIA (no bono)
-        extraPerDayNonBundle: {
-          second:   12,        // 2ª mascota
-          thirdPlus: 8         // 3ª y siguientes (cada una)
+      // Visitas (gatos) — por visita
+      visitas: {
+        base:   { '60':22, '90':30, 'med15':12 },
+        d11:    { '60':18, '90':27, 'med15':10 },   // desde día 11
+        // suplementos por nº de gatos (adicionales sobre el 1º), por visita
+        catSuppl(extraCats){
+          if (extraCats<=0) return 0;
+          if (extraCats===1) return 12;
+          if (extraCats===2) return 2*8;
+          return extraCats*6;
         }
-        // En BONO se suma el suplemento diario por días del bono para cada mascota adicional.
       },
-
-      alojamiento: { mode:'night', rate:28, min:1 },
-      bodas:       { mode:'hour',  rate:35, min:2, step:1 }
+      // Paseos (60 min) — bonos automáticos si días = 10/15/20/25/30
+      paseos: {
+        perWalk: 12,
+        secondDogPerWalk: 8, // y siguientes
+        bundles: { 10:115, 15:168, 20:220, 25:270, 30:318 } // 1 perro
+      },
+      // Guardería
+      guarderia: {
+        dayRates: { std:15, puppy:20 },                         // por día (1ª mascota)
+        bundles:  { std:{10:135,20:250,30:315}, puppy:{10:185,20:350,30:465} }, // total (1ª)
+        extraNonBundle: { second:12, thirdPlus:8 }              // €/día para 2ª y 3ª+
+      },
+      // Alojamiento (noche)
+      alojamiento: {
+        day: { std:30, puppy:35 },    // por noche 1ª
+        d11: { std:27, puppy:32 },    // desde día 11
+        secondDog: { day:25, d11:22 } // 2º perro por noche (y siguientes igual)
+      },
+      // Bodas y Postquirúrgicos: a consultar (sin cálculo)
+      bodas: { consult:true },
+      postq: { consult:true },
+      // Exóticos (estimación simple, puedes detallar más)
+      exoticos: {
+        aves:20, reptiles:15, mamiferos:25, estancia:null // estancia: consultar
+      }
     };
-
-    // 2) Multiplicadores por zona (opcional, vacío por defecto)
-    const ZONE_MULTIPLIERS = { /* 'MAD':1.05 */ };
-
-    // 3) Stripe (configurar antes de producción si usas checkout directo)
-    const STRIPE_PK = window.STRIPE_PK || ''; // pk_live_xxx / pk_test_xxx
-    const PRICE_IDS = { /* mapea service->price_id si lo usas */ };
-    const SUCCESS_URL = (location.origin || '') + '/perfil.html?paid=1';
-    const CANCEL_URL  = (location.href);
 
     const $ = (id)=> document.getElementById(id);
     const q = (sel,root)=> (root||document).querySelector(sel);
@@ -873,192 +905,187 @@
     function parseDate(s){ if(!s) return null; const p=s.split('-'); if(p.length!==3) return null; return new Date(+p[0], +p[1]-1, +p[2], 12,0,0,0); }
     function parseTime(s){ if(!s) return null; const p=s.split(':'); if(p.length<2) return null; return {h:+p[0], m:+p[1]}; }
     function combine(d,t){ if(!d||!t) return null; const x=new Date(d); x.setHours(t.h, t.m, 0, 0); return x; }
-    function spanHours(a,b){ return Math.max(0, (b-a)/36e5); }
     function spanDays(a,b){ return Math.max(0, Math.ceil((b-a)/86400000)); }
-    function formatEUR(n){
-      try{ return n.toLocaleString('es-ES',{style:'currency',currency:'EUR'}); }
-      catch(_){ return '€ '+(Math.round(n*100)/100).toFixed(2).replace('.',','); }
+    function spanHours(a,b){ return Math.max(0, (b-a)/36e5); }
+    function formatEUR(n){ try{ return n.toLocaleString('es-ES',{style:'currency',currency:'EUR'});}catch(_){ return '€ '+(Math.round(n*100)/100).toFixed(2).replace('.',','); } }
+
+    function getCommonInputs(){
+      const svc  = $('service')?.value || '';
+      const sd   = parseDate($('startDate')?.value||'');
+      const ed   = parseDate($('endDate')?.value||'');
+      const st   = parseTime($('start')?.value||'');
+      const et   = parseTime($('end')?.value||'');
+      const sdt  = (sd&&st)?combine(sd,st):null;
+      const edt  = (ed&&et)?combine(ed,et):null;
+      const days = (sdt&&edt)? Math.max(1, spanDays(sdt,edt)) : 1;
+      const hours= (sdt&&edt)? spanHours(sdt,edt) : 0;
+      const pets = parseInt($('petCount')?.value||'1',10)||1;
+      const type = $('animalType')?.value || 'perro';
+      const breed= $('breed')?.value || '';
+      const puppy= $('isPuppy')?.checked || false;
+      const needT= $('needTransport')?.checked || false;
+      const km   = parseFloat($('km')?.value||'0')||0;
+      const visitsPerDay = parseInt($('visitsPerDay')?.value||'1',10)||1;
+      const visitType    = $('visitType')?.value || '60';
+      return { svc, sdt, edt, days, hours, pets, type, breed, puppy, needT, km, visitsPerDay, visitType };
     }
 
-    function computeUnits(mode, sdt, edt, step, min){
-      if (!sdt || !edt || edt<=sdt) return null;
-      let u=0;
-      if (mode==='hour'){ u = spanHours(sdt,edt); if (step && step>0) u = Math.ceil(u/step)*step; }
-      else if (mode==='day'){ u = Math.max(1, spanDays(sdt,edt)); }
-      else if (mode==='night'){ u = Math.max(1, spanDays(sdt,edt)); }
-      else if (mode==='flat'){ u = 1; }
-      if (min && u<min) u = min;
-      return u;
-    }
-
-    function toggleServiceBlocks(){
-      var v = ($('service')?.value)||'';
-      var secG = $('sec-guarderia');
-      if (secG) secG.hidden = (v!=='guarderia');
-    }
-
-    // Presupuesto (mini + desglose)
     function updateBudget(){
-      toggleServiceBlocks();
+      const i = getCommonInputs();
 
+      // Texto cabecera
       const svcSel = $('service');
-      const svcKey = svcSel?.value||'';
-      const cfg    = PRICING[svcKey];
-
-      const sd  = parseDate($('startDate')?.value||'');
-      const ed  = parseDate($('endDate')?.value||'');
-      const st  = parseTime($('start')?.value||'');
-      const et  = parseTime($('end')?.value||'');
-      const sdt = (sd&&st)?combine(sd,st):null;
-      const edt = (ed&&et)?combine(ed,et):null;
-
       const svcText = (svcSel && svcSel.options[svcSel.selectedIndex]) ? svcSel.options[svcSel.selectedIndex].text.trim() : '';
-      const periodo = (sdt&&edt)
-        ? (sdt.toLocaleDateString('es-ES') + ' ' + sdt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
+      const periodo = (i.sdt&&i.edt)
+        ? (i.sdt.toLocaleDateString('es-ES') + ' ' + i.sdt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})
            + ' → ' +
-           edt.toLocaleDateString('es-ES') + ' ' + edt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}))
+           i.edt.toLocaleDateString('es-ES') + ' ' + i.edt.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}))
         : '—';
 
-      function setBasics(durLabel){
-        if ($('tpl-b-svc'))      $('tpl-b-svc').textContent = svcText || '—';
-        if ($('tpl-b-periodo'))  $('tpl-b-periodo').textContent = periodo;
-        if ($('tpl-b-duracion')) $('tpl-b-duracion').textContent = durLabel || '—';
-        if ($('tpl-b-mascota'))  $('tpl-b-mascota').textContent = (function(){
-          const n=$('tpl-pet-name')?.value||$('petNameInput')?.value||'';
-          const s=$('tpl-pet-species')?.value||$('animalType')?.value||'';
-          const b=$('tpl-pet-breed')?.value||$('breed')?.value||'';
-          const meta=[s,b].filter(Boolean).join(', ');
-          return [n, meta?('('+meta+')'):''].filter(Boolean).join(' ') || '—';
-        })();
-        if ($('tpl-b-notas'))    $('tpl-b-notas').textContent = (q('#notes')?.value.trim() || '—');
-      }
+      let total = null, durLabel = '—', extraLines = [];
 
-      let total = null;
-
-      if (svcKey==='guarderia'){
-        // Cálculo especial guardería
-        const days = (sdt&&edt) ? Math.max(1, spanDays(sdt,edt)) : 1;
-        const type = ($('daycareType')?.value==='puppy') ? 'puppy' : 'std';
-        const bundle = $('daycareBundle')?.value || '';
-        const pets = parseInt($('petCount')?.value || '1', 10) || 1;
-
-        let base1 = 0;     // 1ª mascota
-        let extras = 0;    // resto mascotas
-
-        if (bundle) {
-          // BONO: base = bono 1ª mascota; resto = suplemento diario * días del bono
-          const bDays = parseInt(bundle, 10) || days;
-          base1 = (cfg.bundles[type]?.[bundle] || 0);
-
-          if (pets >= 2) extras += (cfg.extraPerDayNonBundle.second || 0) * bDays;
-          if (pets >= 3) extras += (Math.max(0, pets - 2)) * (cfg.extraPerDayNonBundle.thirdPlus || 0) * bDays;
-
-          setBasics('Bono ' + bDays + ' días' + (pets>1 ? (' · ' + pets + ' mascotas') : ''));
-        } else {
-          // DIARIO
-          base1 = (cfg.dayRates[type] || 0) * (days||1);
-          if (pets >= 2) extras += (cfg.extraPerDayNonBundle.second || 0) * days;
-          if (pets >= 3) extras += (Math.max(0, pets - 2)) * (cfg.extraPerDayNonBundle.thirdPlus || 0) * days;
-
-          setBasics(days + (days===1 ? ' día' : ' días') + (pets>1 ? (' · ' + pets + ' mascotas') : ''));
-        }
-
-        total = base1 + extras;
-      } else if (cfg && sdt && edt && edt>sdt){
-        const units = computeUnits(cfg.mode, sdt, edt, cfg.step||0, cfg.min||0);
-        let durLabel = '—';
-        if (cfg.mode==='hour'){
-          const hrs = Math.round(spanHours(sdt,edt)*10)/10;
-          durLabel = hrs + ' h aprox.';
-        } else if (cfg.mode==='day'){
-          const d = Math.max(1, spanDays(sdt,edt));
-          durLabel = d + (d===1?' día':' días');
-        } else if (cfg.mode==='night'){
-          const n = Math.max(1, spanDays(sdt,edt));
-          durLabel = n + (n===1?' noche':' noches');
-        }
-        setBasics(durLabel);
-
-        if (units!=null){
-          total = units * (cfg.rate||0);
-          const zc = $('tpl-zone-code')?.value || '';
-          const mult = (ZONE_MULTIPLIERS[zc] ?? 1);
-          total = total * mult;
-        }
+      // Transporte
+      let transportCost = 0;
+      if (i.needT){
+        transportCost = TRANSPORT.BASE + Math.max(0, i.km)*TRANSPORT.PER_KM;
+        $('#tpl-b-trans-row').style.display = '';
+        $('#tpl-b-trans').textContent = formatEUR(transportCost) + ' (20 € + '+(i.km||0)+' km)';
       } else {
-        setBasics('—');
+        $('#tpl-b-trans-row').style.display = 'none';
       }
+
+      // Servicio
+      if (i.svc==='visitas'){
+        // Visitas por día con duración
+        const tab = (i.days>=11) ? PRICING.visitas.d11 : PRICING.visitas.base;
+        const pricePerVisit = tab[i.visitType] || 0;
+
+        // nº de gatos
+        let catCount = i.pets;
+        if (i.type!=='gato'){ catCount = 1; } // suplementos solo para gatos
+        const extraCats = Math.max(0, catCount-1);
+        const supplPerVisit = (i.type==='gato') ? PRICING.visitas.catSuppl(extraCats) : 0;
+
+        const perVisitTotal = pricePerVisit + supplPerVisit;
+        total = perVisitTotal * i.visitsPerDay * i.days;
+
+        durLabel = i.days + (i.days===1?' día':' días') + ' · ' + i.visitsPerDay + (i.visitsPerDay===1?' visita/día':' visitas/día');
+
+        extraLines.push('Tarifa por visita: '+formatEUR(pricePerVisit));
+        if (supplPerVisit>0) extraLines.push('Suplementos por gatos/visita: '+formatEUR(supplPerVisit));
+      }
+      else if (i.svc==='paseos'){
+        // Asumimos 1 paseo de 60’ por día
+        const walks = i.days;
+        const bundle = PRICING.paseos.bundles[walks] || null;
+        const firstDog = bundle ?? (walks * PRICING.paseos.perWalk);
+        const extraDogs = Math.max(0, i.pets-1) * (walks * PRICING.paseos.secondDogPerWalk);
+        total = firstDog + extraDogs;
+        durLabel = walks + (walks===1?' paseo':' paseos');
+
+        if (bundle){ extraLines.push('Bono aplicado: '+walks+' paseos'); }
+        if (extraDogs>0) extraLines.push('2ª+ mascota: '+formatEUR(extraDogs)+' ('+PRICING.paseos.secondDogPerWalk+' €/paseo)');
+      }
+      else if (i.svc==='guarderia'){
+        const kind = i.puppy ? 'puppy' : 'std';
+        const bundles = PRICING.guarderia.bundles[kind];
+        const dayRate = PRICING.guarderia.dayRates[kind];
+        const possibleBundle = bundles[i.days] || null;
+
+        if (possibleBundle){
+          // Bono automático
+          const base1 = possibleBundle;
+          let extras = 0;
+          if (i.pets>=2) extras += PRICING.guarderia.extraNonBundle.second * i.days;
+          if (i.pets>=3) extras += (i.pets-2) * PRICING.guarderia.extraNonBundle.thirdPlus * i.days;
+          total = base1 + extras;
+          durLabel = 'Bono '+i.days+' días' + (i.pets>1?(' · '+i.pets+' mascotas'):'');
+          extraLines.push('Bono '+i.days+' (1ª mascota): '+formatEUR(base1));
+          if (extras>0) extraLines.push('Suplementos (2ª y 3ª+): '+formatEUR(extras)+' ('+i.days+' días)');
+        }else{
+          // Diario
+          const base1 = dayRate * i.days;
+          let extras = 0;
+          if (i.pets>=2) extras += PRICING.guarderia.extraNonBundle.second * i.days;
+          if (i.pets>=3) extras += (i.pets-2) * PRICING.guarderia.extraNonBundle.thirdPlus * i.days;
+          total = base1 + extras;
+          durLabel = i.days + (i.days===1?' día':' días') + (i.pets>1?(' · '+i.pets+' mascotas'):'');
+          extraLines.push('1ª mascota: '+formatEUR(base1));
+          if (extras>0) extraLines.push('Suplementos (2ª y 3ª+): '+formatEUR(extras)+' ('+i.days+' días)');
+        }
+      }
+      else if (i.svc==='alojamiento'){
+        const kind = i.puppy ? 'puppy' : 'std';
+        const baseRate = (i.days>=11) ? PRICING.alojamiento.d11[kind] : PRICING.alojamiento.day[kind];
+        const secondRate = (i.days>=11) ? PRICING.alojamiento.secondDog.d11 : PRICING.alojamiento.secondDog.day;
+
+        // 1ª mascota
+        let base = baseRate * i.days;
+        // resto
+        let extras = 0;
+        if (i.type==='perro' && i.pets>=2){
+          extras += (i.pets-1) * secondRate * i.days;
+        } else if (i.pets>=2){
+          // si no es perro, replicamos tarifa de 1ª (ajústalo si quieres diferente)
+          extras += (i.pets-1) * baseRate * i.days;
+        }
+        total = base + extras;
+        durLabel = i.days + (i.days===1?' noche':' noches') + (i.pets>1?(' · '+i.pets+' mascotas'):'');
+        extraLines.push('1ª mascota: '+formatEUR(base));
+        if (extras>0) extraLines.push('Suplementos (adicionales): '+formatEUR(extras));
+      }
+      else if (i.svc==='bodas' || i.svc==='postq'){
+        durLabel = i.days + (i.days===1?' día':' días');
+        total = 0; // a consultar
+        extraLines.push('Precio bajo presupuesto. Te llamaremos para concretar.');
+      }
+      else if (i.svc==='exoticos'){
+        durLabel = i.days + (i.days===1?' día':' días');
+        total = 0; // configurable
+        extraLines.push('Precio según especie y cuidados. Te llamaremos para concretar.');
+      }
+
+      // Multiplicador por zona (si lo usas)
+      const zc = $('tpl-zone-code')?.value || '';
+      const mult = (ZONE_MULTIPLIERS[zc] ?? 1);
+      if (total!=null) total = total * mult;
+
+      // Suma transporte
+      if (transportCost>0) total = (total||0) + transportCost;
+
+      // Pintar
+      if ($('tpl-b-svc'))      $('tpl-b-svc').textContent = svcText || '—';
+      if ($('tpl-b-periodo'))  $('tpl-b-periodo').textContent = periodo;
+      if ($('tpl-b-duracion')) $('tpl-b-duracion').textContent = durLabel;
+      if ($('tpl-b-notas'))    $('tpl-b-notas').textContent = (q('#notes')?.value.trim() || '—');
 
       const txt = (total==null) ? '—' : formatEUR(total);
       if ($('tpl-b-total'))        $('tpl-b-total').innerHTML = '<strong>'+txt+'</strong>';
       if ($('tpl-budget-amount'))  $('tpl-budget-amount').textContent = txt;
 
-      return { svcKey, cfg, total };
+      // Añade líneas explicativas a “Notas” si quieres (no saturamos la tabla)
+      // console.log(extraLines);
+
+      return { total };
     }
 
-    function toggleLoginNote(){
-      const user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
-      const note = document.getElementById('tpl-login-note');
-      if (!note) return;
-      note.style.display = (user && !user.isAnonymous) ? 'none' : '';
-    }
-
-    async function ensureStripe(){
-      if (window.Stripe) return window.Stripe(STRIPE_PK);
-      await new Promise((res,rej)=>{
-        const s=document.createElement('script');
-        s.src='https://js.stripe.com/v3';
-        s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar Stripe.js'));
-        document.head.appendChild(s);
-      });
-      return window.Stripe(STRIPE_PK);
-    }
-    async function handlePay(){
-      const calc = updateBudget();
-      const { svcKey } = calc || {};
-      if (!STRIPE_PK || !PRICE_IDS[svcKey]){
-        alert('Para cobro inmediato, configura STRIPE_PK y PRICE_IDS. Si no, paga más tarde tras confirmación.');
-        return;
-      }
-      const stripe = await ensureStripe();
-      const result = await stripe.redirectToCheckout({
-        mode: 'payment',
-        lineItems: [{ price: PRICE_IDS[svcKey], quantity: 1 }],
-        successUrl: SUCCESS_URL,
-        cancelUrl:  CANCEL_URL,
-        allowPromotionCodes: true,
-        clientReferenceId: ( document.getElementById('tpl-uid')?.value || '' ),
-        customerEmail: ( document.getElementById('email')?.value || undefined ),
-        submitType: 'pay'
-      });
-      if (result.error) alert(result.error.message || 'No se pudo iniciar el pago.');
-    }
-
-    // Listeners
-    ['service','startDate','endDate','start','end','notes',
-     'tpl-pet-name','tpl-pet-species','tpl-pet-breed','tpl-zone-code',
-     'petCount','animalType','breed','petNameInput','daycareType','daycareBundle'
-    ].forEach(function(id){
+    // Mostrar/ocultar bloques, recalcular
+    ['service','startDate','endDate','start','end','notes','visitsPerDay','visitType','needTransport','km','animalType','breed','isPuppy','petCount']
+    .forEach(function(id){
       const el = document.getElementById(id);
       if (!el) return;
-      el.addEventListener('input',  updateBudget);
       el.addEventListener('change', updateBudget);
+      el.addEventListener('input',  updateBudget);
     });
 
-    document.addEventListener('DOMContentLoaded', function(){
-      updateBudget();
-      toggleLoginNote();
-      const payBtn = document.getElementById('tpl-pay-btn');
-      if (payBtn) payBtn.addEventListener('click', handlePay);
-    });
-    window.addEventListener('tpl-auth-ready', function(){ toggleLoginNote(); updateBudget(); });
-    window.addEventListener('tpl-auth-change', function(){ toggleLoginNote(); updateBudget(); });
+    document.addEventListener('DOMContentLoaded', function(){ updateBudget(); });
+    window.addEventListener('tpl-auth-ready', function(){ updateBudget(); });
 
     window.TPL_BUDGET = { update:updateBudget, PRICING, ZONE_MULTIPLIERS };
   })();
   </script>
 
-  <!-- Tu lógica de envíos / overlays / EmailJS extra (no se toca) -->
+  <!-- Tu lógica de envíos / overlays / EmailJS extra -->
   <script src="reservas.js" defer></script>
 </body>
 </html>
