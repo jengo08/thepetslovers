@@ -44,6 +44,16 @@
     .tpl-modal p{margin:0 0 12px}
     .tpl-inline-login .tpl-btn{background:var(--color-principal);color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .tpl-inline-login .tpl-btn-outline{background:#fff;color:var(--color-principal);border:1px solid var(--color-principal);border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+
+    /* TPL: FAB ayuda */
+    .help-fab{
+      position:fixed; right:16px; bottom:16px;
+      background:var(--color-principal); color:#fff;
+      padding:10px 14px; border-radius:999px;
+      box-shadow:0 4px 14px rgba(0,0,0,.15);
+      font-weight:600; text-decoration:none; z-index:99999;
+    }
+    .help-fab:focus{ outline:2px solid rgba(0,0,0,.25) }
   </style>
 </head>
 <body>
@@ -95,14 +105,7 @@
       data-to-email="gestion@thepetslovers.es"
       data-to-name="Gestión The Pets Lovers"
     >
-
-      <!-- =================== MASCOTAS (NOMBRES) — ARRIBA =================== -->
-      <section class="tpl-section" aria-labelledby="sec-mascotas">
-        <h2 id="sec-mascotas">Mascotas</h2>
-        <div class="booking-grid" id="petsContainer"></div>
-        <datalist id="tplPetNamesList"></datalist>
-      </section>
-
+      <!-- Datos del servicio -->
       <section class="tpl-section" aria-labelledby="sec-servicio">
         <h2 id="sec-servicio">Datos del servicio</h2>
         <div class="booking-grid">
@@ -136,6 +139,18 @@
         </div>
       </section>
 
+      <!-- Tu mascota (MOVIDO aquí entre servicio y contacto) -->
+      <section class="tpl-section" id="tpl-pet-section" aria-labelledby="sec-mascota" hidden>
+        <h2 id="sec-mascota">Tu mascota</h2>
+        <div class="booking-grid">
+          <div class="booking-field">
+            <label for="tpl-pet-select">Selecciona la mascota</label>
+            <select id="tpl-pet-select" name="Mascota"></select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Datos de contacto -->
       <section class="tpl-section" aria-labelledby="sec-titular">
         <h2 id="sec-titular">Datos de contacto</h2>
         <div class="booking-grid">
@@ -178,32 +193,20 @@
         </div>
       </section>
 
-      <!-- Selector de mascota (solo visible si hay >1) -->
-      <section class="tpl-section" id="tpl-pet-section" aria-labelledby="sec-mascota" hidden>
-        <h2 id="sec-mascota">Tu mascota</h2>
-        <div class="booking-grid">
-          <div class="booking-field">
-            <label for="tpl-pet-select">Selecciona la mascota</label>
-            <select id="tpl-pet-select" name="Mascota"></select>
-          </div>
-        </div>
-      </section>
-
       <!-- Resumen para el correo (lo rellena JS) -->
       <input type="hidden" name="Desglose" id="summaryField">
-      <!-- Lista de nombres escrita en los inputs de arriba -->
-      <input type="hidden" name="Mascotas_lista" id="petsListHidden">
 
       <!-- Fallback si algún script usa sendForm en lugar de send -->
       <input type="hidden" name="to_email" value="gestion@thepetslovers.es">
       <input type="hidden" name="to_name" value="Gestión The Pets Lovers">
 
-      <!-- Hidden para EmailJS + tracking -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Campos ocultos para EmailJS + tracking] -->
       <input type="hidden" name="_replyto" id="tpl-replyto">
       <input type="hidden" name="uid" id="tpl-uid">
       <input type="hidden" name="perfil_url" id="tpl-perfil-url">
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <!-- Hidden con datos de la mascota elegida -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Hidden con datos de la mascota elegida] -->
       <input type="hidden" name="Mascota_nombre" id="tpl-pet-name">
       <input type="hidden" name="Mascota_especie" id="tpl-pet-species">
       <input type="hidden" name="Mascota_raza" id="tpl-pet-breed">
@@ -211,10 +214,12 @@
       <input type="hidden" name="Mascota_medicacion" id="tpl-pet-med">
       <input type="hidden" name="Mascota_necesidades" id="tpl-pet-needs">
       <input type="hidden" name="Mascota_id" id="tpl-pet-id">
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
-      <!-- Hidden zona por CP -->
+      <!-- TPL: INICIO BLOQUE NUEVO [Hidden zona por CP para segmentación] -->
       <input type="hidden" name="Zona_codigo" id="tpl-zone-code">
       <input type="hidden" name="Zona_nombre" id="tpl-zone-name">
+      <!-- TPL: FIN BLOQUE NUEVO -->
 
       <div class="booking-actions">
         <button type="submit" class="cta-button">Solicitar reserva</button>
@@ -274,10 +279,11 @@
     })();
   </script>
 
-  <!-- Config fija de página de login -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Config fija de página de login] -->
   <script>window.TPL_LOGIN_PAGE = 'iniciar-sesion.html';</script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Bootstrap Auth + muro -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Bootstrap Auth unificado + builder de login URL + muro] -->
   <script>
   (function(){
     'use strict';
@@ -360,8 +366,9 @@
     }, 100);
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Auto-recovery IMG *.png.png → *.png -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Auto-recovery IMG *.png.png → *.png] -->
   <script>
   (function(){
     window.addEventListener('error', function(e){
@@ -375,8 +382,9 @@
     }, true);
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Login page redirect por ?next= (solo en iniciar-sesion.html) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Login page redirect por ?next= (solo en iniciar-sesion.html)] -->
   <script>
   (function(){
     if (!/\/iniciar-sesion\.html$/i.test((location.pathname||''))) return;
@@ -389,8 +397,9 @@
     });
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Paso 1: Autocomplete titular + hidden reply_to/uid + forzar login (+ Fallback Firestore) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 1: Autocomplete titular + hidden reply_to/uid + forzar login (+ Fallback Firestore)] -->
   <script>
   (function(){
     'use strict';
@@ -414,6 +423,7 @@
     function splitFullName(full){
       if (!full) return { nombre:'', apellidos:'' };
       var s = String(full).trim().replace(/\s+/g,' ');
+      if (!s) return { nombre:'', apellidos:'' };
       var parts = s.split(' ');
       if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
       return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
@@ -454,6 +464,7 @@
     }
 
     // ===== Fallback Firestore (perfil) =====
+    /* TPL: INICIO SUBBLOQUE NUEVO [Firestore perfil] */
     async function loadOwnerFromFirestore(uid){
       try{
         if (typeof firebase === 'undefined' || !firebase.firestore) return null;
@@ -473,6 +484,7 @@
       }catch(e){ /* silencio */ }
       return null;
     }
+    /* TPL: FIN SUBBLOQUE NUEVO */
 
     function onAuthReady(cb){
       if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) {
@@ -522,8 +534,9 @@
     });
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Paso 2: Selector de mascota con UDB/Firestore (+ hidden) -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 2: Selector de mascota con UDB (auto si 1; select si >1) + Fallback Firestore] -->
   <script>
   (function(){
     'use strict';
@@ -564,12 +577,15 @@
       return arr;
     }
 
+    // ===== Fallback Firestore (mascotas) =====
+    /* TPL: INICIO SUBBLOQUE NUEVO [Firestore mascotas] */
     async function loadPetsFromFirestore(uid){
       var list = [];
       try{
         if (typeof firebase === 'undefined' || !firebase.firestore) return list;
         var db = firebase.firestore();
         var profileCols = ['owners','propietarios','profiles','usuarios'];
+        // 1) subcolecciones 'mascotas' o 'pets' dentro del perfil
         for (var i=0;i<profileCols.length;i++){
           var col = profileCols[i];
           try{
@@ -582,6 +598,7 @@
             if (sub2 && !sub2.empty){
               sub2.forEach(function(doc){ var n=normalizePet(Object.assign({id:doc.id}, doc.data())); if(n) list.push(n); });
             }
+            // 2) arrays/campos en el doc
             var main = await docRef.get().catch(()=>null);
             if (main && main.exists){
               var d = main.data()||{};
@@ -594,6 +611,7 @@
       }catch(e){ /* silencio */ }
       return list;
     }
+    /* TPL: FIN SUBBLOQUE NUEVO */
 
     function applySinglePet(p){
       $('#tpl-pet-section') && ($('#tpl-pet-section').hidden = true);
@@ -697,8 +715,9 @@
     });
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- Paso 3: Validaciones suaves + Desglose vivo + Teléfono ES -->
+  <!-- TPL: INICIO BLOQUE NUEVO [Paso 3: Validaciones suaves + Desglose vivo + Teléfono ES] -->
   <script>
   (function(){
     'use strict';
@@ -833,14 +852,15 @@
 
   })();
   </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
 
-  <!-- CP → Zona (opcional) + integra en resumen -->
+  <!-- TPL: INICIO BLOQUE NUEVO [CP → Zona “caso por caso” + integra en resumen sin tocar tu bloque] -->
   <script>
   (function(){
     'use strict';
     var $ = function(s, r){ return (r||document).querySelector(s); };
 
-    // 🔧 Puedes definir zonas opcionales:
+    // 🔧 Mapa editable: añade aquí tus zonas por prefijo (2 o 3 dígitos)
     // window.TPL_CP_ZONES = [
     //   { prefix:'28', code:'MAD', name:'Madrid' },
     //   { prefix:'36', code:'PO',  name:'Pontevedra' },
@@ -868,6 +888,7 @@
       code.value = z ? z.code : '';
       name.value = z ? z.name : '';
 
+      // Añade/actualiza CP/Zona al final del desglose
       var parts = (sum.value || '').split(' • ').filter(Boolean);
       parts = parts.filter(p=> !/^CP:/i.test(p) && !/^Zona:/i.test(p));
       if (cp) parts.push('CP: ' + cp);
@@ -878,6 +899,7 @@
     var cp = $('#postalCode');
     if (!cp) return;
 
+    // Forzamos HTML attrs correctos (sin romper tu diseño)
     cp.setAttribute('type','text');
     cp.setAttribute('pattern','[0-9]{5}');
     cp.setAttribute('inputmode','numeric');
@@ -888,489 +910,463 @@
     document.addEventListener('DOMContentLoaded', updateHiddenAndSummary);
   })();
   </script>
-
-  <!-- Watchdog Autocomplete + Mascotas robusto -->
-  <script>
-  (function(){
-    'use strict';
-    function $(id){ return document.getElementById(id); }
-    function setIfEmpty(el,val){ if (el && !el.value && val) el.value = val; }
-    function splitFullName(full){
-      if (!full) return {nombre:'', apellidos:''};
-      var s = String(full).trim().replace(/\s+/g,' ');
-      var parts = s.split(' ');
-      if (parts.length===1) return {nombre:parts[0], apellidos:''};
-      return {nombre:parts[0], apellidos:parts.slice(1).join(' ')};
-    }
-    function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
-    function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-    function toArrayMaybe(x){ if (!x) return []; if (Array.isArray(x)) return x; return Object.keys(x).map(function(k){ var o=x[k]; o.id=o.id||k; return o; }); }
-    function normalizePet(p){
-      if (!p) return null;
-      var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
-      var nombre = p.nombre || p.name || p.petName || '';
-      var especie = p.especie || p.tipo || p.species || p.type || '';
-      var raza = p.raza || p.breed || '';
-      var tam = p.tamano || p['tamaño'] || p.size || '';
-      var meds = p.medicacion || p['medicación'] || p.medication || '';
-      var needs = p.necesidades || p.needs || p.specialNeeds || '';
-      return {id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs};
-    }
-    function loadPetsFromUdb(uid){
-      var raw = udbGet(uid,'pets') || udbGet(uid,'mascotas') || [];
-      return toArrayMaybe(raw).map(normalizePet).filter(function(p){ return p && (p.nombre||p.id); });
-    }
-    async function loadPetsFromFirestore(uid){
-      var list = [];
-      try{
-        if (typeof firebase === 'undefined' || !firebase.firestore) return list;
-        var db = firebase.firestore();
-        var cols = ['owners','propietarios','profiles','usuarios'];
-        for (var i=0;i<cols.length;i++){
-          var ref = db.collection(cols[i]).doc(uid);
-          try{
-            var sub1 = await ref.collection('mascotas').get(); 
-            if (sub1 && !sub1.empty){ sub1.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
-          }catch(e){}
-          try{
-            var sub2 = await ref.collection('pets').get();
-            if (sub2 && !sub2.empty){ sub2.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
-          }catch(e){}
-          try{
-            var doc = await ref.get();
-            if (doc && doc.exists){
-              var data = doc.data() || {};
-              toArrayMaybe(data.mascotas).forEach(function(p){ list.push(normalizePet(p)); });
-              toArrayMaybe(data.pets).forEach(function(p){ list.push(normalizePet(p)); });
-            }
-          }catch(e){}
-          if (list.filter(Boolean).length) break;
-        }
-      }catch(e){}
-      return list.filter(Boolean);
-    }
-    function applyPet(p){
-      var el;
-      el = $('tpl-pet-id');      if (el) el.value = p.id || '';
-      el = $('tpl-pet-name');    if (el) el.value = p.nombre || '';
-      el = $('tpl-pet-species'); if (el) el.value = p.especie || '';
-      el = $('tpl-pet-breed');   if (el) el.value = p.raza || '';
-      el = $('tpl-pet-size');    if (el) el.value = p.tamano || '';
-      el = $('tpl-pet-med');     if (el) el.value = p.medicacion || '';
-      el = $('tpl-pet-needs');   if (el) el.value = p.necesidades || '';
-    }
-    function ensurePetsVisible(uid, pets){
-      var sec = $('tpl-pet-section');
-      var sel = document.getElementById('tpl-pet-select');
-      pets = (pets||[]).filter(Boolean);
-      if (!pets.length){ if (sec) sec.hidden = true; return; }
-      if (pets.length===1){ if (sec) sec.hidden = true; applyPet(pets[0]); return; }
-      if (!sec || !sel) return;
-      sec.hidden = false; sel.innerHTML='';
-      for (var i=0;i<pets.length;i++){
-        var p = pets[i];
-        var label = (p.nombre || 'Mascota') + ( (p.especie||p.raza) ? (' (' + [p.especie||'', p.raza||''].filter(Boolean).join(', ') + ')') : '' );
-        var o = new Option(label, p.id || p.nombre || ('p'+i));
-        try{ o.dataset.pet = JSON.stringify(p); }catch(e){}
-        sel.appendChild(o);
+  <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Watchdog Autocomplete + Mascotas robusto] -->
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function setIfEmpty(el,val){ if (el && !el.value && val) el.value = val; }
+  function splitFullName(full){
+    if (!full) return {nombre:'', apellidos:''};
+    var s = String(full).trim().replace(/\s+/g,' ');
+    var parts = s.split(' ');
+    if (parts.length===1) return {nombre:parts[0], apellidos:''};
+    return {nombre:parts[0], apellidos:parts.slice(1).join(' ')};
+  }
+  function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
+  function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+  function toArrayMaybe(x){ if (!x) return []; if (Array.isArray(x)) return x; return Object.keys(x).map(function(k){ var o=x[k]; o.id=o.id||k; return o; }); }
+  function normalizePet(p){
+    if (!p) return null;
+    var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
+    var nombre = p.nombre || p.name || p.petName || '';
+    var especie = p.especie || p.tipo || p.species || p.type || '';
+    var raza = p.raza || p.breed || '';
+    var tam = p.tamano || p['tamaño'] || p.size || '';
+    var meds = p.medicacion || p['medicación'] || p.medication || '';
+    var needs = p.necesidades || p.needs || p.specialNeeds || '';
+    return {id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs};
+  }
+  function loadPetsFromUdb(uid){
+    var raw = udbGet(uid,'pets') || udbGet(uid,'mascotas') || [];
+    return toArrayMaybe(raw).map(normalizePet).filter(function(p){ return p && (p.nombre||p.id); });
+  }
+  async function loadPetsFromFirestore(uid){
+    var list = [];
+    try{
+      if (typeof firebase === 'undefined' || !firebase.firestore) return list;
+      var db = firebase.firestore();
+      var cols = ['owners','propietarios','profiles','usuarios'];
+      for (var i=0;i<cols.length;i++){
+        var ref = db.collection(cols[i]).doc(uid);
+        // subcolecciones
+        try{
+          var sub1 = await ref.collection('mascotas').get(); 
+          if (sub1 && !sub1.empty){ sub1.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
+        }catch(e){}
+        try{
+          var sub2 = await ref.collection('pets').get();
+          if (sub2 && !sub2.empty){ sub2.forEach(function(d){ list.push(normalizePet(Object.assign({id:d.id}, d.data()))); }); }
+        }catch(e){}
+        // arrays en doc
+        try{
+          var doc = await ref.get();
+          if (doc && doc.exists){
+            var data = doc.data() || {};
+            toArrayMaybe(data.mascotas).forEach(function(p){ list.push(normalizePet(p)); });
+            toArrayMaybe(data.pets).forEach(function(p){ list.push(normalizePet(p)); });
+          }
+        }catch(e){}
+        if (list.filter(Boolean).length) break;
       }
-      sel.onchange = function(){
-        var o = sel.options[sel.selectedIndex]; if (!o) return;
-        var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
-        if (p) applyPet(p);
-      };
-      sel.onchange();
+    }catch(e){}
+    return list.filter(Boolean);
+  }
+  function applyPet(p){
+    var el;
+    el = $('tpl-pet-id');      if (el) el.value = p.id || '';
+    el = $('tpl-pet-name');    if (el) el.value = p.nombre || '';
+    el = $('tpl-pet-species'); if (el) el.value = p.especie || '';
+    el = $('tpl-pet-breed');   if (el) el.value = p.raza || '';
+    el = $('tpl-pet-size');    if (el) el.value = p.tamano || '';
+    el = $('tpl-pet-med');     if (el) el.value = p.medicacion || '';
+    el = $('tpl-pet-needs');   if (el) el.value = p.necesidades || '';
+  }
+  function ensurePetsVisible(uid, pets){
+    var sec = $('tpl-pet-section');
+    var sel = document.getElementById('tpl-pet-select');
+    pets = (pets||[]).filter(Boolean);
+    if (!pets.length){ if (sec) sec.hidden = true; return; }
+    if (pets.length===1){ if (sec) sec.hidden = true; applyPet(pets[0]); return; }
+    if (!sec || !sel) return;
+    sec.hidden = false; sel.innerHTML='';
+    for (var i=0;i<pets.length;i++){
+      var p = pets[i];
+      var label = (p.nombre || 'Mascota') + ( (p.especie||p.raza) ? (' (' + [p.especie||'', p.raza||''].filter(Boolean).join(', ') + ')') : '' );
+      var o = new Option(label, p.id || p.nombre || ('p'+i));
+      try{ o.dataset.pet = JSON.stringify(p); }catch(e){}
+      sel.appendChild(o);
     }
-    function hydrateFromUser(u){
-      if (!u || u.isAnonymous) return;
-      // titular
-      var email = $('email'); if (u.email) setIfEmpty(email, u.email);
-      var sp = splitFullName(u.displayName || '');
-      setIfEmpty($('firstName'), sp.nombre);
-      setIfEmpty($('lastName'),  sp.apellidos);
-      // reply-to
-      var hid = $('tpl-replyto'); if (hid){ hid.value = (email && email.value) ? email.value : (u.email || ''); }
-      // UDB perfil
-      var owner = udbGet(u.uid,'owner') || udbGet(u.uid,'propietario');
-      if (owner){
-        setIfEmpty($('firstName'), owner.nombre || owner.name || '');
-        setIfEmpty($('lastName'),  owner.apellidos || '');
-        setIfEmpty($('phone'),     owner.telefono || owner.phone || '');
-      }
-      // Mascotas: UDB → Firestore
-      var pets = loadPetsFromUdb(u.uid);
-      if (pets.length){ ensurePetsVisible(u.uid, pets); }
-      else { loadPetsFromFirestore(u.uid).then(function(fsPets){ if (fsPets && fsPets.length) ensurePetsVisible(u.uid, fsPets); }); }
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex]; if (!o) return;
+      var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
+      if (p) applyPet(p);
+    };
+    sel.onchange();
+  }
+  function hydrateFromUser(u){
+    if (!u || u.isAnonymous) return;
+    // titular
+    var email = $('email'); if (u.email) setIfEmpty(email, u.email);
+    var sp = splitFullName(u.displayName || '');
+    setIfEmpty($('firstName'), sp.nombre);
+    setIfEmpty($('lastName'),  sp.apellidos);
+    // reply-to
+    var hid = $('tpl-replyto'); if (hid){ hid.value = (email && email.value) ? email.value : (u.email || ''); }
+    // UDB perfil
+    var owner = udbGet(u.uid,'owner') || udbGet(u.uid,'propietario');
+    if (owner){
+      setIfEmpty($('firstName'), owner.nombre || owner.name || '');
+      setIfEmpty($('lastName'),  owner.apellidos || '');
+      setIfEmpty($('phone'),     owner.telefono || owner.phone || '');
     }
-    function watchAuthAndFill(){
-      if (typeof firebase === 'undefined' || !firebase.auth) return;
-      var auth = firebase.auth();
-      if (auth.currentUser && !auth.currentUser.isAnonymous){ hydrateFromUser(auth.currentUser); }
-      try{ auth.onAuthStateChanged(function(u){ hydrateFromUser(u); }); }catch(e){}
-      var tries=0, iv=setInterval(function(){
-        tries++;
-        var u = auth.currentUser;
-        if (u && !u.isAnonymous){ clearInterval(iv); hydrateFromUser(u); }
-        if (tries>40) clearInterval(iv);
-      },200);
+    // Mascotas: UDB → Firestore
+    var pets = loadPetsFromUdb(u.uid);
+    if (pets.length){ ensurePetsVisible(u.uid, pets); }
+    else { loadPetsFromFirestore(u.uid).then(function(fsPets){ if (fsPets && fsPets.length) ensurePetsVisible(u.uid, fsPets); }); }
+  }
+  function watchAuthAndFill(){
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    var auth = firebase.auth();
+    // 1) llamado inmediato si ya está hidratado
+    if (auth.currentUser && !auth.currentUser.isAnonymous){ hydrateFromUser(auth.currentUser); }
+    // 2) evento oficial
+    try{ auth.onAuthStateChanged(function(u){ hydrateFromUser(u); }); }catch(e){}
+    // 3) watchdog por si tarda (hasta ~8s)
+    var tries=0, iv=setInterval(function(){
+      tries++;
+      var u = auth.currentUser;
+      if (u && !u.isAnonymous){ clearInterval(iv); hydrateFromUser(u); }
+      if (tries>40) clearInterval(iv);
+    },200);
+  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', watchAuthAndFill); }
+  else { watchAuthAndFill(); }
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Fix Nombre/Apellidos - normalizador] -->
+<script>
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function splitSmart(text){
+    if (!text) return {nombre:'', apellidos:''};
+    var s = String(text).trim().replace(/\s+/g,' ');
+    // Formato "Apellidos, Nombre"
+    if (s.includes(',')){
+      var a = s.split(',');
+      var left  = (a[0]||'').trim();
+      var right = (a.slice(1).join(',')||'').trim();
+      return { nombre: right || '', apellidos: left || '' };
     }
-    if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', watchAuthAndFill); }
-    else { watchAuthAndFill(); }
-  })();
-  </script>
-
-  <!-- Fix Nombre/Apellidos - normalizador -->
-  <script>
-  (function(){
-    'use strict';
-    function $(id){ return document.getElementById(id); }
-    function splitSmart(text){
-      if (!text) return {nombre:'', apellidos:''};
-      var s = String(text).trim().replace(/\s+/g,' ');
-      if (s.includes(',')){
-        var a = s.split(',');
-        var left  = (a[0]||'').trim();
-        var right = (a.slice(1).join(',')||'').trim();
-        return { nombre: right || '', apellidos: left || '' };
-      }
-      var parts = s.split(' ');
-      if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
-      return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
+    var parts = s.split(' ');
+    if (parts.length === 1) return { nombre: parts[0], apellidos: '' };
+    return { nombre: parts[0], apellidos: parts.slice(1).join(' ') };
+  }
+  function normalizeNameFields(){
+    var f = $('firstName'), l = $('lastName');
+    if (!f || !l) return;
+    var fv = (f.value||'').trim(), lv = (l.value||'').trim();
+    // Si nombre contiene espacios y apellidos está vacío o es igual al nombre → dividir
+    if (fv && (!lv || lv === fv || /\s/.test(fv))){
+      var s = splitSmart(fv);
+      if (s.nombre) f.value = s.nombre;
+      if (s.apellidos && !lv) l.value = s.apellidos;
     }
-    function normalizeNameFields(){
-      var f = $('firstName'), l = $('lastName');
-      if (!f || !l) return;
-      var fv = (f.value||'').trim(), lv = (l.value||'').trim();
-      if (fv && (!lv || lv === fv || /\s/.test(fv))){
-        var s = splitSmart(fv);
-        if (s.nombre) f.value = s.nombre;
-        if (s.apellidos && !lv) l.value = s.apellidos;
-      }
-    }
-    document.addEventListener('DOMContentLoaded', normalizeNameFields);
-    window.addEventListener('tpl-auth-ready', normalizeNameFields);
-    window.addEventListener('tpl-auth-change', normalizeNameFields);
-    var f = document.getElementById('firstName');
-    var l = document.getElementById('lastName');
-    if (f) f.addEventListener('blur', normalizeNameFields);
-    if (l) l.addEventListener('blur', normalizeNameFields);
-  })();
-  </script>
-
-  <!-- Mascotas — puente y rehidratación + seed opcional -->
-  <script>
-  (function(){
-    'use strict';
-    var DEBUG = /[?&]debugReservas=1\b/.test(location.search);
-    function $(s, r){ return (r||document).querySelector(s); }
-    function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
-    function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
-    function udbSet(uid,key,val){ try{ localStorage.setItem(udbKey(uid,key), JSON.stringify(val)); }catch(e){} }
-    function toArrayMaybe(x){ if(!x) return []; return Array.isArray(x) ? x : Object.keys(x).map(function(k){ return Object.assign({id:k}, x[k]); }); }
-    function normalizePet(p){
-      if (!p) return null;
-      var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
-      var nombre = p.nombre || p.name || p.petName || '';
-      var especie = p.especie || p.tipo || p.species || p.type || '';
-      var raza = p.raza || p.breed || '';
-      var tam = p.tamano || p['tamaño'] || p.size || '';
-      var meds = p.medicacion || p['medicación'] || p.medication || '';
-      var needs = p.necesidades || p.needs || p.specialNeeds || '';
-      return { id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs };
-    }
-    function labelFor(p){
-      var meta = [p.especie||'', p.raza||''].filter(Boolean).join(', ');
-      return (p.nombre || 'Mascota') + (meta ? ' ('+meta+')' : '');
-    }
-    function applyPetHidden(p){
-      var map = {
-        'tpl-pet-id': p.id||'',
-        'tpl-pet-name': p.nombre||'',
-        'tpl-pet-species': p.especie||'',
-        'tpl-pet-breed': p.raza||'',
-        'tpl-pet-size': p.tamano||'',
-        'tpl-pet-med': p.medicacion||'',
-        'tpl-pet-needs': p.necesidades||''
-      };
-      Object.keys(map).forEach(function(id){
-        var el = document.getElementById(id);
-        if (el) el.value = map[id];
-      });
-    }
-    function renderPets(uid, pets){
-      var sec = $('#tpl-pet-section');
-      var sel = $('#tpl-pet-select');
-      pets = (pets||[]).map(normalizePet).filter(Boolean);
-      if (!pets.length){ if (sec) sec.hidden = true; return false; }
-      if (pets.length === 1){
-        if (sec) sec.hidden = true;
-        applyPetHidden(pets[0]);
-        if (DEBUG) console.log('[TPL][Mascotas] aplicada única', pets[0]);
-        return true;
-      }
-      if (!sec || !sel) return false;
-      sec.hidden = false; sel.innerHTML = '';
-      pets.forEach(function(p){
-        var opt = new Option(labelFor(p), p.id || p.nombre || '');
-        try{ opt.dataset.pet = JSON.stringify(p); }catch(e){}
-        sel.appendChild(opt);
-      });
-      sel.onchange = function(){
-        var o = sel.options[sel.selectedIndex]; if (!o) return;
-        var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
-        if (p) applyPetHidden(p);
-      };
-      sel.onchange();
-      if (DEBUG) console.log('[TPL][Mascotas] selector con', pets.length, 'opciones');
+  }
+  // Ejecuta al cargar, al cambiar auth y al salir de los campos
+  document.addEventListener('DOMContentLoaded', normalizeNameFields);
+  window.addEventListener('tpl-auth-ready', normalizeNameFields);
+  window.addEventListener('tpl-auth-change', normalizeNameFields);
+  var f = document.getElementById('firstName');
+  var l = document.getElementById('lastName');
+  if (f) f.addEventListener('blur', normalizeNameFields);
+  if (l) l.addEventListener('blur', normalizeNameFields);
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Mascotas - puente y rehidratación + seed opcional] -->
+<script>
+(function(){
+  'use strict';
+  var DEBUG = /[?&]debugReservas=1\b/.test(location.search);
+  function $(s, r){ return (r||document).querySelector(s); }
+  function udbKey(uid,key){ return 'tpl.udb.'+uid+'.'+key; }
+  function udbGet(uid,key){ try{ var raw=localStorage.getItem(udbKey(uid,key)); return raw?JSON.parse(raw):null; }catch(e){ return null; } }
+  function udbSet(uid,key,val){ try{ localStorage.setItem(udbKey(uid,key), JSON.stringify(val)); }catch(e){} }
+  function toArrayMaybe(x){ if(!x) return []; return Array.isArray(x) ? x : Object.keys(x).map(function(k){ return Object.assign({id:k}, x[k]); }); }
+  function normalizePet(p){
+    if (!p) return null;
+    var id  = p.id || p.uid || p._id || p.chip || p.chipid || p.microchip || null;
+    var nombre = p.nombre || p.name || p.petName || '';
+    var especie = p.especie || p.tipo || p.species || p.type || '';
+    var raza = p.raza || p.breed || '';
+    var tam = p.tamano || p['tamaño'] || p.size || '';
+    var meds = p.medicacion || p['medicación'] || p.medication || '';
+    var needs = p.necesidades || p.needs || p.specialNeeds || '';
+    return { id:id, nombre:nombre, especie:especie, raza:raza, tamano:tam, medicacion:meds, necesidades:needs };
+  }
+  function labelFor(p){
+    var meta = [p.especie||'', p.raza||''].filter(Boolean).join(', ');
+    return (p.nombre || 'Mascota') + (meta ? ' ('+meta+')' : '');
+  }
+  function applyPetHidden(p){
+    var map = {
+      'tpl-pet-id': p.id||'',
+      'tpl-pet-name': p.nombre||'',
+      'tpl-pet-species': p.especie||'',
+      'tpl-pet-breed': p.raza||'',
+      'tpl-pet-size': p.tamano||'',
+      'tpl-pet-med': p.medicacion||'',
+      'tpl-pet-needs': p.necesidades||''
+    };
+    Object.keys(map).forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.value = map[id];
+    });
+  }
+  function renderPets(uid, pets){
+    var sec = $('#tpl-pet-section');
+    var sel = $('#tpl-pet-select');
+    pets = (pets||[]).map(normalizePet).filter(Boolean);
+    if (!pets.length){ if (sec) sec.hidden = true; return false; }
+    if (pets.length === 1){
+      if (sec) sec.hidden = true;
+      applyPetHidden(pets[0]);
+      if (DEBUG) console.log('[TPL][Mascotas] aplicada única', pets[0]);
       return true;
     }
-    function rehydrateFromUdb(uid){
-      var raw = udbGet(uid,'mascotas') || udbGet(uid,'pets') || [];
-      var list = toArrayMaybe(raw).map(normalizePet).filter(Boolean);
-      if (list.length) renderPets(uid, list);
-      return list.length>0;
-    }
-    function bridgeFromOtherKeys(uid){
-      try{
-        var found = null, k=null;
-        for (var i=0;i<localStorage.length;i++){
-          k = localStorage.key(i);
-          if (/^tpl\.udb\./.test(k)) continue;
-          var raw = localStorage.getItem(k);
-          if (!raw || raw.length < 5) continue;
-          try{
-            var obj = JSON.parse(raw);
-            if (obj && (obj.mascotas || obj.pets)){
-              found = obj.mascotas || obj.pets;
-              break;
-            }
-          }catch(e){}
-        }
-        if (found){
-          udbSet(uid, 'mascotas', found);
-          return true;
-        }
-      }catch(e){}
-      return false;
-    }
-    async function bridgeFromFirestoreRoot(uid){
-      try{
-        if (typeof firebase === 'undefined' || !firebase.firestore) return false;
-        var db = firebase.firestore();
-        var list = [];
-        var q1 = await db.collection('mascotas').where('ownerUid','==',uid).get().catch(()=>null);
-        if (q1 && !q1.empty){ q1.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
-        if (!list.length){
-          var q2 = await db.collection('mascotas').where('uid','==',uid).get().catch(()=>null);
-          if (q2 && !q2.empty){ q2.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
-        }
-        if (list.length){
-          udbSet(uid, 'mascotas', list);
-          return true;
-        }
-      }catch(e){}
-      return false;
-    }
-    function onAuth(cb){
-      if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) window.__TPL_AUTH__.ready.then(cb);
-      else window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail ? ev.detail.user : null); }, {once:true});
-    }
-    onAuth(async function(user){
-      if (!user || user.isAnonymous) return;
-      var uid = user.uid;
-
-      if (rehydrateFromUdb(uid)) return;
-      if (bridgeFromOtherKeys(uid) && rehydrateFromUdb(uid)) return;
-      if (await bridgeFromFirestoreRoot(uid)) { rehydrateFromUdb(uid); return; }
-
-      if (/[?&]seedPet=1\b/.test(location.search)) {
-        var demo = [{ id:'demo', nombre:'Luna', especie:'Perro', raza:'Mestizo', size:'M', medicacion:'', necesidades:'' }];
-        udbSet(uid, 'mascotas', demo);
-        rehydrateFromUdb(uid);
-      }
+    if (!sec || !sel) return false;
+    sec.hidden = false; sel.innerHTML = '';
+    pets.forEach(function(p){
+      var opt = new Option(labelFor(p), p.id || p.nombre || '');
+      try{ opt.dataset.pet = JSON.stringify(p); }catch(e){}
+      sel.appendChild(opt);
     });
-
-    window.addEventListener('storage', function(ev){
-      if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
-      var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
-      if (!user || user.isAnonymous) return;
-      rehydrateFromUdb(user.uid);
-    });
-  })();
-  </script>
-
-  <!-- Mascota — Fallback UI y sincronización -->
-  <script>
-  (function(){
-    'use strict';
-    if (window.__TPL_PET_FALLBACK_INJECTED__) return;
-    window.__TPL_PET_FALLBACK_INJECTED__ = true;
-
-    function $(sel, root){ return (root||document).querySelector(sel); }
-    function val(id){ var el=document.getElementById(id); return el ? (el.value||'').trim() : ''; }
-    function set(id, v){ var el=document.getElementById(id); if (el) el.value = v; }
-    function hasPetHidden(){
-      return !!(val('tpl-pet-name') || val('tpl-pet-species') || val('tpl-pet-breed'));
-    }
-
-    function injectManualUI(){
-      var sec = document.getElementById('tpl-pet-section');
-      if (!sec) return;
-      if (sec.querySelector('[data-tpl-pet-manual]')) return;
-
-      var wrap = document.createElement('div');
-      wrap.setAttribute('data-tpl-pet-manual','');
-      wrap.className = 'booking-grid';
-      wrap.innerHTML = [
-        '<div class="booking-field">',
-          '<label for="tpl-pet-visible-name">Nombre de la mascota</label>',
-          '<input type="text" id="tpl-pet-visible-name" placeholder="Luna / Coco / Nala">',
-        '</div>',
-        '<div class="booking-field">',
-          '<label for="tpl-pet-visible-species">Especie</label>',
-          '<select id="tpl-pet-visible-species">',
-            '<option value="">Elige…</option>',
-            '<option>Perro</option>',
-            '<option>Gato</option>',
-            '<option>Otro</option>',
-          '</select>',
-        '</div>',
-        '<div class="booking-field">',
-          '<label for="tpl-pet-visible-breed">Raza (opcional)</label>',
-          '<input type="text" id="tpl-pet-visible-breed" placeholder="Mestizo, Labrador…">',
-        '</div>',
-        '<div class="booking-field">',
-          '<label for="tpl-pet-visible-size">Tamaño</label>',
-          '<select id="tpl-pet-visible-size">',
-            '<option value="">Elige…</option>',
-            '<option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option>',
-          '</select>',
-        '</div>',
-        '<div class="booking-field" style="grid-column:1/-1">',
-          '<label for="tpl-pet-visible-med">Medicación (si aplica)</label>',
-          '<input type="text" id="tpl-pet-visible-med" placeholder="Nombre y pauta…">',
-        '</div>',
-        '<div class="booking-field" style="grid-column:1/-1">',
-          '<label for="tpl-pet-visible-needs">Necesidades especiales (si aplica)</label>',
-          '<textarea id="tpl-pet-visible-needs" rows="2" placeholder="Ansiedad, alergias, alimentación…"></textarea>',
-        '</div>'
-      ].join('');
-      sec.appendChild(wrap);
-      sec.hidden = false;
-
-      function sync(){
-        set('tpl-pet-name',    $('#tpl-pet-visible-name').value.trim());
-        set('tpl-pet-species', $('#tpl-pet-visible-species').value.trim());
-        set('tpl-pet-breed',   $('#tpl-pet-visible-breed').value.trim());
-        set('tpl-pet-size',    $('#tpl-pet-visible-size').value.trim());
-        set('tpl-pet-med',     $('#tpl-pet-visible-med').value.trim());
-        set('tpl-pet-needs',   $('#tpl-pet-visible-needs').value.trim());
-        try {
-          var sf = document.getElementById('summaryField');
-          if (sf) sf.dispatchEvent(new Event('change', {bubbles:true}));
-        } catch(_) {}
-      }
-
-      ['tpl-pet-visible-name','tpl-pet-visible-species','tpl-pet-visible-breed',
-       'tpl-pet-visible-size','tpl-pet-visible-med','tpl-pet-visible-needs'
-      ].forEach(function(id){
-        var el = document.getElementById(id);
-        if (!el) return;
-        el.addEventListener('input', sync);
-        el.addEventListener('change', sync);
-      });
-    }
-
-    function maybeShowFallback(){
-      if (hasPetHidden()) return;
-      var sel = document.getElementById('tpl-pet-select');
-      if (sel && sel.options && sel.options.length > 0) return;
-      injectManualUI();
-    }
-
-    window.addEventListener('tpl-auth-ready', function(){
-      setTimeout(maybeShowFallback, 800);
-    });
-    window.addEventListener('tpl-auth-change', function(){
-      setTimeout(maybeShowFallback, 800);
-    });
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowFallback, 1000); });
-    } else {
-      setTimeout(maybeShowFallback, 1000);
-    }
-  })();
-  </script>
-
-  <!-- Bloque de compatibilidad con “Mascotas” (nombres libres) + datalist -->
-  <script>
-  (function(){
-    'use strict';
-    function id(x){ return document.getElementById(x); }
-
-    // 1) Al menos 1 input de mascota y mantener "Mascotas_lista" actualizado
-    function ensureOnePetField(){
-      var wrap = id('petsContainer'); if(!wrap) return;
-      if(!wrap.querySelector('input[id^="petName_"]')){
-        var row = document.createElement('div');
-        row.className = 'booking-field';
-        row.innerHTML =
-          '<label for="petName_1">Nombre de la mascota</label>' +
-          '<input type="text" id="petName_1" name="Mascota_1" list="tplPetNamesList" autocomplete="off">';
-        wrap.appendChild(row);
-      }
-      var hidden = id('petsListHidden');
-      var sync = function(){
-        if(!hidden) return;
-        var names = Array.from(wrap.querySelectorAll('input[id^="petName_"]'))
-          .map(i=>i.value.trim()).filter(Boolean);
-        hidden.value = names.join(', ');
-      };
-      wrap.addEventListener('input', sync, {capture:true});
-      sync();
-    }
-
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureOnePetField);
-    else ensureOnePetField();
-    setTimeout(ensureOnePetField, 800);
-
-    // 2) Prefill de nombres desde Firestore -> users/{uid}/mascotas (campo "nombre")
-    function prefillFromFirestore(){
-      if (typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore) return;
-      var user = (firebase.auth().currentUser)||null;
-      if (!user) return;
-
-      firebase.firestore()
-        .collection('users').doc(user.uid).collection('mascotas')
-        .limit(3).get()
-        .then(function(snap){
-          var list = [];
-          snap.forEach(function(doc){
-            var n = (doc.data()||{}).nombre;
-            if (n && list.indexOf(n) === -1) list.push(n);
-          });
-
-          var dl = id('tplPetNamesList');
-          if (dl) dl.innerHTML = list.map(function(n){
-            return '<option value="'+ String(n).replace(/"/g,'&quot;') +'"></option>';
-          }).join('');
-
-          var inp = document.querySelector('#petsContainer input[id^="petName_"]');
-          if (inp && !inp.value && list.length){
-            inp.value = list[0];
-            inp.dispatchEvent(new Event('input', { bubbles:true }));
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex]; if (!o) return;
+      var p = null; try{ p = JSON.parse(o.dataset.pet||'{}'); }catch(e){}
+      if (p) applyPetHidden(p);
+    };
+    sel.onchange();
+    if (DEBUG) console.log('[TPL][Mascotas] selector con', pets.length, 'opciones');
+    return true;
+  }
+  function rehydrateFromUdb(uid){
+    var raw = udbGet(uid,'mascotas') || udbGet(uid,'pets') || [];
+    var list = toArrayMaybe(raw).map(normalizePet).filter(Boolean);
+    if (list.length) renderPets(uid, list);
+    return list.length>0;
+  }
+  function bridgeFromOtherKeys(uid){
+    // Busca en localStorage objetos que tengan {mascotas:...} o {pets:...}
+    try{
+      var found = null;
+      for (var i=0;i<localStorage.length;i++){
+        var k = localStorage.key(i);
+        // ignora nuestro UDB
+        if (/^tpl\.udb\./.test(k)) continue;
+        var raw = localStorage.getItem(k);
+        if (!raw || raw.length < 5) continue;
+        try{
+          var obj = JSON.parse(raw);
+          if (obj && (obj.mascotas || obj.pets)){
+            found = obj.mascotas || obj.pets;
+            break;
           }
-        })
-        .catch(function(){ /* silencio */ });
+        }catch(e){}
+      }
+      if (found){
+        udbSet(uid, 'mascotas', found);
+        if (DEBUG) console.log('[TPL][Mascotas] puenteadas desde', k);
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  async function bridgeFromFirestoreRoot(uid){
+    // Extra: por si usas colección raíz 'mascotas' con ownerUid/uid
+    try{
+      if (typeof firebase === 'undefined' || !firebase.firestore) return false;
+      var db = firebase.firestore();
+      var list = [];
+      var q1 = await db.collection('mascotas').where('ownerUid','==',uid).get().catch(()=>null);
+      if (q1 && !q1.empty){ q1.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
+      if (!list.length){
+        var q2 = await db.collection('mascotas').where('uid','==',uid).get().catch(()=>null);
+        if (q2 && !q2.empty){ q2.forEach(function(d){ list.push(Object.assign({id:d.id}, d.data())); }); }
+      }
+      if (list.length){
+        udbSet(uid, 'mascotas', list);
+        if (DEBUG) console.log('[TPL][Mascotas] puenteadas desde FS raíz');
+        return true;
+      }
+    }catch(e){}
+    return false;
+  }
+  function onAuth(cb){
+    if (window.__TPL_AUTH__ && window.__TPL_AUTH__.ready) window.__TPL_AUTH__.ready.then(cb);
+    else window.addEventListener('tpl-auth-ready', function(ev){ cb(ev.detail ? ev.detail.user : null); }, {once:true});
+  }
+  onAuth(async function(user){
+    if (!user || user.isAnonymous) return;
+    var uid = user.uid;
+
+    // 1) Rehidrata desde nuestro UDB
+    if (rehydrateFromUdb(uid)) return;
+
+    // 2) Puentea desde otras claves locales (si existían en tu perfil) y rehidrata
+    if (bridgeFromOtherKeys(uid) && rehydrateFromUdb(uid)) return;
+
+    // 3) Puenteo extra desde Firestore raíz (si lo usas)
+    if (await bridgeFromFirestoreRoot(uid)) { rehydrateFromUdb(uid); return; }
+
+    if (DEBUG) console.log('[TPL][Mascotas] sin datos detectados en UDB/puentes');
+
+    // 4) Seed opcional (solo si añades ?seedPet=1 en la URL)
+    if (/[?&]seedPet=1\b/.test(location.search)) {
+      var demo = [{ id:'demo', nombre:'Luna', especie:'Perro', raza:'Mestizo', size:'M', medicacion:'', necesidades:'' }];
+      udbSet(uid, 'mascotas', demo);
+      rehydrateFromUdb(uid);
+      if (DEBUG) console.log('[TPL][Mascotas] sembrada demo en UDB');
+    }
+  });
+
+  // Si otra pestaña escribe UDB, reintentamos pintar
+  window.addEventListener('storage', function(ev){
+    if (!ev || !ev.key || !/\.mascotas$|\.pets$/.test(ev.key)) return;
+    var user = (window.__TPL_AUTH__ && window.__TPL_AUTH__.user) || null;
+    if (!user || user.isAnonymous) return;
+    rehydrateFromUdb(user.uid);
+  });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Mascota — Fallback UI y sincronización] -->
+<script>
+(function(){
+  'use strict';
+  if (window.__TPL_PET_FALLBACK_INJECTED__) return;
+  window.__TPL_PET_FALLBACK_INJECTED__ = true;
+
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function val(id){ var el=document.getElementById(id); return el ? (el.value||'').trim() : ''; }
+  function set(id, v){ var el=document.getElementById(id); if (el) el.value = v; }
+  function hasPetHidden(){
+    return !!(val('tpl-pet-name') || val('tpl-pet-species') || val('tpl-pet-breed'));
+  }
+
+  function injectManualUI(){
+    var sec = document.getElementById('tpl-pet-section');
+    if (!sec) return;
+    // No dupliques
+    if (sec.querySelector('[data-tpl-pet-manual]')) return;
+
+    // Si el selector existe y está vacío, mantenlo; añadimos la UI debajo
+    var wrap = document.createElement('div');
+    wrap.setAttribute('data-tpl-pet-manual','');
+    wrap.className = 'booking-grid';
+    wrap.innerHTML = [
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-name">Nombre de la mascota</label>',
+        '<input type="text" id="tpl-pet-visible-name" placeholder="Luna / Coco / Nala">',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-species">Especie</label>',
+        '<select id="tpl-pet-visible-species">',
+          '<option value="">Elige…</option>',
+          '<option>Perro</option>',
+          '<option>Gato</option>',
+          '<option>Otro</option>',
+        '</select>',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-breed">Raza (opcional)</label>',
+        '<input type="text" id="tpl-pet-visible-breed" placeholder="Mestizo, Labrador…">',
+      '</div>',
+      '<div class="booking-field">',
+        '<label for="tpl-pet-visible-size">Tamaño</label>',
+        '<select id="tpl-pet-visible-size">',
+          '<option value="">Elige…</option>',
+          '<option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option>',
+        '</select>',
+      '</div>',
+      '<div class="booking-field" style="grid-column:1/-1">',
+        '<label for="tpl-pet-visible-med">Medicación (si aplica)</label>',
+        '<input type="text" id="tpl-pet-visible-med" placeholder="Nombre y pauta…">',
+      '</div>',
+      '<div class="booking-field" style="grid-column:1/-1">',
+        '<label for="tpl-pet-visible-needs">Necesidades especiales (si aplica)</label>',
+        '<textarea id="tpl-pet-visible-needs" rows="2" placeholder="Ansiedad, alergias, alimentación…"></textarea>',
+      '</div>'
+    ].join('');
+    sec.appendChild(wrap);
+    sec.hidden = false;
+
+    // Sincroniza visibles → ocultos (los ocultos ya existen en tu HTML)
+    function sync(){
+      set('tpl-pet-name',    $('#tpl-pet-visible-name').value.trim());
+      set('tpl-pet-species', $('#tpl-pet-visible-species').value.trim());
+      set('tpl-pet-breed',   $('#tpl-pet-visible-breed').value.trim());
+      set('tpl-pet-size',    $('#tpl-pet-visible-size').value.trim());
+      set('tpl-pet-med',     $('#tpl-pet-visible-med').value.trim());
+      set('tpl-pet-needs',   $('#tpl-pet-visible-needs').value.trim());
+
+      // Intenta refrescar el resumen (si tu otro bloque lo escucha)
+      try {
+        var sf = document.getElementById('summaryField');
+        if (sf) sf.dispatchEvent(new Event('change', {bubbles:true}));
+      } catch(_) {}
     }
 
-    if (typeof firebase !== 'undefined' && firebase.auth){
-      firebase.auth().onAuthStateChanged(function(u){ if (u) prefillFromFirestore(); });
-    }
-  })();
-  </script>
+    ['tpl-pet-visible-name','tpl-pet-visible-species','tpl-pet-visible-breed',
+     'tpl-pet-visible-size','tpl-pet-visible-med','tpl-pet-visible-needs'
+    ].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', sync);
+      el.addEventListener('change', sync);
+    });
+  }
+
+  // Lógica: espera a que Auth/JS intenten rellenar la mascota; si no hay datos → muestra fallback
+  function maybeShowFallback(){
+    // Si ya tenemos mascota oculta, no hacemos nada
+    if (hasPetHidden()) return;
+    // Si el selector de mascotas se pintó con opciones (lo hace reservas.js), tampoco
+    var sel = document.getElementById('tpl-pet-select');
+    if (sel && sel.options && sel.options.length > 0) return;
+    // Caso: no hay datos → muestra editor manual
+    injectManualUI();
+  }
+
+  // Espera a que se intente hidratar (reservas.js + auth); luego decide
+  // 1) al estar lista la auth
+  window.addEventListener('tpl-auth-ready', function(){
+    setTimeout(maybeShowFallback, 800); // margen para que intenten pintar mascotas
+  });
+  // 2) por si llegan cambios tarde
+  window.addEventListener('tpl-auth-change', function(){
+    setTimeout(maybeShowFallback, 800);
+  });
+  // 3) y un último intento al cargar
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ setTimeout(maybeShowFallback, 1000); });
+  } else {
+    setTimeout(maybeShowFallback, 1000);
+  }
+
+  // Si otra pestaña escribe en UDB y reservas.js pinta mascotas, ocultamos el fallback en futuras cargas automáticamente.
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Lógica de reservas (tuya, intacta) -->
   <script src="reservas.js" defer></script>
+
+  <!-- FAB Centro de ayuda -->
+  <a href="ayuda.html" class="help-fab" aria-label="Centro de ayuda">Centro de ayuda</a>
 </body>
 </html>
