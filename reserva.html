@@ -1910,6 +1910,154 @@
 <!-- TPL: INICIO BLOQUE NUEVO [Cargar inyector reservas.js al final] -->
 <script src="reservas.js" defer></script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- AUTOFILL DURO: nombre, apellidos, dirección, email, teléfono, CP y CCAA -->
+<script>
+(function(){
+  'use strict';
+  function byId(id){ return document.getElementById(id); }
+  function setIfEmpty(el,val){
+    if(el && !el.value && val!=null && String(val).trim()!==''){
+      el.value = String(val).trim();
+      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
+    }
+  }
+  function regionValueFromAny(x){
+    if(!x) return '';
+    const s = String(x).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
+    const map = {
+      'comunidad de madrid':'madrid','madrid':'madrid','md':'madrid','es-md':'madrid',
+      'andalucia':'andalucia','es-an':'andalucia','an':'andalucia',
+      'aragon':'aragon','es-ar':'aragon',
+      'asturias':'asturias','es-as':'asturias',
+      'illes balears':'baleares','islas baleares':'baleares','baleares':'baleares','es-ib':'baleares',
+      'canarias':'canarias','es-cn':'canarias',
+      'cantabria':'cantabria','es-cb':'cantabria',
+      'castilla-la mancha':'castilla-la-mancha','castilla-la-mancha':'castilla-la-mancha','es-cm':'castilla-la-mancha',
+      'castilla y leon':'castilla-y-leon','castilla-y-leon':'castilla-y-leon','es-cl':'castilla-y-leon',
+      'cataluna':'cataluna','cataluña':'cataluna','es-ct':'cataluna',
+      'comunitat valenciana':'valenciana','valenciana':'valenciana','es-vc':'valenciana',
+      'extremadura':'extremadura','es-ex':'extremadura',
+      'galicia':'galicia','es-ga':'galicia',
+      'la rioja':'la-rioja','es-ri':'la-rioja',
+      'murcia':'murcia','region de murcia':'murcia','es-mc':'murcia',
+      'navarra':'navarra','es-nc':'navarra',
+      'pais vasco':'euskadi','euskadi':'euskadi','es-pv':'euskadi',
+      'ceuta':'ceuta','es-ce':'ceuta',
+      'melilla':'melilla','es-ml':'melilla',
+      'nacional':'nacional'
+    };
+    return map[s] || '';
+  }
+  async function getUserDoc(auth){
+    try{
+      if(!window.firebase?.firestore) return null;
+      const db = firebase.firestore();
+      const uid = auth?.currentUser?.uid;
+      if(!uid) return null;
+      // 1) users/{uid}
+      let doc = await db.collection('users').doc(uid).get().catch(()=>null);
+      if(doc && doc.exists) return doc.data();
+      // 2) owners/{uid} (por si lo tienes así)
+      doc = await db.collection('owners').doc(uid).get().catch(()=>null);
+      if(doc && doc.exists) return doc.data();
+      return null;
+    }catch(_){ return null; }
+  }
+  function getLocalProfile(){
+    try{
+      if (window.__TPL_PROFILE__ && typeof window.__TPL_PROFILE__==='object') return window.__TPL_PROFILE__;
+      const raw = localStorage.getItem('tpl.profile'); if(raw) return JSON.parse(raw);
+    }catch(_){}
+    return {};
+  }
+  async function hydrate(){
+    const f = {
+      firstName: byId('firstName'),
+      lastName:  byId('lastName'),
+      email:     byId('email'),
+      phone:     byId('phone'),
+      location:  byId('location'),
+      postal:    byId('postalCode'),
+      region:    byId('region'),
+    };
+    const auth = window.firebase?.auth?.();
+    const u = auth?.currentUser || null;
+
+    // 1) datos básicos del usuario Firebase
+    if (u){
+      setIfEmpty(f.email, u.email);
+      if (u.displayName){
+        const s = String(u.displayName).trim().split(/\s+/);
+        if (s.length===1){ setIfEmpty(f.firstName, s[0]); }
+        else { setIfEmpty(f.firstName, s.shift()); setIfEmpty(f.lastName, s.join(' ')); }
+      }
+      if (u.phoneNumber) setIfEmpty(f.phone, u.phoneNumber);
+    }
+
+    // 2) Firestore profile (users/{uid} o owners/{uid})
+    const doc = await getUserDoc(auth);
+    if (doc){
+      setIfEmpty(f.firstName, doc.firstName||doc.nombre);
+      setIfEmpty(f.lastName,  doc.lastName||doc.apellidos);
+      setIfEmpty(f.location,  doc.address||doc.direccion);
+      setIfEmpty(f.postal,    doc.cp||doc.postal||doc.zip||doc.codigoPostal);
+      setIfEmpty(f.email,     doc.email);
+      setIfEmpty(f.phone,     doc.telefono||doc.phone);
+      const rv = regionValueFromAny(doc.ccaa||doc.ccaa_code||doc.region||doc.ccaaName);
+      if (f.region && rv){
+        const has = Array.from(f.region.options).some(o=>o.value===rv);
+        if (has) f.region.value = rv;
+      }
+    }
+
+    // 3) window.__TPL_PROFILE__ / localStorage fallback
+    const lp = getLocalProfile();
+    if (lp){
+      const owner = lp.propietario || lp.owner || lp;
+      setIfEmpty(f.firstName, owner.nombre||owner.firstName);
+      setIfEmpty(f.lastName,  owner.apellidos||owner.lastName);
+      setIfEmpty(f.location,  owner.direccion||owner.address);
+      setIfEmpty(f.postal,    owner.cp||owner.postal||owner.zip);
+      setIfEmpty(f.email,     owner.email);
+      setIfEmpty(f.phone,     owner.telefono||owner.phone);
+      const rv = regionValueFromAny(owner.ccaa||owner.ccaa_code);
+      if (f.region && rv){
+        const has = Array.from(f.region.options).some(o=>o.value===rv);
+        if (has) f.region.value = rv;
+      }
+    }
+
+    // 4) espeja a ocultos Propietario_* (para el correo)
+    const ensureHidden = (name)=>{
+      let el = document.querySelector(`input[name="${name}"]`);
+      if(!el){ el=document.createElement('input'); el.type='hidden'; el.name=name; document.getElementById('bookingForm')?.appendChild(el); }
+      return el;
+    };
+    ensureHidden('Propietario_Nombre').value    = f.firstName?.value||'';
+    ensureHidden('Propietario_Apellidos').value = f.lastName?.value||'';
+    ensureHidden('Propietario_Email').value     = f.email?.value||'';
+    ensureHidden('Propietario_Telefono').value  = f.phone?.value||'';
+    ensureHidden('Propietario_Direccion').value = f.location?.value||'';
+    ensureHidden('Propietario_CP').value        = f.postal?.value||'';
+    if (f.region){
+      const txt = f.region.options[f.region.selectedIndex]?.text||'';
+      ensureHidden('Propietario_CCAA').value = txt;
+    }
+  }
+
+  function start(){
+    hydrate(); // al entrar a Reservas, tanto si vienes de Perfil como de Servicios
+    // si el estado de login cambia, rehidrata (por si entras sin tener cache)
+    try{
+      const auth = window.firebase?.auth?.();
+      if (auth) auth.onAuthStateChanged(()=>hydrate());
+    }catch(_){}
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
 
 </body>
 </html>
