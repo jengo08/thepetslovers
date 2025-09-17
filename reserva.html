@@ -23,6 +23,7 @@
     .booking-actions{ display:flex; gap:12px; justify-content:center; margin-top: 16px; flex-wrap: wrap; }
     .cta-button{background:var(--color-principal);color:#fff;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
     .note{ font-size:.95rem; color:#666; text-align:center; margin: 10px 0 0; }
+
     .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
     .auth-wall strong{ color: var(--color-texto); }
     .disabled{ opacity:.6; pointer-events:none; }
@@ -211,7 +212,6 @@
           </button>
         </div>
       </section>
-
       <!-- ===== Datos de la persona ===== -->
       <section class="tpl-section" aria-labelledby="sec-titular">
         <h2 id="sec-titular">Datos de la persona titular</h2>
@@ -367,6 +367,10 @@
       <input type="hidden" name="Mascotas_detalle" id="petsDetail">
       <input type="hidden" name="Mascotas_detalle_json" id="petsDetailJson">
 
+      <!-- TPL: INICIO BLOQUE NUEVO [Paquete de ocultos para EmailJS: Propietario_*, Mascota_*, Reserva_*] -->
+      <div id="tpl-hidden-pack" aria-hidden="true" style="display:none"></div>
+      <!-- TPL: FIN BLOQUE NUEVO -->
+
       <!-- Acciones -->
       <div class="booking-actions tpl-actions">
         <span class="tpl-spacer" aria-hidden="true"></span>
@@ -419,8 +423,8 @@
   <!-- ===== Precios y bonos ===== -->
   <script>
     const PRICES = {
-      // base
-      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 0, exoticos: 0 },
+      // base (transporte base 20 € + km “pendiente”)
+      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
       puppyBase: { guarderia: 20, alojamiento: 35 },
 
       // visitas (gatos)
@@ -444,9 +448,16 @@
       adult:  { 10: 135, 20: 250, 30: 315 },
       puppy:  { 10: 185, 20: 350, 30: 465 }
     };
+
+    /* TPL: INICIO BLOQUE NUEVO [Opcional: extras fijos para bonos guardería (2ª/3ª+). Si no defines, se usa 12€/día y 8€/día × nº días] */
+    // window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
+    //   adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
+    //   puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
+    // };
+    /* TPL: FIN BLOQUE NUEVO */
   </script>
 
-  <!-- ===== Lógica UI + cálculo (igual “estilo antiguo”) ===== -->
+  <!-- ===== Lógica UI + cálculo + autorrelleno ===== -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('bookingForm');
@@ -472,6 +483,7 @@
       sumTravel: byId('sumTravel'), sumBono: byId('sumBono'), rowBono: byId('rowBono'),
       sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
       summaryField: byId('summaryField'),
+      hiddenPack: byId('tpl-hidden-pack')
     };
     function byId(id){ return document.getElementById(id); }
     const qs = (k) => new URLSearchParams(location.search).get(k);
@@ -736,7 +748,6 @@
       const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
 
       let base = 0, visit1 = 0, visit2 = 0, bono = 0, bonoBase=null;
-      let pets = 0;
 
       if(isVisitas){
         const dur = parseInt(els.visitDuration?.value || '60', 10);
@@ -745,28 +756,39 @@
         visit1 = perDay.price1 * nDias;
         visit2 = perDay.price2 * nDias;
         base = 0;
-        pets = calcPetSupplements(svc, 'gato', nMasc);
       } else if (svc === 'paseos'){
-        // 1 paseo/día
+        // 1 paseo/día → bonos por nº de días
         const walks = Math.max(1, nDias);
         const bonoWalks = PRICES.paseoBonos[walks] || null;
         const firstDog = bonoWalks ?? (walks * PRICES.paseoStd);
+        // Extras por perro (2º+): +8 €/paseo también para 3º+
         const extras = Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro);
         base = firstDog + extras;
       } else if (svc === 'guarderia'){
-        const basePerDay = getBasePrice(svc, species, isPuppy);
         const { descuento, baseBundle } = calcBonoGuarderia(nDias, isPuppy);
-        if (baseBundle){ // se aplica bono
-          base = baseBundle;
-          // suplementos 2ª y 3ª+ por día (12 / 8)
-          let extras = 0;
-          if (nMasc>=2) extras += 12 * nDias;
-          if (nMasc>=3) extras += (nMasc-2) * 8 * nDias;
-          base += extras;
-          bono = descuento; // lo mostramos como “descuento”
-          bonoBase = baseBundle;
+        const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
+        const bundle = table[nDias] || null;
+        const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+
+        if (bundle){
+          // Regla de Jenny: EN BONOS no se aplican suplementos diarios;
+          // se “suma el coste por mascota”.
+          // Por defecto: 1ª mascota = bundle; 2ª = 12€/día × días; 3ª+ = 8€/día × días (override opcional abajo)
+          const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
+          const second = ov?.second ?? (12 * nDias);
+          const thirdP = ov?.thirdPlus ?? (8 * nDias);
+
+          let total = bundle; // 1ª mascota
+          if (nMasc>=2) total += second;
+          if (nMasc>=3) total += (nMasc-2) * thirdP;
+
+          base = total;
+          bono = Math.max(0, (perDay * nDias) - bundle); // sólo mostramos descuento del 1er perro
+          bonoBase = bundle;
         } else {
-          base = basePerDay * nDias;
+          // Tarifa diaria (sin bono)
+          base = perDay * nDias;
+          // Suplementos diarios (2ª +12€/día, 3ª+ +8€/día)
           let extras = 0;
           if (nMasc>=2) extras += 12 * nDias;
           if (nMasc>=3) extras += (nMasc-2) * 8 * nDias;
@@ -779,15 +801,17 @@
         base = rate1 * nDias;
         if (species==='perro' && nMasc>=2){
           const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
-          base += (nMasc-1) * extraRate * nDias;
+          base += (nMasc-1) * extraRate * nDias; // 3º+ igual que 2º
         }
       } else if (svc === 'bodas' || svc === 'postquirurgico' || svc === 'exoticos'){
         base = 0; // a consultar / según especie
       } else if (svc === 'transporte'){
-        base = 0; // se calcula aparte con km al asignar
+        base = PRICES.base.transporte; // 20€ base + km “pendiente”
       } else {
         base = getBasePrice(svc, species, isPuppy) * nDias;
       }
+
+      const pets = (!isVisitas && svc!=='paseos' && svc!=='guarderia' && svc!=='alojamiento') ? calcPetSupplements(svc, species, nMasc) : 0;
 
       const subtotal = (base + visit1 + visit2 + pets + festivo + senalado) - bono;
       const deposit = subtotal * (PRICES.depositPct || 0.3);
@@ -857,61 +881,102 @@
       document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
     }
 
-    // Auto-cachorro + datos de contacto desde perfil (si existe)
-    async function autoPuppyFromProfile(){
-      try{
-        if(typeof firebase === 'undefined') return;
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const u = auth.currentUser;
-        if(!u) return;
-        const snap = await db.collection('users').doc(u.uid).collection('mascotas').limit(1).get();
-        if(!snap.empty){
-          const pet = snap.docs[0].data();
-          if(pet?.birthdate){
-            const b = new Date(pet.birthdate);
-            const today = new Date();
-            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-            const isP = months < 6;
-            const svc = els.service?.value || '';
-            const species = els.species?.value || 'perro';
-            const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && species !== 'otros' && svc !== 'visitas';
-            if(els.isPuppy && puppyAllowed){ els.isPuppy.value = isP ? 'si' : 'no'; }
-            await recalc();
-          }
-        }
-      }catch(_){}
+    // ---------- AUTORRELLENO MULTI-ORIGEN ----------
+    /* TPL: INICIO BLOQUE NUEVO [Helpers perfil/mascotas desde Firebase/window/localStorage] */
+    function getUid(){ try{ return firebase?.auth?.().currentUser?.uid || null; }catch(_){ return null; } }
+    function udbKey(uid, key){ return `tpl.udb.${uid||'default'}.${key}`; }
+    function safeParse(s, fb){ try{ return JSON.parse(s); }catch(_){ return fb; } }
+
+    function fillOwnerFromObj(d){
+      if(!d) return;
+      const setIfEmpty = (el, val)=>{ if(el && !el.value && val){ el.value = String(val||''); } };
+      setIfEmpty(els.firstName, d.nombre || d.name || d.firstName);
+      setIfEmpty(els.lastName,  d.apellidos || d.lastName || d.surname);
+      setIfEmpty(els.email,     d.email);
+      setIfEmpty(els.phone,     d.telefono || d.phone);
+      setIfEmpty(els.address,   d.direccion || d.address);
+      setIfEmpty(els.postalCode,d.cp || d.postal || d.zip);
+      if(els.region && d.ccaa){
+        const val = String(d.ccaa).toLowerCase();
+        if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
+      }
     }
-    async function autoContactFromProfile(u){
-      try{
-        if(!u || typeof firebase === 'undefined') return;
-        const db = firebase.firestore();
-        const doc = await db.collection('users').doc(u.uid).get();
-        const d = doc.exists ? doc.data() : {};
-        els.firstName.value = d?.nombre || u.displayName?.split(' ')?.[0] || '';
-        els.lastName.value  = d?.apellidos || u.displayName?.split(' ')?.slice(1).join(' ') || '';
-        els.email.value     = d?.email || u.email || '';
-        els.phone.value     = d?.telefono || u.phoneNumber || '';
-        if(d?.direccion) els.address.value = d.direccion;
-        if(d?.cp)        els.postalCode.value = d.cp;
-        if(d?.ccaa && els.region){
-          const val = (''+d.ccaa).toLowerCase();
-          if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
-        }
-        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-        PROFILE_PET_NAMES = petsSnap.docs.map(x=> (x.data()?.nombre || '').trim()).filter(Boolean);
-        fillPetDatalist();
-      }catch(_){}
+    function addPetNamesFromArray(arr){
+      const names = (Array.isArray(arr)?arr:[])
+        .map(p => (p?.nombre || p?.name || '').trim())
+        .filter(Boolean);
+      PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...names]));
+      fillPetDatalist();
     }
 
-    // Auth UI
+    async function autoFromFirebase(){
+      try{
+        if(typeof firebase === 'undefined') return;
+        const u = firebase.auth().currentUser; if(!u) return;
+        const db = firebase.firestore();
+        // Owner
+        const doc = await db.collection('users').doc(u.uid).get();
+        const d = doc.exists ? doc.data() : {};
+        fillOwnerFromObj({ ...d, email: d?.email || u.email, telefono: d?.telefono || u.phoneNumber });
+        // Pets
+        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
+        const pets = petsSnap.docs.map(x=>x.data()||{});
+        addPetNamesFromArray(pets);
+        // Cachorro auto si 1 mascota con birthdate < 6 meses
+        try{
+          if(pets.length){
+            const p = pets[0];
+            if(p?.birthdate && els.isPuppy && !els.isPuppy.parentElement.hidden){
+              const b = new Date(p.birthdate), today = new Date();
+              const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+              els.isPuppy.value = (months < 6) ? 'si' : 'no';
+              await recalc();
+            }
+          }
+        }catch(_){}
+      }catch(_){}
+    }
+    function autoFromWindowProfile(){
+      const p = (window.__TPL_PROFILE__ || {});
+      if(!p || typeof p !== 'object') return;
+      fillOwnerFromObj(p);
+      if(Array.isArray(p.mascotas)) addPetNamesFromArray(p.mascotas);
+      else if(Array.isArray(p.pets)) addPetNamesFromArray(p.pets);
+    }
+    function autoFromLocalProfile(){
+      try{
+        const raw = localStorage.getItem('tpl.profile');
+        const obj = safeParse(raw, null);
+        if(!obj) return;
+        fillOwnerFromObj(obj);
+        if(Array.isArray(obj.mascotas)) addPetNamesFromArray(obj.mascotas);
+        if(Array.isArray(obj.pets)) addPetNamesFromArray(obj.pets);
+        const uid = getUid();
+        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+        const arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]') :
+                              safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
+        if(Array.isArray(arr)) addPetNamesFromArray(arr);
+      }catch(_){}
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
+    // Llamadas de autorrelleno por prioridad: Firebase → window → local
+    (async function runAutoFill(){
+      await autoFromFirebase();
+      autoFromWindowProfile();
+      autoFromLocalProfile();
+    })();
+
+    // Auth UI (SIN BLOQUEO DEL FORMULARIO)
     if (typeof firebase !== 'undefined') {
       const auth = firebase.auth();
       function updateAuthUI(user){
         const logged = !!user;
-        if (form) form.classList.toggle('disabled', !logged);
+        /* TPL: INICIO BLOQUE NUEVO [Sin bloqueo por login] */
+        if (form) form.classList.remove('disabled');
+        /* TPL: FIN BLOQUE NUEVO */
         if (wall) wall.style.display = logged ? 'none' : 'block';
-        if (logged){ autoContactFromProfile(user); autoPuppyFromProfile(); }
+        if (logged){ /* ya se hizo autoFromFirebase arriba si hay user */ }
       }
       auth.onAuthStateChanged(updateAuthUI);
     }
@@ -929,16 +994,79 @@
       return true;
     }
 
+    /* TPL: INICIO BLOQUE NUEVO [Ocultos Propietario_*, Mascota_*, Reserva_*] */
+    function clearHiddenPack(){ if(els.hiddenPack) els.hiddenPack.innerHTML=''; }
+    function addHidden(name, value){
+      if(!els.hiddenPack) return;
+      const i = document.createElement('input');
+      i.type='hidden'; i.name = name; i.value = String(value ?? '');
+      els.hiddenPack.appendChild(i);
+    }
+    function collectChosenPets(){
+      const uid = getUid();
+      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+      let arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]')
+                        : safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
+      if (!Array.isArray(arr)) arr = [];
+      const selectedNames = (els.petsListHidden?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+      if (selectedNames.length) return arr.filter(p => selectedNames.includes((p?.nombre||'').trim()));
+      if (arr.length === 1) return [arr[0]];
+      return [];
+    }
+    function regionText(){ try{ return els.region?.options?.[els.region.selectedIndex]?.text || ''; }catch(_){ return ''; } }
+    function serviceText(){ try{ return els.service?.options?.[els.service.selectedIndex]?.text || els.service?.value || ''; }catch(_){ return ''; } }
+
+    function buildHiddenPackBeforeSend(){
+      clearHiddenPack();
+      // Propietario_*
+      addHidden('Propietario_Nombre', els.firstName?.value || '');
+      addHidden('Propietario_Apellidos', els.lastName?.value || '');
+      addHidden('Propietario_Email', els.email?.value || '');
+      addHidden('Propietario_Telefono', els.phone?.value || '');
+      addHidden('Propietario_Direccion', els.address?.value || '');
+      addHidden('Propietario_CP', els.postalCode?.value || '');
+      addHidden('Propietario_CCAA', regionText());
+      try{ const u = firebase?.auth?.().currentUser; addHidden('Propietario_UID', u?.uid || ''); }catch(_){}
+
+      // Reserva_*
+      addHidden('Reserva_Tipo', serviceText());
+      addHidden('Reserva_Fechas', `${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
+      addHidden('Reserva_Horas', `${els.start?.value || '-'} a ${els.end?.value || '-'}`);
+      addHidden('Reserva_SubtotalEUR', byId('sumSubtotal')?.textContent || '');
+      addHidden('Reserva_DepositoEUR', byId('sumDeposit')?.textContent || '');
+
+      // Mascota_* (por índice)
+      const chosen = collectChosenPets();
+      chosen.forEach((p, idx)=>{
+        const ix = idx+1;
+        addHidden(`Mascota_${ix}_Nombre`, (p?.nombre||'').trim());
+        addHidden(`Mascota_${ix}_Especie`, (p?.especie||p?.tipo||'').trim());
+        addHidden(`Mascota_${ix}_Raza`, (p?.raza||p?.tipoExotico||'').trim());
+        addHidden(`Mascota_${ix}_Sexo`, (p?.sexo||'').trim());
+        addHidden(`Mascota_${ix}_Edad`, (p?.edad||'').trim());
+        addHidden(`Mascota_${ix}_Peso`, (p?.peso||'').trim());
+        addHidden(`Mascota_${ix}_Tamano`, (p?.tamano||p?.tamaño||'').trim());
+        addHidden(`Mascota_${ix}_Esterilizado`, (p?.esterilizado||'').trim());
+        addHidden(`Mascota_${ix}_Microchip`, (p?.microchip||'').trim());
+        addHidden(`Mascota_${ix}_Patologias`, (p?.salud||p?.patologias||'').trim());
+        addHidden(`Mascota_${ix}_Medicacion`, (p?.tratamiento||p?.medicacion||'').trim());
+        addHidden(`Mascota_${ix}_Caracter`, (p?.comportamiento||'').trim());
+        addHidden(`Mascota_${ix}_Alergias`, (p?.alergias||'').trim());
+        addHidden(`Mascota_${ix}_Vacunas`, (p?.vacunas||'').trim());
+      });
+    }
+    /* TPL: FIN BLOQUE NUEVO */
+
     // Prepara resumen antes de enviar (Parte 3 añade el envío)
     form.addEventListener('submit', (e)=>{
       if(!validateContactPreference(e)) return;
-      const regionText = els.region?.options?.[els.region.selectedIndex]?.text || 'España';
+      const regionTxt = regionText();
       let petsVal = els.numPets?.value || '1';
       if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
       updatePetsListHidden();
 
       const lines = [];
-      lines.push(`Servicio: ${els.service?.options?.[els.service.selectedIndex]?.text || ''}`);
+      lines.push(`Servicio: ${serviceText()}`);
       lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
       lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
       if(els.service?.value === 'visitas'){
@@ -953,7 +1081,7 @@
       if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
       lines.push(`Dirección: ${els.address?.value || '-'}`);
       lines.push(`CP: ${els.postalCode?.value || '-'}`);
-      lines.push(`CCAA: ${regionText}`);
+      lines.push(`CCAA: ${regionTxt}`);
       lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
       if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
       lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
@@ -963,7 +1091,10 @@
       }
       lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
       lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
-      document.getElementById('summaryField').value = lines.join(' | ');
+      byId('summaryField').value = lines.join(' | ');
+
+      // TPL ocultos completos
+      buildHiddenPackBeforeSend();
     });
 
     // UI menores
@@ -971,6 +1102,10 @@
     els.numPetsExact && els.numPetsExact.addEventListener('input', ()=>{ renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
     els.needTravel && els.needTravel.addEventListener('change', travelSync);
     travelSync();
+
+    /* TPL: INICIO BLOQUE NUEVO [Sin bloqueo inicial del formulario si no hay sesión] */
+    try{ form?.classList.remove('disabled'); }catch(_){}
+    /* TPL: FIN BLOQUE NUEVO */
   });
   </script>
   <!-- Login inline si no hay sesión -->
@@ -1352,6 +1487,171 @@
   })();
   </script>
 
+  <!-- TPL: INICIO BLOQUE NUEVO [Autorrelleno multi-origen + ocultos Propietario_*/Mascota_*/Reserva_* + sin bloqueo de login] -->
+  <script>
+  (function(){
+    function $id(id){ return document.getElementById(id); }
+    function safe(val){ return (val==null?'':String(val)).trim(); }
+    function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    function parseISO(s){ const d=new Date(s); return isNaN(d)?null:d; }
+    function debounce(fn,wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),wait||200); }; }
+
+    const form = $id('bookingForm');
+    if (!form) return;
+
+    // 1) Habilitar envío siempre (quitamos bloqueo funcional, sin cambiar textos de la página)
+    form.classList.remove('disabled');
+
+    // 2) Asegurar inputs ocultos para EmailJS
+    const HIDDEN = [
+      'Propietario_Nombre','Propietario_Apellidos','Propietario_Email','Propietario_Telefono','Propietario_Direccion','Propietario_CP','Propietario_CCAA',
+      'Mascota_Principal_Nombre','Mascota_Principal_Especie','Mascota_Principal_Raza','Mascota_Principal_Microchip','Mascota_Principal_Esterilizado',
+      'Reserva_Tipo','Reserva_Fechas','Reserva_Horas','Reserva_Bono','Reserva_Extras','Reserva_TotalEUR','Reserva_DepositoEUR'
+    ];
+    function ensureHidden(name){
+      let el = form.querySelector(`input[name="${name}"]`);
+      if (!el){
+        el = document.createElement('input');
+        el.type = 'hidden';
+        el.name = name;
+        el.id = name;
+        form.appendChild(el);
+      }
+      return el;
+    }
+    HIDDEN.forEach(ensureHidden);
+
+    // 3) Leer perfil desde múltiples fuentes (orden: Firebase → window.__TPL_PROFILE__ → localStorage('tpl.profile'))
+    function currentUID(){
+      try{ const u = firebase?.auth?.().currentUser; if (u && u.uid) return u.uid; }catch(_){}
+      return 'default';
+    }
+    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+    function getPetsArray(){
+      const uid = currentUID();
+      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+      let arr = hasPets ? JSON.parse(localStorage.getItem(udbKey(uid,'pets'))||'[]') : JSON.parse(localStorage.getItem(udbKey(uid,'mascotas'))||'[]');
+      if (!Array.isArray(arr)) arr = [];
+      return arr;
+    }
+    function getLocalProfile(){
+      try{
+        if (window.__TPL_PROFILE__) return window.__TPL_PROFILE__;
+        const raw = localStorage.getItem('tpl.profile');
+        if (raw) return JSON.parse(raw);
+      }catch(_){}
+      return {};
+    }
+
+    async function fillOwnerFromAny(){
+      // Si Firebase ya rellenó, no sobrescribo campos que ya tengan valor
+      const owner = (getLocalProfile()?.propietario) || getLocalProfile() || {};
+      const map = [
+        ['firstName','nombre'], ['lastName','apellidos'], ['email','email'], ['phone','telefono'],
+        ['location','direccion'], ['postalCode','cp']
+      ];
+      map.forEach(([id,key])=>{
+        const el = $id(id); if (!el) return;
+        if (!safe(el.value) && owner && owner[key]!=null) el.value = owner[key];
+      });
+      // CCAA si coincide
+      const reg = $id('region'); const ccaa = safe(owner.ccaa || owner.ccaa_code || '').toLowerCase();
+      if (reg && ccaa && [...reg.options].some(o=>o.value===ccaa)) reg.value = ccaa;
+
+      // Auto-cachorro desde perfil local si hay birthdate en alguna mascota
+      const svc = $id('service')?.value; const species = $id('species')?.value;
+      const puppyAllowed = (svc==='guarderia' || svc==='alojamiento') && (species!=='otros') && (svc!=='visitas');
+      if (puppyAllowed){
+        const pets = getPetsArray();
+        const withBD = pets.find(p=>p.birthdate);
+        if (withBD){
+          const b = parseISO(withBD.birthdate);
+          if (b){
+            const today = new Date();
+            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+            const isP = months < 6;
+            const sel = $id('isPuppy');
+            if (sel) sel.value = isP ? 'si' : 'no';
+          }
+        }
+      }
+    }
+
+    // 4) Construir y sincronizar ocultos antes de enviar
+    function selectedPetNames(){
+      const val = $id('petsListHidden')?.value || '';
+      return val.split(',').map(s=>s.trim()).filter(Boolean);
+    }
+    function firstSelectedPet(){
+      const names = selectedPetNames();
+      const pets = getPetsArray();
+      if (names.length){
+        const p = pets.find(x => safe(x?.nombre) && names.includes(safe(x.nombre)));
+        return p || null;
+      }
+      if (pets.length===1) return pets[0];
+      return null;
+    }
+    function bonoSize(from, to){
+      const d1 = parseISO(from), d2 = parseISO(to);
+      if (!d1 || !d2 || d2 < d1) return 0;
+      const days = Math.round((Date.UTC(d2.getFullYear(),d2.getMonth(),d2.getDate()) - Date.UTC(d1.getFullYear(),d1.getMonth(),d1.getDate())) / 86400000) + 1;
+      return [10,20,30].includes(days) ? days : 0;
+    }
+    function syncHidden(){
+      // Asegura dueño rellenado si hay perfil local
+      fillOwnerFromAny();
+
+      // Propietario_*
+      ensureHidden('Propietario_Nombre').value   = safe($id('firstName')?.value);
+      ensureHidden('Propietario_Apellidos').value= safe($id('lastName')?.value);
+      ensureHidden('Propietario_Email').value    = safe($id('email')?.value);
+      ensureHidden('Propietario_Telefono').value = safe($id('phone')?.value);
+      ensureHidden('Propietario_Direccion').value= safe($id('location')?.value);
+      ensureHidden('Propietario_CP').value       = safe($id('postalCode')?.value);
+      const regEl = $id('region');
+      ensureHidden('Propietario_CCAA').value     = regEl ? safe(regEl.options[regEl.selectedIndex]?.text) : '';
+
+      // Mascota_* (principal = primera seleccionada o única guardada)
+      const pet = firstSelectedPet() || {};
+      ensureHidden('Mascota_Principal_Nombre').value       = safe(pet.nombre);
+      ensureHidden('Mascota_Principal_Especie').value      = safe(pet.especie || pet.tipo);
+      ensureHidden('Mascota_Principal_Raza').value         = safe(pet.raza || pet.tipoExotico);
+      ensureHidden('Mascota_Principal_Microchip').value    = safe(pet.microchip);
+      ensureHidden('Mascota_Principal_Esterilizado').value = safe(pet.esterilizado);
+
+      // Reserva_* (resumen clave)
+      const svcEl = $id('service');
+      const svcTxt = svcEl ? safe(svcEl.options[svcEl.selectedIndex]?.text) : '';
+      const f1 = safe($id('startDate')?.value), f2 = safe($id('endDate')?.value);
+      const h1 = safe($id('start')?.value), h2 = safe($id('end')?.value);
+      const bono = bonoSize(f1, f2);
+      const extras = safe($id('sumPets')?.textContent);
+      const total  = safe($id('sumSubtotal')?.textContent);
+      const depo   = safe($id('sumDeposit')?.textContent);
+
+      ensureHidden('Reserva_Tipo').value     = svcTxt;
+      ensureHidden('Reserva_Fechas').value   = (f1 && f2) ? `${f1} a ${f2}` : '';
+      ensureHidden('Reserva_Horas').value    = (h1 && h2) ? `${h1} a ${h2}` : '';
+      ensureHidden('Reserva_Bono').value     = bono ? String(bono) : '0';
+      ensureHidden('Reserva_Extras').value   = extras || '0.00';
+      ensureHidden('Reserva_TotalEUR').value = total  || '0.00';
+      ensureHidden('Reserva_DepositoEUR').value = depo || '0.00';
+    }
+
+    // Ejecutar al cargar y en cambios
+    const doSync = debounce(syncHidden, 200);
+    ['input','change'].forEach(ev => form.addEventListener(ev, doSync));
+    // Asegurar que corre después de que otros scripts hayan hecho su magia
+    window.addEventListener('load', ()=>{ setTimeout(syncHidden, 60); });
+
+    // Antes de enviar (captura) para garantizar que los ocultos están listos
+    form.addEventListener('submit', function(){ try{ syncHidden(); }catch(_){ } }, true);
+  })();
+  </script>
+  <!-- TPL: FIN BLOQUE NUEVO -->
+
   <!-- Footer (inyectado) -->
   <div id="tpl-footer">
     <noscript>
@@ -1394,6 +1694,5 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
   <script src="reservas.js" defer></script>
-
 </body>
 </html>
