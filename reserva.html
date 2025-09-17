@@ -1792,6 +1792,16 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Aviso inicio de sesión para autocompletar] -->
+<div id="tpl-login-note" class="tpl-note" aria-live="polite"></div>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
+<!-- TPL: INICIO BLOQUE NUEVO [Selector de mascota (auto si solo hay 1)] -->
+<div id="tpl-pet-selector" class="tpl-card" aria-label="Selecciona una mascota"></div>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
+<!-- Al final de la página, después de Firebase + EmailJS + tu reservas.js -->
+<script src="tpl-autofill-reserva.js" defer></script>
 
   <!-- Mini-injectors -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
