@@ -1807,6 +1807,109 @@
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
+<!-- TPL: INICIO BLOQUE NUEVO [FINAL PATCH — Autorrelleno propietarios/mascotas + JSON EmailJS] -->
+<script>
+(function(){
+  if (window.__TPL_RESERVA_FINAL_PATCH__) return;
+  window.__TPL_RESERVA_FINAL_PATCH__ = true;
+
+  // Usaremos estas colecciones por defecto (respetamos overrides existentes)
+  window.TPL_COLLECTIONS = Object.assign({ owners:'propietarios', pets:'mascotas' }, window.TPL_COLLECTIONS||{});
+
+  function $id(id){ return document.getElementById(id); }
+  function setIfEmpty(el, v){ if (el && !el.value && v!=null && v!=='') el.value=String(v); }
+  function safe(s){ return (s==null?'':String(s)).trim(); }
+
+  function fillOwner(o){
+    setIfEmpty($id('firstName'),  o?.nombre || o?.name || o?.firstName);
+    setIfEmpty($id('lastName'),   o?.apellidos || o?.lastName || o?.surname);
+    setIfEmpty($id('email'),      o?.email);
+    setIfEmpty($id('phone'),      o?.telefono || o?.phone);
+    setIfEmpty($id('location'),   o?.direccion || o?.address);
+    setIfEmpty($id('postalCode'), o?.cp || o?.postal || o?.zip);
+    const reg=$id('region'); const ccaa=String(o?.ccaa||o?.ccaa_code||'').toLowerCase();
+    if (reg && ccaa && [...reg.options].some(opt=>opt.value===ccaa)) reg.value=ccaa;
+  }
+
+  function putPetNames(pets){
+    const dl=$id('tplPetNamesList'); if(!dl) return;
+    if (dl.children.length) return; // si ya hay, no duplicamos
+    const names=[...new Set((pets||[]).map(p=>safe(p?.nombre)).filter(Boolean))];
+    if (names.length){
+      dl.innerHTML = names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
+    }
+  }
+
+  function ensureHidden(name, value){
+    let el = document.querySelector(`input[name="${name}"]`);
+    if (!el){ el=document.createElement('input'); el.type='hidden'; el.name=name; (document.forms[0]||document.body).appendChild(el); }
+    if (value!==undefined) el.value = value;
+    return el;
+  }
+
+  async function fetchOwnerPets(){
+    if (!window.firebase?.auth || !window.firebase?.firestore) return null;
+    const u = firebase.auth().currentUser;
+    if (!u) return null;
+    const db=firebase.firestore(), uid=u.uid;
+
+    async function tryPath(col){
+      const ref=db.collection(col).doc(uid);
+      const snap=await ref.get(); if (!snap.exists) return null;
+      let pets=[];
+      try{ const sub=await ref.collection(window.TPL_COLLECTIONS.pets).get(); pets=sub.docs.map(d=>({id:d.id,...(d.data()||{})})); }catch(_){}
+      if (!pets.length){
+        try{ const q=await db.collection(window.TPL_COLLECTIONS.pets).where('uid','==',uid).get(); pets=q.docs.map(d=>({id:d.id,...(d.data()||{})})); }catch(_){}
+      }
+      return { owner:{id:snap.id,...(snap.data()||{})}, pets };
+    }
+
+    return await tryPath(window.TPL_COLLECTIONS.owners) || await tryPath('users');
+  }
+
+  function autoSelectSinglePet(pets){
+    if (!Array.isArray(pets) || pets.length!==1) return;
+    const name = safe(pets[0]?.nombre);
+    const numSel = $id('numPets');
+    if (numSel){ numSel.value='1'; numSel.dispatchEvent(new Event('change',{bubbles:true})); }
+    setTimeout(()=>{ const inp=$id('petName_1'); if(inp && !inp.value && name){ inp.value=name; inp.dispatchEvent(new Event('input',{bubbles:true})); } },100);
+  }
+
+  function buildJsons(owner, pets){
+    try{
+      ensureHidden('tpl_owner_json', JSON.stringify(owner||{}));
+      const chosen = (function(){
+        const list = ($id('petsListHidden')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+        if (list.length) return (pets||[]).filter(p=>list.includes(safe(p?.nombre)));
+        if ((pets||[]).length===1) return [pets[0]];
+        return [];
+      })();
+      ensureHidden('tpl_pet_json', JSON.stringify(chosen[0]||{}));
+    }catch(_){}
+  }
+
+  function hookSubmit(owner, pets){
+    const form=document.getElementById('bookingForm'); if (!form) return;
+    form.addEventListener('submit', function(){ buildJsons(owner, pets); }, true);
+  }
+
+  async function run(){
+    const pack = await fetchOwnerPets();
+    if (!pack) return; // sin sesión o sin datos
+    fillOwner(pack.owner||{});
+    putPetNames(pack.pets||[]);
+    autoSelectSinglePet(pack.pets||[]);
+    buildJsons(pack.owner, pack.pets);
+    hookSubmit(pack.owner, pack.pets);
+  }
+
+  if (document.readyState==='complete') run(); else window.addEventListener('load', ()=>setTimeout(run,80));
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Cargar inyector reservas.js al final] -->
+<script src="reservas.js" defer></script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
