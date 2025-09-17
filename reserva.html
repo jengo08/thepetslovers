@@ -1688,6 +1688,110 @@
       </footer>
     </noscript>
   </div>
+<!-- TPL: INICIO BLOQUE NUEVO [Hotfix autorrelleno siempre: Firebase + window.__TPL_PROFILE__ + localStorage] -->
+<script>
+(function(){
+  function byId(id){ return document.getElementById(id); }
+  function setIfEmpty(el, val){ if(el && !el.value && val!=null && val!==''){ el.value = String(val); } }
+
+  function fillOwnerFromObj(d){
+    setIfEmpty(byId('firstName'),  d?.nombre || d?.name || d?.firstName);
+    setIfEmpty(byId('lastName'),   d?.apellidos || d?.lastName || d?.surname);
+    setIfEmpty(byId('email'),      d?.email);
+    setIfEmpty(byId('phone'),      d?.telefono || d?.phone);
+    setIfEmpty(byId('location'),   d?.direccion || d?.address);
+    setIfEmpty(byId('postalCode'), d?.cp || d?.postal || d?.zip);
+    const reg = byId('region');
+    const ccaa = String(d?.ccaa || d?.ccaa_code || '').toLowerCase();
+    if (reg && ccaa && [...reg.options].some(o=>o.value===ccaa)) reg.value = ccaa;
+  }
+
+  let PET_NAMES = new Set();
+  function addPetNames(list){
+    const dl = byId('tplPetNamesList'); if(!dl) return;
+    (list||[]).forEach(p=>{
+      const n = (p?.nombre || p?.name || '').trim();
+      if(n) PET_NAMES.add(n);
+    });
+    dl.innerHTML = [...PET_NAMES].map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
+  }
+
+  function maybeAutoPuppy(pets){
+    try{
+      const svc = byId('service')?.value, species = byId('species')?.value;
+      const allowed = (svc==='guarderia'||svc==='alojamiento') && species!=='otros' && svc!=='visitas';
+      if(!allowed) return;
+      const p = (pets||[]).find(x=>x?.birthdate);
+      if(!p) return;
+      const b = new Date(p.birthdate); if(isNaN(b)) return;
+      const today = new Date();
+      const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+      const sel = byId('isPuppy'); if(sel) sel.value = months<6?'si':'no';
+      try{ sel.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    }catch(_){}
+  }
+
+  async function fillFromFirebase(u){
+    try{
+      if(!u || !window.firebase?.firestore) return;
+      const db = firebase.firestore();
+      const doc = await db.collection('users').doc(u.uid).get();
+      const d = doc.exists? doc.data():{};
+      fillOwnerFromObj({ ...d, email: d?.email || u.email, telefono: d?.telefono || u.phoneNumber });
+
+      const snap = await db.collection('users').doc(u.uid).collection('mascotas').get();
+      const pets = snap.docs.map(x=>x.data()||{});
+      addPetNames(pets);
+      maybeAutoPuppy(pets);
+    }catch(_){}
+  }
+
+  function fillFromWindow(){
+    const p = window.__TPL_PROFILE__ || {};
+    if(p && typeof p==='object'){
+      fillOwnerFromObj(p);
+      addPetNames(p.mascotas || p.pets || []);
+    }
+  }
+
+  function fillFromLocal(){
+    try{
+      const raw = localStorage.getItem('tpl.profile');
+      if(raw){
+        const o = JSON.parse(raw);
+        fillOwnerFromObj(o);
+        addPetNames(o.mascotas || o.pets || []);
+      }
+      const uid = (window.firebase?.auth?.().currentUser?.uid) || 'default';
+      const get = k => { try{ return JSON.parse(localStorage.getItem(`tpl.udb.${uid}.${k}`)||'[]'); }catch(_){ return []; } };
+      const hasPetsKey = localStorage.getItem(`tpl.udb.${uid}.pets`) !== null;
+      addPetNames( hasPetsKey ? get('pets') : get('mascotas') );
+    }catch(_){}
+  }
+
+  async function runNow(){
+    if (window.firebase?.auth) {
+      const auth = firebase.auth();
+      const u = auth.currentUser;
+      if(u) await fillFromFirebase(u);
+      auth.onAuthStateChanged(async user => { if(user) await fillFromFirebase(user); });
+    }
+    fillFromWindow();
+    fillFromLocal();
+  }
+
+  // Reintento si __TPL_PROFILE__ llega tarde (máx. ~8s)
+  let tries = 0;
+  const timer = setInterval(()=>{
+    if(window.__TPL_PROFILE__){ fillFromWindow(); clearInterval(timer); }
+    if(++tries>20) clearInterval(timer);
+  }, 400);
+
+  if (document.readyState==='complete') runNow();
+  else window.addEventListener('load', ()=> setTimeout(runNow, 80));
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
   <!-- Mini-injectors -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
