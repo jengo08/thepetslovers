@@ -1,4 +1,4 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-autofill-reserva.js — Autorrelleno desde perfil + selector de mascota] */
+/* TPL: INICIO BLOQUE NUEVO [tpl-autofill-reserva.js — Autorrelleno desde perfil + selector de mascota + hidden EmailJS] */
 (function(){
   'use strict';
   // ===== Helpers DOM =====
@@ -13,27 +13,21 @@
   const db = firebase.firestore();
 
   // ===== Config overridable =====
-  // Si usas otros nombres de colecciones, define esto en global antes de cargar el script:
-  // window.TPL_COLLECTIONS = { owners:'propietarios', pets:'mascotas' }
-  const COLS = Object.assign({ owners:'propietarios', pets:'mascotas' },
-                 window.TPL_COLLECTIONS || {});
+  // Por defecto trabajamos con propietarios/mascotas (puedes overridear en window.TPL_COLLECTIONS)
+  const COLS = Object.assign({ owners:'propietarios', pets:'mascotas' }, window.TPL_COLLECTIONS || {});
 
   // Mapa de IDs/names de inputs -> campos Firestore. Puedes añadir equivalencias sin tocar HTML.
-  // También soporta data-tpl-key="owner.telefono" etc.
   const MAP = Object.assign({
-    'owner.nombre':     ['owner_nombre','nombre','res-nombre','booking-name','nombrePropietario','propietario_nombre'],
-    'owner.apellidos':  ['owner_apellidos','apellidos','res-apellidos'],
-    'owner.email':      ['owner_email','email','correo','res-email','booking-email'],
-    'owner.telefono':   ['owner_telefono','telefono','tel','res-telefono','phone'],
-    'owner.direccion':  ['owner_direccion','direccion','address','res-direccion'],
-    'owner.cp':         ['owner_cp','cp','postal','codigoPostal'],
-    'owner.ciudad':     ['owner_ciudad','ciudad','localidad','poblacion'],
-    'owner.provincia':  ['owner_provincia','provincia'],
-    'owner.dni':        ['owner_dni','dni','nif'],
-    'owner.observaciones':['owner_observaciones','observaciones','notas','comentarios'],
+    'owner.nombre':     ['firstName','owner_nombre','nombre','res-nombre'],
+    'owner.apellidos':  ['lastName','owner_apellidos','apellidos','res-apellidos'],
+    'owner.email':      ['email','owner_email','correo','res-email'],
+    'owner.telefono':   ['phone','owner_telefono','telefono','tel','res-telefono'],
+    'owner.direccion':  ['location','owner_direccion','direccion','address','res-direccion'],
+    'owner.cp':         ['postalCode','owner_cp','cp','postal','codigoPostal'],
+    'owner.ccaa':       ['region','owner_ccaa','ccaa'],
 
     'pet.id':           ['pet_id','mascota_id','res-pet-id'],
-    'pet.nombre':       ['pet_nombre','mascota','res-mascota','nombreMascota'],
+    'pet.nombre':       ['pet_nombre','res-mascota','nombreMascota'],
     'pet.especie':      ['pet_especie','especie'],
     'pet.raza':         ['pet_raza','raza'],
     'pet.edad':         ['pet_edad','edad'],
@@ -50,11 +44,9 @@
       let el = byId(key); if (el) return el;
       el = qs(`[name="${key}"]`); if (el) return el;
     }
-    // data-tpl-key fallback
     const dataKey = keys[0];
     return qs(`[data-tpl-key="${dataKey}"]`) || null;
   }
-
   function setValue(el, val){
     if (!el || val == null) return;
     if (el.dataset?.tplDirty === '1') return; // no pisar lo tecleado
@@ -62,18 +54,23 @@
       if (el.type === 'checkbox'){ el.checked = !!val; }
       else { el.value = val; }
     } else if (el.tagName === 'SELECT'){
-      el.value = val;
+      // Si es la CCAA (region) y el valor es código, normaliza
+      if (el.id === 'region'){
+        const low = String(val||'').toLowerCase();
+        const match = [...el.options].find(o=>o.value===low);
+        if (match) el.value = low;
+      } else {
+        el.value = val;
+      }
     } else { el.textContent = val; }
     el.dispatchEvent(new Event('change', {bubbles:true}));
   }
-
   function bindDirtyTracking(){
     qsa('input,select,textarea').forEach(el=>{
       el.addEventListener('input', ()=> el.dataset.tplDirty = '1');
       el.addEventListener('change', ()=> el.dataset.tplDirty = '1');
     });
   }
-
   function fillOwner(owner){
     for (const [k, ids] of Object.entries(MAP)){
       if (!k.startsWith('owner.')) continue;
@@ -82,7 +79,6 @@
       setValue(el, owner[field]);
     }
   }
-
   function ensureHidden(name, value){
     let el = qs(`input[name="${name}"]`);
     if (!el){
@@ -93,7 +89,6 @@
     }
     el.value = value || '';
   }
-
   function fillPet(pet){
     for (const [k, ids] of Object.entries(MAP)){
       if (!k.startsWith('pet.')) continue;
@@ -101,11 +96,9 @@
       const el = elFor(ids.concat([`pet.${field}`]));
       setValue(el, pet[field]);
     }
-    // JSONs para EmailJS
     ensureHidden('tpl_owner_json', JSON.stringify(state.owner||{}));
     ensureHidden('tpl_pet_json', JSON.stringify(pet||{}));
   }
-
   function renderPetSelector(){
     const mount = byId('tpl-pet-selector');
     if (!mount) return;
@@ -136,46 +129,53 @@
     });
     mount.appendChild(list);
   }
-
   async function loadData(uid){
-    // Owner
-    let ref = db.collection(COLS.owners).doc(uid);
-    let snap = await ref.get();
-    if (!snap.exists && COLS.owners !== 'owners'){
-      ref = db.collection('owners').doc(uid); // fallback alternativo
-      snap = await ref.get();
+    // Owner: propietarios -> users (fallback)
+    async function fetchOwner(){
+      let ref = db.collection(COLS.owners).doc(uid);
+      let snap = await ref.get();
+      if (!snap.exists){ ref = db.collection('users').doc(uid); snap = await ref.get(); }
+      return snap.exists ? Object.assign({id:snap.id}, snap.data()) : null;
     }
-    state.owner = (snap.exists ? Object.assign({id:snap.id}, snap.data()) : null);
-
-    // Pets: subcolección o colección plana
-    const pets = [];
-    try {
-      const sub = await db.collection(COLS.owners).doc(uid).collection(COLS.pets).get();
-      sub.forEach(d=> pets.push(Object.assign({id:d.id}, d.data())));
-    } catch(e){ /* no subcolección */ }
-    if (!pets.length){
-      const q = await db.collection(COLS.pets).where('uid','==',uid).get();
-      q.forEach(d=> pets.push(Object.assign({id:d.id}, d.data())));
+    async function fetchPets(){
+      const out = [];
+      try{
+        const sub = await db.collection(COLS.owners).doc(uid).collection(COLS.pets).get();
+        sub.forEach(d=> out.push(Object.assign({id:d.id}, d.data())));
+      }catch(_){}
+      if (!out.length){
+        try{
+          const q = await db.collection(COLS.pets).where('uid','==',uid).get();
+          q.forEach(d=> out.push(Object.assign({id:d.id}, d.data())));
+        }catch(_){}
+      }
+      // users/{uid}/mascotas fallback
+      if (!out.length){
+        try{
+          const sub = await db.collection('users').doc(uid).collection('mascotas').get();
+          sub.forEach(d=> out.push(Object.assign({id:d.id}, d.data())));
+        }catch(_){}
+      }
+      return out;
     }
-    state.pets = pets;
+    state.owner = await fetchOwner();
+    state.pets  = await fetchPets();
 
     // Cache ligera
-    try {
+    try{
       localStorage.setItem('tpl.owner.'+uid, JSON.stringify(state.owner||{}));
       localStorage.setItem('tpl.pets.'+uid, JSON.stringify(state.pets||[]));
       localStorage.setItem('tpl.cacheAt', Date.now().toString());
-    }catch(e){}
+    }catch(_){}
   }
-
   function tryCache(uid){
     try{
       const owner = JSON.parse(localStorage.getItem('tpl.owner.'+uid) || 'null');
       const pets = JSON.parse(localStorage.getItem('tpl.pets.'+uid) || '[]');
       if (owner){ state.owner = owner; fillOwner(owner); }
       if (pets?.length){ state.pets = pets; renderPetSelector(); }
-    }catch(e){}
+    }catch(_){}
   }
-
   function bindSubmitAugment(){
     const form = document.forms[0];
     if (!form) return;
@@ -186,7 +186,6 @@
       }
     });
   }
-
   function showLoginCTA(){
     const box = byId('tpl-login-note');
     if (box){
@@ -201,8 +200,8 @@
   auth.onAuthStateChanged(async (user)=>{
     state.user = user;
     if (!user){ showLoginCTA(); return; }
-    tryCache(user.uid);                 // pinta rápido
-    await loadData(user.uid);           // asegura datos frescos
+    tryCache(user.uid);
+    await loadData(user.uid);
     if (state.owner) fillOwner(state.owner);
     renderPetSelector();
   });
