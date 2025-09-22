@@ -1,6 +1,7 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Este script gestiona el cálculo de tarifas, bloqueo de envío, alta en Firestore y envío con EmailJS.
-// Además, unifica los campos de nombre y apellidos en un único campo para evitar confusión.
+// Lógica de reservas para The Pets Lovers. Calcula tarifas, muestra el desglose de días,
+// suplementos y descuentos por packs de varios días, bloquea el envío sin perfil,
+// guarda en Firestore y envía notificación por EmailJS.
 
 (function(){
   'use strict';
@@ -8,45 +9,56 @@
   /* ===========================
      Unificar Nombre y Apellidos
      =========================== */
-  /**
-   * Combina el contenido de los campos de nombre y apellidos en un solo campo.
-   * Oculta el campo de apellidos para simplificar el formulario. Mantiene el input
-   * de apellidos en el DOM (aunque oculto) para que otros scripts que dependan
-   * de su existencia no fallen. Actualiza la etiqueta del campo de nombre.
-   */
   function unifyNameFields(){
     const firstNameEl = document.getElementById('firstName');
     const lastNameEl  = document.getElementById('lastName');
     if(!firstNameEl || !lastNameEl) return;
-    // Cambiar etiqueta del primer campo
     const label = document.querySelector('label[for="firstName"]');
     if(label) label.textContent = 'Nombre y apellidos';
-    // Cambiar placeholder
     if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
-    // Unir valores (esperamos a que otros scripts autocompleten primero)
     setTimeout(()=>{
       const nameVal = (firstNameEl.value || '').trim();
       const surVal  = (lastNameEl.value  || '').trim();
       if(surVal){
-        // Si el apellido aún no está incluido en el nombre, combínalos
         if(!nameVal || !nameVal.toLowerCase().includes(surVal.toLowerCase())){
           firstNameEl.value = `${nameVal} ${surVal}`.trim();
           try{
             firstNameEl.dispatchEvent(new Event('input', { bubbles:true }));
             firstNameEl.dispatchEvent(new Event('change',{ bubbles:true }));
-          }catch(_){/* ignore */}
+          }catch(_){}
         }
       }
-      // Ocultar el campo de apellidos conservando el input (para compatibilidad)
       const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
       if(container) container.style.display = 'none';
     }, 800);
   }
 
   /* ===========================
+     Preseleccionar servicio
+     =========================== */
+  function preselectService(){
+    const svcSelect = document.getElementById('service');
+    if(!svcSelect) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    let svc = urlParams.get('service') || urlParams.get('svc') || null;
+    if(!svc){
+      svc = localStorage.getItem('tpl.lastService') || null;
+      if(svc) localStorage.removeItem('tpl.lastService');
+    }
+    if(svc){
+      const opt = Array.from(svcSelect.options).find(o => o.value === svc);
+      if(opt){
+        svcSelect.value = svc;
+        try{
+          svcSelect.dispatchEvent(new Event('change', { bubbles:true }));
+        }catch(_){}
+      }
+    }
+  }
+
+  /* ===========================
      Tarifas base y bonos
      =========================== */
-  // Las tarifas se definen como constantes para mantener el cálculo centralizado.
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
     puppyBase: { guarderia: 20, alojamiento: 35 },
@@ -54,7 +66,7 @@
     visitaMed: 12, visitaMed_larga: 10,
     paseoStd: 12,
     paseoExtraPerro: 8,
-    paseoBonos: { 10: 115, 15: 168, 20: 220, 25: 270, 30: 318 },
+    paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
     alojSegundoPerroDia: 25,
     alojSegundoPerroD11: 22,
     depositPct: 0.30
@@ -90,6 +102,16 @@
     const diff = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? diff + 1 : 0;
   }
+  /* Actualiza la fila de días en el resumen */
+  function updateDaysRow(nDias){
+    const labelEl = document.querySelector('#sumSenalado')?.previousElementSibling;
+    if(labelEl) labelEl.textContent = 'Días';
+    const valueDiv = document.getElementById('sumSenalado')?.parentElement;
+    if(valueDiv){
+      const text = nDias === 1 ? '1 día' : `${nDias} días`;
+      valueDiv.innerHTML = `<span id="sumSenalado">${text}</span>`;
+    }
+  }
 
   /* ===========================
      Cálculo de costes y actualización UI
@@ -97,97 +119,150 @@
   function computeCosts(){
     const svc = document.getElementById('service')?.value || '';
     const species = document.getElementById('species')?.value || 'perro';
-    const isPuppy = document.getElementById('isPuppy')?.value === 'si';
     const visitDur  = parseInt(document.getElementById('visitDuration')?.value || '60', 10);
     const visitDaily= parseInt(document.getElementById('visitDaily')?.value || '1', 10);
     const nMasc = getNumMascotas();
-    const nDias = getDays();
+    const rawDays = getDays();
+    const nDias = Math.max(rawDays, 1);
+    // Actualiza el contador de días en el resumen
+    updateDaysRow(nDias);
 
-    let base = 0, visit1 = 0, visit2 = 0, extras = 0, bono = 0;
+    let baseCost = 0;      // Precio base para 1 mascota
+    let visit1Cost = 0;    // Coste de visitas principales
+    let visit2Cost = 0;    // Coste de visitas secundarias
+    let supplementPetsCost = 0; // Suplementos por mascotas adicionales
+    let bono = 0;          // Descuento por packs o bonos
+    let discountDays = 0;  // Número de días que originan el bono
 
     if(svc === 'visitas'){
-      const long = nDias >= 11;
-      visit1 = (visitDur === 90 ? (long ? PRICES.visita90_larga : PRICES.visita90) :
-                               (long ? PRICES.visita60_larga : PRICES.visita60)) * nDias;
-      visit2 = (visitDaily === 2 ? (long ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0) * nDias;
-      if(nMasc > 1){
-        const extra = nMasc - 1;
-        if(extra === 1) extras += 12;
-        else if(extra === 2) extras += 8 * 2;
-        else extras += 6 * extra;
+      // Cálculo para visitas a domicilio (gatos)
+      const longStay = nDias >= 11;
+      const pricePerDay = (visitDur === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) :
+                                             (longStay ? PRICES.visita60_larga : PRICES.visita60);
+      visit1Cost = pricePerDay * nDias;
+      if(visitDaily === 2){
+        const priceMed = longStay ? PRICES.visitaMed_larga : PRICES.visitaMed;
+        visit2Cost = priceMed * nDias;
       }
+      if(nMasc > 1){
+        const extras = nMasc - 1;
+        if(extras === 1) supplementPetsCost = 12;
+        else if(extras === 2) supplementPetsCost = 8 * 2;
+        else supplementPetsCost = extras * 6;
+      }
+      baseCost = 0;
     } else if(svc === 'paseos'){
+      // Paseos con bono por packs de 10/15/20/25/30 días
       const bonoWalks = PRICES.paseoBonos[nDias] || null;
-      const firstDog = bonoWalks !== null ? bonoWalks : (nDias * PRICES.paseoStd);
-      const extrasPerro = (nMasc - 1) > 0 ? (nMasc - 1) * nDias * PRICES.paseoExtraPerro : 0;
-      base = firstDog + extrasPerro;
+      const normalCost = nDias * PRICES.paseoStd;
+      if(bonoWalks !== null){
+        baseCost = bonoWalks;
+        bono = normalCost - bonoWalks;
+        discountDays = nDias;
+      } else {
+        baseCost = normalCost;
+      }
+      if(nMasc > 1){
+        supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
+      }
     } else if(svc === 'guarderia'){
+      // Guardería de día con paquetes para adultos o cachorros
+      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
       const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
       const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
       const bundle = table[nDias] || null;
+      const normalCost = perDay * nDias;
       if(bundle){
-        base = bundle;
-        if(nMasc >= 2) base += 12 * nDias;
-        if(nMasc >= 3) base += (nMasc - 2) * 8 * nDias;
-        const normalTotal = perDay * nDias;
-        bono = Math.max(0, normalTotal - bundle);
+        baseCost = bundle;
+        bono = normalCost - bundle;
+        discountDays = nDias;
       } else {
-        base = perDay * nDias;
-        if(nMasc >= 2) base += 12 * nDias;
-        if(nMasc >= 3) base += (nMasc - 2) * 8 * nDias;
+        baseCost = normalCost;
+      }
+      if(nMasc >= 2){
+        supplementPetsCost += 12 * nDias;       // segundo perro
+        if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias; // tercero y sucesivos
       }
     } else if(svc === 'alojamiento'){
-      const dayBase = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
-      const dayLong = isPuppy ? 32 : 27;
-      const rate1 = (nDias >= 11) ? dayLong : dayBase;
-      base = rate1 * nDias;
+      // Alojamiento: tarifa diferente a partir del día 11 y suplementos por perro extra
+      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const baseDia = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
+      const baseLong= isPuppy ? 32 : 27;
+      const rate    = (nDias >= 11) ? baseLong : baseDia;
+      baseCost = rate * nDias;
       if(species === 'perro' && nMasc >= 2){
         const extraRate = (nDias >= 11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
-        base += (nMasc - 1) * extraRate * nDias;
+        supplementPetsCost = (nMasc - 1) * extraRate * nDias;
       }
     } else {
-      const svcBase = PRICES.base[svc] || 0;
-      base = svcBase;
+      // Otros servicios (bodas, postquirúrgico, transporte, exóticos)
+      baseCost = PRICES.base[svc] || 0;
+      supplementPetsCost = 0;
     }
 
-    const sumBase = base + visit1 + visit2 + extras;
-    const subtotal = sumBase - bono;
-    const deposit = subtotal * PRICES.depositPct;
+    // Totales
+    const totalBeforeBono = baseCost + visit1Cost + visit2Cost + supplementPetsCost;
+    const subtotal = totalBeforeBono - bono;
+    const deposit  = subtotal * PRICES.depositPct;
 
-    // Actualiza el desglose en pantalla
-    const setText = (id, val) => {
-      const el = document.getElementById(id);
-      if(el) el.textContent = val;
+    // Actualiza UI
+    const byId = id => document.getElementById(id);
+    const els = {
+      sumBase: byId('sumBase'),
+      sumVisit1: byId('sumVisit1'),
+      sumVisit2: byId('sumVisit2'),
+      sumPets: byId('sumPets'),
+      sumFestivo: byId('sumFestivo'),
+      sumSenalado: byId('sumSenalado'),
+      sumTravel: byId('sumTravel'),
+      sumBono: byId('sumBono'),
+      rowBono: document.getElementById('rowBono'),
+      sumSubtotal: byId('sumSubtotal'),
+      sumDeposit: byId('sumDeposit')
     };
-    setText('sumBase', currency(sumBase));
-    setText('sumVisit1', currency(visit1));
-    setText('sumVisit2', currency(visit2));
-    setText('sumPets', currency(extras));
-    setText('sumFestivo', currency(0));
-    setText('sumSenalado', currency(0));
-    setText('sumBono', currency(bono));
-    setText('sumSubtotal', currency(subtotal));
-    setText('sumDeposit', currency(deposit));
+    els.sumBase.textContent     = currency(baseCost);
+    els.sumVisit1.textContent   = currency(visit1Cost);
+    els.sumVisit2.textContent   = currency(visit2Cost);
+    els.sumPets.textContent     = currency(supplementPetsCost);
+    els.sumFestivo.textContent  = '0.00';
+    // sumSenalado se actualiza con updateDaysRow
+    // Desplazamiento permanece como 'pendiente'
 
-    // Mostrar u ocultar filas según corresponda
+    // Mostrar/ocultar filas de visita
     const rowVisit1 = document.getElementById('rowVisit1');
     const rowVisit2 = document.getElementById('rowVisit2');
-    const rowBono   = document.getElementById('rowBono');
-    if(rowVisit1) rowVisit1.style.display = visit1 > 0 ? '' : 'none';
-    if(rowVisit2) rowVisit2.style.display = visit2 > 0 ? '' : 'none';
-    if(rowBono)   rowBono.style.display   = bono > 0 ? '' : 'none';
+    if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
+    if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
 
-    // Genera texto resumido para el campo oculto Desglose
+    // Descuento por bono (guardería o paseos)
+    if(els.rowBono){
+      if(bono > 0){
+        els.rowBono.style.display = '';
+        const label = els.rowBono.querySelector('.summary-label');
+        if(label){
+          label.textContent = `Descuento (${discountDays} días)`;
+        }
+        els.sumBono.textContent = currency(bono);
+      }else{
+        els.rowBono.style.display = 'none';
+        els.sumBono.textContent = '0.00';
+      }
+    }
+    els.sumSubtotal.textContent = currency(subtotal);
+    els.sumDeposit.textContent  = currency(deposit);
+
+    // Componer el resumen para el campo oculto
     const summaryArr = [];
-    summaryArr.push(`Base: ${currency(sumBase)} €`);
-    if(visit1 > 0 || visit2 > 0) summaryArr.push(`Visitas: ${currency(visit1 + visit2)} €`);
-    if(extras > 0) summaryArr.push(`Suplementos: ${currency(extras)} €`);
-    if(bono > 0) summaryArr.push(`Bono: -${currency(bono)} €`);
+    summaryArr.push(`Días: ${nDias}`);
+    if(baseCost > 0) summaryArr.push(`Base: ${currency(baseCost)} €`);
+    if(visit1Cost > 0) summaryArr.push(`1ª visita: ${currency(visit1Cost)} €`);
+    if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
+    if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
+    if(bono > 0) summaryArr.push(`Descuento (${discountDays} días): -${currency(bono)} €`);
     summaryArr.push(`Subtotal: ${currency(subtotal)} €`);
     summaryArr.push(`Depósito: ${currency(deposit)} €`);
-    const summaryTxt = summaryArr.join(' | ');
     const summaryField = document.getElementById('summaryField');
-    if(summaryField) summaryField.value = summaryTxt;
+    if(summaryField) summaryField.value = summaryArr.join(' | ');
   }
 
   function bindEvents(){
@@ -203,7 +278,7 @@
      Inicialización
      =========================== */
   document.addEventListener('DOMContentLoaded', () => {
-    // Unificar campos de nombre y apellidos
+    preselectService();
     unifyNameFields();
     bindEvents();
     computeCosts();
@@ -243,7 +318,7 @@
             }
             return;
           }
-        }catch(_){ /* si falla, seguimos, pero es probable que no haya perfil */ }
+        }catch(_){}
         // Actualiza desglose antes de enviar
         computeCosts();
         // Preparar carga útil a partir del formulario
@@ -287,7 +362,6 @@
         }
         if(saved || mailed){
           alert('Tu reserva se ha enviado correctamente.');
-          // Redirige si el HTML define data-tpl-redirect y data-tpl-wait
           const redirect = form.dataset.tplRedirect || form.getAttribute('data-tpl-redirect');
           const wait = parseInt(form.dataset.tplWait || form.getAttribute('data-tpl-wait') || '800', 10);
           if(redirect){
