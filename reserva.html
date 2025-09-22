@@ -2359,6 +2359,128 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- TPL: INICIO BLOQUE NUEVO [Final Patch — Autorrelleno titular desde perfil (prioridad alta, sin cambiar diseño/envíos)] -->
+<script>
+(function(){
+  'use strict';
+
+  // Helpers
+  function byId(id){ return document.getElementById(id); }
+  function safe(v){ return (v==null?'':String(v)).trim(); }
+  function setIfEmpty(el, val){
+    if(!el) return;
+    if(!safe(el.value) && val!=null && safe(val)!==''){
+      el.value = String(val);
+      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
+      try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    }
+  }
+  // Normalización de CCAA -> value del <select id="region">
+  function normCCAA(x){
+    if(!x) return '';
+    const s = String(x).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
+    const map = {
+      'comunidad de madrid':'madrid','madrid':'madrid','md':'madrid','es-md':'madrid',
+      'andalucia':'andalucia','es-an':'andalucia','an':'andalucia',
+      'aragon':'aragon','es-ar':'aragon',
+      'asturias':'asturias','es-as':'asturias',
+      'illes balears':'baleares','islas baleares':'baleares','baleares':'baleares','es-ib':'baleares',
+      'canarias':'canarias','es-cn':'canarias',
+      'cantabria':'cantabria','es-cb':'cantabria',
+      'castilla-la mancha':'castilla-la-mancha','castilla-la-mancha':'castilla-la-mancha','es-cm':'castilla-la-mancha',
+      'castilla y leon':'castilla-y-leon','castilla-y-leon':'castilla-y-leon','es-cl':'castilla-y-leon',
+      'cataluna':'cataluna','cataluña':'cataluna','es-ct':'cataluna',
+      'comunitat valenciana':'valenciana','valenciana':'valenciana','es-vc':'valenciana',
+      'extremadura':'extremadura','es-ex':'extremadura',
+      'galicia':'galicia','es-ga':'galicia',
+      'la rioja':'la-rioja','es-ri':'la-rioja',
+      'murcia':'murcia','region de murcia':'murcia','es-mc':'murcia',
+      'navarra':'navarra','es-nc':'navarra',
+      'pais vasco':'euskadi','euskadi':'euskadi','es-pv':'euskadi',
+      'ceuta':'ceuta','es-ce':'ceuta',
+      'melilla':'melilla','es-ml':'melilla',
+      'nacional':'nacional'
+    };
+    return map[s] || '';
+  }
+  function setRegionFromAny(val){
+    const sel = byId('region');
+    if(!sel) return;
+    const v = normCCAA(val) || String(val||'').toLowerCase();
+    if ([...sel.options].some(o=>o.value===v)) sel.value = v;
+  }
+
+  // Leer perfil desde varias fuentes (sin pisar si ya está)
+  function hydrateFromObject(obj){
+    if(!obj) return;
+    const owner = obj.propietario || obj.owner || obj;
+    setIfEmpty(byId('firstName'),  owner.firstName || owner.nombre);
+    setIfEmpty(byId('lastName'),   owner.lastName  || owner.apellidos);
+    setIfEmpty(byId('location'),   owner.address   || owner.direccion);
+    setIfEmpty(byId('postalCode'), owner.zip       || owner.postal || owner.cp);
+    setIfEmpty(byId('email'),      owner.email);
+    setIfEmpty(byId('phone'),      owner.phone     || owner.telefono);
+    setRegionFromAny(owner.ccaa || owner.ccaa_code || owner.region || owner.provincia);
+  }
+
+  // 1) Fallbacks locales inmediatamente
+  try{
+    // window.__TPL_PROFILE__ si existe
+    if (window.__TPL_PROFILE__) hydrateFromObject(window.__TPL_PROFILE__);
+    // localStorage('tpl.profile')
+    const raw = localStorage.getItem('tpl.profile');
+    if (raw) hydrateFromObject(JSON.parse(raw));
+    // UDB por usuario: tpl.udb.{uid}.owner
+    const uid =
+      localStorage.getItem('tpl.currentUser') ||
+      localStorage.getItem('tpl_auth_uid') ||
+      'default';
+    const udbOwnerRaw = localStorage.getItem(`tpl.udb.${uid}.owner`);
+    if (udbOwnerRaw) hydrateFromObject(JSON.parse(udbOwnerRaw));
+  }catch(_){}
+
+  // 2) Si hay Firebase, rehidratar desde Firestore al iniciar sesión (owners/{uid} o users/{uid})
+  (function(){
+    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore) return;
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+    async function readOwnerDoc(uid){
+      try{
+        // owners/{uid}
+        let doc = await db.collection('owners').doc(uid).get();
+        if (doc && doc.exists) return doc.data();
+        // users/{uid}
+        doc = await db.collection('users').doc(uid).get();
+        if (doc && doc.exists) return doc.data();
+      }catch(_){}
+      return null;
+    }
+    auth.onAuthStateChanged(async (u)=>{
+      if (!u) return; // obligatorio login para reservar (no cambiamos esa lógica)
+      try{
+        const d = await readOwnerDoc(u.uid);
+        if (d){
+          // Mapear campos habituales
+          const obj = {
+            propietario: {
+              firstName: d.firstName || d.nombre,
+              lastName : d.lastName  || d.apellidos,
+              address  : d.address   || d.direccion,
+              zip      : d.zip       || d.postal || d.cp,
+              email    : d.email     || u.email,
+              phone    : d.phone     || d.telefono || u.phoneNumber,
+              ccaa     : d.ccaa      || d.ccaa_code || d.region || d.provincia
+            }
+          };
+          hydrateFromObject(obj);
+        }
+      }catch(_){}
+    });
+  })();
+
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
 
 </body>
 </html>
