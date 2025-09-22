@@ -1,7 +1,7 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Lógica de reservas para The Pets Lovers. Calcula tarifas, muestra el desglose de días,
-// suplementos y descuentos por packs de varios días, bloquea el envío sin perfil,
-// guarda en Firestore y envía notificación por EmailJS.
+// Gestión integral de reservas para The Pets Lovers: calcula tarifas, aplica bonos parciales,
+// gestiona suplementos por mascotas, muestra desglose de días y descuentos, bloquea el envío
+// si no hay perfil y guarda/manda la reserva con Firebase y EmailJS.
 
 (function(){
   'use strict';
@@ -102,7 +102,6 @@
     const diff = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? diff + 1 : 0;
   }
-  /* Actualiza la fila de días en el resumen */
   function updateDaysRow(nDias){
     const labelEl = document.querySelector('#sumSenalado')?.previousElementSibling;
     if(labelEl) labelEl.textContent = 'Días';
@@ -122,43 +121,48 @@
     const visitDur  = parseInt(document.getElementById('visitDuration')?.value || '60', 10);
     const visitDaily= parseInt(document.getElementById('visitDaily')?.value || '1', 10);
     const nMasc = getNumMascotas();
-    const rawDays = getDays();
-    const nDias = Math.max(rawDays, 1);
-    // Actualiza el contador de días en el resumen
+    let nDias = getDays();
+    // Para servicios sin rango de fechas se considera 1 día
+    if(nDias === 0 && ['transporte','bodas','postquirurgico','exoticos'].includes(svc)){
+      nDias = 1;
+    }
+    // Actualizar visualmente el número de días
     updateDaysRow(nDias);
 
-    let baseCost = 0;      // Precio base para 1 mascota
-    let visit1Cost = 0;    // Coste de visitas principales
-    let visit2Cost = 0;    // Coste de visitas secundarias
-    let supplementPetsCost = 0; // Suplementos por mascotas adicionales
-    let bono = 0;          // Descuento por packs o bonos
-    let discountDays = 0;  // Número de días que originan el bono
+    // Variables de cálculo
+    let baseCost = 0;         // coste base para la primera mascota
+    let visit1Cost = 0;       // coste de la primera visita (visitas a domicilio)
+    let visit2Cost = 0;       // coste de la segunda visita (medicación)
+    let supplementPetsCost = 0; // coste de mascotas extra
+    let bono = 0;             // descuento por pack
+    let discountDays = 0;     // número de días del pack aplicado (si lo hay)
 
     if(svc === 'visitas'){
-      // Cálculo para visitas a domicilio (gatos)
       const longStay = nDias >= 11;
-      const pricePerDay = (visitDur === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) :
-                                             (longStay ? PRICES.visita60_larga : PRICES.visita60);
-      visit1Cost = pricePerDay * nDias;
-      if(visitDaily === 2){
-        const priceMed = longStay ? PRICES.visitaMed_larga : PRICES.visitaMed;
-        visit2Cost = priceMed * nDias;
-      }
+      visit1Cost = (visitDur === 90 ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
+                                    : (longStay ? PRICES.visita60_larga : PRICES.visita60)) * nDias;
+      visit2Cost = (visitDaily === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0) * nDias;
       if(nMasc > 1){
-        const extras = nMasc - 1;
-        if(extras === 1) supplementPetsCost = 12;
-        else if(extras === 2) supplementPetsCost = 8 * 2;
-        else supplementPetsCost = extras * 6;
+        const extra = nMasc - 1;
+        if(extra === 1) supplementPetsCost += 12;
+        else if(extra === 2) supplementPetsCost += 8 * 2;
+        else supplementPetsCost += 6 * extra;
       }
-      baseCost = 0;
     } else if(svc === 'paseos'){
-      // Paseos con bono por packs de 10/15/20/25/30 días
-      const bonoWalks = PRICES.paseoBonos[nDias] || null;
-      const normalCost = nDias * PRICES.paseoStd;
-      if(bonoWalks !== null){
-        baseCost = bonoWalks;
-        bono = normalCost - bonoWalks;
-        discountDays = nDias;
+      // Paseos: aplicar pack más grande ≤ nDias y cobrar el resto a tarifa normal
+      const pricePerDay = PRICES.paseoStd;
+      const packSizes = Object.keys(PRICES.paseoBonos)
+        .map(s => parseInt(s,10))
+        .filter(size => size <= nDias)
+        .sort((a,b) => a - b);
+      const normalCost = nDias * pricePerDay;
+      if(packSizes.length > 0){
+        const packDays = packSizes[packSizes.length - 1];
+        const packPrice = PRICES.paseoBonos[packDays];
+        const remaining = nDias - packDays;
+        baseCost = packPrice + (remaining * pricePerDay);
+        discountDays = packDays;
+        bono = normalCost - baseCost;
       } else {
         baseCost = normalCost;
       }
@@ -166,38 +170,43 @@
         supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
       }
     } else if(svc === 'guarderia'){
-      // Guardería de día con paquetes para adultos o cachorros
+      // Guardería de día: aplicar pack más grande ≤ nDias y cobrar el resto a tarifa diaria
       const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
       const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
       const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
-      const bundle = table[nDias] || null;
       const normalCost = perDay * nDias;
-      if(bundle){
-        baseCost = bundle;
-        bono = normalCost - bundle;
-        discountDays = nDias;
+      const packSizes = Object.keys(table)
+        .map(s => parseInt(s,10))
+        .filter(size => size <= nDias)
+        .sort((a,b) => a - b);
+      if(packSizes.length > 0){
+        const packDays = packSizes[packSizes.length - 1];
+        const packPrice = table[packDays];
+        const remaining = nDias - packDays;
+        baseCost = packPrice + (remaining * perDay);
+        discountDays = packDays;
+        bono = normalCost - baseCost;
       } else {
         baseCost = normalCost;
       }
-      if(nMasc >= 2){
-        supplementPetsCost += 12 * nDias;       // segundo perro
-        if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias; // tercero y sucesivos
-      }
+      // Suplementos por mascotas en guardería: 12 €/día para el 2.º, 8 €/día para el 3.º en adelante
+      if(nMasc >= 2) supplementPetsCost += 12 * nDias;
+      if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias;
     } else if(svc === 'alojamiento'){
-      // Alojamiento: tarifa diferente a partir del día 11 y suplementos por perro extra
+      // Alojamiento: tarifa diferente a partir del día 11
       const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
       const baseDia = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
       const baseLong= isPuppy ? 32 : 27;
       const rate    = (nDias >= 11) ? baseLong : baseDia;
       baseCost = rate * nDias;
+      // Suplemento por 2.º perro (solo perros)
       if(species === 'perro' && nMasc >= 2){
         const extraRate = (nDias >= 11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
         supplementPetsCost = (nMasc - 1) * extraRate * nDias;
       }
     } else {
-      // Otros servicios (bodas, postquirúrgico, transporte, exóticos)
+      // Otros servicios (transporte, bodas, postquirúrgico, exóticos)
       baseCost = PRICES.base[svc] || 0;
-      supplementPetsCost = 0;
     }
 
     // Totales
@@ -220,21 +229,14 @@
       sumSubtotal: byId('sumSubtotal'),
       sumDeposit: byId('sumDeposit')
     };
-    els.sumBase.textContent     = currency(baseCost);
-    els.sumVisit1.textContent   = currency(visit1Cost);
-    els.sumVisit2.textContent   = currency(visit2Cost);
-    els.sumPets.textContent     = currency(supplementPetsCost);
-    els.sumFestivo.textContent  = '0.00';
-    // sumSenalado se actualiza con updateDaysRow
-    // Desplazamiento permanece como 'pendiente'
-
-    // Mostrar/ocultar filas de visita
-    const rowVisit1 = document.getElementById('rowVisit1');
-    const rowVisit2 = document.getElementById('rowVisit2');
-    if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
-    if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
-
-    // Descuento por bono (guardería o paseos)
+    // Precio base: para visitas no hay base, así que muestra '—'
+    els.sumBase.textContent = baseCost > 0 ? currency(baseCost) : '—';
+    els.sumVisit1.textContent = currency(visit1Cost);
+    els.sumVisit2.textContent = currency(visit2Cost);
+    els.sumPets.textContent   = currency(supplementPetsCost);
+    els.sumFestivo.textContent= '0.00';
+    // Días ya se actualizó con updateDaysRow
+    // Bono / descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -243,13 +245,19 @@
           label.textContent = `Descuento (${discountDays} días)`;
         }
         els.sumBono.textContent = currency(bono);
-      }else{
+      } else {
         els.rowBono.style.display = 'none';
         els.sumBono.textContent = '0.00';
       }
     }
     els.sumSubtotal.textContent = currency(subtotal);
     els.sumDeposit.textContent  = currency(deposit);
+
+    // Ajustar visibilidad de filas de visitas
+    const rowVisit1 = document.getElementById('rowVisit1');
+    const rowVisit2 = document.getElementById('rowVisit2');
+    if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
+    if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
 
     // Componer el resumen para el campo oculto
     const summaryArr = [];
@@ -282,7 +290,7 @@
     unifyNameFields();
     bindEvents();
     computeCosts();
-    // Bloqueo/activación según login
+    // Control de login: oculta formulario si no hay sesión
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -293,20 +301,19 @@
         if(wall) wall.style.display = logged ? 'none' : 'block';
       });
     }
-    // Envío del formulario: crea reserva en Firestore y envía EmailJS
+    // Envío del formulario: guarda en Firestore y envía EmailJS
     const form = document.getElementById('bookingForm');
     if(form){
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-        // Verificar sesión
         const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
         const user = auth?.currentUser || null;
         if(!user){
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-        // Asegurar que el usuario tenga perfil (colección propietarios/usuarios)
+        // Verificar perfil en Firestore
         try{
           const db = firebase.firestore();
           const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
@@ -319,9 +326,9 @@
             return;
           }
         }catch(_){}
-        // Actualiza desglose antes de enviar
+        // Calcular costes antes de enviar
         computeCosts();
-        // Preparar carga útil a partir del formulario
+        // Preparar payload
         const fd = new FormData(form);
         const payload = {};
         for(const [k,v] of fd.entries()){
@@ -345,7 +352,7 @@
         }catch(err){
           console.warn('No se pudo guardar la reserva en Firestore', err);
         }
-        // Enviar EmailJS (usa placeholders si no hay datos reales)
+        // Enviar por EmailJS
         let mailed = false;
         try{
           if(window.emailjs){
