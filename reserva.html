@@ -2058,6 +2058,259 @@
   else start();
 })();
 </script>
+<script>
+/* =========================================================
+   TPL · PARCHE ÚNICO “RESERVAS” (sin reservas-core)
+   Colocar ESTE bloque justo antes de </body>.
+   Hace lo siguiente:
+   - Añade checkbox RGPD y valida fechas / teléfono ES.
+   - Muestra overlay de éxito SOLO si Firestore o EmailJS funcionaron.
+   - Ajusta copy del “muro” si se puede reservar sin login.
+   - Arregla accesibilidad del autocompletado de dirección y lo sanea.
+   - Mantiene tu UI y cálculos (no borra nada).
+   ========================================================= */
+
+(function(){
+  'use strict';
+
+  // ——— Helpers DOM
+  function $(sel,root){ return (root||document).querySelector(sel); }
+  function $all(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
+  function byId(id){ return document.getElementById(id); }
+  const form = byId('bookingForm');
+  if (!form) return;
+
+  // ======================================================
+  // 1) Ajuste del "muro" (auth-wall) para no confundir
+  // ======================================================
+  (function(){
+    const wall = byId('authWall');
+    if (!wall) return;
+    const strong = wall.querySelector('p strong');
+    const note = wall.querySelector('.note');
+    if (strong) strong.textContent = 'Inicia sesión para autocompletar tus datos y elegir tus mascotas guardadas.';
+    if (note)   note.textContent   = 'También puedes enviar la solicitud sin iniciar sesión.';
+    // Aseguramos que el formulario no esté bloqueado visualmente
+    form.classList.remove('disabled');
+  })();
+
+  // ======================================================
+  // 2) Inyectar checkbox RGPD (si no existe) + estilos suaves
+  // ======================================================
+  (function injectRGPD(){
+    if (byId('consent')) return;
+    const actions = form.querySelector('.tpl-actions');
+    if (!actions) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'booking-field';
+    wrap.style.gridColumn = '1 / -1';
+    wrap.innerHTML = `
+      <label style="display:flex;align-items:flex-start;gap:8px;line-height:1.35">
+        <input type="checkbox" id="consent" required style="margin-top:2px">
+        <span>He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+      </label>
+    `;
+    // Insertamos justo ANTES del bloque de acciones
+    actions.parentNode.insertBefore(wrap, actions);
+  })();
+
+  // ======================================================
+  // 3) Accesibilidad y saneo del autocompletado de dirección
+  //    - aria-expanded en el input
+  //    - saneo de items renderizados (solo textContent)
+  //    - Si tu código vuelve a renderizar, volvemos a sanear (MutationObserver)
+  // ======================================================
+  (function enhanceAddressAutocomplete(){
+    const addrInput = byId('location');
+    const sugestBox = byId('tplAddrSuggest');
+    if (!addrInput || !sugestBox) return;
+
+    // Atributos ARIA básicos
+    addrInput.setAttribute('aria-haspopup','listbox');
+    addrInput.setAttribute('aria-expanded','false');
+
+    // Saneo de los items existentes o nuevos
+    function sanitizeSuggestions(){
+      const items = sugestBox.querySelectorAll('.tpl-addr-item');
+      if (!items.length){
+        addrInput.setAttribute('aria-expanded','false');
+        sugestBox.style.display = sugestBox.style.display || 'none';
+        return;
+      }
+      items.forEach(node=>{
+        // Si trae innerHTML “rico”, lo pasamos a texto plano
+        const raw = node.textContent || node.innerText || '';
+        node.textContent = raw;
+        node.setAttribute('role','option');
+        if (!node.tabIndex) node.tabIndex = 0;
+        // Normalizamos eventos: Enter y Space
+        node.onkeydown = (e)=>{
+          if(e.key==='Enter' || e.key===' '){ node.click(); }
+        };
+      });
+      addrInput.setAttribute('aria-expanded','true');
+      sugestBox.style.display = 'block';
+    }
+
+    // Observamos cambios en el contenedor de sugerencias para sanear siempre
+    const mo = new MutationObserver(()=> sanitizeSuggestions());
+    mo.observe(sugestBox, { childList:true, subtree:false });
+
+    // Cierre al click fuera
+    document.addEventListener('click', (e)=>{
+      if(!sugestBox.contains(e.target) && e.target!==addrInput){
+        sugestBox.style.display='none';
+        addrInput.setAttribute('aria-expanded','false');
+      }
+    });
+  })();
+
+  // ======================================================
+  // 4) Validaciones (fechas coherentes, tfno ES cuando toca, RGPD)
+  // ======================================================
+  function normalizePhoneES(raw){
+    if (raw == null) return '';
+    return String(raw).replace(/\s+/g,'').replace(/^(\+34)/,'').trim();
+  }
+  function validatePhoneES(s){ return /^[679]\d{8}$/.test(s); }
+  function getPrefContacto(){
+    try{ return (new FormData(form).get('Preferencia_contacto')) || 'cualquiera'; }
+    catch(_){ return 'cualquiera'; }
+  }
+  function validatePreSubmit(){
+    const els = {
+      startDate: byId('startDate'),
+      endDate: byId('endDate'),
+      phone: byId('phone'),
+      consent: byId('consent')
+    };
+    // Fechas (fin >= inicio)
+    const s = new Date(els.startDate?.value || '');
+    const t = new Date(els.endDate?.value || '');
+    if (isNaN(s) || isNaN(t) || t < s) {
+      alert('Revisa las fechas: la fecha fin no puede ser anterior a la de inicio.');
+      return false;
+    }
+    // RGPD
+    if (!els.consent?.checked){
+      alert('Debes aceptar la Política de Privacidad para continuar.');
+      return false;
+    }
+    // Teléfono si prefieres llamada/WhatsApp
+    const pref = getPrefContacto();
+    if (pref === 'telefono' || pref === 'whatsapp') {
+      const tel = normalizePhoneES(els.phone?.value);
+      if(!validatePhoneES(tel)){
+        alert('Introduce un teléfono español válido (9 dígitos, empieza por 6/7/9).');
+        return false;
+      }
+      // Normalizamos a +34 para la ficha
+      if (els.phone) els.phone.value = '+34 ' + tel;
+    }
+    return true;
+  }
+
+  // ======================================================
+  // 5) Envío robusto: éxito solo si Firestore o EmailJS
+  //    - Cancelamos el submit original (capturing) y gestionamos nosotros.
+  //    - Reutilizamos tryEmailJS() y showSuccessOverlay() de tu página.
+  // ======================================================
+  form.addEventListener('submit', async function onSubmitPatch(ev){
+    // Capturamos y frenamos el flujo original
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+
+    if (!validatePreSubmit()) return;
+
+    // Preparamos piezas/funciones ya existentes en tu HTML
+    const tryEmailJS = (window.tryEmailJS || (async ()=>false));
+    const showSuccessOverlay = (window.showSuccessOverlay || (function(){
+      alert('Tu solicitud se ha enviado. (overlay genérico)');
+    }));
+
+    // (Re)construir detalle de mascotas como hace tu script nativo
+    try{
+      const uid = (window.firebase?.auth?.().currentUser?.uid) || 'default';
+      const key = (k)=>`tpl.udb.${uid}.${k}`;
+      const hasPets = localStorage.getItem(key('pets')) !== null;
+      let arr = hasPets ? JSON.parse(localStorage.getItem(key('pets'))||'[]') : JSON.parse(localStorage.getItem(key('mascotas'))||'[]');
+      if (!Array.isArray(arr)) arr = [];
+      const selectedNames = (byId('petsListHidden')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+      let chosen = [];
+      if (selectedNames.length){ chosen = arr.filter(p => selectedNames.includes((p?.nombre||'').trim())); }
+      else if (arr.length === 1){ chosen = [arr[0]]; }
+
+      const rows = chosen.map(p => ({
+        Nombre:(p?.nombre||'').trim(), Especie:(p?.especie||p?.tipo||'').trim(), Raza:(p?.raza||p?.tipoExotico||'').trim(),
+        Edad:(p?.edad||'').trim(), Peso:(p?.peso||'').trim(), Microchip:(p?.microchip||'').trim(), Esterilizado:(p?.esterilizado||'').trim(),
+        Vacunas:(p?.vacunas||'').trim(), Salud:(p?.salud||'').trim(), Tratamiento:(p?.tratamiento||'').trim(), Comportamiento:(p?.comportamiento||'').trim()
+      }));
+      const text = rows.map(r=>`Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}`).join(' || ');
+      const det = byId('petsDetail'); if (det) det.value = text;
+      const detJson = byId('petsDetailJson'); if (detJson) detJson.value = JSON.stringify(rows);
+    }catch(_){}
+
+    // Preparar envío
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+    let extra = { _page: location.href, _tipo: 'reserva', _estado: 'enviada' };
+
+    // Firestore
+    let saved = false;
+    try{
+      if (window.firebase?.firestore){
+        const db = firebase.firestore();
+        const auth = firebase.auth?.();
+        const u = auth?.currentUser || null;
+        payload._page = location.href; payload._estado = 'enviada';
+        if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        if (u) { payload._uid = u.uid; payload._email = u.email || null; }
+        const docRef = await db.collection('reservas').add(payload);
+        extra.reserva_id = extra.doc_id = docRef.id;
+        saved = true;
+      }
+    }catch(err){ console.warn('No se pudo guardar en Firestore', err); }
+
+    // EmailJS
+    let mailed = false;
+    try{
+      mailed = await tryEmailJS(new FormData(form), extra);
+    }catch(err){ console.warn('EmailJS falló', err); }
+
+    if (saved || mailed) {
+      showSuccessOverlay();
+    } else {
+      alert('No se pudo enviar la reserva. Por favor, inténtalo de nuevo en unos minutos.');
+    }
+  }, true); // <- capturing, para adelantarnos al listener original
+
+  // ======================================================
+  // 6) Refuerzo de validación de preferencia de contacto (por si acaso)
+  //    (Permite enviar con "cualquiera", exige teléfono si elige teléfono/WhatsApp)
+  // ======================================================
+  (function reinforcePreference(){
+    const tel = byId('phone'), email = byId('email');
+    form.addEventListener('change', (e)=>{
+      if (!e || !e.target) return;
+      if (e.target.name === 'Preferencia_contacto'){
+        const pref = getPrefContacto();
+        if (pref==='telefono' || pref==='whatsapp'){
+          tel?.setAttribute('required','required');
+          email?.removeAttribute('required');
+        }else if (pref==='email'){
+          email?.setAttribute('required','required');
+          tel?.removeAttribute('required');
+        }else{
+          email?.removeAttribute('required');
+          tel?.removeAttribute('required');
+        }
+      }
+    });
+  })();
+
+})();
+</script>
 
 </body>
 </html>
