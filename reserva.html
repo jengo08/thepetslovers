@@ -2311,5 +2311,54 @@
 
 })();
 </script>
+  <!-- TPL: INICIO BLOQUE NUEVO [Requerir login para poder reservar (sin cambiar diseño/envíos)] -->
+<script>
+(function(){
+  'use strict';
+  // Requiere Firebase (ya lo tienes cargado arriba)
+  if (typeof firebase === 'undefined' || !firebase.auth) return;
+
+  var form = document.getElementById('bookingForm');
+  var wall = document.getElementById('authWall');
+
+  function setEnabled(on){
+    try{
+      if (form) form.classList.toggle('disabled', !on);
+      if (wall) wall.style.display = on ? 'none' : 'block';
+    }catch(_){}
+  }
+
+  // Guard de envío: si no hay sesión, no se puede reservar
+  function guardSubmit(e){
+    try{
+      var u = firebase.auth().currentUser;
+      if (!u){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        alert('Debes iniciar sesión para reservar.');
+        // Opcional: enfocar el bloque de login inline si existe
+        var inline = document.getElementById('tpl-inline-login');
+        if (inline) inline.scrollIntoView({behavior:'smooth', block:'center'});
+        return false;
+      }
+    }catch(_){}
+    return true;
+  }
+
+  // Enlazar guard en captura para adelantarnos a otros listeners
+  if (form){
+    form.addEventListener('submit', guardSubmit, true);
+  }
+
+  // Sincroniza estado visual (sin cambiar el diseño ni textos)
+  var auth = firebase.auth();
+  setEnabled(!!auth.currentUser);
+  auth.onAuthStateChanged(function(u){
+    setEnabled(!!u);
+  });
+})();
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
+
 </body>
 </html>
