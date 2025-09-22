@@ -1,26 +1,62 @@
 // reservas.js (REEMPLAZAR ENTERO)
+// Este script gestiona el cálculo de tarifas, bloqueo de envío, alta en Firestore y envío con EmailJS.
+// Además, unifica los campos de nombre y apellidos en un único campo para evitar confusión.
+
 (function(){
   'use strict';
 
   /* ===========================
+     Unificar Nombre y Apellidos
+     =========================== */
+  /**
+   * Combina el contenido de los campos de nombre y apellidos en un solo campo.
+   * Oculta el campo de apellidos para simplificar el formulario. Mantiene el input
+   * de apellidos en el DOM (aunque oculto) para que otros scripts que dependan
+   * de su existencia no fallen. Actualiza la etiqueta del campo de nombre.
+   */
+  function unifyNameFields(){
+    const firstNameEl = document.getElementById('firstName');
+    const lastNameEl  = document.getElementById('lastName');
+    if(!firstNameEl || !lastNameEl) return;
+    // Cambiar etiqueta del primer campo
+    const label = document.querySelector('label[for="firstName"]');
+    if(label) label.textContent = 'Nombre y apellidos';
+    // Cambiar placeholder
+    if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
+    // Unir valores (esperamos a que otros scripts autocompleten primero)
+    setTimeout(()=>{
+      const nameVal = (firstNameEl.value || '').trim();
+      const surVal  = (lastNameEl.value  || '').trim();
+      if(surVal){
+        // Si el apellido aún no está incluido en el nombre, combínalos
+        if(!nameVal || !nameVal.toLowerCase().includes(surVal.toLowerCase())){
+          firstNameEl.value = `${nameVal} ${surVal}`.trim();
+          try{
+            firstNameEl.dispatchEvent(new Event('input', { bubbles:true }));
+            firstNameEl.dispatchEvent(new Event('change',{ bubbles:true }));
+          }catch(_){/* ignore */}
+        }
+      }
+      // Ocultar el campo de apellidos conservando el input (para compatibilidad)
+      const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
+      if(container) container.style.display = 'none';
+    }, 800);
+  }
+
+  /* ===========================
      Tarifas base y bonos
      =========================== */
+  // Las tarifas se definen como constantes para mantener el cálculo centralizado.
   const PRICES = {
-    // precio base por servicio (visitas, paseos, guardería, alojamiento, bodas, postquirúrgico, transporte, exóticos)
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
-    // precios base para cachorros en guardería y alojamiento
     puppyBase: { guarderia: 20, alojamiento: 35 },
-    // visitas a domicilio (60/90 min) y largas (desde el día 11)
     visita60: 22, visita90: 30, visita60_larga: 18, visita90_larga: 27,
     visitaMed: 12, visitaMed_larga: 10,
-    // paseos
     paseoStd: 12,
     paseoExtraPerro: 8,
     paseoBonos: { 10: 115, 15: 168, 20: 220, 25: 270, 30: 318 },
-    // alojamiento: suplemento por segundo perro
     alojSegundoPerroDia: 25,
     alojSegundoPerroD11: 22,
-    // porcentaje de depósito retenido
     depositPct: 0.30
   };
   const BUNDLE_GUARDERIA = {
@@ -167,6 +203,8 @@
      Inicialización
      =========================== */
   document.addEventListener('DOMContentLoaded', () => {
+    // Unificar campos de nombre y apellidos
+    unifyNameFields();
     bindEvents();
     computeCosts();
     // Bloqueo/activación según login
@@ -180,14 +218,12 @@
         if(wall) wall.style.display = logged ? 'none' : 'block';
       });
     }
-
     // Envío del formulario: crea reserva en Firestore y envía EmailJS
     const form = document.getElementById('bookingForm');
     if(form){
       form.addEventListener('submit', async (ev) => {
         ev.preventDefault();
         ev.stopPropagation();
-
         // Verificar sesión
         const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
         const user = auth?.currentUser || null;
@@ -195,10 +231,21 @@
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-
+        // Asegurar que el usuario tenga perfil (colección propietarios/usuarios)
+        try{
+          const db = firebase.firestore();
+          const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
+          const doc = await db.collection(col).doc(user.uid).get();
+          if(!doc.exists){
+            alert('Completa tu perfil antes de hacer una reserva.');
+            if(window.location.pathname.indexOf('perfil')===-1) {
+              window.location.href = 'perfil.html';
+            }
+            return;
+          }
+        }catch(_){ /* si falla, seguimos, pero es probable que no haya perfil */ }
         // Actualiza desglose antes de enviar
         computeCosts();
-
         // Preparar carga útil a partir del formulario
         const fd = new FormData(form);
         const payload = {};
@@ -211,7 +258,6 @@
         if(firebase.firestore && firebase.firestore.FieldValue){
           payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
         }
-
         // Guardar en Firestore
         let saved = false;
         let docId = null;
@@ -224,8 +270,7 @@
         }catch(err){
           console.warn('No se pudo guardar la reserva en Firestore', err);
         }
-
-        // Enviar EmailJS (usa placeholders)
+        // Enviar EmailJS (usa placeholders si no hay datos reales)
         let mailed = false;
         try{
           if(window.emailjs){
@@ -240,7 +285,6 @@
         }catch(err){
           console.warn('No se pudo enviar la reserva por EmailJS', err);
         }
-
         if(saved || mailed){
           alert('Tu reserva se ha enviado correctamente.');
           // Redirige si el HTML define data-tpl-redirect y data-tpl-wait
