@@ -2476,6 +2476,25 @@
 })();
 </script>
 <!-- TPL: FIN BLOQUE NUEVO -->
+<!-- Llama a updateSummaryFromJS para actualizar el desglose después de cada cambio -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('bookingForm');
+  function reapply() {
+    setTimeout(function(){
+      if (window.updateSummaryFromJS) {
+        window.updateSummaryFromJS();
+      }
+    }, 250);
+  }
+  if (form) {
+    form.addEventListener('change', reapply);
+    form.addEventListener('input', reapply);
+    // Ejecuta una vez al cargar para que el desglose se ajuste desde el principio
+    reapply();
+  }
+});
+</script>
 
 </body>
 </html>
