@@ -1,14 +1,11 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Lógica completa para gestionar reservas de The Pets Lovers. Incluye cálculo de precios,
-// packs de días, suplementos, exóticos, autocompletado de servicio y nombre, control de
-// autenticación, envío a Firestore y EmailJS y desgloses detallados.
+// Gestión completa de reservas para The Pets Lovers. Calcula precios, packs de días,
+// suplementos de mascotas, exóticos y expone la función de cálculo para uso externo.
 
 (function(){
   'use strict';
 
-  /* ===========================
-     Unificar Nombre y Apellidos
-     =========================== */
+  /* ============= Unificación Nombre y Apellidos ============= */
   function unifyNameFields(){
     const firstNameEl = document.getElementById('firstName');
     const lastNameEl  = document.getElementById('lastName');
@@ -33,9 +30,7 @@
     }, 800);
   }
 
-  /* ===========================
-     Preseleccionar servicio desde servicios.html
-     =========================== */
+  /* ============= Preselección de servicio ============= */
   function preselectService(){
     const svcSelect = document.getElementById('service');
     if(!svcSelect) return;
@@ -49,16 +44,12 @@
       const opt = Array.from(svcSelect.options).find(o => o.value === svc);
       if(opt){
         svcSelect.value = svc;
-        try{
-          svcSelect.dispatchEvent(new Event('change', { bubbles:true }));
-        }catch(_){}
+        try{ svcSelect.dispatchEvent(new Event('change',{ bubbles:true })); }catch(_){}
       }
     }
   }
 
-  /* ===========================
-     Tarifas base, bonos y exóticos
-     =========================== */
+  /* ============= Tarifas base, bonos y exóticos ============= */
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
     puppyBase: { guarderia: 20, alojamiento: 35 },
@@ -75,18 +66,15 @@
     adult: { 10: 135, 20: 250, 30: 315 },
     puppy: { 10: 185, 20: 350, 30: 465 }
   };
-  // Tarifas por día para animales exóticos; ajustar según tarifas reales
   const EXOTIC_PRICES = {
     conejo: 15,
     pajaro: 12,
     huron: 18,
     iguana: 20,
-    otro: null // precio a consultar
+    otro: null
   };
 
-  /* ===========================
-     Utilidades
-     =========================== */
+  /* ============= Utilidades ============= */
   function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
   function getNumMascotas(){
     const select = document.getElementById('numPets');
@@ -120,9 +108,7 @@
     }
   }
 
-  /* ===========================
-     Cambio dinámico de opciones exóticas
-     =========================== */
+  /* ============= Opciones exóticas dinámicas ============= */
   function toggleExoticSpecies(){
     const svc = document.getElementById('service')?.value || '';
     const speciesSelect = document.getElementById('species');
@@ -143,9 +129,7 @@
     }
   }
 
-  /* ===========================
-     Cálculo de costes y desglose visible
-     =========================== */
+  /* ============= Cálculo de costes y actualización ============= */
   function computeCosts(){
     const svc = document.getElementById('service')?.value || '';
     const species = document.getElementById('species')?.value || 'perro';
@@ -241,7 +225,8 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        supplementPetsCost = 0; // añadir si procede
+        // si quieres añadir suplemento por varias mascotas exóticas, hazlo aquí
+        supplementPetsCost = 0;
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
@@ -260,32 +245,19 @@
       sumPets: byId('sumPets'),
       sumFestivo: byId('sumFestivo'),
       sumSenalado: byId('sumSenalado'),
-      sumTravel: byId('sumTravel'),
       sumBono: byId('sumBono'),
       rowBono: document.getElementById('rowBono'),
       sumSubtotal: byId('sumSubtotal'),
       sumDeposit: byId('sumDeposit')
     };
+
     // Mostrar base; si no hay precio (exóticos sin tarifa), mostrar '—'
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
-    // Tooltip con detalle del bono
-    if(els.sumBase && els.sumBase.parentElement){
-      if(packInfo){
-        let tip = `Bono ${packInfo.days} días: ${currency(packInfo.price)} €`;
-        if(packInfo.remaining > 0){
-          tip += `; ${packInfo.remaining} × ${currency(packInfo.perDay)} € = ${currency(packInfo.remaining * packInfo.perDay)} €`;
-        }
-        els.sumBase.parentElement.title = tip;
-        els.sumBase.parentElement.setAttribute('aria-label', tip);
-      } else {
-        els.sumBase.parentElement.title = '';
-        els.sumBase.parentElement.removeAttribute('aria-label');
-      }
-    }
-    // Reutilizar fila de Festivos para el bono
+
+    // Fila de Festivos reutilizada para bono
     const festLabelEl = els.sumFestivo?.previousElementSibling;
     if(festLabelEl && !festLabelEl.dataset.origLabel){
       festLabelEl.dataset.origLabel = festLabelEl.textContent;
@@ -301,7 +273,8 @@
       festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
       els.sumFestivo.textContent = '0.00';
     }
-    // Bono/Descuento
+
+    // Bono/descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -313,17 +286,10 @@
         els.sumBono.textContent = '0.00';
       }
     }
-    // Subtotal y depósito
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
-    // Mostrar/ocultar filas de visitas
-    const rowVisit1 = document.getElementById('rowVisit1');
-    const rowVisit2 = document.getElementById('rowVisit2');
-    if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
-    if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
-
-    // Construcción del resumen oculto
+    // Construir el resumen para EmailJS
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
     if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base: ${currency(baseCost)} €`);
@@ -343,9 +309,7 @@
     if(summaryField) summaryField.value = summaryArr.join(' | ');
   }
 
-  /* ===========================
-     Enlazar eventos
-     =========================== */
+  /* ============= Enlazar eventos ============= */
   function bindEvents(){
     const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact'];
     ids.forEach(id=>{
@@ -358,19 +322,17 @@
     });
   }
 
-  /* ===========================
-     Inicialización y envío
-     =========================== */
+  /* ============= Inicialización y envío ============= */
   document.addEventListener('DOMContentLoaded', () => {
     preselectService();
     unifyNameFields();
     toggleExoticSpecies();
     bindEvents();
-    // Esperar a que otros scripts internos calculen y luego recalcular el desglose
+    // Recalcula al inicio y tras un pequeño retardo para sobrescribir el desglose del HTML
     computeCosts();
-    setTimeout(computeCosts, 500); // asegura que nuestro desglose prevalezca
+    setTimeout(computeCosts, 300);
 
-    // Control de autenticación y habilitación del formulario
+    // Control de autenticación (activa/desactiva el formulario)
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -382,7 +344,7 @@
       });
     }
 
-    // Gestión del envío del formulario
+    // Envío del formulario (Firestore + EmailJS)
     const form = document.getElementById('bookingForm');
     if(form){
       form.addEventListener('submit', async (ev) => {
@@ -393,7 +355,7 @@
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-        // Verificar perfil en Firestore
+        // Verifica perfil en Firestore
         try{
           const db = firebase.firestore();
           const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
@@ -406,9 +368,9 @@
             return;
           }
         }catch(_){}
-        // Recalcular desglose antes de enviar
+        // Recalcula antes de enviar
         computeCosts();
-        // Preparar payload
+        // Prepara payload
         const fd = new FormData(form);
         const payload = {};
         for(const [k,v] of fd.entries()){ payload[k] = v; }
@@ -454,6 +416,6 @@
     }
   });
 
-  // Exponemos computeCosts() para que reserva.html pueda llamarlo al terminar recalc()
+  // Exponer computeCosts() para que reserva.html pueda llamar a la actualización
   window.updateSummaryFromJS = computeCosts;
 })();
