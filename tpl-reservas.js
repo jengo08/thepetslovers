@@ -1,7 +1,7 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Lógica completa para gestionar reservas de The Pets Lovers. Incluye cálculo de precios,
-// packs de días, suplementos, exóticos, autocompletado de servicio y nombre, control de
-// autenticación, envío a Firestore y EmailJS y desgloses detallados.
+// Gestión completa de reservas para The Pets Lovers, con packs parciales, desglose de
+// bonos, exóticos, suplementos de mascotas y control de autenticación. Ahora incluye
+// la separación visible del importe del paquete y los días extra en el resumen.
 
 (function(){
   'use strict';
@@ -34,7 +34,7 @@
   }
 
   /* ===========================
-     Preseleccionar servicio desde servicios.html
+     Preseleccionar servicio
      =========================== */
   function preselectService(){
     const svcSelect = document.getElementById('service');
@@ -75,13 +75,12 @@
     adult: { 10: 135, 20: 250, 30: 315 },
     puppy: { 10: 185, 20: 350, 30: 465 }
   };
-  // Tarifas por día para animales exóticos; ajustar según tarifas reales
   const EXOTIC_PRICES = {
     conejo: 15,
     pajaro: 12,
     huron: 18,
     iguana: 20,
-    otro: null // precio a consultar
+    otro: null
   };
 
   /* ===========================
@@ -121,7 +120,7 @@
   }
 
   /* ===========================
-     Cambio dinámico de opciones exóticas
+     Opciones exóticas dinámicas
      =========================== */
   function toggleExoticSpecies(){
     const svc = document.getElementById('service')?.value || '';
@@ -144,7 +143,7 @@
   }
 
   /* ===========================
-     Cálculo de costes y actualización del resumen
+     Cálculo y desglose de costes
      =========================== */
   function computeCosts(){
     const svc = document.getElementById('service')?.value || '';
@@ -165,7 +164,7 @@
     let bono = 0;
     let discountDays = 0;
     let exoticUnpriced = false;
-    let packInfo = null; // detalle del pack para tooltip y resumen
+    let packInfo = null; // Detalle del bono (paquete)
 
     if(svc === 'visitas'){
       const longStay = nDias >= 11;
@@ -241,8 +240,7 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        // Si se desea, definir un suplemento para varias mascotas exóticas
-        supplementPetsCost = 0;
+        supplementPetsCost = 0; // añadir si procede
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
@@ -267,13 +265,24 @@
       sumSubtotal: byId('sumSubtotal'),
       sumDeposit: byId('sumDeposit')
     };
+
+    // Guardar etiquetas originales para el campo de Festivos si no existen
+    const festLabelEl = els.sumFestivo?.previousElementSibling;
+    const festValueParent = els.sumFestivo?.parentElement;
+    if(festLabelEl && festLabelEl.dataset.origLabel === undefined){
+      festLabelEl.dataset.origLabel = festLabelEl.textContent;
+    }
+    if(festValueParent && festValueParent.dataset.origHtml === undefined){
+      festValueParent.dataset.origHtml = festValueParent.innerHTML;
+    }
+
     // Mostrar base; si no hay precio (exóticos sin tarifa), mostrar '—'
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
-    els.sumFestivo.textContent= '0.00';
-    // Tooltip para desglosar bono + días extra
+
+    // Tooltip con detalle del bono
     if(els.sumBase && els.sumBase.parentElement){
       if(packInfo){
         let tip = `Bono ${packInfo.days} días: ${currency(packInfo.price)} €`;
@@ -287,7 +296,30 @@
         els.sumBase.parentElement.removeAttribute('aria-label');
       }
     }
-    // Bono
+
+    // Fila de Festivos -> reutilizada para mostrar el paquete
+    if(packInfo){
+      if(festLabelEl) festLabelEl.textContent = `Paquete ${packInfo.days} días`;
+      if(festValueParent){
+        let valueText = currency(packInfo.price);
+        if(packInfo.remaining > 0){
+          valueText += ` (+${packInfo.remaining}×${currency(packInfo.perDay)}€)`;
+        }
+        // mostrar valor y símbolo de euro
+        festValueParent.innerHTML = `<span id="sumFestivo">${valueText}</span> €`;
+      }
+    } else {
+      // Restaurar etiqueta y valor de Festivos
+      if(festLabelEl) festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
+      if(festValueParent) festValueParent.innerHTML = festValueParent.dataset.origHtml || `<span id="sumFestivo">0.00</span> €`;
+      els.sumFestivo.textContent = '0.00';
+    }
+
+    els.sumFestivo.textContent = els.sumFestivo.textContent; // para asegurar formato
+    els.sumSenalado; // ya se actualizó en updateDaysRow
+    els.sumTravel;   // queda en "pendiente"
+
+    // Bono / descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -299,6 +331,8 @@
         els.sumBono.textContent = '0.00';
       }
     }
+
+    // Subtotal y depósito
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
@@ -308,14 +342,14 @@
     if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
     if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
 
-    // Construir el resumen para EmailJS
+    // Construir resumen para EmailJS
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
     if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base: ${currency(baseCost)} €`);
     if(visit1Cost > 0) summaryArr.push(`1ª visita: ${currency(visit1Cost)} €`);
     if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
     if(packInfo){
-      summaryArr.push(`Pack ${packInfo.days} días: ${currency(packInfo.price)} €`);
+      summaryArr.push(`Paquete ${packInfo.days} días: ${currency(packInfo.price)} €`);
       if(packInfo.remaining > 0){
         summaryArr.push(`${packInfo.remaining} día(s) extra: ${currency(packInfo.remaining * packInfo.perDay)} €`);
       }
@@ -329,7 +363,7 @@
   }
 
   /* ===========================
-     Enlazar eventos de cambio y entrada
+     Enlazar eventos y recalcular
      =========================== */
   function bindEvents(){
     const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact'];
@@ -344,7 +378,7 @@
   }
 
   /* ===========================
-     Inicialización
+     Inicialización general
      =========================== */
   document.addEventListener('DOMContentLoaded', () => {
     preselectService();
@@ -353,7 +387,7 @@
     bindEvents();
     computeCosts();
 
-    // Control de autenticación: mostrar u ocultar formulario
+    // Control de autenticación
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -365,7 +399,7 @@
       });
     }
 
-    // Gestión del envío de la reserva
+    // Gestión del envío del formulario
     const form = document.getElementById('bookingForm');
     if(form){
       form.addEventListener('submit', async (ev) => {
@@ -376,7 +410,7 @@
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-        // Verificar perfil en Firestore
+        // Verificar perfil
         try{
           const db = firebase.firestore();
           const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
@@ -389,7 +423,6 @@
             return;
           }
         }catch(_){}
-        // Calcular costes antes de enviar
         computeCosts();
         // Preparar payload
         const fd = new FormData(form);
