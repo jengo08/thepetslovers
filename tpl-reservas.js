@@ -1,6 +1,7 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Gestión completa de reservas para The Pets Lovers: calcula precios, suplementos,
-// aplica packs parciales y muestra el desglose de bonos de forma visible.
+// Lógica completa para gestionar reservas de The Pets Lovers. Incluye cálculo de precios,
+// packs de días, suplementos, exóticos, autocompletado de servicio y nombre, control de
+// autenticación, envío a Firestore y EmailJS y desgloses detallados.
 
 (function(){
   'use strict';
@@ -56,7 +57,7 @@
   }
 
   /* ===========================
-     Tarifas base y bonos
+     Tarifas base, bonos y exóticos
      =========================== */
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
@@ -74,12 +75,13 @@
     adult: { 10: 135, 20: 250, 30: 315 },
     puppy: { 10: 185, 20: 350, 30: 465 }
   };
+  // Tarifas por día para animales exóticos; ajustar según tarifas reales
   const EXOTIC_PRICES = {
     conejo: 15,
     pajaro: 12,
     huron: 18,
     iguana: 20,
-    otro: null
+    otro: null // precio a consultar
   };
 
   /* ===========================
@@ -119,7 +121,7 @@
   }
 
   /* ===========================
-     Opciones exóticas dinámicas
+     Cambio dinámico de opciones exóticas
      =========================== */
   function toggleExoticSpecies(){
     const svc = document.getElementById('service')?.value || '';
@@ -239,7 +241,7 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        supplementPetsCost = 0;
+        supplementPetsCost = 0; // añadir si procede
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
@@ -264,20 +266,31 @@
       sumSubtotal: byId('sumSubtotal'),
       sumDeposit: byId('sumDeposit')
     };
-
-    // Precio base; en exóticos sin tarifa se muestra —
+    // Mostrar base; si no hay precio (exóticos sin tarifa), mostrar '—'
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
-
-    // Desglosar el paquete (bonus) en la fila de Festivos (auto)
+    // Tooltip con detalle del bono
+    if(els.sumBase && els.sumBase.parentElement){
+      if(packInfo){
+        let tip = `Bono ${packInfo.days} días: ${currency(packInfo.price)} €`;
+        if(packInfo.remaining > 0){
+          tip += `; ${packInfo.remaining} × ${currency(packInfo.perDay)} € = ${currency(packInfo.remaining * packInfo.perDay)} €`;
+        }
+        els.sumBase.parentElement.title = tip;
+        els.sumBase.parentElement.setAttribute('aria-label', tip);
+      } else {
+        els.sumBase.parentElement.title = '';
+        els.sumBase.parentElement.removeAttribute('aria-label');
+      }
+    }
+    // Reutilizar fila de Festivos para el bono
     const festLabelEl = els.sumFestivo?.previousElementSibling;
-    if(!festLabelEl.dataset.origLabel){
+    if(festLabelEl && !festLabelEl.dataset.origLabel){
       festLabelEl.dataset.origLabel = festLabelEl.textContent;
     }
     if(packInfo){
-      // Cambiar etiqueta y valor
       festLabelEl.textContent = `Paquete ${packInfo.days} días`;
       let valTxt = currency(packInfo.price);
       if(packInfo.remaining > 0){
@@ -285,12 +298,10 @@
       }
       els.sumFestivo.textContent = valTxt;
     } else {
-      // Restaurar etiqueta y valor original
       festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
       els.sumFestivo.textContent = '0.00';
     }
-
-    // Bono/descuento
+    // Bono/Descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -302,12 +313,11 @@
         els.sumBono.textContent = '0.00';
       }
     }
-
     // Subtotal y depósito
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
-    // Ajustar filas de visitas (mostrar u ocultar)
+    // Mostrar/ocultar filas de visitas
     const rowVisit1 = document.getElementById('rowVisit1');
     const rowVisit2 = document.getElementById('rowVisit2');
     if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
@@ -443,4 +453,7 @@
       });
     }
   });
+
+  // Exponemos computeCosts() para que reserva.html pueda llamarlo al terminar recalc()
+  window.updateSummaryFromJS = computeCosts;
 })();
