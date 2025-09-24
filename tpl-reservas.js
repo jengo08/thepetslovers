@@ -1,7 +1,6 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Gestión completa de reservas para The Pets Lovers, con packs parciales, desglose de
-// bonos, exóticos, suplementos de mascotas y control de autenticación. Ahora incluye
-// la separación visible del importe del paquete y los días extra en el resumen.
+// Gestión completa de reservas para The Pets Lovers: calcula precios, suplementos,
+// aplica packs parciales y muestra el desglose de bonos de forma visible.
 
 (function(){
   'use strict';
@@ -34,7 +33,7 @@
   }
 
   /* ===========================
-     Preseleccionar servicio
+     Preseleccionar servicio desde servicios.html
      =========================== */
   function preselectService(){
     const svcSelect = document.getElementById('service');
@@ -57,7 +56,7 @@
   }
 
   /* ===========================
-     Tarifas base, bonos y exóticos
+     Tarifas base y bonos
      =========================== */
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
@@ -143,7 +142,7 @@
   }
 
   /* ===========================
-     Cálculo y desglose de costes
+     Cálculo de costes y desglose visible
      =========================== */
   function computeCosts(){
     const svc = document.getElementById('service')?.value || '';
@@ -164,7 +163,7 @@
     let bono = 0;
     let discountDays = 0;
     let exoticUnpriced = false;
-    let packInfo = null; // Detalle del bono (paquete)
+    let packInfo = null;
 
     if(svc === 'visitas'){
       const longStay = nDias >= 11;
@@ -191,7 +190,7 @@
         baseCost = packPrice + (remaining * pricePerDay);
         discountDays = packDays;
         bono = normalCost - baseCost;
-        packInfo = { days: packDays, price: packPrice, remaining, perDay: pricePerDay, service: svc };
+        packInfo = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
       } else {
         baseCost = normalCost;
       }
@@ -214,7 +213,7 @@
         baseCost = packPrice + (remaining * perDay);
         discountDays = packDays;
         bono = normalCost - baseCost;
-        packInfo = { days: packDays, price: packPrice, remaining, perDay: perDay, service: svc };
+        packInfo = { days: packDays, price: packPrice, remaining, perDay: perDay };
       } else {
         baseCost = normalCost;
       }
@@ -240,7 +239,7 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        supplementPetsCost = 0; // añadir si procede
+        supplementPetsCost = 0;
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
@@ -266,60 +265,32 @@
       sumDeposit: byId('sumDeposit')
     };
 
-    // Guardar etiquetas originales para el campo de Festivos si no existen
-    const festLabelEl = els.sumFestivo?.previousElementSibling;
-    const festValueParent = els.sumFestivo?.parentElement;
-    if(festLabelEl && festLabelEl.dataset.origLabel === undefined){
-      festLabelEl.dataset.origLabel = festLabelEl.textContent;
-    }
-    if(festValueParent && festValueParent.dataset.origHtml === undefined){
-      festValueParent.dataset.origHtml = festValueParent.innerHTML;
-    }
-
-    // Mostrar base; si no hay precio (exóticos sin tarifa), mostrar '—'
+    // Precio base; en exóticos sin tarifa se muestra —
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
 
-    // Tooltip con detalle del bono
-    if(els.sumBase && els.sumBase.parentElement){
-      if(packInfo){
-        let tip = `Bono ${packInfo.days} días: ${currency(packInfo.price)} €`;
-        if(packInfo.remaining > 0){
-          tip += `; ${packInfo.remaining} × ${currency(packInfo.perDay)} € = ${currency(packInfo.remaining * packInfo.perDay)} €`;
-        }
-        els.sumBase.parentElement.title = tip;
-        els.sumBase.parentElement.setAttribute('aria-label', tip);
-      } else {
-        els.sumBase.parentElement.title = '';
-        els.sumBase.parentElement.removeAttribute('aria-label');
-      }
+    // Desglosar el paquete (bonus) en la fila de Festivos (auto)
+    const festLabelEl = els.sumFestivo?.previousElementSibling;
+    if(!festLabelEl.dataset.origLabel){
+      festLabelEl.dataset.origLabel = festLabelEl.textContent;
     }
-
-    // Fila de Festivos -> reutilizada para mostrar el paquete
     if(packInfo){
-      if(festLabelEl) festLabelEl.textContent = `Paquete ${packInfo.days} días`;
-      if(festValueParent){
-        let valueText = currency(packInfo.price);
-        if(packInfo.remaining > 0){
-          valueText += ` (+${packInfo.remaining}×${currency(packInfo.perDay)}€)`;
-        }
-        // mostrar valor y símbolo de euro
-        festValueParent.innerHTML = `<span id="sumFestivo">${valueText}</span> €`;
+      // Cambiar etiqueta y valor
+      festLabelEl.textContent = `Paquete ${packInfo.days} días`;
+      let valTxt = currency(packInfo.price);
+      if(packInfo.remaining > 0){
+        valTxt += ` (+${packInfo.remaining}×${currency(packInfo.perDay)}€)`;
       }
+      els.sumFestivo.textContent = valTxt;
     } else {
-      // Restaurar etiqueta y valor de Festivos
-      if(festLabelEl) festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
-      if(festValueParent) festValueParent.innerHTML = festValueParent.dataset.origHtml || `<span id="sumFestivo">0.00</span> €`;
+      // Restaurar etiqueta y valor original
+      festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
       els.sumFestivo.textContent = '0.00';
     }
 
-    els.sumFestivo.textContent = els.sumFestivo.textContent; // para asegurar formato
-    els.sumSenalado; // ya se actualizó en updateDaysRow
-    els.sumTravel;   // queda en "pendiente"
-
-    // Bono / descuento
+    // Bono/descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -336,13 +307,13 @@
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
-    // Mostrar/ocultar filas de visitas
+    // Ajustar filas de visitas (mostrar u ocultar)
     const rowVisit1 = document.getElementById('rowVisit1');
     const rowVisit2 = document.getElementById('rowVisit2');
     if(rowVisit1) rowVisit1.style.display = (visit1Cost > 0) ? '' : 'none';
     if(rowVisit2) rowVisit2.style.display = (visit2Cost > 0) ? '' : 'none';
 
-    // Construir resumen para EmailJS
+    // Construcción del resumen oculto
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
     if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base: ${currency(baseCost)} €`);
@@ -363,7 +334,7 @@
   }
 
   /* ===========================
-     Enlazar eventos y recalcular
+     Enlazar eventos
      =========================== */
   function bindEvents(){
     const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact'];
@@ -378,16 +349,18 @@
   }
 
   /* ===========================
-     Inicialización general
+     Inicialización y envío
      =========================== */
   document.addEventListener('DOMContentLoaded', () => {
     preselectService();
     unifyNameFields();
     toggleExoticSpecies();
     bindEvents();
+    // Esperar a que otros scripts internos calculen y luego recalcular el desglose
     computeCosts();
+    setTimeout(computeCosts, 500); // asegura que nuestro desglose prevalezca
 
-    // Control de autenticación
+    // Control de autenticación y habilitación del formulario
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -410,7 +383,7 @@
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-        // Verificar perfil
+        // Verificar perfil en Firestore
         try{
           const db = firebase.firestore();
           const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
@@ -423,6 +396,7 @@
             return;
           }
         }catch(_){}
+        // Recalcular desglose antes de enviar
         computeCosts();
         // Preparar payload
         const fd = new FormData(form);
