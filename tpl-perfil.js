@@ -1,36 +1,53 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Gestión de reservas: calcula precios, aplica bonos parciales, muestra desglose por partes,
-// controla autenticación, guarda en Firestore y envía con EmailJS.
+// Gestión de reservas para The Pets Lovers. Calcula precios con desglose detallado,
+// mantiene el autorrelleno (nombre, apellidos, dirección), controla autenticación,
+// guarda en Firestore y envía EmailJS. Expone la función de actualización
+// para que el HTML la invoque después de cada cambio.
 
 (function(){
   'use strict';
 
-  /* ============= Unificación Nombre y Apellidos ============= */
+  /* ============= Unificación y autorrelleno Nombre y Apellidos ============= */
   function unifyNameFields(){
     const firstNameEl = document.getElementById('firstName');
     const lastNameEl  = document.getElementById('lastName');
     if(!firstNameEl || !lastNameEl) return;
+
+    // Cambia etiqueta y placeholder del primer campo
     const label = document.querySelector('label[for="firstName"]');
     if(label) label.textContent = 'Nombre y apellidos';
     if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
-    setTimeout(()=>{
+
+    // Función que fusiona nombre y apellidos si ambos existen y el apellido no está ya incluido
+    function mergeNames(){
       const nameVal = (firstNameEl.value || '').trim();
       const surVal  = (lastNameEl.value  || '').trim();
-      if(surVal){
-        if(!nameVal || !nameVal.toLowerCase().includes(surVal.toLowerCase())){
-          firstNameEl.value = `${nameVal} ${surVal}`.trim();
-          try{
-            firstNameEl.dispatchEvent(new Event('input', { bubbles:true }));
-            firstNameEl.dispatchEvent(new Event('change',{ bubbles:true }));
-          }catch(_){}
-        }
+      if(surVal && !nameVal.toLowerCase().includes(surVal.toLowerCase())){
+        firstNameEl.value = `${nameVal} ${surVal}`.trim();
       }
+    }
+
+    // Oculta el campo de apellidos tras fusionar
+    function hideLastNameField(){
       const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
       if(container) container.style.display = 'none';
+    }
+
+    // Primera unificación poco después de cargar (por si el autocompletado tarda)
+    setTimeout(() => {
+      mergeNames();
+      hideLastNameField();
     }, 800);
+
+    // Vuelve a unir cuando cambie cualquiera de los dos campos (input o autocompletado)
+    firstNameEl.addEventListener('input', mergeNames);
+    lastNameEl.addEventListener('input', () => {
+      mergeNames();
+      hideLastNameField();
+    });
   }
 
-  /* ============= Preselección de servicio ============= */
+  /* ============= Preselección de servicio desde la URL o localStorage ============= */
   function preselectService(){
     const svcSelect = document.getElementById('service');
     if(!svcSelect) return;
@@ -44,7 +61,9 @@
       const opt = Array.from(svcSelect.options).find(o => o.value === svc);
       if(opt){
         svcSelect.value = svc;
-        try{ svcSelect.dispatchEvent(new Event('change',{ bubbles:true })); }catch(_){}
+        try{
+          svcSelect.dispatchEvent(new Event('change', { bubbles:true }));
+        }catch(_){}
       }
     }
   }
@@ -150,8 +169,8 @@
     let bono = 0;
     let discountDays = 0;
     let exoticUnpriced = false;
-    let packInfo = null; // Detalle del bono (packDays, price, remaining, perDay)
-    let extraDaysCost = 0; // Coste de los días fuera del bono
+    let packInfo = null; // Detalle del bono
+    let extraDaysCost = 0; // Coste de días extra (fuera del bono)
 
     if(svc === 'visitas'){
       const longStay = nDias >= 11;
@@ -207,7 +226,7 @@
       } else {
         baseCost = normalCost;
       }
-      // Suplementos por mascotas en guardería (12€/día segundo, 8€/día siguientes)
+      // Suplementos en guardería
       if(nMasc >= 2) supplementPetsCost += 12 * nDias;
       if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias;
     } else if(svc === 'alojamiento'){
@@ -230,7 +249,7 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        supplementPetsCost = 0; // aquí podrías añadir suplemento para exóticos
+        supplementPetsCost = 0; // Suplemento de exóticos (si se quiere)
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
@@ -255,33 +274,34 @@
       sumDeposit: byId('sumDeposit')
     };
 
-    // Base total (paquete + días extra)
+    // Base (bono + días extra + mascotas)
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
 
-    // Coste del bono y de los días extra en sus respectivas filas
+    // Coste del bono y días extra (ajustamos etiquetas)
     const festLabelEl = els.sumFestivo?.previousElementSibling;
     const senalLabelEl= els.sumSenalado?.previousElementSibling;
     if(packInfo){
-      // Nombre del bono y coste
       if(festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} días)`;
       els.sumFestivo.textContent = currency(packInfo.price);
-      // Días extra
       if(senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
       els.sumSenalado.textContent = currency(extraDaysCost);
     } else {
-      // Restaurar etiquetas originales si no hay bono
-      if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent;
-      if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent;
-      festLabelEl.textContent = festLabelEl.dataset.orig || 'Festivos (auto)';
-      senalLabelEl.textContent= senalLabelEl.dataset.orig || 'Días especiales (auto)';
+      if(festLabelEl){
+        if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent;
+        festLabelEl.textContent = festLabelEl.dataset.orig || 'Festivos (auto)';
+      }
+      if(senalLabelEl){
+        if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent;
+        senalLabelEl.textContent = senalLabelEl.dataset.orig || 'Días especiales (auto)';
+      }
       els.sumFestivo.textContent = currency(0);
-      els.sumSenalado.textContent= currency(0);
+      els.sumSenalado.textContent = currency(0);
     }
 
-    // Descuento (bono)
+    // Descuento por bono
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -306,7 +326,9 @@
     if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
     if(packInfo){
       summaryArr.push(`Coste del bono (${packInfo.days} días): ${currency(packInfo.price)} €`);
-      if(packInfo.remaining > 0) summaryArr.push(`Coste días extra (${packInfo.remaining}): ${currency(extraDaysCost)} €`);
+      if(packInfo.remaining > 0){
+        summaryArr.push(`Coste días extra (${packInfo.remaining}): ${currency(extraDaysCost)} €`);
+      }
     }
     if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
     if(bono > 0) summaryArr.push(`Descuento (${discountDays} días): -${currency(bono)} €`);
@@ -336,10 +358,10 @@
     toggleExoticSpecies();
     bindEvents();
     computeCosts();
-    // Ejecutar otra vez para sobrescribir posibles cálculos del HTML original
-    setTimeout(computeCosts, 300);
+    // Ejecutar otra vez tras un pequeño retardo para asegurar que sobrescribimos el cálculo del HTML original
+    setTimeout(computeCosts, 400);
 
-    // Control de autenticación (muestra/oculta formulario)
+    // Control de autenticación (muestra/oculta formulario según sesión)
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -397,7 +419,7 @@
             docId = docRef.id;
           }
         }catch(err){ console.warn('No se pudo guardar la reserva en Firestore', err); }
-        // Enviar via EmailJS
+        // Enviar EmailJS
         let mailed = false;
         try{
           if(window.emailjs){
@@ -423,6 +445,6 @@
     }
   });
 
-  // Exponer computeCosts para que pueda ser llamado desde otros scripts
+  // Exponer computeCosts() para su invocación externa
   window.updateSummaryFromJS = computeCosts;
 })();
