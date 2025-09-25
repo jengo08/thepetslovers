@@ -10,52 +10,28 @@
     const lastNameEl  = document.getElementById('lastName');  // oculto
     if(!firstNameEl || !lastNameEl) return;
 
-    // Cambiar etiqueta y placeholder del primer campo
     const label = document.querySelector('label[for="firstName"]');
     if(label) label.textContent = 'Nombre y apellidos';
     if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
 
-    // Función que separa nombre(s) y apellidos y asigna el apellido al campo oculto
     function updateLastName(){
       const parts = firstNameEl.value.trim().split(/\s+/);
-      if(parts.length >= 2){
-        lastNameEl.value = parts.slice(1).join(' ');
-      } else {
-        lastNameEl.value = '';
-      }
+      lastNameEl.value = (parts.length >= 2) ? parts.slice(1).join(' ') : '';
     }
-
-    // Fusionar inicial y mantener apellido oculto
     function mergeOnLoad(){
       const nameVal = (firstNameEl.value || '').trim();
       const surVal  = (lastNameEl.value  || '').trim();
-      // Si hay apellidos en el campo oculto, unificarlos en el visible
       if(surVal && !nameVal.toLowerCase().includes(surVal.toLowerCase())){
         firstNameEl.value = `${nameVal} ${surVal}`.trim();
       }
     }
-
-    // Ocultar visualmente el campo de apellidos, pero no borrarlo
     function hideLastNameField(){
       const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
       if(container) container.style.display = 'none';
     }
-
-    // Unifica al cargar (por si el autorrelleno tarda un poco)
-    setTimeout(() => {
-      mergeOnLoad();
-      hideLastNameField();
-      updateLastName();
-    }, 800);
-
-    // Actualiza apellido oculto en cada cambio del campo visible
+    setTimeout(() => { mergeOnLoad(); hideLastNameField(); updateLastName(); }, 800);
     firstNameEl.addEventListener('input', updateLastName);
-    // También en caso de autocompletado de apellidos
-    lastNameEl.addEventListener('input', () => {
-      mergeOnLoad();
-      hideLastNameField();
-      updateLastName();
-    });
+    lastNameEl.addEventListener('input', () => { mergeOnLoad(); hideLastNameField(); updateLastName(); });
   }
 
   /* ============= Preselección de servicio desde la URL o localStorage ============= */
@@ -107,14 +83,90 @@
   };
 
   // Exóticos: precio por VISITA (usamos 'species' como proxy de tipo)
-  // pajaro -> aves (20); iguana -> reptiles (15); conejo/huron -> mamíferos (25); otro -> a consultar (null)
   const EXOTIC_PRICES = {
-    conejo: 25,
-    pajaro: 20,
-    huron: 25,
-    iguana: 15,
-    otro: null
+    conejo: 25,  // pequeños mamíferos
+    pajaro: 20,  // aves
+    huron: 25,   // pequeños mamíferos
+    iguana: 15,  // reptiles
+    otro: null   // a consultar
   };
+
+  /* ============= Detectar automáticamente “cachorro” (≤ 6 meses) ============= */
+  function parseDateSafe(str){
+    if(!str) return null;
+    const d = new Date(str);
+    return isNaN(d) ? null : d;
+  }
+  function monthsBetween(d1, d2){
+    // diferencia aproximada en meses naturales
+    let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+    // ajustar por día del mes
+    if(d2.getDate() < d1.getDate()) months -= 1;
+    return months;
+  }
+  function computeIsPuppyAuto(){
+    const now = new Date();
+
+    // 1) Fecha de nacimiento (varios IDs típicos)
+    const dobIds = ['petBirthdate','petDob','birthDatePet','pet_dob','mascotaNacimiento'];
+    for(const id of dobIds){
+      const v = document.getElementById(id)?.value || '';
+      const d = parseDateSafe(v);
+      if(d){
+        const m = Math.max(0, monthsBetween(d, now));
+        return m <= 6;
+      }
+    }
+
+    // 2) Edad en meses/años (varios IDs típicos)
+    const monthsIds = ['petAgeMonths','ageMonths','mascotaMeses'];
+    for(const id of monthsIds){
+      const v = document.getElementById(id)?.value;
+      const n = parseInt(v, 10);
+      if(Number.isFinite(n)) return n <= 6;
+    }
+    const yearsIds = ['petAgeYears','ageYears','mascotaAnios'];
+    for(const id of yearsIds){
+      const v = document.getElementById(id)?.value;
+      const n = parseFloat(v);
+      if(Number.isFinite(n)) return (n * 12) <= 6;
+    }
+
+    // 3) Pareja (valor + unidad)
+    const ageVal = document.getElementById('petAge')?.value;
+    const ageUnit = (document.getElementById('petAgeUnit')?.value || '').toLowerCase(); // 'meses'|'años'
+    if(ageVal){
+      const n = parseFloat(ageVal);
+      if(Number.isFinite(n)){
+        const months = (ageUnit.startsWith('año')) ? n*12 : n;
+        return months <= 6;
+      }
+    }
+
+    // Sin datos -> null (no forzar)
+    return null;
+  }
+  function syncPuppyUI(isPuppy){
+    // Sincroniza los campos si existen
+    const sel = document.getElementById('isPuppy');
+    if(sel){
+      const newVal = isPuppy ? 'si' : 'no';
+      if(sel.value !== newVal){
+        sel.value = newVal;
+        try{ sel.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+      }
+    }
+    const g = document.getElementById('guard-puppy');
+    if(g && g.checked !== !!isPuppy){
+      g.checked = !!isPuppy;
+      try{ g.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    }
+    const a = document.getElementById('aloj-puppy');
+    if(a && a.checked !== !!isPuppy){
+      a.checked = !!isPuppy;
+      try{ a.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
+    }
+  }
 
   /* ============= Utilidades ============= */
   function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
@@ -184,77 +236,74 @@
     }
     updateDaysRow(nDias);
 
+    // === AUTO Cachorro (≤6m): si podemos calcularlo, sobrescribimos y sincronizamos UI ===
+    const auto = computeIsPuppyAuto(); // true | false | null
+    if(auto !== null) syncPuppyUI(auto);
+
     let baseCost = 0;
     let visit1Cost = 0;
     let visit2Cost = 0;
     let supplementPetsCost = 0;
-    let bono = 0;
     let discountDays = 0;
     let exoticUnpriced = false;
-    let packInfo = null; // Detalle del bono
-    let extraDaysCost = 0; // Coste de días extra
+    let packInfo = null;      // Detalle del bono
+    let extraDaysCost = 0;    // Coste de días extra (suelto)
+    let packCost = 0;         // Importe del bono (se muestra en “Coste del bono”)
 
     if(svc === 'visitas'){
       // VISITAS A DOMICILIO (GATOS)
       const longStay = nDias >= 11;
-
-      // Primera visita del día: 60/90/15 según visitDuration
       const tarifaPrincipal = (visitDur === 90)
         ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
         : (visitDur === 15)
           ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed)
           : (longStay ? PRICES.visita60_larga : PRICES.visita60);
-
-      // Nº de visitas/día (mín. 1)
       const vxd = Math.max(1, visitDaily);
-
-      // Coste base de todas las visitas (incluye 1 gato)
       visit1Cost = tarifaPrincipal * nDias * vxd;
 
-      // Suplementos POR VISITA según nº total de gatos:
-      // 2 gatos: +12/visita; 3 gatos: 2×8=16/visita; 4+: (n-1)×6/visita
       if(nMasc > 1){
         const extras = nMasc - 1;
         let supPorVisita = 0;
         if(extras === 1) supPorVisita = 12;
         else if(extras === 2) supPorVisita = 2 * 8;
         else supPorVisita = extras * 6;
-        supplementPetsCost = supPorVisita * nDias * vxd; // << CORREGIDO: por visita
+        supplementPetsCost = supPorVisita * nDias * vxd;
       }
 
     } else if(svc === 'paseos'){
       // PASEOS (60 MIN)
-      const pricePerDay = PRICES.paseoStd;               // 12 €/paseo (1 perro)
+      const pricePerDay = PRICES.paseoStd;
       const normalCost  = nDias * pricePerDay;
 
-      // Bono automático (para 1 perro) según nº de días
       const packSizes = Object.keys(PRICES.paseoBonos)
         .map(s => parseInt(s,10))
         .filter(size => size <= nDias)
         .sort((a,b) => a - b);
 
       if(packSizes.length > 0){
-        const packDays = packSizes[packSizes.length - 1];
-        const packPrice = PRICES.paseoBonos[packDays];   // bono SIEMPRE 1 perro
+        const packDays  = packSizes[packSizes.length - 1];
+        const packPrice = PRICES.paseoBonos[packDays];   // bono 1 perro
         const remaining = nDias - packDays;
 
-        baseCost = packPrice + (remaining * pricePerDay);
-        discountDays = packDays;
-        bono = normalCost - baseCost;
-        packInfo = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
-        extraDaysCost = remaining * pricePerDay;
+        packInfo      = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
+        packCost      = packPrice;                // SOLO bono
+        baseCost      = remaining * pricePerDay;  // suelto
+        discountDays  = packDays;
+        extraDaysCost = baseCost;
       } else {
         baseCost = normalCost;
       }
 
-      // Suplemento por cada perro extra y por paseo (el bono NO cubre extras)
       if(nMasc > 1){
         supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
       }
 
     } else if(svc === 'guarderia'){
       // GUARDERÍA DE DÍA (bono auto por nº de días)
-      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      // isPuppy: usa auto si hay dato; si no, cae a selector manual
+      const manualPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const isPuppy = (auto !== null) ? auto : manualPuppy;
+
       const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
       const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
 
@@ -265,15 +314,15 @@
         .sort((a,b) => a - b);
 
       if(packSizes.length > 0){
-        const packDays = packSizes[packSizes.length - 1];
+        const packDays  = packSizes[packSizes.length - 1];
         const packPrice = table[packDays];
         const remaining = nDias - packDays;
 
-        baseCost = packPrice + (remaining * perDay);
-        discountDays = packDays;
-        bono = normalCost - baseCost;
-        packInfo = { days: packDays, price: packPrice, remaining, perDay: perDay };
-        extraDaysCost = remaining * perDay;
+        packInfo      = { days: packDays, price: packPrice, remaining, perDay: perDay };
+        packCost      = packPrice;               // SOLO bono (1 mascota)
+        baseCost      = remaining * perDay;      // días sueltos
+        discountDays  = packDays;
+        extraDaysCost = baseCost;
       } else {
         baseCost = normalCost;
       }
@@ -281,16 +330,15 @@
       // Suplementos guardería — regla acordada:
       // 1 -> 0 ; 2 -> 12 €/día ; ≥3 -> (n-1) × 8 €/día
       if(nMasc >= 2){
-        if(nMasc === 2){
-          supplementPetsCost += 12 * nDias;
-        } else {
-          supplementPetsCost += (nMasc - 1) * 8 * nDias;
-        }
+        if(nMasc === 2) supplementPetsCost += 12 * nDias;
+        else supplementPetsCost += (nMasc - 1) * 8 * nDias;
       }
 
     } else if(svc === 'alojamiento'){
       // ALOJAMIENTO (ESTANCIAS)
-      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const manualPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const isPuppy = (auto !== null) ? auto : manualPuppy;
+
       const baseDia = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
       const baseLong= isPuppy ? 32 : 27; // desde día 11
       const rate    = (nDias >= 11) ? baseLong : baseDia;
@@ -307,28 +355,19 @@
       const pricePerVisit = EXOTIC_PRICES[exoticType];
 
       if(pricePerVisit != null){
-        const vxd = Math.max(1, visitDaily); // visitas/día reutiliza tu input
+        const vxd = Math.max(1, visitDaily);
         baseCost = pricePerVisit * nDias * vxd;
       } else {
-        // A consultar
         exoticUnpriced = true;
         baseCost = 0;
       }
-
-      // (Suplementos exóticos no definidos → 0)
-      if(nMasc > 1){
-        supplementPetsCost = 0;
-      }
+      // Sin suplementos definidos para exóticos de momento
 
     } else {
       baseCost = PRICES.base[svc] || 0;
     }
 
-    const subtotalBeforeDiscount = baseCost + visit1Cost + visit2Cost + supplementPetsCost;
-    const subtotal = subtotalBeforeDiscount - bono;
-    const deposit  = subtotal * PRICES.depositPct;
-
-    // Actualización del desglose en pantalla
+    // ---------- PINTADO DEL DESGLOSE ----------
     const els = {
       sumBase: document.getElementById('sumBase'),
       sumVisit1: document.getElementById('sumVisit1'),
@@ -342,80 +381,79 @@
       sumDeposit: document.getElementById('sumDeposit')
     };
 
-    els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
+    els.sumBase.textContent   = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
 
-    // Ajustar etiquetas y valores de bono y días extra
-    const festLabelEl = els.sumFestivo?.previousElementSibling;
-    const senalLabelEl= els.sumSenalado?.previousElementSibling;
-    if(packInfo){
-      // Coste del bono (1 mascota)
-      if(festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} días)`;
-      els.sumFestivo.textContent = currency(packInfo.price);
-      // Coste de días extra
-      if(senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
+    const festLabelEl  = els.sumFestivo?.previousElementSibling;
+    const senalLabelEl = els.sumSenalado?.previousElementSibling;
+
+    if (packInfo && packCost > 0){
+      if (festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} ${packInfo.days === 1 ? 'día' : 'días'})`;
+      els.sumFestivo.textContent = currency(packCost);
+
+      if (senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
       els.sumSenalado.textContent = currency(extraDaysCost);
     } else {
-      if(festLabelEl){
+      if (festLabelEl){
         if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent;
         festLabelEl.textContent = festLabelEl.dataset.orig || 'Festivos (auto)';
       }
-      if(senalLabelEl){
+      if (senalLabelEl){
         if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent;
         senalLabelEl.textContent = senalLabelEl.dataset.orig || 'Días especiales (auto)';
       }
-      els.sumFestivo.textContent = currency(0);
-      els.sumSenalado.textContent= currency(0);
+      els.sumFestivo.textContent  = currency(0);
+      els.sumSenalado.textContent = currency(0);
     }
 
-    // Mostrar/ocultar descuento (comparativa normal vs bono)
-    if(els.rowBono){
-      if(bono > 0){
-        els.rowBono.style.display = '';
-        const label = els.rowBono.querySelector('.summary-label');
-        if(label) label.textContent = `Descuento (${discountDays} días)`;
-        els.sumBono.textContent = currency(bono);
-      } else {
-        els.rowBono.style.display = 'none';
-        els.sumBono.textContent = '0.00';
-      }
+    if (els.rowBono){
+      els.rowBono.style.display = 'none';
+      els.sumBono.textContent = '0.00';
     }
+
+    // ---------- SUBTOTALES / DEPÓSITO ----------
+    const subtotalBefore = baseCost + visit1Cost + visit2Cost + supplementPetsCost + packCost;
+    const subtotal = (!exoticUnpriced) ? subtotalBefore : 0;
+    const deposit  = (!exoticUnpriced) ? (subtotal * PRICES.depositPct) : 0;
 
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
-    // Construir resumen oculto para EmailJS
+    // ---------- RESUMEN OCULTO ----------
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
-    if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base total: ${currency(baseCost)} €`);
-    if(visit1Cost > 0) summaryArr.push(`Visitas: ${currency(visit1Cost)} €`);
-    if(visit2Cost > 0) summaryArr.push(`2ª visita/día: ${currency(visit2Cost)} €`);
-    if(packInfo){
-      summaryArr.push(`Coste del bono (${packInfo.days} días): ${currency(packInfo.price)} €`);
-      if(packInfo.remaining > 0){
-        summaryArr.push(`Coste días extra (${packInfo.remaining}): ${currency(extraDaysCost)} €`);
-      }
+    if(!exoticUnpriced){
+      if(packCost > 0) summaryArr.push(`Coste del bono (${packInfo.days}): ${currency(packCost)} €`);
+      if(extraDaysCost > 0) summaryArr.push(`Coste días extra (${packInfo?.remaining || 0}): ${currency(extraDaysCost)} €`);
+      if(baseCost > 0) summaryArr.push(`Base suelto: ${currency(baseCost)} €`);
+      if(visit1Cost > 0) summaryArr.push(`Visitas: ${currency(visit1Cost)} €`);
+      if(visit2Cost > 0) summaryArr.push(`2ª visita/día: ${currency(visit2Cost)} €`);
+      if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
+      summaryArr.push(`Subtotal: ${currency(subtotal)} €`);
+      summaryArr.push(`Depósito: ${currency(deposit)} €`);
+    } else {
+      summaryArr.push(`Precio a consultar`);
     }
-    if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
-    if(bono > 0) summaryArr.push(`Descuento (${discountDays} días): -${currency(bono)} €`);
-    summaryArr.push(!exoticUnpriced ? `Subtotal: ${currency(subtotal)} €` : `Precio a consultar`);
-    if(!exoticUnpriced) summaryArr.push(`Depósito: ${currency(deposit)} €`);
     const summaryField = document.getElementById('summaryField');
     if(summaryField) summaryField.value = summaryArr.join(' | ');
   }
 
   /* ============= Enlazar eventos ============= */
   function bindEvents(){
-    const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact'];
+    const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact',
+                 'petBirthdate','petDob','birthDatePet','pet_dob','mascotaNacimiento',
+                 'petAgeMonths','ageMonths','mascotaMeses','petAgeYears','ageYears','mascotaAnios',
+                 'petAge','petAgeUnit'];
     ids.forEach(id=>{
       const el = document.getElementById(id);
-      if(el) el.addEventListener('change', () => {
-        if(id === 'service'){ toggleExoticSpecies(); }
-        computeCosts();
-      });
-      if(el && el.tagName === 'INPUT') el.addEventListener('input', computeCosts);
+      if(!el) return;
+      const handler = () => { computeCosts(); };
+      el.addEventListener('change', handler);
+      if(el.tagName === 'INPUT' || el.tagName === 'SELECT'){
+        el.addEventListener('input', handler);
+      }
     });
   }
 
