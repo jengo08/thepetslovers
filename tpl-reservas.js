@@ -1,36 +1,64 @@
 // reservas.js (REEMPLAZAR ENTERO)
-// Gestión completa de reservas para The Pets Lovers. Calcula precios, packs de días,
-// suplementos de mascotas, exóticos y expone la función de cálculo para uso externo.
+// Gestión de reservas completa: desglose detallado de costes, autorrelleno del perfil y guardado de datos.
 
 (function(){
   'use strict';
 
-  /* ============= Unificación Nombre y Apellidos ============= */
+  /* ============= Unificación Nombre y Apellidos (sin perder apellidos) ============= */
   function unifyNameFields(){
-    const firstNameEl = document.getElementById('firstName');
-    const lastNameEl  = document.getElementById('lastName');
+    const firstNameEl = document.getElementById('firstName'); // visible
+    const lastNameEl  = document.getElementById('lastName');  // oculto
     if(!firstNameEl || !lastNameEl) return;
+
+    // Cambiar etiqueta y placeholder del primer campo
     const label = document.querySelector('label[for="firstName"]');
     if(label) label.textContent = 'Nombre y apellidos';
     if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
-    setTimeout(()=>{
+
+    // Función que separa nombre(s) y apellidos y asigna el apellido al campo oculto
+    function updateLastName(){
+      const parts = firstNameEl.value.trim().split(/\s+/);
+      if(parts.length >= 2){
+        lastNameEl.value = parts.slice(1).join(' ');
+      } else {
+        lastNameEl.value = '';
+      }
+    }
+
+    // Fusionar inicial y mantener apellido oculto
+    function mergeOnLoad(){
       const nameVal = (firstNameEl.value || '').trim();
       const surVal  = (lastNameEl.value  || '').trim();
-      if(surVal){
-        if(!nameVal || !nameVal.toLowerCase().includes(surVal.toLowerCase())){
-          firstNameEl.value = `${nameVal} ${surVal}`.trim();
-          try{
-            firstNameEl.dispatchEvent(new Event('input', { bubbles:true }));
-            firstNameEl.dispatchEvent(new Event('change',{ bubbles:true }));
-          }catch(_){}
-        }
+      // Si hay apellidos en el campo oculto, unificarlos en el visible
+      if(surVal && !nameVal.toLowerCase().includes(surVal.toLowerCase())){
+        firstNameEl.value = `${nameVal} ${surVal}`.trim();
       }
+    }
+
+    // Ocultar visualmente el campo de apellidos, pero no borrarlo
+    function hideLastNameField(){
       const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
       if(container) container.style.display = 'none';
+    }
+
+    // Unifica al cargar (por si el autorrelleno tarda un poco)
+    setTimeout(() => {
+      mergeOnLoad();
+      hideLastNameField();
+      updateLastName();
     }, 800);
+
+    // Actualiza apellido oculto en cada cambio del campo visible
+    firstNameEl.addEventListener('input', updateLastName);
+    // También en caso de autocompletado de apellidos
+    lastNameEl.addEventListener('input', () => {
+      mergeOnLoad();
+      hideLastNameField();
+      updateLastName();
+    });
   }
 
-  /* ============= Preselección de servicio ============= */
+  /* ============= Preselección de servicio desde la URL o localStorage ============= */
   function preselectService(){
     const svcSelect = document.getElementById('service');
     if(!svcSelect) return;
@@ -53,7 +81,8 @@
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
     puppyBase: { guarderia: 20, alojamiento: 35 },
-    visita60: 22, visita90: 30, visita60_larga: 18, visita90_larga: 27,
+    visita60: 22, visita90: 30,
+    visita60_larga: 18, visita90_larga: 27,
     visitaMed: 12, visitaMed_larga: 10,
     paseoStd: 12,
     paseoExtraPerro: 8,
@@ -129,7 +158,7 @@
     }
   }
 
-  /* ============= Cálculo de costes y actualización ============= */
+  /* ============= Cálculo de costes y desglose visible ============= */
   function computeCosts(){
     const svc = document.getElementById('service')?.value || '';
     const species = document.getElementById('species')?.value || 'perro';
@@ -149,7 +178,8 @@
     let bono = 0;
     let discountDays = 0;
     let exoticUnpriced = false;
-    let packInfo = null;
+    let packInfo = null; // Detalle del bono
+    let extraDaysCost = 0; // Coste de días extra
 
     if(svc === 'visitas'){
       const longStay = nDias >= 11;
@@ -177,6 +207,7 @@
         discountDays = packDays;
         bono = normalCost - baseCost;
         packInfo = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
+        extraDaysCost = remaining * pricePerDay;
       } else {
         baseCost = normalCost;
       }
@@ -200,9 +231,11 @@
         discountDays = packDays;
         bono = normalCost - baseCost;
         packInfo = { days: packDays, price: packPrice, remaining, perDay: perDay };
+        extraDaysCost = remaining * perDay;
       } else {
         baseCost = normalCost;
       }
+      // Suplementos en guardería
       if(nMasc >= 2) supplementPetsCost += 12 * nDias;
       if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias;
     } else if(svc === 'alojamiento'){
@@ -225,56 +258,59 @@
         baseCost = 0;
       }
       if(nMasc > 1){
-        // si quieres añadir suplemento por varias mascotas exóticas, hazlo aquí
-        supplementPetsCost = 0;
+        supplementPetsCost = 0; // suplemento exóticos (si necesario)
       }
     } else {
       baseCost = PRICES.base[svc] || 0;
     }
 
-    const totalBeforeBono = baseCost + visit1Cost + visit2Cost + supplementPetsCost;
-    const subtotal = totalBeforeBono - bono;
+    const subtotalBeforeDiscount = baseCost + visit1Cost + visit2Cost + supplementPetsCost;
+    const subtotal = subtotalBeforeDiscount - bono;
     const deposit  = subtotal * PRICES.depositPct;
 
-    // Actualización del panel
-    const byId = id => document.getElementById(id);
+    // Actualización del desglose en pantalla
     const els = {
-      sumBase: byId('sumBase'),
-      sumVisit1: byId('sumVisit1'),
-      sumVisit2: byId('sumVisit2'),
-      sumPets: byId('sumPets'),
-      sumFestivo: byId('sumFestivo'),
-      sumSenalado: byId('sumSenalado'),
-      sumBono: byId('sumBono'),
+      sumBase: document.getElementById('sumBase'),
+      sumVisit1: document.getElementById('sumVisit1'),
+      sumVisit2: document.getElementById('sumVisit2'),
+      sumPets: document.getElementById('sumPets'),
+      sumFestivo: document.getElementById('sumFestivo'),
+      sumSenalado: document.getElementById('sumSenalado'),
+      sumBono: document.getElementById('sumBono'),
       rowBono: document.getElementById('rowBono'),
-      sumSubtotal: byId('sumSubtotal'),
-      sumDeposit: byId('sumDeposit')
+      sumSubtotal: document.getElementById('sumSubtotal'),
+      sumDeposit: document.getElementById('sumDeposit')
     };
 
-    // Mostrar base; si no hay precio (exóticos sin tarifa), mostrar '—'
     els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
     els.sumVisit1.textContent = currency(visit1Cost);
     els.sumVisit2.textContent = currency(visit2Cost);
     els.sumPets.textContent   = currency(supplementPetsCost);
 
-    // Fila de Festivos reutilizada para bono
+    // Ajustar etiquetas y valores de bono y días extra
     const festLabelEl = els.sumFestivo?.previousElementSibling;
-    if(festLabelEl && !festLabelEl.dataset.origLabel){
-      festLabelEl.dataset.origLabel = festLabelEl.textContent;
-    }
+    const senalLabelEl= els.sumSenalado?.previousElementSibling;
     if(packInfo){
-      festLabelEl.textContent = `Paquete ${packInfo.days} días`;
-      let valTxt = currency(packInfo.price);
-      if(packInfo.remaining > 0){
-        valTxt += ` (+${packInfo.remaining}×${currency(packInfo.perDay)}€)`;
-      }
-      els.sumFestivo.textContent = valTxt;
+      // Coste del bono
+      if(festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} días)`;
+      els.sumFestivo.textContent = currency(packInfo.price);
+      // Coste de días extra
+      if(senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
+      els.sumSenalado.textContent = currency(extraDaysCost);
     } else {
-      festLabelEl.textContent = festLabelEl.dataset.origLabel || 'Festivos (auto)';
-      els.sumFestivo.textContent = '0.00';
+      if(festLabelEl){
+        if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent;
+        festLabelEl.textContent = festLabelEl.dataset.orig || 'Festivos (auto)';
+      }
+      if(senalLabelEl){
+        if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent;
+        senalLabelEl.textContent = senalLabelEl.dataset.orig || 'Días especiales (auto)';
+      }
+      els.sumFestivo.textContent = currency(0);
+      els.sumSenalado.textContent= currency(0);
     }
 
-    // Bono/descuento
+    // Mostrar/ocultar descuento
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -286,19 +322,20 @@
         els.sumBono.textContent = '0.00';
       }
     }
+
     els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
     els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
-    // Construir el resumen para EmailJS
+    // Construir resumen oculto para EmailJS
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
-    if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base: ${currency(baseCost)} €`);
+    if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base total: ${currency(baseCost)} €`);
     if(visit1Cost > 0) summaryArr.push(`1ª visita: ${currency(visit1Cost)} €`);
     if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
     if(packInfo){
-      summaryArr.push(`Paquete ${packInfo.days} días: ${currency(packInfo.price)} €`);
+      summaryArr.push(`Coste del bono (${packInfo.days} días): ${currency(packInfo.price)} €`);
       if(packInfo.remaining > 0){
-        summaryArr.push(`${packInfo.remaining} día(s) extra: ${currency(packInfo.remaining * packInfo.perDay)} €`);
+        summaryArr.push(`Coste días extra (${packInfo.remaining}): ${currency(extraDaysCost)} €`);
       }
     }
     if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
@@ -328,11 +365,10 @@
     unifyNameFields();
     toggleExoticSpecies();
     bindEvents();
-    // Recalcula al inicio y tras un pequeño retardo para sobrescribir el desglose del HTML
     computeCosts();
-    setTimeout(computeCosts, 300);
+    setTimeout(computeCosts, 400);
 
-    // Control de autenticación (activa/desactiva el formulario)
+    // Control de autenticación (muestra/oculta formulario según sesión)
     if(typeof firebase !== 'undefined' && firebase.auth){
       const auth = firebase.auth();
       const form = document.getElementById('bookingForm');
@@ -344,7 +380,7 @@
       });
     }
 
-    // Envío del formulario (Firestore + EmailJS)
+    // Envío (Firestore + EmailJS)
     const form = document.getElementById('bookingForm');
     if(form){
       form.addEventListener('submit', async (ev) => {
@@ -355,7 +391,7 @@
           alert('Debes iniciar sesión para reservar.');
           return;
         }
-        // Verifica perfil en Firestore
+        // Verificar perfil en Firestore
         try{
           const db = firebase.firestore();
           const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
@@ -368,9 +404,9 @@
             return;
           }
         }catch(_){}
-        // Recalcula antes de enviar
+        // Recalcular antes de enviar
         computeCosts();
-        // Prepara payload
+        // Preparar payload
         const fd = new FormData(form);
         const payload = {};
         for(const [k,v] of fd.entries()){ payload[k] = v; }
@@ -416,6 +452,6 @@
     }
   });
 
-  // Exponer computeCosts() para que reserva.html pueda llamar a la actualización
+  // Expone la función de cálculo para que la invoquen otros scripts
   window.updateSummaryFromJS = computeCosts;
 })();
