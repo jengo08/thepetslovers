@@ -81,25 +81,38 @@
   const PRICES = {
     base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
     puppyBase: { guarderia: 20, alojamiento: 35 },
+
+    // Visitas (gatos) — tramo desde día 11
     visita60: 22, visita90: 30,
     visita60_larga: 18, visita90_larga: 27,
     visitaMed: 12, visitaMed_larga: 10,
+
+    // Paseos
     paseoStd: 12,
     paseoExtraPerro: 8,
     paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
+
+    // Alojamiento — perro extra
     alojSegundoPerroDia: 25,
     alojSegundoPerroD11: 22,
+
+    // Depósito
     depositPct: 0.30
   };
+
+  // Bonos guardería (1 mascota)
   const BUNDLE_GUARDERIA = {
     adult: { 10: 135, 20: 250, 30: 315 },
     puppy: { 10: 185, 20: 350, 30: 465 }
   };
+
+  // Exóticos: precio por VISITA (usamos 'species' como proxy de tipo)
+  // pajaro -> aves (20); iguana -> reptiles (15); conejo/huron -> mamíferos (25); otro -> a consultar (null)
   const EXOTIC_PRICES = {
-    conejo: 15,
-    pajaro: 12,
-    huron: 18,
-    iguana: 20,
+    conejo: 25,
+    pajaro: 20,
+    huron: 25,
+    iguana: 15,
     otro: null
   };
 
@@ -182,27 +195,49 @@
     let extraDaysCost = 0; // Coste de días extra
 
     if(svc === 'visitas'){
+      // VISITAS A DOMICILIO (GATOS)
       const longStay = nDias >= 11;
-      visit1Cost = (visitDur === 90 ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
-                                    : (longStay ? PRICES.visita60_larga : PRICES.visita60)) * nDias;
-      visit2Cost = (visitDaily === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0) * nDias;
+
+      // Primera visita del día: 60/90/15 según visitDuration
+      const tarifaPrincipal = (visitDur === 90)
+        ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
+        : (visitDur === 15)
+          ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed)
+          : (longStay ? PRICES.visita60_larga : PRICES.visita60);
+
+      // Nº de visitas/día (mín. 1)
+      const vxd = Math.max(1, visitDaily);
+
+      // Coste base de todas las visitas (incluye 1 gato)
+      visit1Cost = tarifaPrincipal * nDias * vxd;
+
+      // Suplementos POR VISITA según nº total de gatos:
+      // 2 gatos: +12/visita; 3 gatos: 2×8=16/visita; 4+: (n-1)×6/visita
       if(nMasc > 1){
-        const extra = nMasc - 1;
-        if(extra === 1) supplementPetsCost += 12;
-        else if(extra === 2) supplementPetsCost += 8 * 2;
-        else supplementPetsCost += 6 * extra;
+        const extras = nMasc - 1;
+        let supPorVisita = 0;
+        if(extras === 1) supPorVisita = 12;
+        else if(extras === 2) supPorVisita = 2 * 8;
+        else supPorVisita = extras * 6;
+        supplementPetsCost = supPorVisita * nDias * vxd; // << CORREGIDO: por visita
       }
+
     } else if(svc === 'paseos'){
-      const pricePerDay = PRICES.paseoStd;
+      // PASEOS (60 MIN)
+      const pricePerDay = PRICES.paseoStd;               // 12 €/paseo (1 perro)
+      const normalCost  = nDias * pricePerDay;
+
+      // Bono automático (para 1 perro) según nº de días
       const packSizes = Object.keys(PRICES.paseoBonos)
         .map(s => parseInt(s,10))
         .filter(size => size <= nDias)
         .sort((a,b) => a - b);
-      const normalCost = nDias * pricePerDay;
+
       if(packSizes.length > 0){
         const packDays = packSizes[packSizes.length - 1];
-        const packPrice = PRICES.paseoBonos[packDays];
+        const packPrice = PRICES.paseoBonos[packDays];   // bono SIEMPRE 1 perro
         const remaining = nDias - packDays;
+
         baseCost = packPrice + (remaining * pricePerDay);
         discountDays = packDays;
         bono = normalCost - baseCost;
@@ -211,22 +246,29 @@
       } else {
         baseCost = normalCost;
       }
+
+      // Suplemento por cada perro extra y por paseo (el bono NO cubre extras)
       if(nMasc > 1){
         supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
       }
+
     } else if(svc === 'guarderia'){
+      // GUARDERÍA DE DÍA (bono auto por nº de días)
       const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
       const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
       const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
+
       const normalCost = perDay * nDias;
       const packSizes = Object.keys(table)
         .map(s => parseInt(s,10))
         .filter(size => size <= nDias)
         .sort((a,b) => a - b);
+
       if(packSizes.length > 0){
         const packDays = packSizes[packSizes.length - 1];
         const packPrice = table[packDays];
         const remaining = nDias - packDays;
+
         baseCost = packPrice + (remaining * perDay);
         discountDays = packDays;
         bono = normalCost - baseCost;
@@ -235,31 +277,49 @@
       } else {
         baseCost = normalCost;
       }
-      // Suplementos en guardería
-      if(nMasc >= 2) supplementPetsCost += 12 * nDias;
-      if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias;
+
+      // Suplementos guardería — regla acordada:
+      // 1 -> 0 ; 2 -> 12 €/día ; ≥3 -> (n-1) × 8 €/día
+      if(nMasc >= 2){
+        if(nMasc === 2){
+          supplementPetsCost += 12 * nDias;
+        } else {
+          supplementPetsCost += (nMasc - 1) * 8 * nDias;
+        }
+      }
+
     } else if(svc === 'alojamiento'){
+      // ALOJAMIENTO (ESTANCIAS)
       const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
       const baseDia = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
-      const baseLong= isPuppy ? 32 : 27;
+      const baseLong= isPuppy ? 32 : 27; // desde día 11
       const rate    = (nDias >= 11) ? baseLong : baseDia;
       baseCost = rate * nDias;
+
       if(species === 'perro' && nMasc >= 2){
         const extraRate = (nDias >= 11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
         supplementPetsCost = (nMasc - 1) * extraRate * nDias;
       }
+
     } else if(svc === 'exoticos'){
+      // EXÓTICOS — precio por VISITA según especie/tipo
       const exoticType = species || 'otro';
-      const pricePerDay = EXOTIC_PRICES[exoticType];
-      if(pricePerDay != null){
-        baseCost = pricePerDay * nDias;
+      const pricePerVisit = EXOTIC_PRICES[exoticType];
+
+      if(pricePerVisit != null){
+        const vxd = Math.max(1, visitDaily); // visitas/día reutiliza tu input
+        baseCost = pricePerVisit * nDias * vxd;
       } else {
+        // A consultar
         exoticUnpriced = true;
         baseCost = 0;
       }
+
+      // (Suplementos exóticos no definidos → 0)
       if(nMasc > 1){
-        supplementPetsCost = 0; // suplemento exóticos (si necesario)
+        supplementPetsCost = 0;
       }
+
     } else {
       baseCost = PRICES.base[svc] || 0;
     }
@@ -291,7 +351,7 @@
     const festLabelEl = els.sumFestivo?.previousElementSibling;
     const senalLabelEl= els.sumSenalado?.previousElementSibling;
     if(packInfo){
-      // Coste del bono
+      // Coste del bono (1 mascota)
       if(festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} días)`;
       els.sumFestivo.textContent = currency(packInfo.price);
       // Coste de días extra
@@ -310,7 +370,7 @@
       els.sumSenalado.textContent= currency(0);
     }
 
-    // Mostrar/ocultar descuento
+    // Mostrar/ocultar descuento (comparativa normal vs bono)
     if(els.rowBono){
       if(bono > 0){
         els.rowBono.style.display = '';
@@ -330,8 +390,8 @@
     const summaryArr = [];
     summaryArr.push(`Días: ${nDias}`);
     if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base total: ${currency(baseCost)} €`);
-    if(visit1Cost > 0) summaryArr.push(`1ª visita: ${currency(visit1Cost)} €`);
-    if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
+    if(visit1Cost > 0) summaryArr.push(`Visitas: ${currency(visit1Cost)} €`);
+    if(visit2Cost > 0) summaryArr.push(`2ª visita/día: ${currency(visit2Cost)} €`);
     if(packInfo){
       summaryArr.push(`Coste del bono (${packInfo.days} días): ${currency(packInfo.price)} €`);
       if(packInfo.remaining > 0){
