@@ -1,408 +1,428 @@
-/* TPL: INICIO BLOQUE NUEVO [tpl-perfil.js — Perfil: owner + mascotas + reservas (tiempo real)] */
+// reservas.js (REEMPLAZAR ENTERO)
+// Gestión de reservas: calcula precios, aplica bonos parciales, muestra desglose por partes,
+// controla autenticación, guarda en Firestore y envía con EmailJS.
+
 (function(){
   'use strict';
 
-  // ---------- Helpers DOM ----------
-  const $ = (sel, root=document) => root.querySelector(sel);
-  const show = (el, disp='') => { if (!el) return; el.style.display = disp; el.hidden = false; };
-  const hide = (el) => { if (!el) return; el.style.display = 'none'; el.hidden = true; };
-  const setText = (sel, txt) => { const el = $(sel); if (el) el.textContent = txt; };
-  const esc = (s) => String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]) );
-
-  // ---------- UDB helpers ----------
-  function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-  function udbGet(uid, key, fallback){
-    try { const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }
-    catch(_){ return fallback; }
-  }
-  function udbHas(uid, key){ try { return localStorage.getItem(udbKey(uid,key)) !== null; }catch(_){ return false; } }
-  function udbSet(uid, key, value){ try { localStorage.setItem(udbKey(uid,key), JSON.stringify(value)); } catch(_){ } }
-
-  // ---------- UID robusto ----------
-  let CURRENT_UID = null;
-  function getCurrentUserId(){
-    const explicit = localStorage.getItem('tpl.currentUser'); if (explicit) return explicit;
-    const uidLS = localStorage.getItem('tpl_auth_uid'); if (uidLS) return uidLS;
-    try{
-      if (window.firebase && typeof firebase.auth === 'function'){
-        const u = firebase.auth().currentUser;
-        if (u && !u.isAnonymous && u.uid) return u.uid;
-      }
-    }catch(_){}
-    return 'default';
-  }
-
-  // ---------- Dedupe mascotas ----------
-  const norm = (s)=>String(s||'').trim();
-  const normKey = (v)=>String(v||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  function dedupePets(arr){
-    if (!Array.isArray(arr)) return [];
-    const seen = new Set(), out=[];
-    for (const p of arr){
-      const key = `${normKey(p?.nombre)}|${normKey(p?.microchip)}|${normKey(p?.especie||p?.tipo||'')}`;
-      if (seen.has(key)) continue; seen.add(key);
-      out.push({
-        nombre:norm(p?.nombre), microchip:norm(p?.microchip||p?.chip||''), especie:norm(p?.especie||p?.tipo||''),
-        raza:norm(p?.raza||p?.tipoExotico||''), edad:norm(p?.edad||''), peso:norm(p?.peso||''),
-        esterilizado:norm(p?.esterilizado||''), vacunas:norm(p?.vacunas||''), salud:norm(p?.salud||''),
-        tratamiento:norm(p?.tratamiento||''), comportamiento:norm(p?.comportamiento||''),
-        seguroVet:norm(p?.seguroVet||''), seguroVetComp:norm(p?.seguroVetComp||''), seguroVetNum:norm(p?.seguroVetNum||''),
-        seguroRC:norm(p?.seguroRC||''), foto: typeof p?.foto==='string'?p.foto:''
-      });
-      if (out.length>=100) break;
-    }
-    return out;
-  }
-
-  // ---------- Migración default → UID real ----------
-  function maybeMigrateFromDefault(toUid){
-    if (!toUid || toUid==='default') return;
-    const flagKey = `tpl.udb.migratedTo.${toUid}`;
-    if (localStorage.getItem(flagKey)) return;
-
-    const ownerDefault = udbGet('default','owner',null);
-    const petsDefault  = (udbHas('default','pets') ? udbGet('default','pets',[]) : udbGet('default','mascotas',[])) || [];
-    const ownerTo = udbGet(toUid,'owner',null);
-    const hasPetsTo = udbHas(toUid,'pets') || udbHas(toUid,'mascotas');
-
-    if (!ownerTo && ownerDefault) udbSet(toUid,'owner', ownerDefault);
-    if (!hasPetsTo && petsDefault.length){
-      const clean = dedupePets(petsDefault);
-      udbSet(toUid,'pets', clean);
-      if (udbHas(toUid,'mascotas')) udbSet(toUid,'mascotas', clean);
-    }
-    try{ localStorage.setItem(flagKey,'1'); }catch(_){}
-  }
-
-  // ---------- Owner ----------
-  function setOwnerIncomplete(){
-    setText('#tpl-owner-nombre','—'); setText('#tpl-owner-telefono','—'); setText('#tpl-owner-zona','—'); setText('#tpl-owner-email','—');
-    const st=$('#tpl-owner-status'); if(st){ st.innerHTML='<i class="fa-solid fa-circle-exclamation"></i> Incompleto'; }
-    const fill=$('#tpl-owner-fill'), edit=$('#tpl-owner-edit'); if(fill) fill.style.display=''; if(edit) edit.style.display='none';
-  }
-  function loadOwner(){
-    const uid = CURRENT_UID || getCurrentUserId();
-    const owner = udbGet(uid,'owner',null);
-    if(!owner){ setOwnerIncomplete(); return; }
-    setText('#tpl-owner-nombre', owner.nombre||'—');
-    setText('#tpl-owner-telefono', owner.telefono||'—');
-    setText('#tpl-owner-zona', owner.zona||'—');
-    setText('#tpl-owner-email', owner.email||'—');
-    const st=$('#tpl-owner-status'); if(st){ st.innerHTML='<i class="fa-solid fa-circle-check"></i> Completo'; }
-    const fill=$('#tpl-owner-fill'), edit=$('#tpl-owner-edit'); if(fill) fill.style.display='none'; if(edit) edit.style.display='';
-  }
-
-  // ---------- Mascotas ----------
-  function iconBySpecies(sp){ const v=(sp||'').toLowerCase(); if(v.includes('perro'))return'fa-dog'; if(v.includes('gato'))return'fa-cat'; if(v.includes('exó')||v.includes('exo'))return'fa-dove'; return'fa-paw'; }
-  function setPetsEmpty(){
-    const empty=$('#tpl-pets-empty'), list=$('#tpl-pets-list'); if(empty){ empty.style.display='flex'; empty.hidden=false; } hide(list);
-    const st=$('#tpl-pets-status'); if(st) st.innerHTML='<i class="fa-solid fa-circle-exclamation"></i> Ninguna';
-  }
-  function renderPets(pets){
-    const empty=$('#tpl-pets-empty'), list=$('#tpl-pets-list'), status=$('#tpl-pets-status');
-    if(!Array.isArray(pets)||!pets.length){ setPetsEmpty(); return; }
-    const cleaned = dedupePets(pets);
-    if(empty){ empty.style.display='none'; empty.hidden=true; }
-    show(list,'block'); list.innerHTML='';
-    cleaned.forEach((p,idx)=>{
-      const nombre=esc(p?.nombre||'Sin nombre'), especie=esc(p?.especie||''), raza=esc(p?.raza||p?.tipoExotico||''), edad=esc(p?.edad||''), foto=typeof p?.foto==='string'?p.foto:'';
-      const item=document.createElement('div'); item.className='tpl-pet-item';
-      if(foto){ const img=document.createElement('img'); img.className='tpl-pet-thumb'; img.src=foto; img.alt=`Foto de ${nombre}`; item.appendChild(img); }
-      else { const ic=document.createElement('div'); ic.className='tpl-pet-icon'; ic.innerHTML=`<i class="fa-solid ${iconBySpecies(especie)}" aria-hidden="true"></i>`; item.appendChild(ic); }
-      const meta=document.createElement('div'); meta.className='tpl-pet-meta';
-      const nm=document.createElement('div'); nm.className='tpl-pet-name'; nm.textContent=nombre;
-      const sub=document.createElement('div'); sub.className='tpl-pet-sub'; sub.textContent=[especie,raza,edad&&('Edad: '+edad)].filter(Boolean).join(' · ');
-      meta.appendChild(nm); meta.appendChild(sub); item.appendChild(meta);
-      const edit=document.createElement('a'); edit.href=`tpl-mascota.html?edit=${idx}`; edit.className='tpl-pet-edit'; edit.textContent='Editar'; edit.setAttribute('aria-label',`Editar a ${nombre}`); item.appendChild(edit);
-      list.appendChild(item);
-    });
-    if(status){ const n=cleaned.length; status.innerHTML=`<i class="fa-solid fa-circle-check"></i> ${n} ${n===1?'mascota':'mascotas'}`; }
-
-    // Persist dedupe si difiere
-    const uid=CURRENT_UID||getCurrentUserId();
-    const hasPets=udbHas(uid,'pets'); const stored=hasPets?(udbGet(uid,'pets',[])||[]):(udbGet(uid,'mascotas',[])||[]);
-    if(JSON.stringify(stored)!==JSON.stringify(cleaned)){ udbSet(uid,'pets',cleaned); if(udbHas(uid,'mascotas')) udbSet(uid,'mascotas',cleaned); try{ localStorage.setItem('tpl.udb.lastChange', String(Date.now())); }catch(_){ } }
-  }
-  function loadPetsAndRender(){
-    const uid=CURRENT_UID||getCurrentUserId();
-    const hasPets=udbHas(uid,'pets');
-    const pets=hasPets?(udbGet(uid,'pets',[])||[]):(udbGet(uid,'mascotas',[])||[]);
-    if(!Array.isArray(pets)||!pets.length){ setPetsEmpty(); }
-    renderPets(pets||[]);
-  }
-
-  // ---------- Logout robusto ----------
-  function setupLogout(){
-    const btn=$('#tpl-logout'); if(!btn) return;
-    btn.style.position='fixed'; btn.style.right='16px'; btn.style.bottom='16px'; btn.style.zIndex='999999';
-    btn.addEventListener('click', function(ev){
-      ev.preventDefault();
-      if(window.__TPL_LOGOUT__) return window.__TPL_LOGOUT__();
-      try{ sessionStorage.clear(); }catch(_){}
-      try{ localStorage.removeItem('tpl.session'); localStorage.removeItem('tpl.auth'); localStorage.removeItem('tpl.currentUser'); }catch(_){}
-      location.assign('index.html');
-    }, {passive:false});
-  }
-
-  // ---------- Reservas (UI + tiempo real) ----------
-  const fmtDateES = (iso)=>{
-    if(!iso) return '—';
-    const d=new Date(iso); if(Number.isNaN(+d)) return iso;
-    const dd=String(d.getDate()).padStart(2,'0'), mm=String(d.getMonth()+1).padStart(2,'0'), yyyy=d.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  };
-  const fmtTime = (hhmm)=> (hhmm && /^\d{2}:\d{2}/.test(hhmm)) ? hhmm.slice(0,5) : (hhmm||'—');
-  const daysBetween = (d1,d2)=>{
-    try{
-      const a=new Date(d1), b=new Date(d2);
-      if(Number.isNaN(+a)||Number.isNaN(+b)) return 0;
-      a.setHours(0,0,0,0); b.setHours(0,0,0,0);
-      return Math.max(1, Math.round((b - a)/86400000) + 1); // inclusivo
-    }catch(_){ return 0; }
-  };
-  function estadoCalculado(row){
-    const base = String(row._estado || row.estado || 'en revisión').toLowerCase();
-    const today = new Date(); today.setHours(0,0,0,0);
-    const s = row.Fecha_inicio || row.startDate, e = row.Fecha_fin || row.endDate;
-    const sd = s? new Date(s):null, ed = e? new Date(e):null;
-    if (base.includes('rech')) return 'rechazada';
-    if (base.includes('acept')) {
-      if (sd && ed){
-        const tsd = new Date(sd); tsd.setHours(0,0,0,0);
-        const ted = new Date(ed); ted.setHours(0,0,0,0);
-        if (today < tsd) return 'aceptada';
-        if (today >= tsd && today <= ted) return 'en curso';
-        if (today > ted) return 'finalizada';
-      }
-      return 'aceptada';
-    }
-    // si viene "enviada", lo consideramos "en revisión"
-    if (base.includes('envi')) return 'en revisión';
-    if (base.includes('revis')) return 'en revisión';
-    return base || 'en revisión';
-  }
-  function pillHtml(estado){
-    switch(estado){
-      case 'aceptada':   return '<span class="tpl-pill"><i class="fa-regular fa-circle-check"></i> Aceptada</span>';
-      case 'en curso':   return '<span class="tpl-pill"><i class="fa-solid fa-play"></i> En curso</span>';
-      case 'finalizada': return '<span class="tpl-pill"><i class="fa-regular fa-flag-checkered"></i> Finalizada</span>';
-      case 'rechazada':  return '<span class="tpl-pill"><i class="fa-regular fa-circle-xmark"></i> Rechazada</span>';
-      default:           return '<span class="tpl-pill"><i class="fa-regular fa-hourglass-half"></i> En revisión</span>';
-    }
-  }
-  function renderBookingsUI(items){
-    const pill=$('#tpl-bookings-status'), empty=$('#tpl-bookings-empty'), list=$('#tpl-bookings-list');
-    if(!pill||!empty||!list) return;
-
-    if(!items||!items.length){ pill.innerHTML='<i class="fa-regular fa-circle"></i> Sin reservas'; empty.style.display=''; list.hidden=true; list.innerHTML=''; return; }
-
-    const data = items.slice(0, 5);
-    pill.innerHTML = `<i class="fa-solid fa-calendar-check"></i> ${data.length} reserva${data.length>1?'s':''}`;
-    empty.style.display='none'; list.hidden=false;
-
-    list.innerHTML = data.map(it=>{
-      const svc = esc(it.Servicio || it.service || it.serviceText || '—');
-      const f1  = fmtDateES(it.Fecha_inicio || it.startDate);
-      const f2  = fmtDateES(it.Fecha_fin    || it.endDate);
-      const nDias = daysBetween(it.Fecha_inicio||it.startDate, it.Fecha_fin||it.endDate);
-      const h1 = fmtTime(it.Hora_inicio || it.start || it.hora_inicio);
-      const h2 = fmtTime(it.Hora_fin    || it.end   || it.hora_fin);
-      const nm = esc((it.Mascotas_lista || it.petNames || '').replace(/\|/g, ', '));
-      const sub = (it.subtotal || it.Subtotal || it['Subtotal (sin desplazamiento)'] || '').toString();
-      const dep = (it.deposito || it.Deposito || it['Depósito a retener'] || '').toString();
-      const dir = esc(it.Direccion || it.address || '');
-      const notas = esc(it.Notas || it.notas || '');
-
-      const estado = estadoCalculado(it);
-      const badge  = pillHtml(estado);
-
-      // Mensaje contextual
-      let extraLine = '';
-      if (estado==='aceptada'){
-        // si empieza mañana/hoy
-        const sd = it.Fecha_inicio || it.startDate;
-        if (sd){
-          const now = new Date(); now.setHours(0,0,0,0);
-          const sD = new Date(sd); sD.setHours(0,0,0,0);
-          const diff = Math.round((sD - now)/86400000);
-          if (diff===0) extraLine = 'Comienza <strong>hoy</strong>.';
-          else if (diff===1) extraLine = 'Comienza <strong>mañana</strong>.';
-          else if (diff>1) extraLine = `Comienza en <strong>${diff} días</strong>.`;
+  /* ============= Unificación Nombre y Apellidos ============= */
+  function unifyNameFields(){
+    const firstNameEl = document.getElementById('firstName');
+    const lastNameEl  = document.getElementById('lastName');
+    if(!firstNameEl || !lastNameEl) return;
+    const label = document.querySelector('label[for="firstName"]');
+    if(label) label.textContent = 'Nombre y apellidos';
+    if(firstNameEl.placeholder) firstNameEl.placeholder = 'Nombre y apellidos';
+    setTimeout(()=>{
+      const nameVal = (firstNameEl.value || '').trim();
+      const surVal  = (lastNameEl.value  || '').trim();
+      if(surVal){
+        if(!nameVal || !nameVal.toLowerCase().includes(surVal.toLowerCase())){
+          firstNameEl.value = `${nameVal} ${surVal}`.trim();
+          try{
+            firstNameEl.dispatchEvent(new Event('input', { bubbles:true }));
+            firstNameEl.dispatchEvent(new Event('change',{ bubbles:true }));
+          }catch(_){}
         }
-      } else if (estado==='en curso'){
-        extraLine = 'Tu reserva está <strong>en curso</strong>.';
-      } else if (estado==='finalizada'){
-        extraLine = 'Tu reserva ha <strong>finalizado</strong>.';
-      } else {
-        extraLine = 'Estamos revisando tu solicitud. Te contactaremos lo antes posible.';
       }
+      const container = lastNameEl.closest('.booking-field') || lastNameEl.parentElement;
+      if(container) container.style.display = 'none';
+    }, 800);
+  }
 
-      return `
-        <div class="tpl-empty" style="border-style:solid">
-          <i class="fa-regular fa-calendar"></i>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <strong>${svc}</strong>
-            <span>${f1}${(f2 && f2!==f1)?' → '+f2:''} ${nDias?` · ${nDias} día${nDias>1?'s':''}`:''}</span>
-            ${(h1||h2)?`<span>Horario: ${h1}${h2 && h2!==h1?'–'+h2:''}</span>`:''}
-            ${nm?`<span style="color:#666">Mascotas: ${nm}</span>`:''}
-            ${sub?`<span style="color:#666">Subtotal: ${sub} €</span>`:''}
-            ${dep?`<span style="color:#666">Depósito: ${dep} €</span>`:''}
-            ${dir?`<span style="color:#666">Dirección: ${dir}</span>`:''}
-            ${notas?`<span style="color:#666">Notas: ${notas}</span>`:''}
-            <div>${badge}</div>
-            <div style="color:#58425a">${extraLine}</div>
-          </div>
-        </div>
+  /* ============= Preselección de servicio ============= */
+  function preselectService(){
+    const svcSelect = document.getElementById('service');
+    if(!svcSelect) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    let svc = urlParams.get('service') || urlParams.get('svc') || null;
+    if(!svc){
+      svc = localStorage.getItem('tpl.lastService') || null;
+      if(svc) localStorage.removeItem('tpl.lastService');
+    }
+    if(svc){
+      const opt = Array.from(svcSelect.options).find(o => o.value === svc);
+      if(opt){
+        svcSelect.value = svc;
+        try{ svcSelect.dispatchEvent(new Event('change',{ bubbles:true })); }catch(_){}
+      }
+    }
+  }
+
+  /* ============= Tarifas base, bonos y exóticos ============= */
+  const PRICES = {
+    base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
+    puppyBase: { guarderia: 20, alojamiento: 35 },
+    visita60: 22, visita90: 30,
+    visita60_larga: 18, visita90_larga: 27,
+    visitaMed: 12, visitaMed_larga: 10,
+    paseoStd: 12,
+    paseoExtraPerro: 8,
+    paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
+    alojSegundoPerroDia: 25,
+    alojSegundoPerroD11: 22,
+    depositPct: 0.30
+  };
+  const BUNDLE_GUARDERIA = {
+    adult: { 10: 135, 20: 250, 30: 315 },
+    puppy: { 10: 185, 20: 350, 30: 465 }
+  };
+  const EXOTIC_PRICES = {
+    conejo: 15,
+    pajaro: 12,
+    huron: 18,
+    iguana: 20,
+    otro: null
+  };
+
+  /* ============= Utilidades ============= */
+  function currency(n){ return (Math.round((n || 0) * 100) / 100).toFixed(2); }
+  function getNumMascotas(){
+    const select = document.getElementById('numPets');
+    if(!select) return 1;
+    const val = select.value;
+    if(val === '6+'){
+      const exact = document.getElementById('numPetsExact');
+      const n = parseInt((exact && exact.value) || '6', 10);
+      return isNaN(n) ? 6 : Math.max(6, n);
+    }
+    const num = parseInt(val, 10);
+    return isNaN(num) ? 1 : num;
+  }
+  function getDays(){
+    const start = document.getElementById('startDate')?.value;
+    const end   = document.getElementById('endDate')?.value;
+    if(!start || !end) return 0;
+    const d1 = new Date(start);
+    const d2 = new Date(end);
+    if(isNaN(d1) || isNaN(d2)) return 0;
+    const diff = Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+    return diff >= 0 ? diff + 1 : 0;
+  }
+  function updateDaysRow(nDias){
+    const labelEl = document.querySelector('#sumSenalado')?.previousElementSibling;
+    if(labelEl) labelEl.textContent = 'Días';
+    const valueDiv = document.getElementById('sumSenalado')?.parentElement;
+    if(valueDiv){
+      const text = nDias === 1 ? '1 día' : `${nDias} días`;
+      valueDiv.innerHTML = `<span id="sumSenalado">${text}</span>`;
+    }
+  }
+
+  /* ============= Opciones exóticas dinámicas ============= */
+  function toggleExoticSpecies(){
+    const svc = document.getElementById('service')?.value || '';
+    const speciesSelect = document.getElementById('species');
+    if(!speciesSelect) return;
+    if(!speciesSelect.dataset.originalOptions){
+      speciesSelect.dataset.originalOptions = speciesSelect.innerHTML;
+    }
+    if(svc === 'exoticos'){
+      speciesSelect.innerHTML = `
+        <option value="conejo">Conejo</option>
+        <option value="pajaro">Pájaro</option>
+        <option value="huron">Hurón</option>
+        <option value="iguana">Iguana</option>
+        <option value="otro">Otro exótico</option>
       `;
-    }).join('');
-  }
-
-  // Fallback: última reserva guardada localmente
-  function readLocalLastReservation(uid){
-    try{
-      const raw = localStorage.getItem(udbKey(uid,'lastReservation'));
-      if(!raw) return null;
-      const x = JSON.parse(raw);
-      return {
-        Servicio: x.Servicio || x.service,
-        startDate: x.startDate || x.Fecha_inicio,
-        endDate:   x.endDate   || x.Fecha_fin,
-        Hora_inicio: x.Hora_inicio || x.hora_inicio,
-        Hora_fin:    x.Hora_fin    || x.hora_fin,
-        Mascotas_lista: x.Mascotas_lista || x.petNames || '',
-        subtotal: x.subtotal, deposito: x.deposito,
-        Direccion: x.Direccion || x.address || '',
-        Notas: x.Notas || x.notas || '',
-        _estado: x._estado || x.estado || 'en revisión',
-        _createdAt: x._createdAt || Date.now()
-      };
-    }catch(_){ return null; }
-  }
-
-  // SDK Loader (v8) si no existe
-  function lazyLoadFirebase(cb){
-    if (window.firebase && firebase.app) { cb && cb(); return; }
-    const urls = [
-      'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
-      'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
-      'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js'
-    ];
-    let i=0; (function next(){
-      if (i>=urls.length){ cb && cb(); return; }
-      const s=document.createElement('script'); s.src=urls[i++]; s.async=true;
-      s.onload=next; s.onerror=function(){ console.warn('[tpl-perfil] No se pudo cargar Firebase SDK'); cb && cb(); };
-      document.head.appendChild(s);
-    })();
-  }
-
-  // Suscripción en tiempo real
-  let _unsubscribe = null;
-  function unsubscribeBookings(){ if(typeof _unsubscribe==='function'){ try{ _unsubscribe(); }catch(_){ } _unsubscribe=null; } }
-
-  function ensureFirebaseApp(){
-    if (!(window.firebase && firebase.apps && firebase.apps.length)) {
-      const cfg = window.TPL_FIREBASE_CONFIG || window.__TPL_FIREBASE_CONFIG || window.firebaseConfig;
-      if (cfg) { try{ firebase.initializeApp(cfg); }catch(_){ /* ok si ya está */ } }
+    } else {
+      speciesSelect.innerHTML = speciesSelect.dataset.originalOptions;
     }
   }
 
-  async function subscribeBookings(uid){
-    try{
-      ensureFirebaseApp();
-      if (!(window.firebase && firebase.firestore)) return [];
-
-      const db = firebase.firestore();
-      const auth = firebase.auth ? firebase.auth() : null;
-      const u = auth && auth.currentUser ? auth.currentUser : null;
-      const realUid = (u && u.uid) ? u.uid : uid;
-      if (!realUid) { renderBookingsUI([]); return; }
-
-      // Primero: pinta la última local (si existe)
-      const localLast = readLocalLastReservation(uid);
-      if (localLast) renderBookingsUI([localLast]);
-
-      // Query y suscripción
-      let q = db.collection('reservas').where('_uid','==', realUid).limit(10);
-      try{ q = q.orderBy('_createdAt','desc'); }catch(_){ /* si no hay índice, seguimos sin orderBy */ }
-
-      _unsubscribe = q.onSnapshot((snap)=>{
-        const rows = snap.docs.map(d=>({ id:d.id, ...(d.data()||{}) }));
-        const norm = rows.map(r=>({
-          id: r.id,
-          Servicio: r.Servicio || r.service,
-          Fecha_inicio: r.Fecha_inicio || r.fecha_inicio,
-          Fecha_fin: r.Fecha_fin || r.fecha_fin,
-          Hora_inicio: r.Hora_inicio || r.hora_inicio,
-          Hora_fin: r.Hora_fin || r.hora_fin,
-          Mascotas_lista: r.Mascotas_lista || r.mascotas || '',
-          subtotal: r.subtotal, deposito: r.deposito,
-          Direccion: r.Direccion || r.direccion || '',
-          Notas: r.Notas || r.notas || '',
-          _estado: r._estado || r.estado || 'en revisión',
-          _createdAt: r._createdAt ? (r._createdAt.toDate ? r._createdAt.toDate().getTime() : Date.parse(r._createdAt)) : 0
-        }));
-        norm.sort((a,b)=>(b._createdAt||0)-(a._createdAt||0));
-        renderBookingsUI(norm);
-      }, (err)=>{
-        console.warn('[tpl-perfil] onSnapshot error', err);
-      });
-
-    }catch(err){
-      console.warn('[tpl-perfil] subscribeBookings fail', err);
-      renderBookingsUI([]);
+  /* ============= Cálculo de costes y desglose visible ============= */
+  function computeCosts(){
+    const svc = document.getElementById('service')?.value || '';
+    const species = document.getElementById('species')?.value || 'perro';
+    const visitDur  = parseInt(document.getElementById('visitDuration')?.value || '60', 10);
+    const visitDaily= parseInt(document.getElementById('visitDaily')?.value || '1', 10);
+    const nMasc = getNumMascotas();
+    let nDias = getDays();
+    if(nDias === 0 && ['transporte','bodas','postquirurgico','exoticos'].includes(svc)){
+      nDias = 1;
     }
-  }
+    updateDaysRow(nDias);
 
-  // ---------- Refresh orquestado ----------
-  let refreshTimer=null;
-  function refreshAll(reason){
-    if (refreshTimer) clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(()=>{
-      const newUid = getCurrentUserId();
-      if (CURRENT_UID !== newUid){
-        maybeMigrateFromDefault(newUid);
-        CURRENT_UID = newUid;
+    let baseCost = 0;
+    let visit1Cost = 0;
+    let visit2Cost = 0;
+    let supplementPetsCost = 0;
+    let bono = 0;
+    let discountDays = 0;
+    let exoticUnpriced = false;
+    let packInfo = null; // Detalle del bono (packDays, price, remaining, perDay)
+    let extraDaysCost = 0; // Coste de los días fuera del bono
+
+    if(svc === 'visitas'){
+      const longStay = nDias >= 11;
+      visit1Cost = (visitDur === 90 ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
+                                    : (longStay ? PRICES.visita60_larga : PRICES.visita60)) * nDias;
+      visit2Cost = (visitDaily === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0) * nDias;
+      if(nMasc > 1){
+        const extra = nMasc - 1;
+        if(extra === 1) supplementPetsCost += 12;
+        else if(extra === 2) supplementPetsCost += 8 * 2;
+        else supplementPetsCost += 6 * extra;
       }
-      setOwnerIncomplete();
-      setPetsEmpty();
-      loadOwner();
-      loadPetsAndRender();
-      unsubscribeBookings();
-      lazyLoadFirebase(()=>subscribeBookings(CURRENT_UID));
-    }, reason==='immediate' ? 0 : 60);
+    } else if(svc === 'paseos'){
+      const pricePerDay = PRICES.paseoStd;
+      const packSizes = Object.keys(PRICES.paseoBonos)
+        .map(s => parseInt(s,10))
+        .filter(size => size <= nDias)
+        .sort((a,b) => a - b);
+      const normalCost = nDias * pricePerDay;
+      if(packSizes.length > 0){
+        const packDays = packSizes[packSizes.length - 1];
+        const packPrice = PRICES.paseoBonos[packDays];
+        const remaining = nDias - packDays;
+        baseCost = packPrice + (remaining * pricePerDay);
+        discountDays = packDays;
+        bono = normalCost - baseCost;
+        packInfo = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
+        extraDaysCost = remaining * pricePerDay;
+      } else {
+        baseCost = normalCost;
+      }
+      if(nMasc > 1){
+        supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
+      }
+    } else if(svc === 'guarderia'){
+      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+      const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
+      const normalCost = perDay * nDias;
+      const packSizes = Object.keys(table)
+        .map(s => parseInt(s,10))
+        .filter(size => size <= nDias)
+        .sort((a,b) => a - b);
+      if(packSizes.length > 0){
+        const packDays = packSizes[packSizes.length - 1];
+        const packPrice = table[packDays];
+        const remaining = nDias - packDays;
+        baseCost = packPrice + (remaining * perDay);
+        discountDays = packDays;
+        bono = normalCost - baseCost;
+        packInfo = { days: packDays, price: packPrice, remaining, perDay: perDay };
+        extraDaysCost = remaining * perDay;
+      } else {
+        baseCost = normalCost;
+      }
+      // Suplementos por mascotas en guardería (12€/día segundo, 8€/día siguientes)
+      if(nMasc >= 2) supplementPetsCost += 12 * nDias;
+      if(nMasc >= 3) supplementPetsCost += (nMasc - 2) * 8 * nDias;
+    } else if(svc === 'alojamiento'){
+      const isPuppy = (document.getElementById('isPuppy')?.value === 'si');
+      const baseDia = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
+      const baseLong= isPuppy ? 32 : 27;
+      const rate    = (nDias >= 11) ? baseLong : baseDia;
+      baseCost = rate * nDias;
+      if(species === 'perro' && nMasc >= 2){
+        const extraRate = (nDias >= 11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
+        supplementPetsCost = (nMasc - 1) * extraRate * nDias;
+      }
+    } else if(svc === 'exoticos'){
+      const exoticType = species || 'otro';
+      const pricePerDay = EXOTIC_PRICES[exoticType];
+      if(pricePerDay != null){
+        baseCost = pricePerDay * nDias;
+      } else {
+        exoticUnpriced = true;
+        baseCost = 0;
+      }
+      if(nMasc > 1){
+        supplementPetsCost = 0; // aquí podrías añadir suplemento para exóticos
+      }
+    } else {
+      baseCost = PRICES.base[svc] || 0;
+    }
+
+    const totalBeforeBono = baseCost + visit1Cost + visit2Cost + supplementPetsCost;
+    const subtotal = totalBeforeBono - bono;
+    const deposit  = subtotal * PRICES.depositPct;
+
+    // Actualización de la UI
+    const byId = id => document.getElementById(id);
+    const els = {
+      sumBase: byId('sumBase'),
+      sumVisit1: byId('sumVisit1'),
+      sumVisit2: byId('sumVisit2'),
+      sumPets: byId('sumPets'),
+      sumFestivo: byId('sumFestivo'),
+      sumSenalado: byId('sumSenalado'),
+      sumBono: byId('sumBono'),
+      rowBono: document.getElementById('rowBono'),
+      sumSubtotal: byId('sumSubtotal'),
+      sumDeposit: byId('sumDeposit')
+    };
+
+    // Base total (paquete + días extra)
+    els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '—';
+    els.sumVisit1.textContent = currency(visit1Cost);
+    els.sumVisit2.textContent = currency(visit2Cost);
+    els.sumPets.textContent   = currency(supplementPetsCost);
+
+    // Coste del bono y de los días extra en sus respectivas filas
+    const festLabelEl = els.sumFestivo?.previousElementSibling;
+    const senalLabelEl= els.sumSenalado?.previousElementSibling;
+    if(packInfo){
+      // Nombre del bono y coste
+      if(festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} días)`;
+      els.sumFestivo.textContent = currency(packInfo.price);
+      // Días extra
+      if(senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
+      els.sumSenalado.textContent = currency(extraDaysCost);
+    } else {
+      // Restaurar etiquetas originales si no hay bono
+      if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent;
+      if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent;
+      festLabelEl.textContent = festLabelEl.dataset.orig || 'Festivos (auto)';
+      senalLabelEl.textContent= senalLabelEl.dataset.orig || 'Días especiales (auto)';
+      els.sumFestivo.textContent = currency(0);
+      els.sumSenalado.textContent= currency(0);
+    }
+
+    // Descuento (bono)
+    if(els.rowBono){
+      if(bono > 0){
+        els.rowBono.style.display = '';
+        const label = els.rowBono.querySelector('.summary-label');
+        if(label) label.textContent = `Descuento (${discountDays} días)`;
+        els.sumBono.textContent = currency(bono);
+      } else {
+        els.rowBono.style.display = 'none';
+        els.sumBono.textContent = '0.00';
+      }
+    }
+
+    // Subtotal y depósito
+    els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
+    els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
+
+    // Resumen oculto para EmailJS
+    const summaryArr = [];
+    summaryArr.push(`Días: ${nDias}`);
+    if(baseCost > 0 && !exoticUnpriced) summaryArr.push(`Base total: ${currency(baseCost)} €`);
+    if(visit1Cost > 0) summaryArr.push(`1ª visita: ${currency(visit1Cost)} €`);
+    if(visit2Cost > 0) summaryArr.push(`2ª visita: ${currency(visit2Cost)} €`);
+    if(packInfo){
+      summaryArr.push(`Coste del bono (${packInfo.days} días): ${currency(packInfo.price)} €`);
+      if(packInfo.remaining > 0) summaryArr.push(`Coste días extra (${packInfo.remaining}): ${currency(extraDaysCost)} €`);
+    }
+    if(supplementPetsCost > 0) summaryArr.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
+    if(bono > 0) summaryArr.push(`Descuento (${discountDays} días): -${currency(bono)} €`);
+    summaryArr.push(!exoticUnpriced ? `Subtotal: ${currency(subtotal)} €` : `Precio a consultar`);
+    if(!exoticUnpriced) summaryArr.push(`Depósito: ${currency(deposit)} €`);
+    const summaryField = document.getElementById('summaryField');
+    if(summaryField) summaryField.value = summaryArr.join(' | ');
   }
 
-  // ---------- Watchers ----------
-  function attachWatchers(){
-    lazyLoadFirebase(()=>{
-      try{
-        if (!(window.firebase && firebase.auth)) return;
-        firebase.auth().onAuthStateChanged(function(){ refreshAll('immediate'); });
-      }catch(_){}
+  /* ============= Enlazar eventos ============= */
+  function bindEvents(){
+    const ids = ['service','species','isPuppy','startDate','endDate','visitDuration','visitDaily','numPets','numPetsExact'];
+    ids.forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.addEventListener('change', () => {
+        if(id === 'service'){ toggleExoticSpecies(); }
+        computeCosts();
+      });
+      if(el && el.tagName === 'INPUT') el.addEventListener('input', computeCosts);
     });
-    window.addEventListener('focus', ()=>refreshAll());
-    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refreshAll(); });
-    window.addEventListener('pageshow', (e)=>{ if (e.persisted) refreshAll('immediate'); });
-    let lastAuthKey = localStorage.getItem('tpl_auth_uid') || '';
-    setInterval(()=>{ const cur=localStorage.getItem('tpl_auth_uid')||''; if(cur!==lastAuthKey){ lastAuthKey=cur; refreshAll('immediate'); } }, 1200);
-    window.addEventListener('storage', (ev)=>{ if(!ev) return;
-      if((ev.key||'').startsWith('tpl.udb.')) refreshAll();
-      if(ev.key==='tpl.udb.lastChange') refreshAll();
-      if(ev.key==='tpl_auth_uid') refreshAll('immediate');
-    });
   }
 
-  // ---------- Inicio ----------
-  function start(){
-    CURRENT_UID = getCurrentUserId();
-    maybeMigrateFromDefault(CURRENT_UID);
-    setupLogout();
-    refreshAll('immediate');
-    attachWatchers();
-  }
-  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', start); else start();
+  /* ============= Inicialización y envío ============= */
+  document.addEventListener('DOMContentLoaded', () => {
+    preselectService();
+    unifyNameFields();
+    toggleExoticSpecies();
+    bindEvents();
+    computeCosts();
+    // Ejecutar otra vez para sobrescribir posibles cálculos del HTML original
+    setTimeout(computeCosts, 300);
 
-  // API útil
-  window.__TPL_PERFIL__ = Object.assign({}, window.__TPL_PERFIL__||{}, { refresh: refreshAll, getUid: ()=>CURRENT_UID });
+    // Control de autenticación (muestra/oculta formulario)
+    if(typeof firebase !== 'undefined' && firebase.auth){
+      const auth = firebase.auth();
+      const form = document.getElementById('bookingForm');
+      const wall = document.getElementById('authWall');
+      auth.onAuthStateChanged((user) => {
+        const logged = !!user;
+        if(form) form.classList.toggle('disabled', !logged);
+        if(wall) wall.style.display = logged ? 'none' : 'block';
+      });
+    }
+
+    // Gestión del envío (Firestore + EmailJS)
+    const form = document.getElementById('bookingForm');
+    if(form){
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const auth = (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null;
+        const user = auth?.currentUser || null;
+        if(!user){
+          alert('Debes iniciar sesión para reservar.');
+          return;
+        }
+        // Verificar perfil
+        try{
+          const db = firebase.firestore();
+          const col = (window.TPL_COLLECTIONS?.owners) || 'propietarios';
+          const doc = await db.collection(col).doc(user.uid).get();
+          if(!doc.exists){
+            alert('Completa tu perfil antes de hacer una reserva.');
+            if(window.location.pathname.indexOf('perfil')===-1) {
+              window.location.href = 'perfil.html';
+            }
+            return;
+          }
+        }catch(_){}
+        // Recalcular antes de enviar
+        computeCosts();
+        // Preparar payload
+        const fd = new FormData(form);
+        const payload = {};
+        for(const [k,v] of fd.entries()){ payload[k] = v; }
+        payload._estado = 'pending';
+        payload._uid = user.uid;
+        payload._email = user.email || null;
+        if(firebase.firestore && firebase.firestore.FieldValue){
+          payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        // Guardar en Firestore
+        let saved = false;
+        let docId = null;
+        try{
+          if(firebase.firestore){
+            const docRef = await firebase.firestore().collection('reservas').add(payload);
+            saved = true;
+            docId = docRef.id;
+          }
+        }catch(err){ console.warn('No se pudo guardar la reserva en Firestore', err); }
+        // Enviar via EmailJS
+        let mailed = false;
+        try{
+          if(window.emailjs){
+            const cfg = window.TPL_EMAILJS || {};
+            const service  = cfg.serviceId || cfg.service || '<YOUR_SERVICE_ID>';
+            const template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || '<YOUR_TEMPLATE_ID>';
+            const pubKey   = cfg.publicKey || cfg.userId || '<YOUR_PUBLIC_KEY>';
+            const params   = Object.assign({}, payload, { reserva_id: docId });
+            const resp = await emailjs.send(service, template, params, pubKey);
+            if(resp && resp.status >= 200 && resp.status < 300) mailed = true;
+          }
+        }catch(err){ console.warn('No se pudo enviar la reserva por EmailJS', err); }
+        if(saved || mailed){
+          alert('Tu reserva se ha enviado correctamente.');
+          const redirect = form.dataset.tplRedirect || form.getAttribute('data-tpl-redirect');
+          const wait = parseInt(form.dataset.tplWait || form.getAttribute('data-tpl-wait') || '800', 10);
+          if(redirect){ setTimeout(() => { window.location.href = redirect; }, wait); }
+          else { form.reset(); }
+        } else {
+          alert('No se pudo enviar la reserva. Por favor, inténtalo de nuevo.');
+        }
+      });
+    }
+  });
+
+  // Exponer computeCosts para que pueda ser llamado desde otros scripts
+  window.updateSummaryFromJS = computeCosts;
 })();
-/* TPL: FIN BLOQUE NUEVO */
