@@ -182,7 +182,6 @@
   function ensurePuppyBadge(){
     let badge = document.getElementById('puppyBadge');
     if(badge) return badge;
-    // Insertar badge al lado de #isPuppy si existe, si no al lado del selector de servicio
     const host = document.getElementById('isPuppy')?.closest('.booking-field') || document.getElementById('service')?.closest('.booking-field') || document.body;
     badge = document.createElement('span');
     badge.id = 'puppyBadge';
@@ -230,6 +229,51 @@
     setPuppyBadge(!!isPuppy);
   }
 
+  /* ============= Opción B: crear esqueleto del desglose si faltan nodos ============= */
+  function ensureSummaryNodes(){
+    // Contenedor
+    let body = document.getElementById('summaryBody');
+    if(!body){
+      const sec = document.createElement('section');
+      sec.id = 'budget-summary';
+      sec.className = 'tpl-summary';
+      const h3 = document.createElement('h3'); h3.textContent='Desglose';
+      const tbl = document.createElement('table'); tbl.className='summary';
+      const thead = document.createElement('thead');
+      thead.innerHTML = '<tr><th>Concepto</th><th>Importe</th></tr>';
+      body = document.createElement('tbody'); body.id='summaryBody';
+      tbl.appendChild(thead); tbl.appendChild(body);
+      sec.appendChild(h3); sec.appendChild(tbl);
+      (document.getElementById('bookingForm') || document.body).appendChild(sec);
+    }
+
+    // Filas requeridas
+    const rows = [
+      { id:'sumBase',     label:'Base suelto' },
+      { id:'sumVisit1',   label:'Visitas (principal)' },
+      { id:'sumVisit2',   label:'Visitas (medicación)' },
+      { id:'sumFestivo',  label:'Coste del bono' },
+      { id:'sumSenalado', label:'Coste días extra' },
+      { id:'sumPets',     label:'Suplementos mascotas' },
+      { id:'sumBono',     label:'Descuento (bono)', rowId:'rowBono', hidden:true },
+      { id:'sumSubtotal', label:'Subtotal', cls:'total' },
+      { id:'sumDeposit',  label:'Depósito', cls:'total' }
+    ];
+
+    rows.forEach(r => {
+      if(!document.getElementById(r.id)){
+        const tr = document.createElement('tr');
+        if(r.rowId) tr.id = r.rowId;
+        if(r.cls) tr.className = r.cls;
+        const th = document.createElement('th'); th.textContent = r.label;
+        const td = document.createElement('td'); td.id = r.id; td.textContent = '0.00';
+        tr.appendChild(th); tr.appendChild(td);
+        if(r.hidden) tr.style.display = 'none';
+        body.appendChild(tr);
+      }
+    });
+  }
+
   /* ============= Opciones exóticas dinámicas ============= */
   function toggleExoticSpecies(){
     const svc = document.getElementById('service')?.value || '';
@@ -268,23 +312,21 @@
     const auto = computeIsPuppyAuto(); // true | false | null
     if(auto !== null) syncPuppyUI(auto);
 
-    // Importes (separados para poder pintar el desglose correctamente)
-    let baseCost = 0;            // suelto (paseos/guardería fuera del bono) o tarifa base
-    let visit1Cost = 0;          // 1ª visita/día (visitas gatos)
-    let visit2Cost = 0;          // 2ª+ visitas/día de medicación (15 min)
-    let supplementPetsCost = 0;  // suplementos por nº de mascotas
+    // Importes
+    let baseCost = 0;            // suelto / tarifa base
+    let visit1Cost = 0;          // 1ª visita/día
+    let visit2Cost = 0;          // 2ª+ visitas/día (medicación)
+    let supplementPetsCost = 0;  // suplementos
     let exoticUnpriced = false;
 
-    // Bono (separado)
+    // Bono separado
     let packInfo = null;         // {days, price, remaining, perDay}
-    let packCost = 0;            // importe del bono (1 mascota)
-    let extraDaysCost = 0;       // coste de días sueltos (fuera del bono)
+    let packCost = 0;            // coste del bono (1 mascota)
+    let extraDaysCost = 0;       // suelto fuera del bono
 
     if(svc === 'visitas'){
-      // VISITAS A DOMICILIO (GATOS) — 1ª visita vs 2ª+ (medicación)
+      // VISITAS A DOMICILIO (GATOS)
       const longStay = nDias >= 11;
-
-      // 1ª visita/día a la duración elegida (60/90/15)
       const tarifa1 = (visitDur === 90)
         ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
         : (visitDur === 15)
@@ -292,14 +334,12 @@
           : (longStay ? PRICES.visita60_larga : PRICES.visita60);
       visit1Cost = tarifa1 * nDias * 1;
 
-      // 2ª+ visitas/día SI visitDaily > 1 → todas son de medicación (15 min)
       const extrasPorDia = Math.max(0, visitDaily - 1);
       if(extrasPorDia > 0){
         const tarifaMed = longStay ? PRICES.visitaMed_larga : PRICES.visitaMed;
         visit2Cost = tarifaMed * nDias * extrasPorDia;
       }
 
-      // Suplementos POR VISITA: se multiplican por todas las visitas (1ª + extras)
       const totalVisitas = nDias * Math.max(1, visitDaily);
       if(nMasc > 1){
         const extras = nMasc - 1;
@@ -326,14 +366,14 @@
         const remaining = nDias - packDays;
 
         packInfo      = { days: packDays, price: packPrice, remaining, perDay: pricePerDay };
-        packCost      = packPrice;                 // Coste del bono (fila propia)
+        packCost      = packPrice;                 // Coste del bono
         baseCost      = remaining * pricePerDay;   // Suelto fuera del bono
-        extraDaysCost = baseCost;                  // Para rotular “Coste días extra”
+        extraDaysCost = baseCost;                  // Rotular
       } else {
         baseCost = normalCost;
       }
 
-      // Suplementos: +8 €/paseo por cada perro extra (el bono NO cubre extras)
+      // Suplementos: +8 €/paseo por perro extra (el bono NO cubre extras)
       if(nMasc > 1){
         supplementPetsCost = (nMasc - 1) * nDias * PRICES.paseoExtraPerro;
       }
@@ -358,9 +398,9 @@
         const remaining = nDias - packDays;
 
         packInfo      = { days: packDays, price: packPrice, remaining, perDay: perDay };
-        packCost      = packPrice;                // Coste del bono (fila propia)
+        packCost      = packPrice;                // Coste del bono
         baseCost      = remaining * perDay;       // Suelto fuera del bono
-        extraDaysCost = baseCost;                 // Para rotular
+        extraDaysCost = baseCost;                 // Rotular
       } else {
         baseCost = normalCost;
       }
@@ -419,27 +459,25 @@
     };
 
     // Base suelto
-    els.sumBase && (els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '0.00');
+    if(els.sumBase) els.sumBase.textContent = (!exoticUnpriced && baseCost > 0) ? currency(baseCost) : '0.00';
 
     // Visitas (dos filas)
-    els.sumVisit1 && (els.sumVisit1.textContent = currency(visit1Cost));
-    els.sumVisit2 && (els.sumVisit2.textContent = currency(visit2Cost));
+    if(els.sumVisit1) els.sumVisit1.textContent = currency(visit1Cost);
+    if(els.sumVisit2) els.sumVisit2.textContent = currency(visit2Cost);
 
     // Suplementos
-    els.sumPets && (els.sumPets.textContent = currency(supplementPetsCost));
+    if(els.sumPets) els.sumPets.textContent   = currency(supplementPetsCost);
 
     // Etiquetas dinámicas para bono/días extra
     const festLabelEl  = els.sumFestivo?.previousElementSibling;
     const senalLabelEl = els.sumSenalado?.previousElementSibling;
 
     if (packInfo && packCost > 0){
-      // Coste del bono
       if (festLabelEl) festLabelEl.textContent = `Coste del bono (${packInfo.days} ${packInfo.days === 1 ? 'día' : 'días'})`;
-      els.sumFestivo && (els.sumFestivo.textContent = currency(packCost));
+      if (els.sumFestivo) els.sumFestivo.textContent = currency(packCost);
 
-      // Coste de días extra (suelto fuera del bono)
       if (senalLabelEl) senalLabelEl.textContent = `Coste días extra (${packInfo.remaining})`;
-      els.sumSenalado && (els.sumSenalado.textContent = currency(extraDaysCost));
+      if (els.sumSenalado) els.sumSenalado.textContent = currency(extraDaysCost);
     } else {
       if (festLabelEl){
         if(!festLabelEl.dataset.orig) festLabelEl.dataset.orig = festLabelEl.textContent || '';
@@ -449,14 +487,14 @@
         if(!senalLabelEl.dataset.orig) senalLabelEl.dataset.orig = senalLabelEl.textContent || '';
         senalLabelEl.textContent = senalLabelEl.dataset.orig || 'Días especiales (auto)';
       }
-      els.sumFestivo && (els.sumFestivo.textContent = currency(0));
-      els.sumSenalado && (els.sumSenalado.textContent = currency(0));
+      if(els.sumFestivo) els.sumFestivo.textContent  = '0.00';
+      if(els.sumSenalado) els.sumSenalado.textContent = '0.00';
     }
 
     // Ocultar “Descuento (bono)”
     if (els.rowBono){
       els.rowBono.style.display = 'none';
-      els.sumBono && (els.sumBono.textContent = '0.00');
+      if(els.sumBono) els.sumBono.textContent = '0.00';
     }
 
     // ---------- SUBTOTALES / DEPÓSITO ----------
@@ -464,8 +502,8 @@
     const subtotal = (!exoticUnpriced) ? subtotalBefore : 0;
     const deposit  = (!exoticUnpriced) ? (subtotal * PRICES.depositPct) : 0;
 
-    els.sumSubtotal && (els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—');
-    els.sumDeposit  && (els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—');
+    if(els.sumSubtotal) els.sumSubtotal.textContent = (!exoticUnpriced) ? currency(subtotal) : '—';
+    if(els.sumDeposit)  els.sumDeposit.textContent  = (!exoticUnpriced) ? currency(deposit)  : '—';
 
     // ---------- RESUMEN OCULTO ----------
     const summaryField = document.getElementById('summaryField');
@@ -486,6 +524,9 @@
       }
       summaryField.value = s.join(' | ');
     }
+
+    // DEBUG opcional
+    console.debug('[DESGLOSE]', { svc, nDias, nMasc, baseCost, packCost, extraDaysCost, visit1Cost, visit2Cost, supplementPetsCost });
   }
 
   /* ============= Enlazar eventos ============= */
@@ -507,6 +548,7 @@
 
   /* ============= Inicialización y envío ============= */
   document.addEventListener('DOMContentLoaded', () => {
+    ensureSummaryNodes();     // <-- Opción B: crea las filas si no existen
     preselectService();
     unifyNameFields();
     toggleExoticSpecies();
