@@ -212,6 +212,7 @@
           </button>
         </div>
       </section>
+
       <!-- ===== Datos de la persona ===== -->
       <section class="tpl-section" aria-labelledby="sec-titular">
         <h2 id="sec-titular">Datos de la persona titular</h2>
@@ -338,7 +339,7 @@
             <div class="summary-value"><span id="sumTravel" class="summary-muted">pendiente</span></div>
           </div>
           <div class="summary-row" id="rowBono" style="display:none;">
-            <div class="summary-label" id="rowBonoLabel">Bono (descuento)</div>
+            <div class="summary-label">Bono guardería (descuento)</div>
             <div class="summary-value">−<span id="sumBono">0.00</span> €</div>
           </div>
           <div class="summary-row summary-total">
@@ -376,6 +377,7 @@
       <p class="note">Tras enviar, te llamaremos para confirmar detalles. La primera visita con el cuidador es gratuita.</p>
     </form>
   </div>
+
   <!-- SDKs Firebase (compat) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
@@ -416,1707 +418,909 @@
   </script>
 
   <!-- ===== Precios y bonos ===== -->
-  <script>
-    const PRICES = {
-      // base (transporte base 20 € + km “pendiente”)
-      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
-      puppyBase: { guarderia: 20, alojamiento: 35 },
+  <!-- (Sigue en PARTE 2/4) -->
+<!-- ===== Precios y bonos ===== -->
+<script>
+  const PRICES = {
+    // base (transporte base 20 € + km “pendiente”)
+    base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
+    puppyBase: { guarderia: 20, alojamiento: 35 },
 
-      // visitas (gatos)
-      visita60: 22, visita90: 30,
-      visita60_larga: 18, visita90_larga: 27,
-      visitaMed: 12, visitaMed_larga: 10,
+    // visitas (gatos)
+    visita60: 22, visita90: 30,
+    visita60_larga: 18, visita90_larga: 27,
+    visitaMed: 12, visitaMed_larga: 10,
 
-      // paseos
-      paseoStd: 12,
-      paseoExtraPerro: 8,
-      paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
+    // paseos
+    paseoStd: 12,
+    paseoExtraPerro: 8,
+    // Bonos paseos SOLO a partir de 10 días (clave = nº de días)
+    paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
 
-      // alojamiento (desde día 11)
-      alojSegundoPerroDia: 25,
-      alojSegundoPerroD11: 22,
+    // alojamiento (2º+ perro por día)
+    alojSegundoPerroDia: 25,   // hasta 10 días
+    alojSegundoPerroD11: 22,   // desde 11 días
 
-      // depósito
-      depositPct: 0.30
+    // depósito
+    depositPct: 0.30
+  };
+
+  // Bonos guardería (precio 1er perro)
+  const BUNDLE_GUARDERIA = {
+    adult:  { 10: 135, 20: 250, 30: 315 },
+    puppy:  { 10: 185, 20: 350, 30: 465 }
+  };
+
+  /* Opcional: extras fijos para bonos guardería (2ª/3ª+) → si no defines, se usa 12€/día 2ª y 8€/día 3ª+ × nº días */
+  // window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
+  //   adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
+  //   puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
+  // };
+</script>
+
+<!-- ===== Lógica UI + cálculo + autorrelleno ===== -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('bookingForm');
+  const wall = document.getElementById('authWall');
+
+  const els = {
+    service: byId('service'), region: byId('region'),
+    startDate: byId('startDate'), endDate: byId('endDate'),
+    start: byId('start'), end: byId('end'),
+    address: byId('location'), addrSuggest: byId('tplAddrSuggest'), postalCode: byId('postalCode'),
+    species: byId('species'), isPuppy: byId('isPuppy'),
+    numPets: byId('numPets'), numPetsExact: byId('numPetsExact'),
+    needTravel: byId('needTravel'), travelBubble: byId('travelBubble'),
+    visitDuration: byId('visitDuration'), visitDaily: byId('visitDaily'),
+    fieldVisitDuration: byId('fieldVisitDuration'), fieldVisitDaily: byId('fieldVisitDaily'),
+    firstName: byId('firstName'), lastName: byId('lastName'),
+    phone: byId('phone'), email: byId('email'), contactTime: byId('contactTime'),
+    petsContainer: byId('petsContainer'), petsListHidden: byId('petsListHidden'), petNamesList: byId('tplPetNamesList'),
+
+    sumBase: byId('sumBase'), sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
+    rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
+    sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
+    sumTravel: byId('sumTravel'), sumBono: byId('sumBono'), rowBono: byId('rowBono'),
+    sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
+    summaryField: byId('summaryField'),
+    hiddenPack: byId('tpl-hidden-pack')
+  };
+  function byId(id){ return document.getElementById(id); }
+  const qs = (k) => new URLSearchParams(location.search).get(k);
+  const currency = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
+  const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01'];
+  const REGION_TO_COUNTY = {
+    andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
+    'castilla-la-mancha':'ES-CM', 'castilla-y-leon':'ES-CL', cataluna:'ES-CT', ceuta:'ES-CE', valenciana:'ES-VC',
+    extremadura:'ES-EX', galicia:'ES-GA', 'la-rioja':'ES-RI', madrid:'ES-MD', melilla:'ES-ML', murcia:'ES-MC',
+    navarra:'ES-NC', euskadi:'ES-PV', nacional:null
+  };
+  const COUNTY_TO_REGIONKEY = {
+    'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
+    'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
+  };
+
+  function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function eachDate(from,to){
+    const res=[]; if(!from||!to) return res;
+    const d1=new Date(from), d2=new Date(to);
+    if(isNaN(d1)||isNaN(d2)||d2<d1) return res;
+    const cur=new Date(d1); cur.setHours(0,0,0,0); d2.setHours(0,0,0,0);
+    while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+    return res;
+  }
+  function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+
+  /* Preselección desde Servicios / URL */
+  function inferServiceFromReferrer(){
+    try{
+      const u = new URL(document.referrer || '');
+      const p = (u.pathname || '').toLowerCase();
+      if(p.includes('guarderia')) return 'guarderia';
+      if(p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
+      if(p.includes('paseos')) return 'paseos';
+      if(p.includes('visitas')) return 'visitas';
+      if(p.includes('bodas')) return 'bodas';
+      if(p.includes('postquir')) return 'postquirurgico';
+      if(p.includes('transporte')) return 'transporte';
+      if(p.includes('exotico')) return 'exoticos';
+    }catch(_){}
+    return null;
+  }
+  (function presetService(){
+    const raw = (qs('service') || qs('svc') || '').toLowerCase();
+    const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
+    const map = {
+      visitas:'visitas','visitas-gatos':'visitas',
+      paseos:'paseos',
+      guarderia:'guarderia','guarderia-dia':'guarderia',
+      alojamiento:'alojamiento','estancias':'alojamiento',
+      bodas:'bodas',
+      postquirurgico:'postquirurgico','post-quirurgico':'postquirurgico','postquirugico':'postquirurgico',
+      transporte:'transporte',
+      exoticos:'exoticos','exotico':'exoticos'
     };
-    const BUNDLE_GUARDERIA = {
-      adult:  { 10: 135, 20: 250, 30: 315 },
-      puppy:  { 10: 185, 20: 350, 30: 465 }
-    };
+    let val = map[norm] || inferServiceFromReferrer();
+    if(val && els.service){ els.service.value = val; els.service.disabled = false; }
+  })();
 
-    /* TPL: INICIO BLOQUE NUEVO [Opcional: extras fijos para bonos guardería (2ª/3ª+). Si no defines, se usa 12€/día y 8€/día × nº días] */
-    // window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
-    //   adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
-    //   puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
-    // };
-    /* TPL: FIN BLOQUE NUEVO */
-  </script>
+  function toggleFields(){
+    const svc = els.service?.value;
+    const isVisitas = (svc === 'visitas');
+    if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
+    if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
+    if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
+    if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60'; }
+    if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1'; }
+    const species = els.species?.value || 'perro';
+    const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
+    if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
+    if(isVisitas && els.species) els.species.value = 'gato';
+  }
 
-  <!-- ===== Lógica UI + cálculo + autorrelleno ===== -->
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('bookingForm');
-    const wall = document.getElementById('authWall');
-
-    const els = {
-      service: byId('service'), region: byId('region'),
-      startDate: byId('startDate'), endDate: byId('endDate'),
-      start: byId('start'), end: byId('end'),
-      address: byId('location'), addrSuggest: byId('tplAddrSuggest'), postalCode: byId('postalCode'),
-      species: byId('species'), isPuppy: byId('isPuppy'),
-      numPets: byId('numPets'), numPetsExact: byId('numPetsExact'),
-      needTravel: byId('needTravel'), travelBubble: byId('travelBubble'),
-      visitDuration: byId('visitDuration'), visitDaily: byId('visitDaily'),
-      fieldVisitDuration: byId('fieldVisitDuration'), fieldVisitDaily: byId('fieldVisitDaily'),
-      firstName: byId('firstName'), lastName: byId('lastName'),
-      phone: byId('phone'), email: byId('email'), contactTime: byId('contactTime'),
-      petsContainer: byId('petsContainer'), petsListHidden: byId('petsListHidden'), petNamesList: byId('tplPetNamesList'),
-
-      sumBase: byId('sumBase'), sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
-      rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
-      sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
-      sumTravel: byId('sumTravel'), sumBono: byId('sumBono'), rowBono: byId('rowBono'), rowBonoLabel: byId('rowBonoLabel'),
-      sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
-      summaryField: byId('summaryField'),
-      hiddenPack: byId('tpl-hidden-pack')
-    };
-    function byId(id){ return document.getElementById(id); }
-    const qs = (k) => new URLSearchParams(location.search).get(k);
-    const currency = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
-    const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01'];
-    const REGION_TO_COUNTY = {
-      andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
-      'castilla-la-mancha':'ES-CM', 'castilla-y-leon':'ES-CL', cataluna:'ES-CT', ceuta:'ES-CE', valenciana:'ES-VC',
-      extremadura:'ES-EX', galicia:'ES-GA', 'la-rioja':'ES-RI', madrid:'ES-MD', melilla:'ES-ML', murcia:'ES-MC',
-      navarra:'ES-NC', euskadi:'ES-PV', nacional:null
-    };
-    const COUNTY_TO_REGIONKEY = {
-      'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
-      'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
-    };
-
-    function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function eachDate(from,to){
-      const res=[]; if(!from||!to) return res;
-      const d1=new Date(from), d2=new Date(to);
-      if(isNaN(d1)||isNaN(d2)||d2<d1) return res;
-      const cur=new Date(d1); cur.setHours(0,0,0,0); d2.setHours(0,0,0,0);
-      while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
-      return res;
+  function getNumMascotas(){
+    let n = els.numPets?.value || '1';
+    if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
+    return parseInt(n,10);
+  }
+  function syncPetsExact(){
+    if(els.numPets?.value === '6+'){
+      els.numPetsExact.style.display = 'block';
+      els.numPetsExact.required = true;
+    }else{
+      els.numPetsExact.style.display = 'none';
+      els.numPetsExact.required = false;
     }
-    function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
+  }
 
-    /* Preselección desde Servicios / URL */
-    function inferServiceFromReferrer(){
+  let PROFILE_PET_NAMES = [];
+  function fillPetDatalist(){
+    if(!els.petNamesList) return;
+    els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
+      .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
+  }
+  function renderPetNameFields(n){
+    n = Math.max(1, n|0);
+    const wrap = els.petsContainer; if(!wrap) return;
+    const current = wrap.querySelectorAll('[data-pet-row]').length;
+    for(let i=current+1;i<=n;i++){
+      const row = document.createElement('div');
+      row.className = 'booking-field';
+      row.setAttribute('data-pet-row', i.toString());
+      row.innerHTML = `
+        <label for="petName_${i}">Nombre de la mascota ${n>1?`#${i}`:''}</label>
+        <input type="text" id="petName_${i}" name="Mascota_${i}" list="tplPetNamesList" placeholder="Ej. Nala" autocomplete="off">
+      `;
+      wrap.appendChild(row);
+    }
+    const rows = wrap.querySelectorAll('[data-pet-row]');
+    rows.forEach(r=>{
+      const idx = parseInt(r.getAttribute('data-pet-row'),10);
+      if(idx>n) r.remove();
+    });
+    updatePetsListHidden();
+    wrap.querySelectorAll('input[id^="petName_"]').forEach(inp=>{
+      inp.addEventListener('input', updatePetsListHidden);
+    });
+  }
+  function updatePetsListHidden(){
+    const names = [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].map(i=>i.value.trim()).filter(Boolean);
+    els.petsListHidden.value = names.join(', ');
+  }
+
+  function travelSync(){
+    if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
+    if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
+  }
+
+  const _festivosCache = new Map();
+  async function fetchLocalHolidays(year){
+    const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
+    for(const url of urls){
       try{
-        const u = new URL(document.referrer || '');
-        const p = (u.pathname || '').toLowerCase();
-        if(p.includes('guarderia')) return 'guarderia';
-        if(p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
-        if(p.includes('paseos')) return 'paseos';
-        if(p.includes('visitas')) return 'visitas';
-        if(p.includes('bodas')) return 'bodas';
-        if(p.includes('postquir')) return 'postquirurgico';
-        if(p.includes('transporte')) return 'transporte';
-        if(p.includes('exotico')) return 'exoticos';
+        const r = await fetch(url, {cache:'no-store'});
+        if(!r.ok) continue;
+        const data = await r.json();
+        const nacional = new Set((data.national || data.nacional || []).map(x => x.date || x));
+        const porCcaa = new Map();
+        if(data.regions){ Object.entries(data.regions).forEach(([k, arr])=>{ porCcaa.set(k, new Set((arr||[]).map(x => x.date || x))); }); }
+        return { nacional, porCcaa, _src:'local' };
       }catch(_){}
-      return null;
     }
-    (function presetService(){
-      const raw = (qs('service') || qs('svc') || '').toLowerCase();
-      const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
-      const map = {
-        visitas:'visitas','visitas-gatos':'visitas',
-        paseos:'paseos',
-        guarderia:'guarderia','guarderia-dia':'guarderia',
-        alojamiento:'alojamiento','estancias':'alojamiento',
-        bodas:'bodas',
-        postquirurgico:'postquirurgico','post-quirurgico':'postquirurgico','postquirugico':'postquirurgico',
-        transporte:'transporte',
-        exoticos:'exoticos','exotico':'exoticos'
-      };
-      let val = map[norm] || inferServiceFromReferrer();
-      if(val && els.service){ els.service.value = val; els.service.disabled = false; }
-    })();
-
-    function toggleFields(){
-      const svc = els.service?.value;
-      const isVisitas = (svc === 'visitas');
-      if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
-      if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
-      if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
-      if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60'; }
-      if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1'; }
-      const species = els.species?.value || 'perro';
-      const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
-      if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
-      if(isVisitas && els.species) els.species.value = 'gato';
-    }
-
-    function getNumMascotas(){
-      let n = els.numPets?.value || '1';
-      if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
-      return parseInt(n,10);
-    }
-    function syncPetsExact(){
-      if(els.numPets?.value === '6+'){
-        els.numPetsExact.style.display = 'block';
-        els.numPetsExact.required = true;
-      }else{
-        els.numPetsExact.style.display = 'none';
-        els.numPetsExact.required = false;
-      }
-    }
-
-    let PROFILE_PET_NAMES = [];
-    function fillPetDatalist(){
-      if(!els.petNamesList) return;
-      els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
-        .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
-    }
-    function renderPetNameFields(n){
-      n = Math.max(1, n|0);
-      const wrap = els.petsContainer; if(!wrap) return;
-      const current = wrap.querySelectorAll('[data-pet-row]').length;
-      for(let i=current+1;i<=n;i++){
-        const row = document.createElement('div');
-        row.className = 'booking-field';
-        row.setAttribute('data-pet-row', i.toString());
-        row.innerHTML = `
-          <label for="petName_${i}">Nombre de la mascota ${n>1?`#${i}`:''}</label>
-          <input type="text" id="petName_${i}" name="Mascota_${i}" list="tplPetNamesList" placeholder="Ej. Nala" autocomplete="off">
-        `;
-        wrap.appendChild(row);
-      }
-      const rows = wrap.querySelectorAll('[data-pet-row]');
-      rows.forEach(r=>{
-        const idx = parseInt(r.getAttribute('data-pet-row'),10);
-        if(idx>n) r.remove();
-      });
-      updatePetsListHidden();
-      wrap.querySelectorAll('input[id^="petName_"]').forEach(inp=>{
-        inp.addEventListener('input', updatePetsListHidden);
-      });
-    }
-    function updatePetsListHidden(){
-      const names = [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].map(i=>i.value.trim()).filter(Boolean);
-      els.petsListHidden.value = names.join(', ');
-    }
-
-    function travelSync(){
-      if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
-      if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
-    }
-
-    const _festivosCache = new Map();
-    async function fetchLocalHolidays(year){
-      const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
-      for(const url of urls){
-        try{
-          const r = await fetch(url, {cache:'no-store'});
-          if(!r.ok) continue;
-          const data = await r.json();
-          const nacional = new Set((data.national || data.nacional || []).map(x => x.date || x));
-          const porCcaa = new Map();
-          if(data.regions){ Object.entries(data.regions).forEach(([k, arr])=>{ porCcaa.set(k, new Set((arr||[]).map(x => x.date || x))); }); }
-          return { nacional, porCcaa, _src:'local' };
-        }catch(_){}
-      }
-      return null;
-    }
-    async function fetchNagerHolidays(year){
-      const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ES`, {cache:'force-cache'});
-      if(!r.ok) throw new Error('Nager fail');
-      const data = await r.json();
-      const nacional = new Set();
-      const porCcaa = new Map();
-      for(const h of data){
-        const date = h.date;
-        if(!h.counties || !h.counties.length){ nacional.add(date); }
-        else{
-          for(const c of h.counties){
-            const key = COUNTY_TO_REGIONKEY[c] || c;
-            if(!porCcaa.has(key)) porCcaa.set(key, new Set());
-            porCcaa.get(key).add(date);
-          }
+    return null;
+  }
+  async function fetchNagerHolidays(year){
+    const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ES`, {cache:'force-cache'});
+    if(!r.ok) throw new Error('Nager fail');
+    const data = await r.json();
+    const nacional = new Set();
+    const porCcaa = new Map();
+    for(const h of data){
+      const date = h.date;
+      if(!h.counties || !h.counties.length){ nacional.add(date); }
+      else{
+        for(const c of h.counties){
+          const key = COUNTY_TO_REGIONKEY[c] || c;
+          if(!porCcaa.has(key)) porCcaa.set(key, new Set());
+          porCcaa.get(key).add(date);
         }
       }
-      return { nacional, porCcaa, _src:'nager' };
     }
-    async function fetchHolidaysForYear(year){
-      if(_festivosCache.has(year)) return _festivosCache.get(year);
-      try{
-        const raw = localStorage.getItem(`tpl_festivos_${year}`);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(parsed?.t && Date.now() - parsed.t <= 24*3600*1000){
-            const nacional = new Set(parsed.d || []);
-            const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
-            const cached = {nacional, porCcaa, _src:'localStorage'};
-            _festivosCache.set(year, cached); return cached;
-          }
+    return { nacional, porCcaa, _src:'nager' };
+  }
+  async function fetchHolidaysForYear(year){
+    if(_festivosCache.has(year)) return _festivosCache.get(year);
+    try{
+      const raw = localStorage.getItem(`tpl_festivos_${year}`);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed?.t && Date.now() - parsed.t <= 24*3600*1000){
+          const nacional = new Set(parsed.d || []);
+          const porCcaa = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
+          const cached = {nacional, porCcaa, _src:'localStorage'};
+          _festivosCache.set(year, cached); return cached;
         }
-      }catch(_){}
-      const local = await fetchLocalHolidays(year);
-      if(local){ _festivosCache.set(year, local); return local; }
-      try{
-        const nager = await fetchNagerHolidays(year);
-        _festivosCache.set(year, nager);
-        try{
-          localStorage.setItem(`tpl_festivos_${year}`, JSON.stringify({ t:Date.now(), d:[...nager.nacional], r:[...nager.porCcaa.entries()].map(([k,v])=>[k,[...v]]) }));
-        }catch(_){}
-        return nager;
-      }catch(_){}
-      const basic = { nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]), porCcaa: new Map(), _src:'basic' };
-      _festivosCache.set(year, basic); return basic;
-    }
-    async function calcFestivosAutoAsync(region, start, end){
-      const days = eachDate(start, end);
-      if(!days.length) return { festivo:0, senalado:0, nDias:0 };
-      let festivo = 0, senalado = 0;
-      for(const d of days){
-        const year = d.getFullYear();
-        const iso = ymd(d);
-        const pack = await fetchHolidaysForYear(year);
-        const county = REGION_TO_COUNTY[region || 'nacional'] || null;
-        const regKey = COUNTY_TO_REGIONKEY[county] || county;
-        const isNat = !!pack?.nacional?.has(iso);
-        const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
-        const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
-        if(isNat || isReg) festivo += 10;
-        if(isSpecial) senalado += 30;
       }
-      return { festivo, senalado, nDias: days.length };
+    }catch(_){}
+    const local = await fetchLocalHolidays(year);
+    if(local){ _festivosCache.set(year, local); return local; }
+    try{
+      const nager = await fetchNagerHolidays(year);
+      _festivosCache.set(year, nager);
+      try{
+        localStorage.setItem(`tpl_festivos_${year}`, JSON.stringify({ t:Date.now(), d:[...nager.nacional], r:[...nager.porCcaa.entries()].map(([k,v])=>[k,[...v]]) }));
+      }catch(_){}
+      return nager;
+    }catch(_){}
+    const basic = { nacional: new Set([`${year}-01-06`, `${year}-05-01`, `${year}-08-15`, `${year}-10-12`, `${year}-11-01`, `${year}-12-06`, `${year}-12-08`, `${year}-12-25`]), porCcaa: new Map(), _src:'basic' };
+    _festivosCache.set(year, basic); return basic;
+  }
+  async function calcFestivosAutoAsync(region, start, end){
+    const days = eachDate(start, end);
+    if(!days.length) return { festivo:0, senalado:0, nDias:0 };
+    let festivo = 0, senalado = 0;
+    for(const d of days){
+      const year = d.getFullYear();
+      const iso = ymd(d);
+      const pack = await fetchHolidaysForYear(year);
+      const county = REGION_TO_COUNTY[region || 'nacional'] || null;
+      const regKey = COUNTY_TO_REGIONKEY[county] || county;
+      const isNat = !!pack?.nacional?.has(iso);
+      const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
+      const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
+      if(isNat || isReg) festivo += 10;
+      if(isSpecial) senalado += 30;
     }
-    async function calcVisitas(visitDurationMin, dailyVisits, nDias){
-      const longStay = (nDias >= 11);
-      const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) : (longStay ? PRICES.visita60_larga : PRICES.visita60);
-      const price2 = dailyVisits === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0;
-      return { price1, price2 };
-    }
-    function calcPetSupplementsForVisitas(n){
-      // Mantengo tu lógica original para VISITAS (suplemento no diario)
-      if(n <= 1) return 0;
-      const extra = n - 1;
-      if(extra === 1) return 12;
-      if(extra === 2) return 8 * 2;
-      if(extra >= 3) return 6 * extra;
+    return { festivo, senalado, nDias: days.length };
+  }
+  async function calcVisitas(visitDurationMin, dailyVisits, nDias){
+    const longStay = (nDias >= 11);
+    const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) : (longStay ? PRICES.visita60_larga : PRICES.visita60);
+    const price2 = dailyVisits === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0;
+    return { price1, price2 };
+  }
+
+  // ==== SUPLEMENTOS POR MASCOTAS: SIEMPRE FUERA DEL "PRECIO BASE" ====
+  function supplementsForService({service, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed}){
+    if (nMasc <= 1) return 0;
+
+    if (service === 'visitas'){
+      // Escalonado que acordamos para gatos:
+      const extra = nMasc - 1;
+      if(extra === 1) return 12 * nDias;
+      if(extra === 2) return (8 * 2) * nDias; // 2 extras → 16€/día
+      if(extra >= 3) return (6 * extra) * nDias; // 3º+ → 6€/día por mascota extra
       return 0;
     }
 
-    function getBasePrice(service, species, isPuppy){
-      if(service === 'visitas') return 0;
-      if(service === 'alojamiento'){
-        return isPuppy ? (PRICES.puppyBase.alojamiento ?? PRICES.base.alojamiento) : PRICES.base.alojamiento;
-      }
-      if(service === 'guarderia'){
-        return isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-      }
-      if(service === 'paseos') return 0;
-      return PRICES.base[service] || 0;
-    }
-    function calcBonoGuarderia(nDias, isPuppy){
-      const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-      const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
-      const bundlePrice = table[nDias];
-      if (!bundlePrice) return { descuento:0, baseBundle:null };
-      const normalTotal = perDay * nDias;
-      return { descuento: Math.max(0, normalTotal - bundlePrice), baseBundle: bundlePrice };
+    if (service === 'paseos'){
+      // +8 €/paseo por cada perro adicional
+      const walks = Math.max(1, nDias);
+      return Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro);
     }
 
-    async function recalc(){
-      const svc = els.service?.value || '';
-      const species = (els.species?.value || 'perro');
-      const isExotic = species === 'otros';
-      const isVisitas = (svc === 'visitas');
-      const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && !isExotic && !isVisitas;
-      const isPuppy = puppyAllowed && (els.isPuppy?.value === 'si');
-
-      const nMasc = getNumMascotas();
-      const region = els.region?.value || 'nacional';
-      const start = els.startDate?.value;
-      const end   = els.endDate?.value;
-      const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
-
-      let base = 0, visit1 = 0, visit2 = 0, bono = 0, petsSupp = 0;
-
-      // Ajuste dinámico del label de bono
-      if (els.rowBonoLabel) els.rowBonoLabel.textContent = 'Bono (descuento)';
-
-      if(isVisitas){
-        const dur = parseInt(els.visitDuration?.value || '60', 10);
-        const daily = parseInt(els.visitDaily?.value || '1', 10);
-        const perDay = await calcVisitas(dur, daily, nDias);
-        visit1 = perDay.price1 * nDias;
-        visit2 = perDay.price2 * nDias;
-        // Suplementos de visitas (mantenemos tu lógica original)
-        petsSupp = calcPetSupplementsForVisitas(nMasc);
-        base = 0; // base no se usa en visitas
-      } else if (svc === 'paseos'){
-        // 1 paseo/día → bonos por nº de días (exactamente 10/15/20/25/30)
-        const walks = Math.max(1, nDias);
-        const normalTotalFirstDog = walks * PRICES.paseoStd;
-        const bonoWalk = PRICES.paseoBonos[walks] || null;
-        const firstDogCost = bonoWalk ?? normalTotalFirstDog;
-        base = firstDogCost; // precio base = solo 1er perro
-        // Descuento (si hay bono)
-        bono = bonoWalk ? Math.max(0, normalTotalFirstDog - bonoWalk) : 0;
-        if (els.rowBonoLabel && bono > 0) els.rowBonoLabel.textContent = 'Bono paseos (descuento)';
-        // Suplementos por 2º/3º+ perro → fuera del base
-        petsSupp = Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro);
-      } else if (svc === 'guarderia'){
-        // Guardería: bono por 10/20/30 días; extras 2ª/3ª+ a "Suplementos por mascotas"
-        const { descuento, baseBundle } = calcBonoGuarderia(nDias, isPuppy);
+    if (service === 'guarderia'){
+      // Con o sin bono, suplementos DIARIOS fuera del base:
+      // 2ª mascota: +12€/día ; 3ª+: +8€/día
+      if (bundleGuarderiaUsed){
+        // permitimos override por bono si se define
         const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
-        const bundle = table[nDias] || null;
-        const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-
-        if (bundle){
-          base = bundle; // solo 1ª mascota en base
-          bono = Math.max(0, (perDay * nDias) - bundle);
-          if (els.rowBonoLabel && bono > 0) els.rowBonoLabel.textContent = 'Bono guardería (descuento)';
-
-          // Suplementos 2ª/3ª+ → fuera (por defecto 12€/día para 2ª; 8€/día 3ª+)
-          const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
-          const second = ov?.second ?? (12 * nDias);
-          const thirdP = ov?.thirdPlus ?? (8 * nDias);
-          if (nMasc>=2) petsSupp += second;
-          if (nMasc>=3) petsSupp += (nMasc-2) * thirdP;
-        } else {
-          // Sin bono: base = 1ª mascota × días; suplementos diarios aparte
-          base = perDay * nDias;
-          if (nMasc>=2) petsSupp += 12 * nDias;
-          if (nMasc>=3) petsSupp += (nMasc-2) * 8 * nDias;
-        }
-      } else if (svc === 'alojamiento'){
-        // Alojamiento: 1ª mascota en base, resto como suplementos
-        const dayBase = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
-        const dayLong = isPuppy ? 32 : 27;
-        const rate1 = (nDias>=11) ? dayLong : dayBase;
-        base = rate1 * nDias;
-        if (species==='perro' && nMasc>=2){
-          const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
-          petsSupp += (nMasc-1) * extraRate * nDias; // suplementos fuera del base
-        }
-      } else if (svc === 'bodas' || svc === 'postquirurgico' || svc === 'exoticos'){
-        base = 0; // a consultar / según especie
-      } else if (svc === 'transporte'){
-        base = PRICES.base.transporte; // 20€ base + km “pendiente”
+        const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
+        const second   = ov?.second ?? (12 * nDias);
+        const thirdPlu = ov?.thirdPlus ?? (8 * nDias);
+        let sup = 0;
+        if (nMasc >= 2) sup += second;
+        if (nMasc >= 3) sup += (nMasc-2) * thirdPlu;
+        return sup;
       } else {
-        base = getBasePrice(svc, species, isPuppy) * nDias;
-        // Para otros servicios, si alguna vez aplicaran suplementos genéricos:
-        // petsSupp += calcPetSupplements(...); // (no definido ahora)
+        // Sin bono: mismas reglas (12€/día para la 2ª, 8€/día 3ª+)
+        let sup = 0;
+        if (nMasc >= 2) sup += 12 * nDias;
+        if (nMasc >= 3) sup += (nMasc-2) * 8 * nDias;
+        return sup;
       }
-
-      const subtotal = (base + visit1 + visit2 + petsSupp + festivo + senalado) - bono;
-      const deposit = subtotal * (PRICES.depositPct || 0.3);
-
-      els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(base) : '—');
-      els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
-      els.rowVisit2.style.display = (svc==='visitas' && visit2 > 0) ? '' : 'none';
-      els.sumVisit1.textContent = currency(visit1);
-      els.sumVisit2.textContent = currency(visit2);
-      els.sumPets.textContent = currency(petsSupp);
-      els.sumFestivo.textContent = currency(festivo);
-      els.sumSenalado.textContent = currency(senalado);
-
-      // Mostrar fila de bono si hay descuento en guardería o paseos
-      els.rowBono.style.display = (bono > 0) ? '' : 'none';
-      els.sumBono.textContent = currency(bono);
-
-      els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
-      els.sumDeposit.textContent = (subtotal>0) ? currency(deposit) : '—';
     }
-    async function recalcAll(){ toggleFields(); syncPetsExact(); renderPetNameFields(getNumMascotas()); await recalc(); }
 
-    // Eventos UI
-    ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
-        .forEach(id=>{
-          const el = byId(id); if(el) el.addEventListener(ev, recalcAll);
-        });
-    });
-
-    // Init
-    renderPetNameFields(1);
-    recalcAll();
-
-    // Autocompletado dirección (OpenStreetMap)
-    async function searchAddresses(q){
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
-      const r = await fetch(url, { headers: { 'Accept':'application/json' }});
-      if(!r.ok) return [];
-      return r.json();
+    if (service === 'alojamiento' && species === 'perro'){
+      // 2º+ perro por día (misma tarifa para 3º+)
+      const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
+      return (nMasc-1) * extraRate * nDias;
     }
-    function renderAddrSuggestions(list){
-      if(!els.addrSuggest) return;
-      if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; return; }
-      els.addrSuggest.innerHTML = list.map((it)=>(`
-        <div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
-          ${it.display_name}
-        </div>`)).join('');
-      els.addrSuggest.style.display = 'block';
-      els.addrSuggest.querySelectorAll('.tpl-addr-item').forEach(node=>{
-        node.addEventListener('click', ()=> chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))));
-        node.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))); });
+
+    // otros servicios: sin suplemento
+    return 0;
+  }
+
+  function getBasePrice(service, species, isPuppy){
+    if(service === 'visitas') return 0;
+    if(service === 'alojamiento'){
+      return isPuppy ? (PRICES.puppyBase.alojamiento ?? PRICES.base.alojamiento) : PRICES.base.alojamiento;
+    }
+    if(service === 'guarderia'){
+      return isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+    }
+    if(service === 'paseos') return 0; // base se calcula por días/bono 1er perro
+    return PRICES.base[service] || 0;
+  }
+  function calcBonoGuarderia(nDias, isPuppy){
+    const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+    const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
+    const bundlePrice = table[nDias];
+    if (!bundlePrice) return { descuento:0, baseBundle:null };
+    const normalTotal = perDay * nDias;
+    return { descuento: Math.max(0, normalTotal - bundlePrice), baseBundle: bundlePrice };
+  }
+
+  async function recalc(){
+    const svc = els.service?.value || '';
+    const species = (els.species?.value || 'perro');
+    const isExotic = species === 'otros';
+    const isVisitas = (svc === 'visitas');
+    const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && !isExotic && !isVisitas;
+    const isPuppy = puppyAllowed && (els.isPuppy?.value === 'si');
+
+    const nMasc = getNumMascotas();
+    const region = els.region?.value || 'nacional';
+    const start = els.startDate?.value;
+    const end   = els.endDate?.value;
+    const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
+
+    let base = 0, visit1 = 0, visit2 = 0, petsSupp = 0, bono = 0;
+
+    if(isVisitas){
+      // VISITAS A DOMICILIO (gatos)
+      const dur = parseInt(els.visitDuration?.value || '60', 10);
+      const daily = parseInt(els.visitDaily?.value || '1', 10);
+      const perDay = await calcVisitas(dur, daily, nDias);
+      visit1 = perDay.price1 * nDias;
+      visit2 = perDay.price2 * nDias;
+      base = 0;
+      petsSupp = supplementsForService({service:svc, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed:false});
+    }
+    else if (svc === 'paseos'){
+      // PASEOS — 1 paseo/día
+      const walks = Math.max(1, nDias);
+      // Bonos SOLO si días >=10
+      const bonoWalks = (walks >= 10) ? (PRICES.paseoBonos[walks] || null) : null;
+      const firstDogCost = bonoWalks ?? (walks * PRICES.paseoStd);
+      base = firstDogCost;        // SOLO 1er perro
+      petsSupp = supplementsForService({service:svc, species, nMasc, nDias:walks, isPuppy, bundleGuarderiaUsed:false});
+      bono = 0; // En paseos no mostramos línea de descuento; el bono ya está aplicado en el base del 1er perro
+    }
+    else if (svc === 'guarderia'){
+      // GUARDERÍA — por días
+      const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+      const { descuento, baseBundle } = calcBonoGuarderia(nDias, isPuppy);
+      if (baseBundle){
+        base = baseBundle; // SOLO 1er perro en el precio del bono
+        petsSupp = supplementsForService({service:svc, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed:true});
+        bono = descuento; // mostramos el ahorro del 1er perro
+      } else {
+        base = perDay * nDias; // 1er perro sin bono
+        petsSupp = supplementsForService({service:svc, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed:false});
+        bono = 0;
+      }
+    }
+    else if (svc === 'alojamiento'){
+      // ALOJAMIENTO — por días
+      const dayBase = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
+      const dayLong = isPuppy ? 32 : 27; // tarifa “larga estancia” (>= 11 días)
+      const rate1 = (nDias>=11) ? dayLong : dayBase;
+      base = rate1 * nDias; // SOLO 1ª mascota
+      petsSupp = supplementsForService({service:svc, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed:false});
+      bono = 0;
+    }
+    else if (svc === 'bodas' || svc === 'postquirurgico' || svc === 'exoticos'){
+      base = 0; petsSupp = 0; bono = 0;
+    }
+    else if (svc === 'transporte'){
+      base = PRICES.base.transporte; // 20€ base + km “pendiente”
+      petsSupp = 0; bono = 0;
+    }
+    else {
+      base = getBasePrice(svc, species, isPuppy) * nDias;
+      petsSupp = 0; bono = 0;
+    }
+
+    const subtotal = (base + visit1 + visit2 + petsSupp + festivo + senalado) - bono;
+    const deposit = subtotal * (PRICES.depositPct || 0.3);
+
+    // ——— Pintado UI
+    els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(base) : '—');
+    els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
+    els.rowVisit2.style.display = (svc==='visitas' && visit2 > 0) ? '' : 'none';
+    els.sumVisit1.textContent = currency(visit1);
+    els.sumVisit2.textContent = currency(visit2);
+
+    els.sumPets.textContent = currency(petsSupp);
+    els.sumFestivo.textContent = currency(festivo);
+    els.sumSenalado.textContent = currency(senalado);
+
+    els.rowBono.style.display = (svc === 'guarderia' && bono > 0) ? '' : 'none';
+    els.sumBono.textContent = currency(bono);
+
+    els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
+    els.sumDeposit.textContent = (subtotal>0) ? currency(deposit) : '—';
+  }
+  async function recalcAll(){ toggleFields(); syncPetsExact(); renderPetNameFields(getNumMascotas()); await recalc(); }
+
+  // Eventos UI que disparan recálculo
+  ['change','input'].forEach(ev=>{
+    ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
+      .forEach(id=>{
+        const el = byId(id); if(el) el.addEventListener(ev, recalcAll);
       });
-    }
-    function chooseAddr(item){
-      els.address.value = (item?.display_name || '').replace(/, España$/,'');
-      const pc = item?.address?.postcode || '';
-      if(els.postalCode){ els.postalCode.value = pc; }
-      els.addrSuggest.style.display='none';
-    }
-    const addressInputHandler = (function debounce(fn, wait=380){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; })(async ()=>{
-      const q = (els.address?.value || '').trim();
-      if(q.length < 4){ renderAddrSuggestions([]); return; }
-      try{ renderAddrSuggestions(await searchAddresses(q) || []); }
-      catch(_){ renderAddrSuggestions([]); }
-    });
-    if(els.address){
-      els.address.addEventListener('input', addressInputHandler);
-      els.address.addEventListener('focus', addressInputHandler);
-      document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
-    }
-
-    // ---------- AUTORRELLENO MULTI-ORIGEN ----------
-    /* TPL: INICIO BLOQUE NUEVO [Helpers perfil/mascotas desde Firebase/window/localStorage] */
-    function getUid(){ try{ return firebase?.auth?.().currentUser?.uid || null; }catch(_){ return null; } }
-    function udbKey(uid, key){ return `tpl.udb.${uid||'default'}.${key}`; }
-    function safeParse(s, fb){ try{ return JSON.parse(s); }catch(_){ return fb; } }
-
-    function fillOwnerFromObj(d){
-      if(!d) return;
-      const setIfEmpty = (el, val)=>{ if(el && !el.value && val){ el.value = String(val||''); } };
-      setIfEmpty(els.firstName, d.nombre || d.name || d.firstName);
-      setIfEmpty(els.lastName,  d.apellidos || d.lastName || d.surname);
-      setIfEmpty(els.email,     d.email);
-      setIfEmpty(els.phone,     d.telefono || d.phone);
-      setIfEmpty(els.address,   d.direccion || d.address);
-      setIfEmpty(els.postalCode,d.cp || d.postal || d.zip);
-      if(els.region && d.ccaa){
-        const val = String(d.ccaa).toLowerCase();
-        if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
-      }
-    }
-    function addPetNamesFromArray(arr){
-      const names = (Array.isArray(arr)?arr:[])
-        .map(p => (p?.nombre || p?.name || '').trim())
-        .filter(Boolean);
-      PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...names]));
-      fillPetDatalist();
-    }
-
-    async function autoFromFirebase(){
-      try{
-        if(typeof firebase === 'undefined') return;
-        const u = firebase.auth().currentUser; if(!u) return;
-        const db = firebase.firestore();
-        // Owner
-        const doc = await db.collection('users').doc(u.uid).get();
-        const d = doc.exists ? doc.data() : {};
-        fillOwnerFromObj({ ...d, email: d?.email || u.email, telefono: d?.telefono || u.phoneNumber });
-        // Pets
-        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-        const pets = petsSnap.docs.map(x=>x.data()||{});
-        addPetNamesFromArray(pets);
-        // Cachorro auto si 1 mascota con birthdate < 6 meses
-        try{
-          if(pets.length){
-            const p = pets[0];
-            if(p?.birthdate && els.isPuppy && !els.isPuppy.parentElement.hidden){
-              const b = new Date(p.birthdate), today = new Date();
-              const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-              els.isPuppy.value = (months < 6) ? 'si' : 'no';
-              await recalc();
-            }
-          }
-        }catch(_){}
-      }catch(_){}
-    }
-    function autoFromWindowProfile(){
-      const p = (window.__TPL_PROFILE__ || {});
-      if(!p || typeof p !== 'object') return;
-      fillOwnerFromObj(p);
-      if(Array.isArray(p.mascotas)) addPetNamesFromArray(p.mascotas);
-      else if(Array.isArray(p.pets)) addPetNamesFromArray(p.pets);
-    }
-    function autoFromLocalProfile(){
-      try{
-        const raw = localStorage.getItem('tpl.profile');
-        const obj = safeParse(raw, null);
-        if(!obj) return;
-        fillOwnerFromObj(obj);
-        if(Array.isArray(obj.mascotas)) addPetNamesFromArray(obj.mascotas);
-        if(Array.isArray(obj.pets)) addPetNamesFromArray(obj.pets);
-        const uid = getUid();
-        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-        const arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]') :
-                              safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
-        if(Array.isArray(arr)) addPetNamesFromArray(arr);
-      }catch(_){}
-    }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    // Llamadas de autorrelleno por prioridad: Firebase → window → local
-    (async function runAutoFill(){
-      await autoFromFirebase();
-      autoFromWindowProfile();
-      autoFromLocalProfile();
-    })();
-
-    // Auth UI (SIN BLOQUEO DEL FORMULARIO)
-    if (typeof firebase !== 'undefined') {
-      const auth = firebase.auth();
-      function updateAuthUI(user){
-        const logged = !!user;
-        /* TPL: INICIO BLOQUE NUEVO [Sin bloqueo por login] */
-        if (form) form.classList.remove('disabled');
-        /* TPL: FIN BLOQUE NUEVO */
-        if (wall) wall.style.display = logged ? 'none' : 'block';
-        if (logged){ /* ya se hizo autoFromFirebase arriba si hay user */ }
-      }
-      auth.onAuthStateChanged(updateAuthUI);
-    }
-
-    // Preferencia de contacto
-    function validateContactPreference(e){
-      const pref = (new FormData(form).get('Preferencia_contacto')) || 'cualquiera';
-      const tel  = els.phone?.value?.trim();
-      const mail = els.email?.value?.trim();
-      if(pref === 'telefono' || pref === 'whatsapp'){
-        if(!tel){ e.preventDefault(); alert('Por favor, indícanos tu teléfono para poder contactarte.'); return false; }
-      }else if(pref === 'email'){
-        if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return false; }
-      }
-      return true;
-    }
-
-    /* TPL: INICIO BLOQUE NUEVO [Ocultos Propietario_*, Mascota_*, Reserva_*] */
-    function clearHiddenPack(){ if(els.hiddenPack) els.hiddenPack.innerHTML=''; }
-    function addHidden(name, value){
-      if(!els.hiddenPack) return;
-      const i = document.createElement('input');
-      i.type='hidden'; i.name = name; i.value = String(value ?? '');
-      els.hiddenPack.appendChild(i);
-    }
-    function collectChosenPets(){
-      const uid = getUid();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]')
-                        : safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
-      if (!Array.isArray(arr)) arr = [];
-      const selectedNames = (els.petsListHidden?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-      if (selectedNames.length) return arr.filter(p => selectedNames.includes((p?.nombre||'').trim()));
-      if (arr.length === 1) return [arr[0]];
-      return [];
-    }
-    function regionText(){ try{ return els.region?.options?.[els.region.selectedIndex]?.text || ''; }catch(_){ return ''; } }
-    function serviceText(){ try{ return els.service?.options?.[els.service.selectedIndex]?.text || els.service?.value || ''; }catch(_){ return ''; } }
-
-    function buildHiddenPackBeforeSend(){
-      clearHiddenPack();
-      // Propietario_*
-      addHidden('Propietario_Nombre', els.firstName?.value || '');
-      addHidden('Propietario_Apellidos', els.lastName?.value || '');
-      addHidden('Propietario_Email', els.email?.value || '');
-      addHidden('Propietario_Telefono', els.phone?.value || '');
-      addHidden('Propietario_Direccion', els.address?.value || '');
-      addHidden('Propietario_CP', els.postalCode?.value || '');
-      addHidden('Propietario_CCAA', regionText());
-      try{ const u = firebase?.auth?.().currentUser; addHidden('Propietario_UID', u?.uid || ''); }catch(_){}
-
-      // Reserva_*
-      addHidden('Reserva_Tipo', serviceText());
-      addHidden('Reserva_Fechas', `${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
-      addHidden('Reserva_Horas', `${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      addHidden('Reserva_SubtotalEUR', byId('sumSubtotal')?.textContent || '');
-      addHidden('Reserva_DepositoEUR', byId('sumDeposit')?.textContent || '');
-
-      // Mascota_* (por índice)
-      const chosen = collectChosenPets();
-      chosen.forEach((p, idx)=>{
-        const ix = idx+1;
-        addHidden(`Mascota_${ix}_Nombre`, (p?.nombre||'').trim());
-        addHidden(`Mascota_${ix}_Especie`, (p?.especie||p?.tipo||'').trim());
-        addHidden(`Mascota_${ix}_Raza`, (p?.raza||p?.tipoExotico||'').trim());
-        addHidden(`Mascota_${ix}_Sexo`, (p?.sexo||'').trim());
-        addHidden(`Mascota_${ix}_Edad`, (p?.edad||'').trim());
-        addHidden(`Mascota_${ix}_Peso`, (p?.peso||'').trim());
-        addHidden(`Mascota_${ix}_Tamano`, (p?.tamano||p?.tamaño||'').trim());
-        addHidden(`Mascota_${ix}_Esterilizado`, (p?.esterilizado||'').trim());
-        addHidden(`Mascota_${ix}_Microchip`, (p?.microchip||'').trim());
-        addHidden(`Mascota_${ix}_Patologias`, (p?.salud||p?.patologias||'').trim());
-        addHidden(`Mascota_${ix}_Medicacion`, (p?.tratamiento||p?.medicacion||'').trim());
-        addHidden(`Mascota_${ix}_Caracter`, (p?.comportamiento||'').trim());
-        addHidden(`Mascota_${ix}_Alergias`, (p?.alergias||'').trim());
-        addHidden(`Mascota_${ix}_Vacunas`, (p?.vacunas||'').trim());
-      });
-    }
-    /* TPL: FIN BLOQUE NUEVO */
-
-    // Prepara resumen antes de enviar (Parte 3 añade el envío)
-    form.addEventListener('submit', (e)=>{
-      if(!validateContactPreference(e)) return;
-      const regionTxt = regionText();
-      let petsVal = els.numPets?.value || '1';
-      if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
-      updatePetsListHidden();
-
-      const lines = [];
-      lines.push(`Servicio: ${serviceText()}`);
-      lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
-      lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      if(els.service?.value === 'visitas'){
-        lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
-      }else{
-        const puppyAllowed = (els.service?.value === 'alojamiento' || els.service?.value === 'guarderia') && (els.species?.value !== 'otros');
-        lines.push(`Tipo de animal: ${els.species?.value || '-'}`);
-        lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
-      }
-      lines.push(`Nº mascotas: ${petsVal}`);
-      const petNames = els.petsListHidden.value || '';
-      if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
-      lines.push(`Dirección: ${els.address?.value || '-'}`);
-      lines.push(`CP: ${els.postalCode?.value || '-'}`);
-      lines.push(`CCAA: ${regionTxt}`);
-      lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
-      if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
-      lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
-      lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
-      if(parseFloat(els.sumBono?.textContent||'0')>0){
-        lines.push(`Bono (descuento): −${els.sumBono?.textContent || '0.00'} €`);
-      }
-      lines.push(`Suplementos por mascotas: ${els.sumPets?.textContent || '0.00'} €`);
-      lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
-      lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
-      byId('summaryField').value = lines.join(' | ');
-
-      // TPL ocultos completos
-      buildHiddenPackBeforeSend();
-    });
-
-    // UI menores
-    els.numPets && els.numPets.addEventListener('change', ()=>{ syncPetsExact(); renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
-    els.numPetsExact && els.numPetsExact.addEventListener('input', ()=>{ renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
-    els.needTravel && els.needTravel.addEventListener('change', travelSync);
-    travelSync();
-
-    /* TPL: INICIO BLOQUE NUEVO [Sin bloqueo inicial del formulario si no hay sesión] */
-    try{ form?.classList.remove('disabled'); }catch(_){}
-    /* TPL: FIN BLOQUE NUEVO */
   });
-  </script>
-  <!-- Login inline si no hay sesión -->
-  <script>
-    (function(){
-      if (typeof firebase === 'undefined') return;
-      const auth = firebase.auth();
-      const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-      function renderInlineLogin(){
-        const host = document.getElementById('tpl-inline-login');
-        if(!host) return;
-        host.innerHTML = `
-          <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
-            <h3 class="tpl-login-title">Accede aquí mismo</h3>
-            <div class="tpl-socials">
-              <button type="button" class="tpl-btn-social" id="tpl-google-btn">
-                <i class="fa-brands fa-google"></i> Continuar con Google
-              </button>
-            </div>
-            <div class="tpl-sep"><span>o</span></div>
-            <form class="tpl-login-form" id="tpl-inline-form" novalidate>
-              <label>Email</label>
-              <input type="email" name="email" required autocomplete="email" />
-              <label>Contraseña</label>
-              <input type="password" name="password" required autocomplete="current-password" />
-              <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <a class="tpl-btn-outline" href="registro.html?next=reservas.html">Regístrate</a>
-              <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
-              <p class="tpl-login-msg" aria-live="polite"></p>
-            </form>
-          </div>
-        `;
-        const form = document.getElementById('tpl-inline-form');
-        const msg  = host.querySelector('.tpl-login-msg');
-        const btnG = document.getElementById('tpl-google-btn');
-        const btnReset = document.getElementById('tpl-reset');
+  // Init
+  renderPetNameFields(1);
+  recalcAll();
 
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault();
-          msg.textContent = 'Accediendo…';
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          try{
-            await auth.signInWithEmailAndPassword(email, pass);
-            msg.textContent = '¡Listo!';
-            location.reload();
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
-          }
-        });
+  // Autocompletado dirección (OpenStreetMap)
+  async function searchAddresses(q){
+    const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
+    const r = await fetch(url, { headers: { 'Accept':'application/json' }});
+    if(!r.ok) return [];
+    return r.json();
+  }
+  function renderAddrSuggestions(list){
+    if(!els.addrSuggest) return;
+    if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; return; }
+    els.addrSuggest.innerHTML = list.map((it)=>(`
+      <div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
+        ${it.display_name}
+      </div>`)).join('');
+    els.addrSuggest.style.display = 'block';
+    els.addrSuggest.querySelectorAll('.tpl-addr-item').forEach(node=>{
+      node.addEventListener('click', ()=> chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))));
+      node.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))); });
+    });
+  }
+  function chooseAddr(item){
+    els.address.value = (item?.display_name || '').replace(/, España$/,'');
+    const pc = item?.address?.postcode || '';
+    if(els.postalCode){ els.postalCode.value = pc; }
+    els.addrSuggest.style.display='none';
+  }
+  const addressInputHandler = (function debounce(fn, wait=380){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; })(async ()=>{
+    const q = (els.address?.value || '').trim();
+    if(q.length < 4){ renderAddrSuggestions([]); return; }
+    try{ renderAddrSuggestions(await searchAddresses(q) || []); }
+    catch(_){ renderAddrSuggestions([]); }
+  });
+  if(els.address){
+    els.address.addEventListener('input', addressInputHandler);
+    els.address.addEventListener('focus', addressInputHandler);
+    document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
+  }
 
-        btnG.addEventListener('click', async (e)=>{
-          e.preventDefault();
-          msg.textContent = 'Conectando con Google…';
-          try{
-            const provider = new firebase.auth.GoogleAuthProvider();
-            if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
-            else { await auth.signInWithPopup(provider); }
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
-          }
-        });
-
-        btnReset.addEventListener('click', async (e)=>{
-          e.preventDefault();
-          const email = form.email.value.trim();
-          if(!email){ msg.textContent='Escribe tu email arriba para enviarte el enlace.'; return; }
-          try{
-            await auth.sendPasswordResetEmail(email);
-            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo enviar el email.';
-          }
-        });
-      }
-
-      auth.onAuthStateChanged(u=>{ if(!u) renderInlineLogin(); });
-    })();
-  </script>
-
-  <!-- Envío: Firestore + EmailJS + Overlay OK -->
-  <script>
-    async function tryEmailJS(fd, extra){
-      if (!window.emailjs) return false;
-      try{
-        const cfg = window.TPL_EMAILJS || {};
-        const service  = cfg.serviceId || cfg.service;
-        const template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
-        const pubKey   = cfg.publicKey || cfg.userId;
-        const adminTo  = (cfg.adminEmail || '').trim();
-
-        if (!service || !template || !pubKey) return false;
-
-        const payload = Object.fromEntries(fd.entries());
-        const subtotalUI = (document.getElementById('sumSubtotal')?.textContent || '').trim();
-        const depositoUI = (document.getElementById('sumDeposit')?.textContent || '').trim();
-        const resumenUI  = (document.getElementById('summaryField')?.value || '').trim();
-
-        function genId(){ return 'R-' + Date.now().toString(36).toUpperCase().slice(-6) + '-' + Math.random().toString(36).slice(2,6).toUpperCase(); }
-        const reservaId = (extra && (extra.reserva_id || extra.doc_id)) || payload.reserva_id || genId();
-
-        const serviceText = document.getElementById('service')?.selectedOptions?.[0]?.text || (payload.Servicio || '');
-        const regionText  = document.getElementById('region')?.selectedOptions?.[0]?.text || (payload.CCAA || '');
-        const ownerNombre = ((payload.Nombre||'') + ' ' + (payload.Apellidos||'')).trim();
-
-        const baseParams = {
-          owner_nombre: ownerNombre,
-          owner_nombre_only: payload.Nombre || '',
-          owner_apellidos: payload.Apellidos || '',
-          owner_email: payload.Email || '',
-          owner_telefono: payload.Telefono || '',
-          owner_direccion: payload.Direccion || '',
-          owner_cp: payload.CP || '',
-          owner_ccaa: regionText || '',
-
-          mascotas: payload.Mascotas_lista || '',
-          mascotas_detalle: payload.Mascotas_detalle || '',
-          mascotas_detalle_json: payload.Mascotas_detalle_json || '[]',
-
-          servicio: serviceText || payload.Servicio || '',
-          fecha_inicio: payload.Fecha_inicio || '',
-          fecha_fin: payload.Fecha_fin || '',
-          hora_inicio: payload.Hora_inicio || '',
-          hora_fin: payload.Hora_fin || '',
-          subtotal: subtotalUI || payload.Subtotal || payload.subtotal || '',
-          deposito: depositoUI || payload.Deposito || payload.deposito || '',
-          resumen:  resumenUI || payload.Desglose || payload.Resumen || payload.resumen || '',
-          reserva_id: reservaId,
-
-          _estado: (extra && extra._estado) || payload._estado || 'enviada',
-          _page:   (extra && extra._page)   || payload._page || location.href
-        };
-
-        const recipients = [];
-        if (adminTo) recipients.push(adminTo);
-        if ((baseParams.owner_email||'').trim()) recipients.push(baseParams.owner_email.trim());
-        if (!recipients.length) return false;
-
-        let ok = 0;
-        for (const to of recipients){
-          const params = { ...baseParams, to_email: to };
-          const resp = await emailjs.send(service, template, params, pubKey);
-          if (resp && resp.status >= 200 && resp.status < 300) ok++;
-        }
-        return ok>0;
-      }catch(_){ return false; }
-    }
-
-    (function(){
-      const form = document.getElementById('bookingForm');
-      if (!form) return;
-
-      function showSuccessOverlay(){
-        const msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
-        const go  = form?.dataset?.tplRedirect || 'perfil.html';
-        let wrap = document.getElementById('tpl-overlay');
-        if(!wrap){
-          wrap = document.createElement('div');
-          wrap.id = 'tpl-overlay';
-          wrap.className = 'tpl-overlay';
-          wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button></div>';
-          document.body.appendChild(wrap);
-        }
-        wrap.querySelector('.tpl-modal p').textContent = msg;
-        wrap.classList.add('on');
-        wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
-      }
-
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault(); // manejamos envío
-
-        const fd = new FormData(form);
-        const payload = Object.fromEntries(fd.entries());
-
-        // Construye detalle de mascotas desde localStorage (si existe)
-        try{
-          const uid = (firebase?.auth?.().currentUser?.uid) || 'default';
-          const key = (k)=>`tpl.udb.${uid}.${k}`;
-          const hasPets = localStorage.getItem(key('pets')) !== null;
-          let arr = hasPets ? JSON.parse(localStorage.getItem(key('pets'))||'[]') : JSON.parse(localStorage.getItem(key('mascotas'))||'[]');
-          if (!Array.isArray(arr)) arr = [];
-          const selectedNames = (document.getElementById('petsListHidden')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-          let chosen = [];
-          if (selectedNames.length){ chosen = arr.filter(p => selectedNames.includes((p?.nombre||'').trim())); }
-          else if (arr.length === 1){ chosen = [arr[0]]; }
-
-          const rows = chosen.map(p => ({
-            Nombre:(p?.nombre||'').trim(), Especie:(p?.especie||p?.tipo||'').trim(), Raza:(p?.raza||p?.tipoExotico||'').trim(),
-            Edad:(p?.edad||'').trim(), Peso:(p?.peso||'').trim(), Microchip:(p?.microchip||'').trim(), Esterilizado:(p?.esterilizado||'').trim(),
-            Vacunas:(p?.vacunas||'').trim(), Salud:(p?.salud||'').trim(), Tratamiento:(p?.tratamiento||'').trim(), Comportamiento:(p?.comportamiento||'').trim()
-          }));
-          const text = rows.map(r=>`Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}`).join(' || ');
-          document.getElementById('petsDetail').value = text;
-          document.getElementById('petsDetailJson').value = JSON.stringify(rows);
-        }catch(_){}
-
-        // Guarda en Firestore + envía emails
-        let extra = { _page: location.href, _tipo: 'reserva', _estado: 'enviada' };
-        try{
-          if (firebase?.firestore){
-            const db = firebase.firestore();
-            const auth = firebase.auth?.();
-            const u = auth?.currentUser || null;
-            payload._page = location.href; payload._estado = 'enviada';
-            if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-            if (u) { payload._uid = u.uid; payload._email = u.email || null; }
-            const docRef = await db.collection('reservas').add(payload);
-            extra.reserva_id = docRef.id; extra.doc_id = docRef.id;
-          }
-        }catch(err){ console.warn('No se pudo guardar en Firestore', err); }
-
-        try{
-          await tryEmailJS(new FormData(form), extra);
-        }catch(err){ console.warn('EmailJS falló', err); }
-
-        showSuccessOverlay();
-      });
-    })();
-  </script>
-
-  <!-- Modal selector de mascotas -->
-  <div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
-    <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
-      <h3 id="tpl-petpicker-title" style="margin-top:0">Elige tus mascotas</h3>
-      <div id="tpl-petpicker-list" style="display:grid;gap:10px;max-height:320px;overflow:auto;margin:10px 0"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
-        <button type="button" class="tpl-btn" id="tpl-petpicker-apply">Usar selección</button>
-        <button type="button" class="tpl-btn-outline" id="tpl-petpicker-cancel">Cancelar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lógica selector mascotas -->
-  <script>
-  (function(){
-    'use strict';
-    if (window.__TPL_RESERV_PICKER__) return;
-    window.__TPL_RESERV_PICKER__ = true;
-
-    function getCurrentUserId(){
-      try{
-        const u = firebase?.auth?.().currentUser;
-        if (u && !u.isAnonymous && u.uid) return u.uid;
-      }catch(_){}
-      return 'default';
-    }
-    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-    function udbGet(uid, key, fallback){
-      try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
-    }
-    function norm(s){ return String(s||'').trim(); }
-
-    function getPets(){
-      const uid = getCurrentUserId();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-      if (!Array.isArray(arr)) arr = [];
-      const seen = new Set(), out=[];
-      arr.forEach(p=>{
-        const key = `${norm(p?.nombre).toLowerCase()}|${norm(p?.microchip).toLowerCase()}|${norm(p?.especie||p?.tipo||'').toLowerCase()}`;
-        if (seen.has(key)) return; seen.add(key); out.push(p);
-      });
-      return out;
-    }
-
-    let SELECTED_INDEXES = [];
-    function openPetPicker(){
-      const pets = getPets();
-      if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
-
-      const overlay = document.getElementById('tpl-petpicker');
-      const list = document.getElementById('tpl-petpicker-list');
-      const btnApply = document.getElementById('tpl-petpicker-apply');
-      const btnCancel = document.getElementById('tpl-petpicker-cancel');
-      if (!overlay || !list || !btnApply || !btnCancel) return;
-
-      list.innerHTML = pets.map((p, i)=>{
-        const foto = (typeof p.foto === 'string' && p.foto) ? `<img src="${p.foto}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #eee">` : `<span style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #eee;color:#9aa0a6"><i class="fa-solid fa-paw"></i></span>`;
-        const raza = norm(p.raza || p.tipoExotico || '');
-        const esp  = norm(p.especie || p.tipo || '');
-        const sub  = [esp, raza].filter(Boolean).join(' · ');
-        const checked = SELECTED_INDEXES.includes(i) ? 'checked' : '';
-        return `
-          <label style="display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:10px;padding:8px 10px">
-            <input type="checkbox" class="tpl-petpick" value="${i}" ${checked} style="transform:scale(1.2)">
-            ${foto}
-            <span style="display:flex;flex-direction:column;line-height:1.25">
-              <strong>${norm(p.nombre)||'Sin nombre'}</strong>
-              <span style="color:#666;font-size:.92rem">${sub||''}</span>
-            </span>
-          </label>
-        `;
-      }).join('');
-
-      function close(){ overlay.classList.remove('on'); overlay.style.display='none'; document.body.style.overflow=''; overlay.setAttribute('aria-hidden','true'); }
-      overlay.classList.add('on'); overlay.style.display='flex'; document.body.style.overflow='hidden'; overlay.setAttribute('aria-hidden','false');
-
-      btnCancel.onclick = close;
-      overlay.addEventListener('click', (e)=>{ if (e.target === overlay) close(); }, { once:true });
-
-      btnApply.onclick = function(){
-        const checks = list.querySelectorAll('.tpl-petpick:checked');
-        if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
-        SELECTED_INDEXES = Array.from(checks).map(ch => parseInt(ch.value,10)).filter(n=>!isNaN(n));
-
-        const pets = getPets();
-        const names = SELECTED_INDEXES.map(ix => pets[ix]).filter(Boolean).map(p=>norm(p.nombre)).filter(Boolean);
-
-        const numSel = document.getElementById('numPets');
-        if (numSel){
-          const n = Math.min(5, Math.max(1, names.length));
-          numSel.value = String(n);
-          numSel.dispatchEvent(new Event('change', { bubbles:true }));
-        }
-
-        setTimeout(()=>{
-          names.forEach((n, idx)=>{
-            const inp = document.getElementById('petName_'+(idx+1));
-            if (inp){ inp.value = n; inp.dispatchEvent(new Event('input', { bubbles:true })); }
-          });
-        }, 120);
-
-        close();
-      };
-    }
-
-    function attachPickerButton(){
-      const btn = document.getElementById('tpl-open-petpicker');
-      if (!btn) return;
-      btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
-    }
-
-    function attachSubmitValidator(){
-      const form = document.getElementById('bookingForm');
-      if (!form) return;
-      form.addEventListener('submit', function(e){
-        try{
-          const uid = getCurrentUserId();
-          const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-          const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-          if (Array.isArray(pets) && pets.length >= 2){
-            const list = (document.getElementById('petsListHidden')?.value || '').trim();
-            if (!list){
-              e.preventDefault();
-              e.stopImmediatePropagation();
-              alert('Por favor, elige la(s) mascota(s) con el botón “Elegir de mis mascotas”.');
-              return false;
-            }
-          }
-        }catch(err){ console.warn('[TPL reservas] validación mascotas:', err); }
-      }, true);
-    }
-
-    function autoFillSinglePet(){
-      const uid = getCurrentUserId();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-      if (Array.isArray(pets) && pets.length === 1){
-        const name = (pets[0]?.nombre || '').trim();
-        const numSel = document.getElementById('numPets');
-        if (numSel){
-          numSel.value = '1';
-          numSel.dispatchEvent(new Event('change', { bubbles:true }));
-        }
-        setTimeout(()=>{
-          const inp = document.getElementById('petName_1');
-          if (inp && !inp.value){
-            inp.value = name;
-            inp.dispatchEvent(new Event('input', { bubbles:true }));
-          }
-        }, 120);
-      }
-    }
-
-    function init(){ attachPickerButton(); attachSubmitValidator(); autoFillSinglePet(); }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  })();
-  </script>
-
-  <!-- TPL: INICIO BLOQUE NUEVO [Autorrelleno multi-origen + ocultos Propietario_*/Mascota_*/Reserva_* + sin bloqueo de login] -->
-  <script>
-  (function(){
-    function $id(id){ return document.getElementById(id); }
-    function safe(val){ return (val==null?'':String(val)).trim(); }
-    function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function parseISO(s){ const d=new Date(s); return isNaN(d)?null:d; }
-    function debounce(fn,wait){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a),wait||200); }; }
-
-    const form = $id('bookingForm');
-    if (!form) return;
-
-    // 1) Habilitar envío siempre (quitamos bloqueo funcional, sin cambiar textos de la página)
-    form.classList.remove('disabled');
-
-    // 2) Asegurar inputs ocultos para EmailJS
-    const HIDDEN = [
-      'Propietario_Nombre','Propietario_Apellidos','Propietario_Email','Propietario_Telefono','Propietario_Direccion','Propietario_CP','Propietario_CCAA',
-      'Mascota_Principal_Nombre','Mascota_Principal_Especie','Mascota_Principal_Raza','Mascota_Principal_Microchip','Mascota_Principal_Esterilizado',
-      'Reserva_Tipo','Reserva_Fechas','Reserva_Horas','Reserva_Bono','Reserva_Extras','Reserva_TotalEUR','Reserva_DepositoEUR'
-    ];
-    function ensureHidden(name){
-      let el = form.querySelector(`input[name="${name}"]`);
-      if (!el){
-        el = document.createElement('input');
-        el.type = 'hidden';
-        el.name = name;
-        el.id = name;
-        form.appendChild(el);
-      }
-      return el;
-    }
-    HIDDEN.forEach(ensureHidden);
-
-    // 3) Leer perfil desde múltiples fuentes (orden: Firebase → window.__TPL_PROFILE__ → localStorage('tpl.profile'))
-    function currentUID(){
-      try{ const u = firebase?.auth?.().currentUser; if (u && u.uid) return u.uid; }catch(_){}
-      return 'default';
-    }
-    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-    function getPetsArray(){
-      const uid = currentUID();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? JSON.parse(localStorage.getItem(udbKey(uid,'pets'))||'[]') : JSON.parse(localStorage.getItem(udbKey(uid,'mascotas'))||'[]');
-      if (!Array.isArray(arr)) arr = [];
-      return arr;
-    }
-    function getLocalProfile(){
-      try{
-        if (window.__TPL_PROFILE__) return window.__TPL_PROFILE__;
-        const raw = localStorage.getItem('tpl.profile');
-        if (raw) return JSON.parse(raw);
-      }catch(_){}
-      return {};
-    }
-
-    async function fillOwnerFromAny(){
-      // Si Firebase ya rellenó, no sobrescribo campos que ya tengan valor
-      const owner = (getLocalProfile()?.propietario) || getLocalProfile() || {};
-      const map = [
-        ['firstName','nombre'], ['lastName','apellidos'], ['email','email'], ['phone','telefono'],
-        ['location','direccion'], ['postalCode','cp']
-      ];
-      map.forEach(([id,key])=>{
-        const el = $id(id); if (!el) return;
-        if (!safe(el.value) && owner && owner[key]!=null) el.value = owner[key];
-      });
-      // CCAA si coincide
-      const reg = $id('region'); const ccaa = safe(owner.ccaa || owner.ccaa_code || '').toLowerCase();
-      if (reg && ccaa && [...reg.options].some(o=>o.value===ccaa)) reg.value = ccaa;
-
-      // Auto-cachorro desde perfil local si hay birthdate en alguna mascota
-      const svc = $id('service')?.value; const species = $id('species')?.value;
-      const puppyAllowed = (svc==='guarderia' || svc==='alojamiento') && (species!=='otros') && (svc!=='visitas');
-      if (puppyAllowed){
-        const pets = getPetsArray();
-        const withBD = pets.find(p=>p.birthdate);
-        if (withBD){
-          const b = parseISO(withBD.birthdate);
-          if (b){
-            const today = new Date();
-            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-            const isP = months < 6;
-            const sel = $id('isPuppy');
-            if (sel) sel.value = isP ? 'si' : 'no';
-          }
-        }
-      }
-    }
-
-    // 4) Construir y sincronizar ocultos antes de enviar
-    function selectedPetNames(){
-      const val = $id('petsListHidden')?.value || '';
-      return val.split(',').map(s=>s.trim()).filter(Boolean);
-    }
-    function firstSelectedPet(){
-      const names = selectedPetNames();
-      const pets = getPetsArray();
-      if (names.length){
-        const p = pets.find(x => safe(x?.nombre) && names.includes(safe(x.nombre)));
-        return p || null;
-      }
-      if (pets.length===1) return pets[0];
-      return null;
-    }
-    function bonoSize(from, to){
-      const d1 = parseISO(from), d2 = parseISO(to);
-      if (!d1 || !d2 || d2 < d1) return 0;
-      const days = Math.round((Date.UTC(d2.getFullYear(),d2.getMonth(),d2.getDate()) - Date.UTC(d1.getFullYear(),d1.getMonth(),d1.getDate())) / 86400000) + 1;
-      return [10,20,30].includes(days) ? days : 0;
-    }
-    function syncHidden(){
-      // Asegura dueño rellenado si hay perfil local
-      fillOwnerFromAny();
-
-      // Propietario_*
-      ensureHidden('Propietario_Nombre').value   = safe($id('firstName')?.value);
-      ensureHidden('Propietario_Apellidos').value= safe($id('lastName')?.value);
-      ensureHidden('Propietario_Email').value    = safe($id('email')?.value);
-      ensureHidden('Propietario_Telefono').value = safe($id('phone')?.value);
-      ensureHidden('Propietario_Direccion').value= safe($id('location')?.value);
-      ensureHidden('Propietario_CP').value       = safe($id('postalCode')?.value);
-      const regEl = $id('region');
-      ensureHidden('Propietario_CCAA').value     = regEl ? safe(regEl.options[regEl.selectedIndex]?.text) : '';
-
-      // Mascota_* (principal = primera seleccionada o única guardada)
-      const pet = firstSelectedPet() || {};
-      ensureHidden('Mascota_Principal_Nombre').value       = safe(pet.nombre);
-      ensureHidden('Mascota_Principal_Especie').value      = safe(pet.especie || pet.tipo);
-      ensureHidden('Mascota_Principal_Raza').value         = safe(pet.raza || pet.tipoExotico);
-      ensureHidden('Mascota_Principal_Microchip').value    = safe(pet.microchip);
-      ensureHidden('Mascota_Principal_Esterilizado').value = safe(pet.esterilizado);
-
-      // Reserva_* (resumen clave)
-      const svcEl = $id('service');
-      const svcTxt = svcEl ? safe(svcEl.options[svcEl.selectedIndex]?.text) : '';
-      const f1 = safe($id('startDate')?.value), f2 = safe($id('endDate')?.value);
-      const h1 = safe($id('start')?.value), h2 = safe($id('end')?.value);
-      const bono = bonoSize(f1, f2);
-      const extras = safe($id('sumPets')?.textContent);
-      const total  = safe($id('sumSubtotal')?.textContent);
-      const depo   = safe($id('sumDeposit')?.textContent);
-
-      ensureHidden('Reserva_Tipo').value     = svcTxt;
-      ensureHidden('Reserva_Fechas').value   = (f1 && f2) ? `${f1} a ${f2}` : '';
-      ensureHidden('Reserva_Horas').value    = (h1 && h2) ? `${h1} a ${h2}` : '';
-      ensureHidden('Reserva_Bono').value     = bono ? String(bono) : '0';
-      ensureHidden('Reserva_Extras').value   = extras || '0.00';
-      ensureHidden('Reserva_TotalEUR').value = total  || '0.00';
-      ensureHidden('Reserva_DepositoEUR').value = depo || '0.00';
-    }
-
-    // Ejecutar al cargar y en cambios
-    const doSync = debounce(syncHidden, 200);
-    ['input','change'].forEach(ev => form.addEventListener(ev, doSync));
-    // Asegurar que corre después de que otros scripts hayan hecho su magia
-    window.addEventListener('load', ()=>{ setTimeout(syncHidden, 60); });
-
-    // Antes de enviar (captura) para garantizar que los ocultos están listos
-    form.addEventListener('submit', function(){ try{ syncHidden(); }catch(_){ } }, true);
-  })();
-  </script>
-  <!-- TPL: FIN BLOQUE NUEVO -->
-
-  <!-- Footer (inyectado) -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
-
-<!-- (Mantengo todos tus parches/injectores siguientes, sin tocar) -->
-<script>
-(function(){
-  function byId(id){ return document.getElementById(id); }
-  function setIfEmpty(el, val){ if(el && !el.value && val!=null && val!==''){ el.value = String(val); } }
+  // ---------- AUTORRELLENO MULTI-ORIGEN ----------
+  function getUid(){ try{ return firebase?.auth?.().currentUser?.uid || null; }catch(_){ return null; } }
+  function udbKey(uid, key){ return `tpl.udb.${uid||'default'}.${key}`; }
+  function safeParse(s, fb){ try{ return JSON.parse(s); }catch(_){ return fb; } }
 
   function fillOwnerFromObj(d){
-    setIfEmpty(byId('firstName'),  d?.nombre || d?.name || d?.firstName);
-    setIfEmpty(byId('lastName'),   d?.apellidos || d?.lastName || d?.surname);
-    setIfEmpty(byId('email'),      d?.email);
-    setIfEmpty(byId('phone'),      d?.telefono || d?.phone);
-    setIfEmpty(byId('location'),   d?.direccion || d?.address);
-    setIfEmpty(byId('postalCode'), d?.cp || d?.postal || d?.zip);
-    const reg = byId('region');
-    const ccaa = String(d?.ccaa || d?.ccaa_code || '').toLowerCase();
-    if (reg && ccaa && [...reg.options].some(o=>o.value===ccaa)) reg.value = ccaa;
-  }
-
-  let PET_NAMES = new Set();
-  function addPetNames(list){
-    const dl = byId('tplPetNamesList'); if(!dl) return;
-    (list||[]).forEach(p=>{
-      const n = (p?.nombre || p?.name || '').trim();
-      if(n) PET_NAMES.add(n);
-    });
-    dl.innerHTML = [...PET_NAMES].map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
-  }
-
-  function maybeAutoPuppy(pets){
-    try{
-      const svc = byId('service')?.value, species = byId('species')?.value;
-      const allowed = (svc==='guarderia'||svc==='alojamiento') && species!=='otros' && svc!=='visitas';
-      if(!allowed) return;
-      const p = (pets||[]).find(x=>x?.birthdate);
-      if(!p) return;
-      const b = new Date(p.birthdate); if(isNaN(b)) return;
-      const today = new Date();
-      const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-      const sel = byId('isPuppy'); if(sel) sel.value = months<6?'si':'no';
-      try{ sel.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
-    }catch(_){}
-  }
-
-  async function fillFromFirebase(u){
-    try{
-      if(!u || !window.firebase?.firestore) return;
-      const db = firebase.firestore();
-      const doc = await db.collection('users').doc(u.uid).get();
-      const d = doc.exists? doc.data():{};
-      fillOwnerFromObj({ ...d, email: d?.email || u.email, telefono: d?.telefono || u.phoneNumber });
-
-      const snap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-      const pets = snap.docs.map(x=>x.data()||{});
-      addPetNames(pets);
-      maybeAutoPuppy(pets);
-    }catch(_){}
-  }
-
-  function fillFromWindow(){
-    const p = window.__TPL_PROFILE__ || {};
-    if(p && typeof p==='object'){
-      fillOwnerFromObj(p);
-      addPetNames(p.mascotas || p.pets || []);
+    if(!d) return;
+    const setIfEmpty = (el, val)=>{ if(el && !el.value && val){ el.value = String(val||''); } };
+    setIfEmpty(els.firstName, d.nombre || d.name || d.firstName);
+    setIfEmpty(els.lastName,  d.apellidos || d.lastName || d.surname);
+    setIfEmpty(els.email,     d.email);
+    setIfEmpty(els.phone,     d.telefono || d.phone);
+    setIfEmpty(els.address,   d.direccion || d.address);
+    setIfEmpty(els.postalCode,d.cp || d.postal || d.zip);
+    if(els.region && d.ccaa){
+      const val = String(d.ccaa).toLowerCase();
+      if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
     }
   }
+  function addPetNamesFromArray(arr){
+    const names = (Array.isArray(arr)?arr:[])
+      .map(p => (p?.nombre || p?.name || '').trim())
+      .filter(Boolean);
+    PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...names]));
+    fillPetDatalist();
+  }
 
-  function fillFromLocal(){
+  async function autoFromFirebase(){
+    try{
+      if(typeof firebase === 'undefined') return;
+      const u = firebase.auth().currentUser; if(!u) return;
+      const db = firebase.firestore();
+      // Owner
+      const doc = await db.collection('users').doc(u.uid).get();
+      const d = doc.exists ? doc.data() : {};
+      fillOwnerFromObj({ ...d, email: d?.email || u.email, telefono: d?.telefono || u.phoneNumber });
+      // Pets
+      const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
+      const pets = petsSnap.docs.map(x=>x.data()||{});
+      addPetNamesFromArray(pets);
+      // Cachorro auto si una mascota < 6 meses
+      try{
+        if(pets.length){
+          const p = pets[0];
+          if(p?.birthdate && els.isPuppy && !els.isPuppy.parentElement.hidden){
+            const b = new Date(p.birthdate), today = new Date();
+            const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
+            els.isPuppy.value = (months < 6) ? 'si' : 'no';
+            await recalc();
+          }
+        }
+      }catch(_){}
+    }catch(_){}
+  }
+  function autoFromWindowProfile(){
+    const p = (window.__TPL_PROFILE__ || {});
+    if(!p || typeof p !== 'object') return;
+    fillOwnerFromObj(p);
+    if(Array.isArray(p.mascotas)) addPetNamesFromArray(p.mascotas);
+    else if(Array.isArray(p.pets)) addPetNamesFromArray(p.pets);
+  }
+  function autoFromLocalProfile(){
     try{
       const raw = localStorage.getItem('tpl.profile');
-      if(raw){
-        const o = JSON.parse(raw);
-        fillOwnerFromObj(o);
-        addPetNames(o.mascotas || o.pets || []);
-      }
-      const uid = (window.firebase?.auth?.().currentUser?.uid) || 'default';
-      const get = k => { try{ return JSON.parse(localStorage.getItem(`tpl.udb.${uid}.${k}`)||'[]'); }catch(_){ return []; } };
-      const hasPetsKey = localStorage.getItem(`tpl.udb.${uid}.pets`) !== null;
-      addPetNames( hasPetsKey ? get('pets') : get('mascotas') );
+      const obj = safeParse(raw, null);
+      if(!obj) return;
+      fillOwnerFromObj(obj);
+      if(Array.isArray(obj.mascotas)) addPetNamesFromArray(obj.mascotas);
+      if(Array.isArray(obj.pets)) addPetNamesFromArray(obj.pets);
+      const uid = getUid();
+      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+      const arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]') :
+                            safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
+      if(Array.isArray(arr)) addPetNamesFromArray(arr);
     }catch(_){}
   }
 
-  async function runNow(){
-    if (window.firebase?.auth) {
-      const auth = firebase.auth();
-      const u = auth.currentUser;
-      if(u) await fillFromFirebase(u);
-      auth.onAuthStateChanged(async user => { if(user) await fillFromFirebase(user); });
-    }
-    fillFromWindow();
-    fillFromLocal();
-  }
-
-  let tries = 0;
-  const timer = setInterval(()=>{
-    if(window.__TPL_PROFILE__){ fillFromWindow(); clearInterval(timer); }
-    if(++tries>20) clearInterval(timer);
-  }, 400);
-
-  if (document.readyState==='complete') runNow();
-  else window.addEventListener('load', ()=> setTimeout(runNow, 80));
-})();
-</script>
-
-<!-- Nota, selector, y scripts auxiliares (se mantienen) -->
-<div id="tpl-login-note" class="tpl-note" aria-live="polite"></div>
-<div id="tpl-pet-selector" class="tpl-card" aria-label="Selecciona una mascota"></div>
-<script src="tpl-autofill-reserva.js" defer></script>
-
-  <!-- Mini-injectors -->
-  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-
-<!-- Parche final + reservas.js (se conservan) -->
-<script>
-(function(){
-  if (window.__TPL_RESERVA_FINAL_PATCH__) return;
-  window.__TPL_RESERVA_FINAL_PATCH__ = true;
-
-  window.TPL_COLLECTIONS = Object.assign({ owners:'propietarios', pets:'mascotas' }, window.TPL_COLLECTIONS||{});
-
-  function $id(id){ return document.getElementById(id); }
-  function setIfEmpty(el, v){ if (el && !el.value && v!=null && v!=='') el.value=String(v); }
-  function safe(s){ return (s==null?'':String(s)).trim(); }
-
-  function fillOwner(o){
-    setIfEmpty($id('firstName'),  o?.nombre || o?.name || o?.firstName);
-    setIfEmpty($id('lastName'),   o?.apellidos || o?.lastName || o?.surname);
-    setIfEmpty($id('email'),      o?.email);
-    setIfEmpty($id('phone'),      o?.telefono || o?.phone);
-    setIfEmpty($id('location'),   o?.direccion || o?.address);
-    setIfEmpty($id('postalCode'), o?.cp || o?.postal || o?.zip);
-    const reg=$id('region'); const ccaa=String(o?.ccaa||o?.ccaa_code||'').toLowerCase();
-    if (reg && ccaa && [...reg.options].some(opt=>opt.value===ccaa)) reg.value=ccaa;
-  }
-
-  function putPetNames(pets){
-    const dl=$id('tplPetNamesList'); if(!dl) return;
-    if (dl.children.length) return;
-    const names=[...new Set((pets||[]).map(p=>safe(p?.nombre)).filter(Boolean))];
-    if (names.length){
-      dl.innerHTML = names.map(n=>`<option value="${n.replace(/"/g,'&quot;')}"></option>`).join('');
-    }
-  }
-
-  function ensureHidden(name, value){
-    let el = document.querySelector(`input[name="${name}"]`);
-    if (!el){ el=document.createElement('input'); el.type='hidden'; el.name=name; (document.forms[0]||document.body).appendChild(el); }
-    if (value!==undefined) el.value = value;
-    return el;
-  }
-
-  async function fetchOwnerPets(){
-    if (!window.firebase?.auth || !window.firebase?.firestore) return null;
-    const u = firebase.auth().currentUser;
-    if (!u) return null;
-    const db=firebase.firestore(), uid=u.uid;
-
-    async function tryPath(col){
-      const ref=db.collection(col).doc(uid);
-      const snap=await ref.get(); if (!snap.exists) return null;
-      let pets=[];
-      try{ const sub=await ref.collection(window.TPL_COLLECTIONS.pets).get(); pets=sub.docs.map(d=>({id:d.id,...(d.data()||{})})); }catch(_){}
-      if (!pets.length){
-        try{ const q=await db.collection(window.TPL_COLLECTIONS.pets).where('uid','==',uid).get(); pets=q.docs.map(d=>({id:d.id,...(d.data()||{})})); }catch(_){}
-      }
-      return { owner:{id:snap.id,...(snap.data()||{})}, pets };
-    }
-
-    return await tryPath(window.TPL_COLLECTIONS.owners) || await tryPath('users');
-  }
-
-  function autoSelectSinglePet(pets){
-    if (!Array.isArray(pets) || pets.length!==1) return;
-    const name = safe(pets[0]?.nombre);
-    const numSel = $id('numPets');
-    if (numSel){ numSel.value='1'; numSel.dispatchEvent(new Event('change',{bubbles:true})); }
-    setTimeout(()=>{ const inp=$id('petName_1'); if(inp && !inp.value && name){ inp.value=name; inp.dispatchEvent(new Event('input',{bubbles:true})); } },100);
-  }
-
-  function buildJsons(owner, pets){
-    try{
-      ensureHidden('tpl_owner_json', JSON.stringify(owner||{}));
-      const chosen = (function(){
-        const list = ($id('petsListHidden')?.value||'').split(',').map(s=>s.trim()).filter(Boolean);
-        if (list.length) return (pets||[]).filter(p=>list.includes(safe(p?.nombre)));
-        if ((pets||[]).length===1) return [pets[0]];
-        return [];
-      })();
-      ensureHidden('tpl_pet_json', JSON.stringify(chosen[0]||{}));
-    }catch(_){}
-  }
-
-  function hookSubmit(owner, pets){
-    const form=document.getElementById('bookingForm'); if (!form) return;
-    form.addEventListener('submit', function(){ buildJsons(owner, pets); }, true);
-  }
-
-  async function run(){
-    const pack = await fetchOwnerPets();
-    if (!pack) return;
-    fillOwner(pack.owner||{});
-    putPetNames(pack.pets||[]);
-    autoSelectSinglePet(pack.pets||[]);
-    buildJsons(pack.owner, pack.pets);
-    hookSubmit(pack.owner, pack.pets);
-  }
-
-  if (document.readyState==='complete') run(); else window.addEventListener('load', ()=>setTimeout(run,80));
-})();
-</script>
-
-<script src="reservas.js" defer></script>
-
-<script>
-(function(){
-  'use strict';
-  function byId(id){ return document.getElementById(id); }
-  function setIfEmpty(el,val){
-    if(el && !el.value && val!=null && String(val).trim()!==''){
-      el.value = String(val).trim();
-      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
-    }
-  }
-  function regionValueFromAny(x){
-    if(!x) return '';
-    const s = String(x).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
-    const map = {
-      'comunidad de madrid':'madrid','madrid':'madrid','md':'madrid','es-md':'madrid',
-      'andalucia':'andalucia','es-an':'andalucia','an':'andalucia',
-      'aragon':'aragon','es-ar':'aragon',
-      'asturias':'asturias','es-as':'asturias',
-      'illes balears':'baleares','islas baleares':'baleares','baleares':'baleares','es-ib':'baleares',
-      'canarias':'canarias','es-cn':'canarias',
-      'cantabria':'cantabria','es-cb':'cantabria',
-      'castilla-la mancha':'castilla-la-mancha','castilla-la-mancha':'castilla-la-mancha','es-cm':'castilla-la-mancha',
-      'castilla y leon':'castilla-y-leon','castilla-y-leon':'castilla-y-leon','es-cl':'castilla-y-leon',
-      'cataluna':'cataluna','cataluña':'cataluna','es-ct':'cataluna',
-      'comunitat valenciana':'valenciana','valenciana':'valenciana','es-vc':'valenciana',
-      'extremadura':'extremadura','es-ex':'extremadura',
-      'galicia':'galicia','es-ga':'galicia',
-      'la rioja':'la-rioja','es-ri':'la-rioja',
-      'murcia':'murcia','region de murcia':'murcia','es-mc':'murcia',
-      'navarra':'navarra','es-nc':'navarra',
-      'pais vasco':'euskadi','euskadi':'euskadi','es-pv':'euskadi',
-      'ceuta':'ceuta','es-ce':'ceuta',
-      'melilla':'melilla','es-ml':'melilla',
-      'nacional':'nacional'
-    };
-    return map[s] || '';
-  }
-  async function getUserDoc(auth){
-    try{
-      if(!window.firebase?.firestore) return null;
-      const db = firebase.firestore();
-      const uid = auth?.currentUser?.uid;
-      if(!uid) return null;
-      let doc = await db.collection('users').doc(uid).get().catch(()=>null);
-      if(doc && doc.exists) return doc.data();
-      doc = await db.collection('owners').doc(uid).get().catch(()=>null);
-      if(doc && doc.exists) return doc.data();
-      return null;
-    }catch(_){ return null; }
-  }
-  function getLocalProfile(){
-    try{
-      if (window.__TPL_PROFILE__ && typeof window.__TPL_PROFILE__==='object') return window.__TPL_PROFILE__;
-      const raw = localStorage.getItem('tpl.profile'); if(raw) return JSON.parse(raw);
-    }catch(_){}
-    return {};
-  }
-  async function hydrate(){
-    const f = {
-      firstName: byId('firstName'),
-      lastName:  byId('lastName'),
-      email:     byId('email'),
-      phone:     byId('phone'),
-      location:  byId('location'),
-      postal:    byId('postalCode'),
-      region:    byId('region'),
-    };
-    const auth = window.firebase?.auth?.();
-    const u = auth?.currentUser || null;
-
-    if (u){
-      setIfEmpty(f.email, u.email);
-      if (u.displayName){
-        const s = String(u.displayName).trim().split(/\s+/);
-        if (s.length===1){ setIfEmpty(f.firstName, s[0]); }
-        else { setIfEmpty(f.firstName, s.shift()); setIfEmpty(f.lastName, s.join(' ')); }
-      }
-      if (u.phoneNumber) setIfEmpty(f.phone, u.phoneNumber);
-    }
-
-    const doc = await getUserDoc(auth);
-    if (doc){
-      setIfEmpty(f.firstName, doc.firstName||doc.nombre);
-      setIfEmpty(f.lastName,  doc.lastName||doc.apellidos);
-      setIfEmpty(f.location,  doc.address||doc.direccion);
-      setIfEmpty(f.postal,    doc.cp||doc.postal||doc.zip||doc.codigoPostal);
-      setIfEmpty(f.email,     doc.email);
-      setIfEmpty(f.phone,     doc.telefono||doc.phone);
-      const rv = regionValueFromAny(doc.ccaa||doc.ccaa_code||doc.region||doc.ccaaName);
-      if (f.region && rv){
-        const has = Array.from(f.region.options).some(o=>o.value===rv);
-        if (has) f.region.value = rv;
-      }
-    }
-
-    const lp = getLocalProfile();
-    if (lp){
-      const owner = lp.propietario || lp.owner || lp;
-      setIfEmpty(f.firstName, owner.nombre||owner.firstName);
-      setIfEmpty(f.lastName,  owner.apellidos||owner.lastName);
-      setIfEmpty(f.location,  owner.address||owner.direccion);
-      setIfEmpty(f.postal,    owner.cp||owner.postal||owner.zip);
-      setIfEmpty(f.email,     owner.email);
-      setIfEmpty(f.phone,     owner.telefono||owner.phone);
-      const rv = regionValueFromAny(owner.ccaa||owner.ccaa_code);
-      if (f.region && rv){
-        const has = Array.from(f.region.options).some(o=>o.value===rv);
-        if (has) f.region.value = rv;
-      }
-    }
-
-    const ensureHidden = (name)=>{
-      let el = document.querySelector(`input[name="${name}"]`);
-      if(!el){ el=document.createElement('input'); el.type='hidden'; el.name=name; document.getElementById('bookingForm')?.appendChild(el); }
-      return el;
-    };
-    ensureHidden('Propietario_Nombre').value    = f.firstName?.value||'';
-    ensureHidden('Propietario_Apellidos').value = f.lastName?.value||'';
-    ensureHidden('Propietario_Email').value     = f.email?.value||'';
-    ensureHidden('Propietario_Telefono').value  = f.phone?.value||'';
-    ensureHidden('Propietario_Direccion').value = f.location?.value||'';
-    ensureHidden('Propietario_CP').value        = f.postal?.value||'';
-    if (f.region){
-      const txt = f.region.options[f.region.selectedIndex]?.text||'';
-      ensureHidden('Propietario_CCAA').value = txt;
-    }
-  }
-
-  function start(){
-    hydrate();
-    try{
-      const auth = window.firebase?.auth?.();
-      if (auth) auth.onAuthStateChanged(()=>hydrate());
-    }catch(_){}
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-  else start();
-})();
-</script>
-<script>
-(function(){
-  'use strict';
-  function $(sel,root){ return (root||document).querySelector(sel); }
-  function byId(id){ return document.getElementById(id); }
-  const form = byId('bookingForm');
-  if (!form) return;
-
-  (function(){
-    const wall = byId('authWall');
-    if (!wall) return;
-    const strong = wall.querySelector('p strong');
-    const note = wall.querySelector('.note');
-    if (strong) strong.textContent = 'Inicia sesión para autocompletar tus datos y elegir tus mascotas guardadas.';
-    if (note)   note.textContent   = 'También puedes enviar la solicitud sin iniciar sesión.';
-    form.classList.remove('disabled');
+  // Llamadas de autorrelleno por prioridad: Firebase → window → local
+  (async function runAutoFill(){
+    await autoFromFirebase();
+    autoFromWindowProfile();
+    autoFromLocalProfile();
   })();
 
-  (function injectRGPD(){
-    if (byId('consent')) return;
-    const actions = form.querySelector('.tpl-actions');
-    if (!actions) return;
-
-    const wrap = document.createElement('div');
-    wrap.className = 'booking-field';
-    wrap.style.gridColumn = '1 / -1';
-    wrap.innerHTML = `
-      <label style="display:flex;align-items:flex-start;gap:8px;line-height:1.35">
-        <input type="checkbox" id="consent" required style="margin-top:2px">
-        <span>He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
-      </label>
-    `;
-    actions.parentNode.insertBefore(wrap, actions);
-  })();
-
-  function normalizePhoneES(raw){
-    if (raw == null) return '';
-    return String(raw).replace(/\s+/g,'').replace(/^(\+34)/,'').trim();
+  // Auth UI (SIN BLOQUEO DEL FORMULARIO)
+  if (typeof firebase !== 'undefined') {
+    const auth = firebase.auth();
+    function updateAuthUI(user){
+      const logged = !!user;
+      // Formulario activo siempre; el “muro” sólo informa
+      if (form) form.classList.remove('disabled');
+      if (wall) wall.style.display = logged ? 'none' : 'block';
+    }
+    auth.onAuthStateChanged(updateAuthUI);
   }
-  function validatePhoneES(s){ return /^[679]\d{8}$/.test(s); }
-  function getPrefContacto(){
-    try{ return (new FormData(form).get('Preferencia_contacto')) || 'cualquiera'; }
-    catch(_){ return 'cualquiera'; }
-  }
-  function validatePreSubmit(){
-    const els = { startDate: byId('startDate'), endDate: byId('endDate'), phone: byId('phone'), consent: byId('consent') };
-    const s = new Date(els.startDate?.value || '');
-    const t = new Date(els.endDate?.value || '');
-    if (isNaN(s) || isNaN(t) || t < s) { alert('Revisa las fechas: la fecha fin no puede ser anterior a la de inicio.'); return false; }
-    if (!els.consent?.checked){ alert('Debes aceptar la Política de Privacidad para continuar.'); return false; }
-    const pref = getPrefContacto();
-    if (pref === 'telefono' || pref === 'whatsapp') {
-      const tel = normalizePhoneES(els.phone?.value);
-      if(!validatePhoneES(tel)){ alert('Introduce un teléfono español válido (9 dígitos, empieza por 6/7/9).'); return false; }
-      if (els.phone) els.phone.value = '+34 ' + tel;
+
+  // Preferencia de contacto
+  function validateContactPreference(e){
+    const pref = (new FormData(form).get('Preferencia_contacto')) || 'cualquiera';
+    const tel  = els.phone?.value?.trim();
+    const mail = els.email?.value?.trim();
+    if(pref === 'telefono' || pref === 'whatsapp'){
+      if(!tel){ e.preventDefault(); alert('Por favor, indícanos tu teléfono para poder contactarte.'); return false; }
+    }else if(pref === 'email'){
+      if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return false; }
     }
     return true;
   }
 
-  form.addEventListener('submit', async function onSubmitPatch(ev){
-    ev.preventDefault();
-    ev.stopImmediatePropagation();
-    if (!validatePreSubmit()) return;
+  // ===== Paquete de ocultos Propietario_* / Mascota_* / Reserva_* (para EmailJS) =====
+  function clearHiddenPack(){ if(els.hiddenPack) els.hiddenPack.innerHTML=''; }
+  function addHidden(name, value){
+    if(!els.hiddenPack) return;
+    const i = document.createElement('input');
+    i.type='hidden'; i.name = name; i.value = String(value ?? '');
+    els.hiddenPack.appendChild(i);
+  }
+  function collectChosenPets(){
+    const uid = getUid();
+    const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+    let arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]')
+                      : safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
+    if (!Array.isArray(arr)) arr = [];
+    const selectedNames = (els.petsListHidden?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+    if (selectedNames.length) return arr.filter(p => selectedNames.includes((p?.nombre||'').trim()));
+    if (arr.length === 1) return [arr[0]];
+    return [];
+  }
+  function regionText(){ try{ return els.region?.options?.[els.region.selectedIndex]?.text || ''; }catch(_){ return ''; } }
+  function serviceText(){ try{ return els.service?.options?.[els.service.selectedIndex]?.text || els.service?.value || ''; }catch(_){ return ''; } }
 
-    const tryEmailJS = (window.tryEmailJS || (async ()=>false));
-    const showSuccessOverlay = (window.showSuccessOverlay || (function(){ alert('Tu solicitud se ha enviado. (overlay genérico)'); }));
+  function buildHiddenPackBeforeSend(){
+    clearHiddenPack();
+    // Propietario_*
+    addHidden('Propietario_Nombre', els.firstName?.value || '');
+    addHidden('Propietario_Apellidos', els.lastName?.value || '');
+    addHidden('Propietario_Email', els.email?.value || '');
+    addHidden('Propietario_Telefono', els.phone?.value || '');
+    addHidden('Propietario_Direccion', els.address?.value || '');
+    addHidden('Propietario_CP', els.postalCode?.value || '');
+    addHidden('Propietario_CCAA', regionText());
+    try{ const u = firebase?.auth?.().currentUser; addHidden('Propietario_UID', u?.uid || ''); }catch(_){}
 
+    // Reserva_*
+    addHidden('Reserva_Tipo', serviceText());
+    addHidden('Reserva_Fechas', `${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
+    addHidden('Reserva_Horas', `${els.start?.value || '-'} a ${els.end?.value || '-'}`);
+    addHidden('Reserva_SubtotalEUR', byId('sumSubtotal')?.textContent || '');
+    addHidden('Reserva_DepositoEUR', byId('sumDeposit')?.textContent || '');
+
+    // Mascota_* (por índice)
+    const chosen = collectChosenPets();
+    chosen.forEach((p, idx)=>{
+      const ix = idx+1;
+      addHidden(`Mascota_${ix}_Nombre`, (p?.nombre||'').trim());
+      addHidden(`Mascota_${ix}_Especie`, (p?.especie||p?.tipo||'').trim());
+      addHidden(`Mascota_${ix}_Raza`, (p?.raza||p?.tipoExotico||'').trim());
+      addHidden(`Mascota_${ix}_Sexo`, (p?.sexo||'').trim());
+      addHidden(`Mascota_${ix}_Edad`, (p?.edad||'').trim());
+      addHidden(`Mascota_${ix}_Peso`, (p?.peso||'').trim());
+      addHidden(`Mascota_${ix}_Tamano`, (p?.tamano||p?.tamaño||'').trim());
+      addHidden(`Mascota_${ix}_Esterilizado`, (p?.esterilizado||'').trim());
+      addHidden(`Mascota_${ix}_Microchip`, (p?.microchip||'').trim());
+      addHidden(`Mascota_${ix}_Patologias`, (p?.salud||p?.patologias||'').trim());
+      addHidden(`Mascota_${ix}_Medicacion`, (p?.tratamiento||p?.medicacion||'').trim());
+      addHidden(`Mascota_${ix}_Caracter`, (p?.comportamiento||'').trim());
+      addHidden(`Mascota_${ix}_Alergias`, (p?.alergias||'').trim());
+      addHidden(`Mascota_${ix}_Vacunas`, (p?.vacunas||'').trim());
+    });
+  }
+
+  // Prepara resumen antes de enviar
+  form.addEventListener('submit', (e)=>{
+    if(!validateContactPreference(e)) return;
+    const regionTxt = regionText();
+    let petsVal = els.numPets?.value || '1';
+    if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
+    updatePetsListHidden();
+
+    const lines = [];
+    lines.push(`Servicio: ${serviceText()}`);
+    lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
+    lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
+    if(els.service?.value === 'visitas'){
+      lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
+    }else{
+      const puppyAllowed = (els.service?.value === 'alojamiento' || els.service?.value === 'guarderia') && (els.species?.value !== 'otros');
+      lines.push(`Tipo de animal: ${els.species?.value || '-'}`);
+      lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
+    }
+    lines.push(`Nº mascotas: ${petsVal}`);
+    const petNames = els.petsListHidden.value || '';
+    if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
+    lines.push(`Dirección: ${els.address?.value || '-'}`);
+    lines.push(`CP: ${els.postalCode?.value || '-'}`);
+    lines.push(`CCAA: ${regionTxt}`);
+    lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
+    if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
+    lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
+    lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
+    if(els.service?.value === 'guarderia' && els.rowBono?.style.display !== 'none'){
+      lines.push(`Bono guardería (descuento): −${els.sumBono?.textContent || '0.00'} €`);
+    }
+    lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
+    lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
+    byId('summaryField').value = lines.join(' | ');
+
+    // Ocultos completos
+    buildHiddenPackBeforeSend();
+  });
+
+  // UI menores
+  els.numPets && els.numPets.addEventListener('change', ()=>{ syncPetsExact(); renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
+  els.numPetsExact && els.numPetsExact.addEventListener('input', ()=>{ renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
+  els.needTravel && els.needTravel.addEventListener('change', travelSync);
+  travelSync();
+
+  // Form siempre habilitado
+  try{ form?.classList.remove('disabled'); }catch(_){}
+});
+</script>
+<!-- (Sigue en PARTE 3/4) -->
+<!-- ========== LOGIN INLINE (si no hay sesión) ========== -->
+<script>
+(function(){
+  if (typeof firebase === 'undefined') return;
+  const auth = firebase.auth();
+  const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  function renderInlineLogin(){
+    const host = document.getElementById('tpl-inline-login');
+    if(!host) return;
+    host.innerHTML = `
+      <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
+        <h3 class="tpl-login-title">Accede aquí mismo</h3>
+        <div class="tpl-socials">
+          <button type="button" class="tpl-btn-social" id="tpl-google-btn">
+            <i class="fa-brands fa-google"></i> Continuar con Google
+          </button>
+        </div>
+        <div class="tpl-sep"><span>o</span></div>
+        <form class="tpl-login-form" id="tpl-inline-form" novalidate>
+          <label>Email</label>
+          <input type="email" name="email" required autocomplete="email" />
+          <label>Contraseña</label>
+          <input type="password" name="password" required autocomplete="current-password" />
+          <button type="submit" class="tpl-btn">Iniciar sesión</button>
+          <a class="tpl-btn-outline" href="registro.html?next=reservas.html">Regístrate</a>
+          <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
+          <p class="tpl-login-msg" aria-live="polite"></p>
+        </form>
+      </div>
+    `;
+    const form = document.getElementById('tpl-inline-form');
+    const msg  = host.querySelector('.tpl-login-msg');
+    const btnG = document.getElementById('tpl-google-btn');
+    const btnReset = document.getElementById('tpl-reset');
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      msg.textContent = 'Accediendo…';
+      const email = form.email.value.trim();
+      const pass  = form.password.value;
+      try{
+        await auth.signInWithEmailAndPassword(email, pass);
+        msg.textContent = '¡Listo!';
+        location.reload();
+      }catch(err){
+        msg.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
+      }
+    });
+
+    btnG.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      msg.textContent = 'Conectando con Google…';
+      try{
+        const provider = new firebase.auth.GoogleAuthProvider();
+        if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
+        else { await auth.signInWithPopup(provider); }
+      }catch(err){
+        msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
+      }
+    });
+
+    btnReset.addEventListener('click', async (e)=>{
+      e.preventDefault();
+      const email = form.email.value.trim();
+      if(!email){ msg.textContent='Escribe tu email arriba para enviarte el enlace.'; return; }
+      try{
+        await auth.sendPasswordResetEmail(email);
+        msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
+      }catch(err){
+        msg.textContent = (err && err.message) || 'No se pudo enviar el email.';
+      }
+    });
+  }
+
+  auth.onAuthStateChanged(u=>{ if(!u) renderInlineLogin(); });
+})();
+</script>
+
+<!-- ========== ENVÍO: Firestore + EmailJS + overlay de éxito ========== -->
+<script>
+/* Enviar por EmailJS a admin y (si hay) al cliente */
+async function tryEmailJS(fd, extra){
+  if (!window.emailjs) return false;
+  try{
+    const cfg = window.TPL_EMAILJS || {};
+    const service  = cfg.serviceId || cfg.service;
+    const template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
+    const pubKey   = cfg.publicKey || cfg.userId;
+    const adminTo  = (cfg.adminEmail || '').trim();
+
+    if (!service || !template || !pubKey) return false;
+
+    const payload = Object.fromEntries(fd.entries());
+    const subtotalUI = (document.getElementById('sumSubtotal')?.textContent || '').trim();
+    const depositoUI = (document.getElementById('sumDeposit')?.textContent || '').trim();
+    const resumenUI  = (document.getElementById('summaryField')?.value || '').trim();
+
+    function genId(){ return 'R-' + Date.now().toString(36).toUpperCase().slice(-6) + '-' + Math.random().toString(36).slice(2,6).toUpperCase(); }
+    const reservaId = (extra && (extra.reserva_id || extra.doc_id)) || payload.reserva_id || genId();
+
+    const serviceText = document.getElementById('service')?.selectedOptions?.[0]?.text || (payload.Servicio || '');
+    const regionText  = document.getElementById('region')?.selectedOptions?.[0]?.text || (payload.CCAA || '');
+    const ownerNombre = ((payload.Nombre||'') + ' ' + (payload.Apellidos||'')).trim();
+
+    const baseParams = {
+      owner_nombre: ownerNombre,
+      owner_nombre_only: payload.Nombre || '',
+      owner_apellidos: payload.Apellidos || '',
+      owner_email: payload.Email || '',
+      owner_telefono: payload.Telefono || '',
+      owner_direccion: payload.Direccion || '',
+      owner_cp: payload.CP || '',
+      owner_ccaa: regionText || '',
+
+      mascotas: payload.Mascotas_lista || '',
+      mascotas_detalle: payload.Mascotas_detalle || '',
+      mascotas_detalle_json: payload.Mascotas_detalle_json || '[]',
+
+      servicio: serviceText || payload.Servicio || '',
+      fecha_inicio: payload.Fecha_inicio || '',
+      fecha_fin: payload.Fecha_fin || '',
+      hora_inicio: payload.Hora_inicio || '',
+      hora_fin: payload.Hora_fin || '',
+      subtotal: subtotalUI || payload.Subtotal || payload.subtotal || '',
+      deposito: depositoUI || payload.Deposito || payload.deposito || '',
+      resumen:  resumenUI || payload.Desglose || payload.Resumen || payload.resumen || '',
+      reserva_id: reservaId,
+
+      _estado: (extra && extra._estado) || payload._estado || 'enviada',
+      _page:   (extra && extra._page)   || payload._page || location.href
+    };
+
+    const recipients = [];
+    if (adminTo) recipients.push(adminTo);
+    if ((baseParams.owner_email||'').trim()) recipients.push(baseParams.owner_email.trim());
+    if (!recipients.length) return false;
+
+    let ok = 0;
+    for (const to of recipients){
+      const params = { ...baseParams, to_email: to };
+      const resp = await emailjs.send(service, template, params, pubKey);
+      if (resp && resp.status >= 200 && resp.status < 300) ok++;
+    }
+    return ok>0;
+  }catch(_){ return false; }
+}
+
+/* Overlay de éxito simple y reutilizable */
+function showSuccessOverlay(){
+  const form = document.getElementById('bookingForm');
+  const msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
+  const go  = form?.dataset?.tplRedirect || 'perfil.html';
+  let wrap = document.getElementById('tpl-overlay');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.id = 'tpl-overlay';
+    wrap.className = 'tpl-overlay';
+    wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button></div>';
+    document.body.appendChild(wrap);
+  }
+  wrap.querySelector('.tpl-modal p').textContent = msg;
+  wrap.classList.add('on');
+  wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
+}
+
+/* Envío principal: guarda Firestore + EmailJS + overlay */
+(function(){
+  const form = document.getElementById('bookingForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    // Construye detalle de mascotas para el email
     try{
-      const uid = (window.firebase?.auth?.().currentUser?.uid) || 'default';
+      const uid = (firebase?.auth?.().currentUser?.uid) || 'default';
       const key = (k)=>`tpl.udb.${uid}.${k}`;
       const hasPets = localStorage.getItem(key('pets')) !== null;
       let arr = hasPets ? JSON.parse(localStorage.getItem(key('pets'))||'[]') : JSON.parse(localStorage.getItem(key('mascotas'))||'[]');
       if (!Array.isArray(arr)) arr = [];
-      const selectedNames = (byId('petsListHidden')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
+      const selectedNames = (document.getElementById('petsListHidden')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
       let chosen = [];
       if (selectedNames.length){ chosen = arr.filter(p => selectedNames.includes((p?.nombre||'').trim())); }
       else if (arr.length === 1){ chosen = [arr[0]]; }
@@ -2127,17 +1331,18 @@
         Vacunas:(p?.vacunas||'').trim(), Salud:(p?.salud||'').trim(), Tratamiento:(p?.tratamiento||'').trim(), Comportamiento:(p?.comportamiento||'').trim()
       }));
       const text = rows.map(r=>`Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}`).join(' || ');
-      const det = byId('petsDetail'); if (det) det.value = text;
-      const detJson = byId('petsDetailJson'); if (detJson) detJson.value = JSON.stringify(rows);
+      document.getElementById('petsDetail').value = text;
+      document.getElementById('petsDetailJson').value = JSON.stringify(rows);
     }catch(_){}
 
     const fd = new FormData(form);
     const payload = Object.fromEntries(fd.entries());
     let extra = { _page: location.href, _tipo: 'reserva', _estado: 'enviada' };
 
+    // Guarda en Firestore
     let saved = false;
     try{
-      if (window.firebase?.firestore){
+      if (firebase?.firestore){
         const db = firebase.firestore();
         const auth = firebase.auth?.();
         const u = auth?.currentUser || null;
@@ -2145,204 +1350,404 @@
         if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
         if (u) { payload._uid = u.uid; payload._email = u.email || null; }
         const docRef = await db.collection('reservas').add(payload);
-        extra.reserva_id = extra.doc_id = docRef.id;
+        extra.reserva_id = docRef.id; extra.doc_id = docRef.id;
         saved = true;
       }
     }catch(err){ console.warn('No se pudo guardar en Firestore', err); }
 
+    // Envía EmailJS
     let mailed = false;
-    try{ mailed = await tryEmailJS(new FormData(form), extra); }catch(err){ console.warn('EmailJS falló', err); }
-
-    if (saved || mailed) { showSuccessOverlay(); }
-    else { alert('No se pudo enviar la reserva. Por favor, inténtalo de nuevo en unos minutos.'); }
-  }, true);
-})();
-</script>
-
-<script>
-(function(){
-  'use strict';
-  if (typeof firebase === 'undefined' || !firebase.auth) return;
-
-  var form = document.getElementById('bookingForm');
-  var wall = document.getElementById('authWall');
-
-  function setEnabled(on){
     try{
-      if (form) form.classList.toggle('disabled', !on);
-      if (wall) wall.style.display = on ? 'none' : 'block';
-    }catch(_){}
-  }
+      mailed = await tryEmailJS(new FormData(form), extra);
+    }catch(err){ console.warn('EmailJS falló', err); }
 
-  function guardSubmit(e){
-    try{
-      var u = firebase.auth().currentUser;
-      if (!u){
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        alert('Debes iniciar sesión para reservar.');
-        var inline = document.getElementById('tpl-inline-login');
-        if (inline) inline.scrollIntoView({behavior:'smooth', block:'center'});
-        return false;
-      }
-    }catch(_){}
-    return true;
-  }
-
-  if (form){
-    form.addEventListener('submit', guardSubmit, true);
-  }
-
-  var auth = firebase.auth();
-  setEnabled(!!auth.currentUser);
-  auth.onAuthStateChanged(function(u){
-    setEnabled(!!u);
+    if (saved || mailed) showSuccessOverlay();
+    else alert('No se pudo enviar la reserva. Por favor, inténtalo de nuevo en unos minutos.');
   });
 })();
 </script>
 
+<!-- ========== MODAL: Selector de mascotas (UI) ========== -->
+<div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
+  <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
+    <h3 id="tpl-petpicker-title" style="margin-top:0">Elige tus mascotas</h3>
+    <div id="tpl-petpicker-list" style="display:grid;gap:10px;max-height:320px;overflow:auto;margin:10px 0"></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button type="button" class="tpl-btn" id="tpl-petpicker-apply">Usar selección</button>
+      <button type="button" class="tpl-btn-outline" id="tpl-petpicker-cancel">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Lógica del selector de mascotas ========== -->
 <script>
 (function(){
   'use strict';
-  function byId(id){ return document.getElementById(id); }
-  function safe(v){ return (v==null?'':String(v)).trim(); }
-  function setIfEmpty(el, val){
-    if(!el) return;
-    if(!safe(el.value) && val!=null && safe(val)!==''){
-      el.value = String(val);
-      try{ el.dispatchEvent(new Event('input',{bubbles:true})); }catch(_){}
-      try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(_){}
-    }
-  }
-  function normCCAA(x){
-    if(!x) return '';
-    const s = String(x).toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu,'');
-    const map = {
-      'comunidad de madrid':'madrid','madrid':'madrid','md':'madrid','es-md':'madrid',
-      'andalucia':'andalucia','es-an':'andalucia','an':'andalucia',
-      'aragon':'aragon','es-ar':'aragon',
-      'asturias':'asturias','es-as':'asturias',
-      'illes balears':'baleares','islas baleares':'baleares','baleares':'baleares','es-ib':'baleares',
-      'canarias':'canarias','es-cn':'canarias',
-      'cantabria':'cantabria','es-cb':'cantabria',
-      'castilla-la mancha':'castilla-la-mancha','castilla-la-mancha':'castilla-la-mancha','es-cm':'castilla-la-mancha',
-      'castilla y leon':'castilla-y-leon','castilla-y-leon':'castilla-y-leon','es-cl':'castilla-y-leon',
-      'cataluna':'cataluna','cataluña':'cataluna','es-ct':'cataluna',
-      'comunitat valenciana':'valenciana','valenciana':'valenciana','es-vc':'valenciana',
-      'extremadura':'extremadura','es-ex':'extremadura',
-      'galicia':'galicia','es-ga':'galicia',
-      'la rioja':'la-rioja','es-ri':'la-rioja',
-      'murcia':'murcia','region de murcia':'murcia','es-mc':'murcia',
-      'navarra':'navarra','es-nc':'navarra',
-      'pais vasco':'euskadi','euskadi':'euskadi','es-pv':'euskadi',
-      'ceuta':'ceuta','es-ce':'ceuta',
-      'melilla':'melilla','es-ml':'melilla',
-      'nacional':'nacional'
-    };
-    return map[s] || '';
-  }
-  function setRegionFromAny(val){
-    const sel = byId('region');
-    if(!sel) return;
-    const v = normCCAA(val) || String(val||'').toLowerCase();
-    if ([...sel.options].some(o=>o.value===v)) sel.value = v;
-  }
+  if (window.__TPL_RESERV_PICKER__) return;
+  window.__TPL_RESERV_PICKER__ = true;
 
-  function hydrateFromObject(obj){
-    if(!obj) return;
-    const owner = obj.propietario || obj.owner || obj;
-    setIfEmpty(byId('firstName'),  owner.firstName || owner.nombre);
-    setIfEmpty(byId('lastName'),   owner.lastName  || owner.apellidos);
-    setIfEmpty(byId('location'),   owner.address   || owner.direccion);
-    setIfEmpty(byId('postalCode'), owner.zip       || owner.postal || owner.cp);
-    setIfEmpty(byId('email'),      owner.email);
-    setIfEmpty(byId('phone'),      owner.phone     || owner.telefono);
-    setRegionFromAny(owner.ccaa || owner.ccaa_code || owner.region || owner.provincia);
+  function getCurrentUserId(){
+    try{
+      const u = firebase?.auth?.().currentUser;
+      if (u && !u.isAnonymous && u.uid) return u.uid;
+    }catch(_){}
+    return 'default';
   }
+  function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
+  function udbGet(uid, key, fallback){
+    try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
+  }
+  function norm(s){ return String(s||'').trim(); }
 
-  try{
-    if (window.__TPL_PROFILE__) hydrateFromObject(window.__TPL_PROFILE__);
-    const raw = localStorage.getItem('tpl.profile');
-    if (raw) hydrateFromObject(JSON.parse(raw));
-    const uid =
-      localStorage.getItem('tpl.currentUser') ||
-      localStorage.getItem('tpl_auth_uid') ||
-      'default';
-    const udbOwnerRaw = localStorage.getItem(`tpl.udb.${uid}.owner`);
-    if (udbOwnerRaw) hydrateFromObject(JSON.parse(udbOwnerRaw));
-  }catch(_){}
-
-  (function(){
-    if (typeof firebase === 'undefined' || !firebase.auth || !firebase.firestore) return;
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-    async function readOwnerDoc(uid){
-      try{
-        let doc = await db.collection('owners').doc(uid).get();
-        if (doc && doc.exists) return doc.data();
-        doc = await db.collection('users').doc(uid).get();
-        if (doc && doc.exists) return doc.data();
-      }catch(_){}
-      return null;
-    }
-    auth.onAuthStateChanged(async (u)=>{
-      if (!u) return;
-      try{
-        const d = await readOwnerDoc(u.uid);
-        if (d){
-          const obj = {
-            propietario: {
-              firstName: d.firstName || d.nombre,
-              lastName : d.lastName  || d.apellidos,
-              address  : d.address   || d.direccion,
-              zip      : d.zip       || d.postal || d.cp,
-              email    : d.email     || u.email,
-              phone    : d.phone     || d.telefono || u.phoneNumber,
-              ccaa     : d.ccaa      || d.ccaa_code || d.region || d.provincia
-            }
-          };
-          hydrateFromObject(obj);
-        }
-      }catch(_){}
+  function getPets(){
+    const uid = getCurrentUserId();
+    const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+    let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+    if (!Array.isArray(arr)) arr = [];
+    const seen = new Set(), out=[];
+    arr.forEach(p=>{
+      const key = `${norm(p?.nombre).toLowerCase()}|${norm(p?.microchip).toLowerCase()}|${norm(p?.especie||p?.tipo||'').toLowerCase()}`;
+      if (seen.has(key)) return; seen.add(key); out.push(p);
     });
-  })();
+    return out;
+  }
 
+  let SELECTED_INDEXES = [];
+  function openPetPicker(){
+    const pets = getPets();
+    if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
+
+    const overlay = document.getElementById('tpl-petpicker');
+    const list = document.getElementById('tpl-petpicker-list');
+    const btnApply = document.getElementById('tpl-petpicker-apply');
+    const btnCancel = document.getElementById('tpl-petpicker-cancel');
+    if (!overlay || !list || !btnApply || !btnCancel) return;
+
+    list.innerHTML = pets.map((p, i)=>{
+      const foto = (typeof p.foto === 'string' && p.foto) ? `<img src="${p.foto}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #eee">` : `<span style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #eee;color:#9aa0a6"><i class="fa-solid fa-paw"></i></span>`;
+      const raza = norm(p.raza || p.tipoExotico || '');
+      const esp  = norm(p.especie || p.tipo || '');
+      const sub  = [esp, raza].filter(Boolean).join(' · ');
+      const checked = SELECTED_INDEXES.includes(i) ? 'checked' : '';
+      return `
+        <label style="display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:10px;padding:8px 10px">
+          <input type="checkbox" class="tpl-petpick" value="${i}" ${checked} style="transform:scale(1.2)">
+          ${foto}
+          <span style="display:flex;flex-direction:column;line-height:1.25">
+            <strong>${norm(p.nombre)||'Sin nombre'}</strong>
+            <span style="color:#666;font-size:.92rem">${sub||''}</span>
+          </span>
+        </label>
+      `;
+    }).join('');
+
+    function close(){ overlay.classList.remove('on'); overlay.style.display='none'; document.body.style.overflow=''; overlay.setAttribute('aria-hidden','true'); }
+    overlay.classList.add('on'); overlay.style.display='flex'; document.body.style.overflow='hidden'; overlay.setAttribute('aria-hidden','false');
+
+    btnCancel.onclick = close;
+    overlay.addEventListener('click', (e)=>{ if (e.target === overlay) close(); }, { once:true });
+
+    btnApply.onclick = function(){
+      const checks = list.querySelectorAll('.tpl-petpick:checked');
+      if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
+      SELECTED_INDEXES = Array.from(checks).map(ch => parseInt(ch.value,10)).filter(n=>!isNaN(n));
+
+      const pets = getPets();
+      const names = SELECTED_INDEXES.map(ix => pets[ix]).filter(Boolean).map(p=>norm(p.nombre)).filter(Boolean);
+
+      const numSel = document.getElementById('numPets');
+      if (numSel){
+        const n = Math.min(5, Math.max(1, names.length));
+        numSel.value = String(n);
+        numSel.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+
+      setTimeout(()=>{
+        names.forEach((n, idx)=>{
+          const inp = document.getElementById('petName_'+(idx+1));
+          if (inp){ inp.value = n; inp.dispatchEvent(new Event('input', { bubbles:true })); }
+        });
+      }, 120);
+
+      close();
+    };
+  }
+
+  function attachPickerButton(){
+    const btn = document.getElementById('tpl-open-petpicker');
+    if (!btn) return;
+    btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
+  }
+
+  function attachSubmitValidator(){
+    const form = document.getElementById('bookingForm');
+    if (!form) return;
+    form.addEventListener('submit', function(e){
+      try{
+        const uid = getCurrentUserId();
+        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+        const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+        if (Array.isArray(pets) && pets.length >= 2){
+          const list = (document.getElementById('petsListHidden')?.value || '').trim();
+          if (!list){
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            alert('Por favor, elige la(s) mascota(s) con el botón “Elegir de mis mascotas”.');
+            return false;
+          }
+        }
+      }catch(err){ console.warn('[TPL reservas] validación mascotas:', err); }
+    }, true);
+  }
+
+  function autoFillSinglePet(){
+    const uid = getCurrentUserId();
+    const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
+    const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
+    if (Array.isArray(pets) && pets.length === 1){
+      const name = (pets[0]?.nombre || '').trim();
+      const numSel = document.getElementById('numPets');
+      if (numSel){
+        numSel.value = '1';
+        numSel.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+      setTimeout(()=>{
+        const inp = document.getElementById('petName_1');
+        if (inp && !inp.value){
+          inp.value = name;
+          inp.dispatchEvent(new Event('input', { bubbles:true }));
+        }
+      }, 120);
+    }
+  }
+
+  function init(){ attachPickerButton(); attachSubmitValidator(); autoFillSinglePet(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
+<!-- ========== PATCH FINAL: Desglose + RGPD + Validaciones Ligeras ========== -->
+<script>
+(function(){
+  'use strict';
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('bookingForm');
-  function reapply() {
-    setTimeout(function(){
-      if (window.updateSummaryFromJS) {
-        window.updateSummaryFromJS();
+  // Utilidades ya presentes en tu código, con fallback por si en este contexto no existieran
+  function byId(id){ return document.getElementById(id); }
+  const currency = (n)=> (Math.round((n || 0) * 100) / 100).toFixed(2);
+
+  // Tomamos referencias a PRICES/BUNDLE_GUARDERIA definidos antes
+  const P = window.PRICES || {};
+  const B = window.BUNDLE_GUARDERIA || { adult:{}, puppy:{} };
+
+  // Festivos/Señalados: usamos las funciones ya definidas si existen
+  async function calcFestivosAutoAsync(region, start, end){
+    if (typeof window.calcFestivosAutoAsync === 'function'){
+      return await window.calcFestivosAutoAsync(region, start, end);
+    }
+    // Fallback mínimo (0s) si no estuviera disponible
+    return { festivo:0, senalado:0, nDias: (function(){
+      const d1 = start ? new Date(start) : null;
+      const d2 = end   ? new Date(end)   : null;
+      if(!d1 || !d2 || isNaN(d1)||isNaN(d2)|| d2<d1) return 0;
+      const u = (d)=> Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+      return Math.round((u(d2)-u(d1))/86400000)+1;
+    })()};
+  }
+
+  // Helpers UI
+  function getNumMascotas(){
+    const sel = byId('numPets'); const exact = byId('numPetsExact');
+    let n = sel ? sel.value : '1';
+    if(n==='6+') n = Math.max(6, parseInt(exact?.value||'6',10)||6);
+    return parseInt(n,10)||1;
+  }
+  function regionValue(){ try{ const r=byId('region'); return r?.value || 'nacional'; }catch(_){ return 'nacional'; } }
+  function isPuppyOn(svc, species){
+    const el = byId('isPuppy'); const v = (el?.value||'no')==='si';
+    return (svc==='guarderia' || svc==='alojamiento') && species!=='otros' && v;
+  }
+
+  // ============= NÚCLEO: cálculo correcto con suplementos separados ============
+  window.updateSummaryFromJS = async function(){
+    const svc = byId('service')?.value || '';
+    const species = byId('species')?.value || 'perro';
+    const nMasc = getNumMascotas();
+    const start = byId('startDate')?.value || '';
+    const end   = byId('endDate')?.value   || '';
+    const region= regionValue();
+
+    // Festivos + Días señalados + nº días
+    const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
+
+    // Valores a mostrar
+    let base = 0;            // precio base (solo 1ª mascota)
+    let petsSupp = 0;        // suplementos por 2ª/3ª/… mascota
+    let visit1 = 0, visit2 = 0; // para VISITAS
+    let bono = 0;            // descuento de bono guardería (solo 1ª)
+    let bonoBase = null;     // precio del bono de 1ª mascota (para info interna)
+
+    // VISITAS (gatos) — tal cual lo definiste
+    if (svc==='visitas'){
+      const longStay = (nDias >= 11);
+      const dur = parseInt(byId('visitDuration')?.value || '60', 10);
+      const daily = parseInt(byId('visitDaily')?.value || '1', 10);
+      const v60  = longStay ? P.visita60_larga : P.visita60;
+      const v90  = longStay ? P.visita90_larga : P.visita90;
+      const vMed = longStay ? P.visitaMed_larga : P.visitaMed;
+      const price1 = (dur===90) ? v90 : v60;
+      const price2 = (daily===2) ? vMed : 0;
+      visit1 = price1 * nDias;
+      visit2 = price2 * nDias;
+      // base/petsSupp en visitas queda 0 (tu desglose ya separa "1ª visita" y "2ª medicación")
+    }
+
+    // PASEOS — bonos por nº de días SOLO 1ª mascota; extras a suplementos
+    else if (svc==='paseos'){
+      const walks = Math.max(1, nDias || 1);
+      const bonoWalks = (P.paseoBonos||{})[walks] ?? null;
+      const firstDog = bonoWalks ?? (walks * (P.paseoStd||12));
+      base = firstDog;
+      // suplementos por perro adicional (2º+)
+      if (nMasc>=2){
+        petsSupp += (nMasc-1) * walks * (P.paseoExtraPerro || 8);
       }
-    }, 250);
-  }
-  if (form) {
-    form.addEventListener('change', reapply);
-    form.addEventListener('input', reapply);
-    reapply();
-  }
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('bookingForm');
-  function reapply() {
-    setTimeout(function(){
-      if (window.updateSummaryFromJS) {
-        window.updateSummaryFromJS();
+    }
+
+    // GUARDERÍA — bono 10/20/30 para 1ª mascota; 2ª/3ª+ a suplementos
+    else if (svc==='guarderia'){
+      const isPup = isPuppyOn(svc, species);
+      const perDay = isPup ? ((P.puppyBase||{}).guarderia ?? (P.base||{}).guarderia) : (P.base||{}).guarderia;
+      const table  = isPup ? (B.puppy||{}) : (B.adult||{});
+      const bundle = table[nDias] || null;
+
+      if (bundle){
+        // 1ª mascota = bundle
+        base = bundle;
+
+        // suplementos de 2ª/3ª+ fuera del base
+        const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPup?'puppy':'adult']||{})[nDias]) || null;
+        const second = ov?.second ?? (12 * nDias);
+        const thirdP = ov?.thirdPlus ?? (8 * nDias);
+        if (nMasc>=2) petsSupp += second;
+        if (nMasc>=3) petsSupp += (nMasc-2) * thirdP;
+
+        // bono = (precio normal 1ª mascota) - bundle
+        const normalFirst = perDay * nDias;
+        bono = Math.max(0, normalFirst - bundle);
+        bonoBase = bundle;
+      } else {
+        // Sin bono: base = 1ª mascota por días
+        base = (perDay||0) * nDias;
+        // suplementos diarios por 2ª / 3ª+
+        if (nMasc>=2) petsSupp += 12 * nDias;
+        if (nMasc>=3) petsSupp += (nMasc-2) * 8 * nDias;
       }
-    }, 250);
+    }
+
+    // ALOJAMIENTO — 1ª mascota a base; 2ª+ a suplementos (con tarifa d<=10 / d>=11)
+    else if (svc==='alojamiento'){
+      const isPup = isPuppyOn(svc, species);
+      const dayBase = isPup ? ((P.puppyBase||{}).alojamiento ?? (P.base||{}).alojamiento) : (P.base||{}).alojamiento; // 35/30 según tabla
+      const dayLong = isPup ? 32 : 27;     // a partir del día 11 (regla que definimos)
+      const rate1 = (nDias>=11) ? dayLong : dayBase;
+      base = (rate1||0) * nDias;
+
+      // Suplemento por 2º+ perro
+      if (species==='perro' && nMasc>=2){
+        const extraRate = (nDias>=11) ? (P.alojSegundoPerroD11 || 22) : (P.alojSegundoPerroDia || 25);
+        petsSupp += (nMasc-1) * extraRate * nDias; // 3º+ igual que 2º
+      }
+    }
+
+    // TRANSPORTE / EXÓTICOS / BODAS / POSTQUIR — solo base
+    else {
+      if (P.base && P.base[svc]){
+        base = (P.base[svc]||0) * Math.max(1, nDias || 1);
+      }
+    }
+
+    // Totales
+    const subtotal = (base + visit1 + visit2 + petsSupp + (festivo||0) + (senalado||0)) - (bono||0);
+    const deposit  = subtotal * (P.depositPct || 0.30);
+
+    // Pintar UI
+    const els = {
+      sumBase: byId('sumBase'),
+      rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
+      sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
+      sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
+      rowBono: byId('rowBono'), sumBono: byId('sumBono'),
+      sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit')
+    };
+
+    // Base muestra "—" en visitas (coherente con tu UI)
+    if (els.sumBase) els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(base) : '—');
+
+    if (els.rowVisit1) els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
+    if (els.rowVisit2) els.rowVisit2.style.display = (svc==='visitas' && visit2>0) ? '' : 'none';
+    if (els.sumVisit1) els.sumVisit1.textContent = currency(visit1);
+    if (els.sumVisit2) els.sumVisit2.textContent = currency(visit2);
+
+    if (els.sumPets) els.sumPets.textContent = currency(petsSupp);
+    if (els.sumFestivo) els.sumFestivo.textContent = currency(festivo||0);
+    if (els.sumSenalado) els.sumSenalado.textContent = currency(senalado||0);
+
+    if (els.rowBono) els.rowBono.style.display = (svc==='guarderia' && (bono||0) > 0) ? '' : 'none';
+    if (els.sumBono) els.sumBono.textContent = currency(bono||0);
+
+    if (els.sumSubtotal) els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
+    if (els.sumDeposit)  els.sumDeposit.textContent  = (subtotal>0) ? currency(deposit)  : '—';
+  };
+
+  // ——— RGPD (si faltase) + validación ligera en captura
+  function ensureRGPD(){
+    if (byId('consent')) return;
+    const form = byId('bookingForm');
+    const actions = form?.querySelector('.tpl-actions');
+    if (!form || !actions) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'booking-field';
+    wrap.style.gridColumn = '1 / -1';
+    wrap.innerHTML = `
+      <label style="display:flex;align-items:flex-start;gap:8px;line-height:1.35">
+        <input type="checkbox" id="consent" required style="margin-top:2px">
+        <span>He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+      </label>
+    `;
+    actions.parentNode.insertBefore(wrap, actions);
   }
-  if (form) {
-    form.addEventListener('change', reapply);
-    form.addEventListener('input', reapply);
-    reapply();
+  function attachLightValidation(){
+    const form = byId('bookingForm');
+    if (!form) return;
+    form.addEventListener('submit', function(ev){
+      const s = byId('startDate')?.value || '';
+      const e = byId('endDate')?.value || '';
+      const c = byId('consent');
+      if (s && e){
+        const d1 = new Date(s), d2 = new Date(e);
+        if (isNaN(d1) || isNaN(d2) || d2<d1){
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          alert('Revisa las fechas: la fecha fin no puede ser anterior a la de inicio.');
+          return false;
+        }
+      }
+      if (!c || !c.checked){
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        alert('Debes aceptar la Política de Privacidad para continuar.');
+        return false;
+      }
+      return true;
+    }, true); // captura, antes del handler principal
   }
-});
+
+  // Arranque
+  ensureRGPD();
+  attachLightValidation();
+
+  // Recalcular una vez al cargar
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>{ setTimeout(()=>window.updateSummaryFromJS && window.updateSummaryFromJS(), 60); });
+  } else {
+    setTimeout(()=>window.updateSummaryFromJS && window.updateSummaryFromJS(), 60);
+  }
+})();
 </script>
-</body>
-</html>
