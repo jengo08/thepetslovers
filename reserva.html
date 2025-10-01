@@ -11,7 +11,14 @@
 
   <style>
     :root{ --color-principal:#339496; --color-texto:#58425a; --fuente-texto:'Poppins',system-ui,sans-serif; }
-    body{ background:#fafafa; font-family:var(--fuente-texto); }
+    body{ background:#fafafa; font-family:var(--fuente-texto); margin:0; }
+    .navbar{position:fixed;top:0;left:0;right:0;z-index:1000;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:16px;padding:10px 16px}
+    .navbar .logo img{height:42px}
+    .navbar .home-button{font-weight:600;color:var(--color-principal);text-decoration:none;border:1px solid #e6f3f3;padding:8px 12px;border-radius:10px}
+    .navbar .nav-links{list-style:none;margin:0;padding:0;display:flex;gap:12px;flex:1}
+    .navbar .nav-links a{color:#444;text-decoration:none;padding:8px 10px;border-radius:8px}
+    .navbar .login-button{margin-left:auto;background:var(--color-principal);color:#fff;text-decoration:none;padding:8px 12px;border-radius:999px;font-weight:700}
+
     .booking-wrapper{ max-width: 980px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
     .booking-header{ text-align:center; margin-bottom: 18px; }
     .booking-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
@@ -51,7 +58,7 @@
 
     #location{ width:100%; max-width:100%; }
 
-    /* Login inline */
+    /* Login inline (si no has iniciado sesión) */
     .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
     .tpl-login-title{margin:0 0 8px;color:#58425a;font-weight:700;font-size:1.05rem;text-align:center}
     .tpl-socials{display:grid;gap:10px;margin-bottom:8px}
@@ -72,28 +79,29 @@
     .tpl-overlay.on{ display:flex; }
     .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow:0 8px 30px rgba(0,0,0,.2); text-align:center; }
     .tpl-modal p{ margin:0 0 12px; }
+
+    /* Footer simple (se inyecta en la PARTE 5, estilos aquí) */
+    footer.site-footer{background:#fff;border-top:1px solid #eee;padding:24px 16px;margin-top:40px}
+    footer.site-footer .inner{max-width:980px;margin:0 auto;color:#666;display:grid;gap:10px}
+    footer.site-footer a{color:var(--color-principal);text-decoration:none}
   </style>
 </head>
 <body>
 
-  <!-- Navbar (inyectada por tpl-navbar.js; deja este <noscript> por si acaso) -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
+  <!-- Navbar fija (no dependemos de inyección externa para evitar “no sale lo de arriba”) -->
+  <nav class="navbar" aria-label="Principal">
+    <div class="logo">
+      <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
+    </div>
+    <a href="index.html" class="home-button">Inicio</a>
+    <ul class="nav-links">
+      <li><a href="como-funciona.html">Cómo funciona</a></li>
+      <li><a href="servicios.html">Servicios</a></li>
+      <li><a href="index.html#contactanos">Contáctanos</a></li>
+      <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
+    </ul>
+    <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+  </nav>
 
   <div class="booking-wrapper">
     <div class="booking-header">
@@ -101,8 +109,8 @@
       <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario iniciar sesión y tener los datos de tu mascota guardados.</p>
     </div>
 
-    <!-- Muro de autenticación -->
-    <div id="authWall" class="auth-wall">
+    <!-- Muro de autenticación (solo informativo, el formulario NO se bloquea) -->
+    <div id="authWall" class="auth-wall" role="region" aria-label="Acceso">
       <p><strong>Para reservar debes estar registrada o iniciar sesión.</strong></p>
       <p class="note">Cuando accedas, el formulario se activará automáticamente.</p>
       <div id="tpl-inline-login"></div>
@@ -111,7 +119,6 @@
     <!-- Formulario -->
     <form
       id="bookingForm"
-      class="disabled"
       novalidate
       data-tpl-type="reserva"
       data-tpl-success="Tu reserva se ha enviado. Podrás ver su estado en tu panel."
@@ -315,7 +322,7 @@
             <div class="summary-value"><span id="sumBase">—</span> €</div>
           </div>
 
-          <!-- NUEVO: Precio bono (solo visible si aplica) -->
+          <!-- NUEVA FILA: Precio bono (oculta por defecto; se mostrará si hay bono) -->
           <div class="summary-row" id="rowBonoBase" style="display:none;">
             <div class="summary-label">Precio bono</div>
             <div class="summary-value"><span id="sumBonoBase">0.00</span> €</div>
@@ -329,27 +336,34 @@
             <div class="summary-label">2ª visita (medicación)</div>
             <div class="summary-value"><span id="sumVisit2">0.00</span> €</div>
           </div>
+
           <div class="summary-row">
             <div class="summary-label">Suplementos por mascotas</div>
             <div class="summary-value"><span id="sumPets">0.00</span> €</div>
           </div>
+
+          <!-- ETIQUETA ACTUALIZADA: Festivos auton./nacionales (auto) -->
           <div class="summary-row">
-            <!-- CAMBIADO el texto -->
             <div class="summary-label">Festivos auton./nacionales (auto)</div>
             <div class="summary-value"><span id="sumFestivo">0.00</span> €</div>
           </div>
+
           <div class="summary-row">
             <div class="summary-label">Días especiales (auto)</div>
             <div class="summary-value"><span id="sumSenalado">0.00</span> €</div>
           </div>
+
           <div class="summary-row">
             <div class="summary-label">Desplazamiento</div>
-            <div class="summary-value"><span id="sumTravel" class="summary-muted">pendiente</span></div>
+            <div class="summary-value"><span id="sumTravel" class="summary-muted">—</span></div>
           </div>
+
+          <!-- Descuento bono (guardería y paseos cuando aplique) -->
           <div class="summary-row" id="rowBono" style="display:none;">
-            <div class="summary-label">Bono guardería (descuento)</div>
+            <div class="summary-label">Bono (descuento)</div>
             <div class="summary-value">−<span id="sumBono">0.00</span> €</div>
           </div>
+
           <div class="summary-row summary-total">
             <div class="summary-label">Subtotal (sin desplazamiento)</div>
             <div class="summary-value"><span id="sumSubtotal">—</span> €</div>
@@ -361,6 +375,7 @@
         </div>
         <p class="note" style="margin-top:10px;">
           Este cálculo es orientativo. El importe por kilometraje se añade al confirmar el cuidador más cercano.
+          El desplazamiento se mostrará como <strong>pendiente</strong> sólo si lo marcas y no se suma al subtotal.
           El depósito se retiene y se captura tras aceptar la reserva.
         </p>
       </div>
@@ -413,7 +428,7 @@
       publicKey: 'L2xAATfVuHJwj4EIV',
       serviceId: 'service_odjqrfl',
       templates: { reserva: 'template_rao5n0c' },
-      adminEmail: 'gestion@thepetslovers.es' // opcional
+      adminEmail: 'gestion@thepetslovers.es'
     };
     (function(){
       const cfg = window.TPL_EMAILJS || {};
@@ -456,40 +471,49 @@
       puppy:  { 10: 185, 20: 350, 30: 465 }
     };
 
-    /* Opcional: extras fijos para bonos guardería (2ª/3ª+) → si no defines, se usa 12€/día 2ª y 8€/día 3ª+ × nº días
-    window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
-      adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
-      puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
-    };
-    */
+    /* Opcional: extras fijos para bonos guardería (2ª/3ª+) → si no defines, se usa 12€/día 2ª y 8€/día 3ª+ × nº días */
+    // window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
+    //   adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
+    //   puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
+    // };
   </script>
 
-  <!-- ===== Lógica UI + festivos + NUEVA recalc() (drop-in) ===== -->
+  <!-- ===== Lógica UI + cálculo + autorrelleno ===== -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('bookingForm');
+    const wall = document.getElementById('authWall');
+
     const els = {
       service: byId('service'), region: byId('region'),
       startDate: byId('startDate'), endDate: byId('endDate'),
       start: byId('start'), end: byId('end'),
+      address: byId('location'), addrSuggest: byId('tplAddrSuggest'), postalCode: byId('postalCode'),
       species: byId('species'), isPuppy: byId('isPuppy'),
       numPets: byId('numPets'), numPetsExact: byId('numPetsExact'),
-      needTravel: byId('needTravel'),
+      needTravel: byId('needTravel'), travelBubble: byId('travelBubble'),
       visitDuration: byId('visitDuration'), visitDaily: byId('visitDaily'),
       fieldVisitDuration: byId('fieldVisitDuration'), fieldVisitDaily: byId('fieldVisitDaily'),
+      firstName: byId('firstName'), lastName: byId('lastName'),
+      phone: byId('phone'), email: byId('email'), contactTime: byId('contactTime'),
+      petsContainer: byId('petsContainer'), petsListHidden: byId('petsListHidden'), petNamesList: byId('tplPetNamesList'),
 
-      // Resumen
-      sumBase: byId('sumBase'),
-      sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
+      sumBase: byId('sumBase'), sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
       rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
       sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
-      sumTravel: byId('sumTravel'),
-      sumBono: byId('sumBono'), rowBono: byId('rowBono'),
-      sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit')
+      sumTravel: byId('sumTravel'), sumBono: byId('sumBono'), rowBono: byId('rowBono'),
+      sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
+      summaryField: byId('summaryField'),
+      hiddenPack: byId('tpl-hidden-pack'),
+      // nuevos para “Precio bono”
+      rowBonoBase: byId('rowBonoBase'),
+      sumBonoBase: byId('sumBonoBase')
     };
     function byId(id){ return document.getElementById(id); }
+    const qs = (k) => new URLSearchParams(location.search).get(k);
     const currency = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
 
-    // ---------- Detección de festivos auton./nacionales + señalados ----------
+    // ===== Festivos & señalados =====
     const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01'];
     const REGION_TO_COUNTY = {
       andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
@@ -501,6 +525,7 @@
       'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
       'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
     };
+
     function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function eachDate(from,to){
@@ -511,6 +536,7 @@
       while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
       return res;
     }
+
     const _festivosCache = new Map();
     async function fetchLocalHolidays(year){
       const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
@@ -582,87 +608,88 @@
         const iso = ymd(d);
         const pack = await fetchHolidaysForYear(year);
         const county = REGION_TO_COUNTY[region || 'nacional'] || null;
-        const regKey = county ? (COUNTY_TO_REGIONKEY[county] || county) : null;
+        const regKey = COUNTY_TO_REGIONKEY[county] || county;
         const isNat = !!pack?.nacional?.has(iso);
         const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
         const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
-        if(isNat || isReg) festivo += 10;
-        if(isSpecial) senalado += 30;
+        if(isNat || isReg) festivo += 10;  // auton./nacionales
+        if(isSpecial) senalado += 30;       // días especiales
       }
       return { festivo, senalado, nDias: days.length };
     }
 
-    // ---------- Helpers de UI ----------
-    function toggleFields(){
-      const svc = els.service?.value;
-      const isVisitas = (svc === 'visitas');
-      document.getElementById('bookingForm')?.classList.toggle('tpl-visitas-on', isVisitas);
-      els.fieldVisitDuration.hidden = !isVisitas;
-      els.fieldVisitDaily.hidden = !isVisitas;
-      els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60';
-      els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1';
-      const species = els.species?.value || 'perro';
-      const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
-      document.getElementById('isPuppy').parentElement.hidden = !puppyApplies;
-      if(isVisitas) document.getElementById('species').value = 'gato';
-    }
+    // ===== Helpers generales =====
+    function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
     function getNumMascotas(){
       let n = els.numPets?.value || '1';
       if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
       return parseInt(n,10);
     }
+    function toggleFields(){
+      const svc = els.service?.value;
+      const isVisitas = (svc === 'visitas');
+      if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
+      if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
+      if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
+      if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60'; }
+      if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1'; }
+      const species = els.species?.value || 'perro';
+      const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
+      if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
+      if(isVisitas && els.species) els.species.value = 'gato';
+    }
+    function syncPetsExact(){
+      if(els.numPets?.value === '6+'){
+        els.numPetsExact.style.display = 'block';
+        els.numPetsExact.required = true;
+      }else{
+        els.numPetsExact.style.display = 'none';
+        els.numPetsExact.required = false;
+      }
+    }
 
-    // ---------- Suplementos por mascotas (fuera del base SIEMPRE) ----------
-    function calcPetSupplements(service, species, nMasc, nDias=1, isPuppy=false, bundleGuarderiaUsed=false){
+    // ===== Suplementos por mascotas (siempre fuera del “precio base”) =====
+    function calcPetSupplements(service, species, nMasc, nDias){
       if (nMasc <= 1) return 0;
 
       if (service === 'visitas'){
+        // Escalonado gatos:
         const extra = nMasc - 1;
-        if(extra === 1) return 12 * nDias;             // 2º gato: +12 €/día
-        if(extra === 2) return (8 * 2) * nDias;         // 3º gato: +16 €/día
-        if(extra >= 3) return (6 * extra) * nDias;      // 4º+: +6 €/día por gato
+        if(extra === 1) return 12 * nDias;
+        if(extra === 2) return (8 * 2) * nDias;       // 2 extras → 16 €/día
+        if(extra >= 3) return (6 * extra) * nDias;    // 3º+ → 6 €/día por mascota extra
         return 0;
       }
 
       if (service === 'paseos'){
         const walks = Math.max(1, nDias);
-        return Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro); // +8 €/paseo por perro extra
+        return Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro);
       }
 
       if (service === 'guarderia'){
-        if (bundleGuarderiaUsed){
-          const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
-          const second   = ov?.second ?? (12 * nDias);
-          const thirdPlu = ov?.thirdPlus ?? (8 * nDias);
-          let sup = 0;
-          if (nMasc >= 2) sup += second;
-          if (nMasc >= 3) sup += (nMasc-2) * thirdPlu;
-          return sup;
-        } else {
-          let sup = 0;
-          if (nMasc >= 2) sup += 12 * nDias;
-          if (nMasc >= 3) sup += (nMasc-2) * 8 * nDias;
-          return sup;
-        }
+        // Por defecto: 2ª = 12 €/día; 3ª+ = 8 €/día
+        let sup = 0;
+        if (nMasc >= 2) sup += 12 * nDias;
+        if (nMasc >= 3) sup += (nMasc-2) * 8 * nDias;
+        return sup;
       }
 
       if (service === 'alojamiento' && species === 'perro'){
         const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
         return (nMasc-1) * extraRate * nDias;
       }
+
       return 0;
     }
 
-    // ---------- Cálculo visitas (gatos) ----------
     async function calcVisitas(visitDurationMin, dailyVisits, nDias){
       const longStay = (nDias >= 11);
-      const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90)
-                                               : (longStay ? PRICES.visita60_larga : PRICES.visita60);
+      const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) : (longStay ? PRICES.visita60_larga : PRICES.visita60);
       const price2 = dailyVisits === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0;
       return { price1, price2 };
     }
 
-    // ========== NUEVA recalc() (drop-in) ==========
+    // ======= RECALC “drop-in” (muestra Base normal, Precio bono y Descuento bono; extras fuera del base) =======
     async function recalc(){
       const svc = els.service?.value || '';
       const species = els.species?.value || 'perro';
@@ -685,7 +712,7 @@
         const perDay = await calcVisitas(dur, daily, nDias);
         visit1 = perDay.price1 * nDias;     // 1ª visita
         visit2 = perDay.price2 * nDias;     // 2ª visita (medicación)
-        // Si mantenéis suplemento de más gatos en visitas:
+        // Si mantenéis suplemento de más gatos en visitas, dejad esta línea; si no, poned 0
         petSupp = calcPetSupplements('visitas', species, nMasc, nDias) || 0;
 
       } else if (svc === 'paseos'){
@@ -724,7 +751,7 @@
                                    : (isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento);
         baseNormal  = rate1 * nDias;   // 1ª mascota
         baseApplied = baseNormal;
-        // 2ª+ perro = suplemento por día (mismo para 3º+)
+        // 2ª+ perro = suplemento por día (misma para 3º+)
         if (species==='perro' && nMasc>=2){
           const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
           petSupp += (nMasc-1) * extraRate * nDias;
@@ -735,7 +762,7 @@
         baseApplied = baseNormal;
 
       } else {
-        baseNormal  = PRICES.base[svc] || 0;
+        baseNormal  = (PRICES.base[svc] || 0) * Math.max(1, nDias || 1);
         baseApplied = baseNormal;
         petSupp     = calcPetSupplements(svc, species, nMasc, nDias) || 0;
       }
@@ -744,30 +771,24 @@
       const subtotal = (baseApplied + visit1 + visit2 + petSupp + festivo + senalado) - bonoDesc;
       const deposit  = subtotal * (PRICES.depositPct || 0.3);
 
-      // UI — “Precio base” muestra el normal del 1er animal
+      // UI
       els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(baseNormal) : '—');
 
-      // Fila “Precio bono”
-      const rb = document.getElementById('rowBonoBase');
-      const sb = document.getElementById('sumBonoBase');
       if (bonoBase != null){
-        if (rb) rb.style.display = '';
-        if (sb) sb.textContent = currency(bonoBase);
+        if (els.rowBonoBase) els.rowBonoBase.style.display = '';
+        if (els.sumBonoBase) els.sumBonoBase.textContent = currency(bonoBase);
       } else {
-        if (rb) rb.style.display = 'none';
-        if (sb) sb.textContent = '0.00';
+        if (els.rowBonoBase) els.rowBonoBase.style.display = 'none';
+        if (els.sumBonoBase) els.sumBonoBase.textContent = '0.00';
       }
-      // Fila “Descuento bono”
       els.rowBono.style.display = (bonoDesc > 0) ? '' : 'none';
       els.sumBono.textContent   = currency(bonoDesc);
 
-      // Visitas
       els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
       els.rowVisit2.style.display = (svc==='visitas' && visit2 > 0) ? '' : 'none';
       els.sumVisit1.textContent = currency(visit1);
       els.sumVisit2.textContent = currency(visit2);
 
-      // Resto de filas
       els.sumPets.textContent     = currency(petSupp);
       els.sumFestivo.textContent  = currency(festivo);
       els.sumSenalado.textContent = currency(senalado);
@@ -775,23 +796,64 @@
       els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
       els.sumDeposit.textContent  = (subtotal>0) ? currency(deposit)  : '—';
 
-      // Desplazamiento: solo “pendiente” si marcan Sí; nunca suma
+      // Desplazamiento: solo mostrar “pendiente” si eligen Sí; nunca suma
       if (els.needTravel?.value === 'si'){ els.sumTravel.textContent = 'pendiente'; }
       else { els.sumTravel.textContent = '—'; }
     }
 
-    // Recalc al cambiar campos clave
-    const triggers = ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel'];
+    async function recalcAll(){ toggleFields(); syncPetsExact(); await recalc(); }
+
+    // Eventos UI que disparan recálculo
     ['change','input'].forEach(ev=>{
-      triggers.forEach(id=>{ const el = byId(id); if(el) el.addEventListener(ev, async ()=>{ toggleFields(); await recalc(); }); });
+      ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
+        .forEach(id=>{
+          const el = byId(id); if(el) el.addEventListener(ev, recalcAll);
+        });
     });
 
-    // Init
-    toggleFields();
-    recalc();
+    // Init mínimos
+    recalcAll();
+
+    // ===== Autocompletado dirección (OpenStreetMap/Nominatim) =====
+    async function searchAddresses(q){
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
+      const r = await fetch(url, { headers: { 'Accept':'application/json' }});
+      if(!r.ok) return [];
+      return r.json();
+    }
+    function renderAddrSuggestions(list){
+      if(!els.addrSuggest) return;
+      if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; return; }
+      els.addrSuggest.innerHTML = list.map((it)=>(`
+        <div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'>
+          ${it.display_name}
+        </div>`)).join('');
+      els.addrSuggest.style.display = 'block';
+      els.addrSuggest.querySelectorAll('.tpl-addr-item').forEach(node=>{
+        node.addEventListener('click', ()=> chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))));
+        node.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') chooseAddr(JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"))); });
+      });
+    }
+    function chooseAddr(item){
+      els.address.value = (item?.display_name || '').replace(/, España$/,'');
+      const pc = item?.address?.postcode || '';
+      if(els.postalCode){ els.postalCode.value = pc; }
+      els.addrSuggest.style.display='none';
+    }
+    const addressInputHandler = (function debounce(fn, wait=380){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; })(async ()=>{
+      const q = (els.address?.value || '').trim();
+      if(q.length < 4){ renderAddrSuggestions([]); return; }
+      try{ renderAddrSuggestions(await searchAddresses(q) || []); }
+      catch(_){ renderAddrSuggestions([]); }
+    });
+    if(els.address){
+      els.address.addEventListener('input', addressInputHandler);
+      els.address.addEventListener('focus', addressInputHandler);
+      document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; }});
+    }
   });
   </script>
-  <!-- (Sigue en PARTE 3/4) -->
+  <!-- (Sigue en PARTE 3/6) -->
 <!-- ========== LOGIN INLINE (si no hay sesión) ========== -->
 <script>
 (function(){
@@ -868,13 +930,14 @@
     });
   }
 
+  // Mostrar mini-login solo si NO hay sesión.
   auth.onAuthStateChanged(u=>{ if(!u) renderInlineLogin(); });
 })();
 </script>
 
 <!-- ========== ENVÍO: Firestore + EmailJS + overlay de éxito ========== -->
 <script>
-/* Enviar por EmailJS a admin y (si hay) al cliente */
+/* EmailJS helper */
 async function tryEmailJS(fd, extra){
   if (!window.emailjs) return false;
   try{
@@ -941,7 +1004,7 @@ async function tryEmailJS(fd, extra){
   }catch(_){ return false; }
 }
 
-/* Overlay de éxito simple y reutilizable */
+/* Overlay de éxito simple */
 function showSuccessOverlay(){
   const form = document.getElementById('bookingForm');
   const msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
@@ -959,7 +1022,7 @@ function showSuccessOverlay(){
   wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
 }
 
-/* Envío principal: guarda Firestore + EmailJS + overlay */
+/* Envío principal: Firestore + EmailJS + overlay */
 (function(){
   const form = document.getElementById('bookingForm');
   if (!form) return;
@@ -967,7 +1030,7 @@ function showSuccessOverlay(){
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
-    // Construye detalle de mascotas para el email
+    // Construir detalle de mascotas para el email
     try{
       const uid = (firebase?.auth?.().currentUser?.uid) || 'default';
       const key = (k)=>`tpl.udb.${uid}.${k}`;
@@ -993,7 +1056,7 @@ function showSuccessOverlay(){
     const payload = Object.fromEntries(fd.entries());
     let extra = { _page: location.href, _tipo: 'reserva', _estado: 'enviada' };
 
-    // Guarda en Firestore
+    // Guardar en Firestore
     let saved = false;
     try{
       if (firebase?.firestore){
@@ -1009,7 +1072,7 @@ function showSuccessOverlay(){
       }
     }catch(err){ console.warn('No se pudo guardar en Firestore', err); }
 
-    // Envía EmailJS
+    // Enviar por EmailJS
     let mailed = false;
     try{
       mailed = await tryEmailJS(new FormData(form), extra);
@@ -1020,7 +1083,7 @@ function showSuccessOverlay(){
   });
 })();
 </script>
-
+<!-- (Sigue en PARTE 4/6) -->
 <!-- ========== MODAL: Selector de mascotas (UI) ========== -->
 <div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
   <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
@@ -1044,14 +1107,14 @@ function showSuccessOverlay(){
     try{
       const u = firebase?.auth?.().currentUser;
       if (u && !u.isAnonymous && u.uid) return u.uid;
-    }catch(_){}
+    }catch(_){/* noop */}
     return 'default';
   }
   function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
   function udbGet(uid, key, fallback){
     try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
   }
-  function norm(s){ return String(s||'').trim(); }
+  const norm = (s)=>String(s||'').trim();
 
   function getPets(){
     const uid = getCurrentUserId();
@@ -1179,175 +1242,143 @@ function showSuccessOverlay(){
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
 </script>
-<!-- ========== PARCHE FINAL: Etiquetas + Fila "Precio bono" + recalc() nuevo ========== -->
+
+<!-- ========== PATCH FINAL: Desglose actualizado (festivos auton./nacionales + precio bono) + RGPD ========== -->
 <script>
 (function(){
   'use strict';
 
-  // Helpers mínimos
-  const byId = (id)=> document.getElementById(id);
+  // Helpers
+  const $ = (id)=>document.getElementById(id);
   const currency = (n)=> (Math.round((n || 0) * 100) / 100).toFixed(2);
 
-  // 1) Cambiar etiqueta "Festivos (auto)" -> "Festivos auton./nacionales (auto)"
-  (function patchFestivosLabel(){
-    const grid = document.querySelector('#summary .summary-grid');
-    if (!grid) return;
-    const rows = grid.querySelectorAll('.summary-row');
-    rows.forEach(r=>{
-      const lbl = r.querySelector('.summary-label');
-      if (!lbl) return;
-      if (lbl.textContent.trim() === 'Festivos (auto)'){
-        lbl.textContent = 'Festivos auton./nacionales (auto)';
-      }
+  // 1) Cambiar etiqueta de Festivos
+  function patchFestivosLabel(){
+    try{
+      const grid = document.querySelector('.summary-grid');
+      if(!grid) return;
+      const rows = grid.querySelectorAll('.summary-row');
+      rows.forEach(r=>{
+        const lbl = r.querySelector('.summary-label');
+        if(!lbl) return;
+        if (lbl.textContent.trim() === 'Festivos (auto)'){
+          lbl.textContent = 'Festivos auton./nacionales (auto)';
+        }
+      });
+    }catch(_){}
+  }
+
+  // 2) Insertar fila "Precio bono" debajo de "Precio base" (si no existe)
+  function ensurePrecioBonoRow(){
+    if ($('rowBonoBase')) return;
+    const grid = document.querySelector('.summary-grid');
+    if(!grid) return;
+    const baseRow = Array.from(grid.children).find(n=>{
+      return n.classList?.contains('summary-row') && n.querySelector('.summary-label')?.textContent?.trim() === 'Precio base';
     });
-  })();
-
-  // 2) Insertar fila "Precio bono" justo debajo de "Precio base" (si no existe)
-  (function ensureBonoBaseRow(){
-    const grid = document.querySelector('#summary .summary-grid');
-    if (!grid) return;
-    const already = byId('rowBonoBase');
-    if (already) return;
-
-    // localizar fila "Precio base"
-    let baseRow = null;
-    [...grid.querySelectorAll('.summary-row')].some(r=>{
-      const lbl = r.querySelector('.summary-label');
-      if (lbl && lbl.textContent.trim() === 'Precio base'){ baseRow = r; return true; }
-      return false;
-    });
-    if (!baseRow){
-      // como fallback: lo insertamos al principio
-      baseRow = grid.firstElementChild;
-    }
-
-    const frag = document.createElement('div');
-    frag.className = 'summary-row';
-    frag.id = 'rowBonoBase';
-    frag.style.display = 'none';
-    frag.innerHTML = `
+    const row = document.createElement('div');
+    row.className = 'summary-row';
+    row.id = 'rowBonoBase';
+    row.style.display = 'none';
+    row.innerHTML = `
       <div class="summary-label">Precio bono</div>
       <div class="summary-value"><span id="sumBonoBase">0.00</span> €</div>
     `;
-
-    // La grid usa .summary-row { display: contents }, así que insertamos el bloque justo después
-    if (baseRow && baseRow.nextSibling){
-      baseRow.parentNode.insertBefore(frag, baseRow.nextSibling);
-    }else{
-      grid.appendChild(frag);
-    }
-  })();
-
-  // 3) Fallbacks a utilidades ya existentes en tu archivo
-  const P = window.PRICES || {};
-  const B = window.BUNDLE_GUARDERIA || { adult:{}, puppy:{} };
-
-  // Si tu script anterior usa supplementsForService, creamos un alias seguro:
-  function calcPetSupplements(service, species, nMasc){
-    if (typeof window.supplementsForService === 'function'){
-      // necesitamos nDias e isPuppy para el cálculo; si no aplican, pasamos valores por defecto
-      const start = byId('startDate')?.value || '';
-      const end   = byId('endDate')?.value || '';
-      const nDias = (function(){
-        const d1 = start ? new Date(start) : null;
-        const d2 = end   ? new Date(end)   : null;
-        if(!d1 || !d2 || isNaN(d1) || isNaN(d2) || d2<d1) return 1;
-        const u = d=> Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-        return Math.round((u(d2)-u(d1))/86400000)+1;
-      })();
-      const isVisitas = (service==='visitas');
-      const isExotic  = (species==='otros');
-      const puppyAllowed = (service==='alojamiento'||service==='guarderia') && !isExotic && !isVisitas;
-      const isPuppy = puppyAllowed && ((byId('isPuppy')?.value||'no')==='si');
-      return window.supplementsForService({service, species, nMasc, nDias, isPuppy, bundleGuarderiaUsed:false}) || 0;
-    }
-    return 0;
+    // Insertar justo después del base
+    if (baseRow && baseRow.nextSibling) grid.insertBefore(row, baseRow.nextSibling);
+    else grid.appendChild(row);
   }
 
-  // Usa tu misma función si existe (llama a la real de tu archivo)
-  async function calcFestivosAutoAsync(region, start, end){
-    if (typeof window.calcFestivosAutoAsync === 'function'){
-      return await window.calcFestivosAutoAsync(region, start, end);
-    }
-    // Fallback muy básico
-    const d1 = start ? new Date(start) : null;
-    const d2 = end   ? new Date(end)   : null;
-    let nDias = 0;
-    if (d1 && d2 && !isNaN(d1) && !isNaN(d2) && d2>=d1){
-      const u = d=> Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
-      nDias = Math.round((u(d2)-u(d1))/86400000)+1;
-    }
-    return { festivo:0, senalado:0, nDias };
+  // 3) RGPD (si no estuviera)
+  function ensureRGPD(){
+    if ($('consent')) return;
+    const form = $('bookingForm');
+    const actions = form?.querySelector('.tpl-actions');
+    if (!form || !actions) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'booking-field';
+    wrap.style.gridColumn = '1 / -1';
+    wrap.innerHTML = `
+      <label style="display:flex;align-items:flex-start;gap:8px;line-height:1.35">
+        <input type="checkbox" id="consent" required style="margin-top:2px">
+        <span>He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+      </label>
+    `;
+    actions.parentNode.insertBefore(wrap, actions);
   }
 
-  // Ya está en tu archivo, lo reutilizamos si existe:
-  async function calcVisitas(visitDurationMin, dailyVisits, nDias){
-    if (typeof window.calcVisitas === 'function'){
-      return await window.calcVisitas(visitDurationMin, dailyVisits, nDias);
-    }
-    // Fallback: usa PRICES
-    const longStay = (nDias >= 11);
-    const price1 = (visitDurationMin === 90) ? (longStay ? P.visita90_larga : P.visita90) : (longStay ? P.visita60_larga : P.visita60);
-    const price2 = dailyVisits === 2 ? (longStay ? P.visitaMed_larga : P.visitaMed) : 0;
-    return { price1, price2 };
+  // 4) Validación ligera en submit (fechas + RGPD)
+  function attachLightValidation(){
+    const form = $('bookingForm');
+    if (!form) return;
+    form.addEventListener('submit', function(ev){
+      const s = $('startDate')?.value || '';
+      const e = $('endDate')?.value || '';
+      const c = $('consent');
+      if (s && e){
+        const d1 = new Date(s), d2 = new Date(e);
+        if (isNaN(d1) || isNaN(d2) || d2<d1){
+          ev.preventDefault(); ev.stopImmediatePropagation();
+          alert('Revisa las fechas: la fecha fin no puede ser anterior a la de inicio.');
+          return false;
+        }
+      }
+      if (!c || !c.checked){
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        alert('Debes aceptar la Política de Privacidad para continuar.');
+        return false;
+      }
+      return true;
+    }, true);
   }
 
-  function getNumMascotas(){
-    let n = byId('numPets')?.value || '1';
-    if (n === '6+') n = Math.max(6, parseInt(byId('numPetsExact')?.value || '6', 10) || 6);
-    return parseInt(n,10) || 1;
-  }
+  // 5) Cálculo actualizado (base normal + precio bono + descuento; suplementos fuera del base)
+  //    Usa tus PRICES, BUNDLE_GUARDERIA y calcFestivosAutoAsync ya definidos en PARTES anteriores.
+  window.tplRecalcSummary = async function(){
+    const svc      = $('service')?.value || '';
+    const species  = $('species')?.value || 'perro';
+    const region   = $('region')?.value || 'nacional';
+    const start    = $('startDate')?.value;
+    const end      = $('endDate')?.value;
+    const isVisitas= (svc === 'visitas');
 
-  // 4) Sustituimos recalc() por la versión pedida (drop-in)
-  async function recalc(){
-    // Intentamos respetar tus refs "els" si existen; si no, cogemos los nodos directos.
-    const els = (window.__elsCache__) || (function(){
-      const m = {
-        service: byId('service'), species: byId('species'),
-        isPuppy: byId('isPuppy'),
-        visitDuration: byId('visitDuration'), visitDaily: byId('visitDaily'),
-        region: byId('region'),
-        startDate: byId('startDate'), endDate: byId('endDate'),
-        needTravel: byId('needTravel'),
-        sumBase: byId('sumBase'),
-        rowBono: byId('rowBono'), sumBono: byId('sumBono'),
-        rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
-        sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
-        sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
-        sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
-        sumTravel: byId('sumTravel')
-      };
-      window.__elsCache__ = m; return m;
+    const nMasc = (function(){
+      let n = $('numPets')?.value || '1';
+      if (n==='6+') n = Math.max(6, parseInt($('numPetsExact')?.value || '6', 10) || 6);
+      return parseInt(n,10)||1;
     })();
 
-    const svc = els.service?.value || '';
-    const species = els.species?.value || 'perro';
-    const isVisitas = (svc==='visitas');
+    // Cachorro solo en guardería/alojamiento y no “otros”
     const puppyAllowed = (svc==='alojamiento'||svc==='guarderia') && species!=='otros' && !isVisitas;
-    const isPuppy = puppyAllowed && (els.isPuppy?.value==='si');
+    const isPuppy = puppyAllowed && (($('isPuppy')?.value || 'no') === 'si');
 
-    const nMasc = getNumMascotas();
-    const region = els.region?.value || 'nacional';
-    const start = els.startDate?.value;
-    const end   = els.endDate?.value;
-    const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
+    // Festivos (auton./nacionales) + especiales + nDias
+    const festFn = (typeof window.calcFestivosAutoAsync === 'function') ? window.calcFestivosAutoAsync : async()=>({ festivo:0, senalado:0, nDias:0 });
+    const { festivo, senalado, nDias } = await festFn(region, start, end);
 
     let baseNormal=0, baseApplied=0, bonoBase=null, bonoDesc=0;
     let petSupp=0, visit1=0, visit2=0;
 
+    // VISITAS (gatos)
     if (isVisitas){
-      const dur = parseInt(els.visitDuration?.value || '60', 10);
-      const daily = parseInt(els.visitDaily?.value || '1', 10);
-      const perDay = await calcVisitas(dur, daily, nDias);
-      visit1 = perDay.price1 * nDias;     // 1ª visita
-      visit2 = perDay.price2 * nDias;     // 2ª visita (medicación)
-      // Si mantenéis suplemento de más gatos en visitas, dejamos esto; si no, poned 0
-      petSupp = calcPetSupplements('visitas', species, nMasc) || 0;
-
-    } else if (svc === 'paseos'){
+      const longStay = (nDias >= 11);
+      const dur   = parseInt($('visitDuration')?.value || '60', 10);
+      const daily = parseInt($('visitDaily')?.value || '1', 10);
+      const v60  = longStay ? PRICES.visita60_larga : PRICES.visita60;
+      const v90  = longStay ? PRICES.visita90_larga : PRICES.visita90;
+      const vMed = longStay ? PRICES.visitaMed_larga : PRICES.visitaMed;
+      const price1 = (dur===90) ? v90 : v60;
+      const price2 = (daily===2) ? vMed : 0;
+      visit1 = price1 * nDias;     // 1ª visita
+      visit2 = price2 * nDias;     // 2ª visita (medicación)
+      // Si mantenéis suplemento extra por más gatos, ajusta aquí (actualmente fuera del base)
+      petSupp = 0;
+    }
+    // PASEOS
+    else if (svc === 'paseos'){
       const walks = Math.max(1, nDias);
-      const normalFirst = (P.paseoStd||12) * walks;       // 1er perro sin bono
-      const bonoWalks   = (P.paseoBonos||{})[walks] || null; // 1er perro con bono si aplica
+      const normalFirst = PRICES.paseoStd * walks;                 // 1er perro sin bono
+      const bonoWalks   = PRICES.paseoBonos[walks] || null;        // 1er perro con bono
       baseNormal = normalFirst;
       if (bonoWalks){
         bonoBase  = bonoWalks;
@@ -1357,12 +1388,13 @@ function showSuccessOverlay(){
         baseApplied = baseNormal;
       }
       // 2º+ perro = suplemento (8 €/paseo) -> fuera del base
-      petSupp = Math.max(0, nMasc-1) * ((P.paseoExtraPerro||8) * walks);
-
-    } else if (svc === 'guarderia'){
-      const perDay = isPuppy ? ((P.puppyBase||{}).guarderia ?? (P.base||{}).guarderia) : (P.base||{}).guarderia;
-      baseNormal = (perDay||0) * nDias; // 1ª mascota, sin bono
-      const table  = isPuppy ? (B.puppy||{}) : (B.adult||{});
+      petSupp = Math.max(0, nMasc-1) * (PRICES.paseoExtraPerro * walks);
+    }
+    // GUARDERÍA
+    else if (svc === 'guarderia'){
+      const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
+      baseNormal = perDay * nDias; // 1ª mascota, sin bono
+      const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
       const bundle = table[nDias] || null;
       if (bundle){
         bonoBase  = bundle;                 // 1ª mascota con bono
@@ -1371,95 +1403,267 @@ function showSuccessOverlay(){
       }else{
         baseApplied = baseNormal;
       }
-      // Suplementos fuera del base: 2ª = 12 €/día; 3ª+ = 8 €/día
-      if (nMasc>=2) petSupp += 12 * nDias;
-      if (nMasc>=3) petSupp += (nMasc-2) * 8 * nDias;
-
-    } else if (svc === 'alojamiento'){
-      const rate1 = (nDias>=11)
-        ? (isPuppy ? 32 : 27)
-        : (isPuppy ? ((P.puppyBase||{}).alojamiento ?? (P.base||{}).alojamiento) : (P.base||{}).alojamiento);
-      baseNormal  = (rate1||0) * nDias;   // 1ª mascota
+      // Suplementos DIARIOS fuera del base: 2ª = 12 €/día; 3ª+ = 8 €/día (override si define TPL_GUARDERIA_BUNDLE_EXTRAS)
+      const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
+      const second   = ov?.second ?? (12 * nDias);
+      const thirdPlu = ov?.thirdPlus ?? (8 * nDias);
+      if (nMasc>=2) petSupp += second;
+      if (nMasc>=3) petSupp += (nMasc-2) * thirdPlu;
+    }
+    // ALOJAMIENTO
+    else if (svc === 'alojamiento'){
+      const rate1 = (nDias>=11) ? (isPuppy ? 32 : 27)
+                                 : (isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento);
+      baseNormal  = rate1 * nDias;   // 1ª mascota
       baseApplied = baseNormal;
-      // 2ª+ perro = suplemento por día (mismo para 3º+)
+      // 2º+ perro suplemento por día
       if (species==='perro' && nMasc>=2){
-        const extraRate = (nDias>=11) ? (P.alojSegundoPerroD11 || 22) : (P.alojSegundoPerroDia || 25);
+        const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
         petSupp += (nMasc-1) * extraRate * nDias;
       }
-
-    } else if (svc === 'transporte'){
-      baseNormal = (P.base && P.base.transporte) ? P.base.transporte : 20; // 20€ base + km “pendiente”
+    }
+    // TRANSPORTE / otros
+    else if (svc === 'transporte'){
+      baseNormal = PRICES.base.transporte; // 20€ base (km pendiente fuera)
       baseApplied = baseNormal;
-
     } else {
-      baseNormal  = (P.base && P.base[svc]) ? P.base[svc] : 0;
+      baseNormal  = (PRICES.base[svc] || 0) * Math.max(1, nDias||1);
       baseApplied = baseNormal;
-      petSupp     = calcPetSupplements(svc, species, nMasc) || 0;
     }
 
     // Subtotal = base aplicado + visitas + suplementos + festivos + especiales − descuento bono
     const subtotal = (baseApplied + visit1 + visit2 + petSupp + (festivo||0) + (senalado||0)) - (bonoDesc||0);
-    const deposit  = subtotal * ((P.depositPct!=null ? P.depositPct : 0.3));
+    const deposit  = subtotal * (PRICES.depositPct || 0.3);
 
     // ——— Pintado UI
-    const rb = byId('rowBonoBase');
-    const sb = byId('sumBonoBase');
+    const rowBonoBase = $('rowBonoBase'), sumBonoBase=$('sumBonoBase');
+    const rowBono     = $('rowBono'),     sumBono    = $('sumBono');
 
-    // "Precio base" muestra SIEMPRE el normal del 1er animal (no el del bono)
-    if (els.sumBase) els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(baseNormal) : '—');
+    // Precio base (muestra siempre el NORMAL del 1er animal; en visitas = —)
+    $('sumBase').textContent = (isVisitas) ? '—' : (subtotal>0 ? currency(baseNormal) : '—');
 
-    // Fila Precio bono visible solo si hay bono aplicado
+    // Precio bono (nuevo)
     if (bonoBase != null){
-      if (rb) rb.style.display = '';
-      if (sb) sb.textContent = currency(bonoBase);
+      if (rowBonoBase) rowBonoBase.style.display = '';
+      if (sumBonoBase) sumBonoBase.textContent = currency(bonoBase);
     } else {
-      if (rb) rb.style.display = 'none';
-      if (sb) sb.textContent = '0.00';
+      if (rowBonoBase) rowBonoBase.style.display = 'none';
+      if (sumBonoBase) sumBonoBase.textContent = '0.00';
     }
 
-    if (els.rowBono) els.rowBono.style.display = (bonoDesc > 0) ? '' : 'none';
-    if (els.sumBono) els.sumBono.textContent   = currency(bonoDesc||0);
+    // Descuento bono (ya existía)
+    if (rowBono) rowBono.style.display = (bonoDesc>0) ? '' : 'none';
+    if (sumBono) sumBono.textContent   = currency(bonoDesc||0);
 
-    if (els.rowVisit1) els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
-    if (els.rowVisit2) els.rowVisit2.style.display = (svc==='visitas' && visit2 > 0) ? '' : 'none';
-    if (els.sumVisit1) els.sumVisit1.textContent = currency(visit1);
-    if (els.sumVisit2) els.sumVisit2.textContent = currency(visit2);
+    // Visitas
+    const rowV1=$('rowVisit1'), rowV2=$('rowVisit2');
+    if (rowV1) rowV1.style.display = isVisitas ? '' : 'none';
+    if (rowV2) rowV2.style.display = (isVisitas && visit2>0) ? '' : 'none';
+    $('sumVisit1').textContent = currency(visit1);
+    $('sumVisit2').textContent = currency(visit2);
 
-    if (els.sumPets)      els.sumPets.textContent     = currency(petSupp);
-    if (els.sumFestivo)   els.sumFestivo.textContent  = currency(festivo||0);
-    if (els.sumSenalado)  els.sumSenalado.textContent = currency(senalado||0);
+    // Suplementos / Festivos / Señalados
+    $('sumPets').textContent     = currency(petSupp);
+    $('sumFestivo').textContent  = currency(festivo||0);
+    $('sumSenalado').textContent = currency(senalado||0);
 
-    if (els.sumSubtotal) els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
-    if (els.sumDeposit)  els.sumDeposit.textContent  = (subtotal>0) ? currency(deposit)  : '—';
+    // Totales
+    $('sumSubtotal').textContent = (subtotal>0) ? currency(subtotal) : '—';
+    $('sumDeposit').textContent  = (subtotal>0) ? currency(deposit)  : '—';
 
-    // Desplazamiento: solo mostrar “pendiente” si eligen Sí; nunca suma
-    if (els.needTravel?.value === 'si'){
-      if (els.sumTravel) els.sumTravel.textContent = 'pendiente';
-    } else {
-      if (els.sumTravel) els.sumTravel.textContent = '—';
-    }
+    // Desplazamiento: solo “pendiente” si marcan Sí; nunca suma
+    const needTravel = $('needTravel')?.value === 'si';
+    $('sumTravel').textContent = needTravel ? 'pendiente' : '—';
+  };
+
+  // Lanzar parches e iniciar recálculo cuando haya DOM
+  function boot(){
+    patchFestivosLabel();
+    ensurePrecioBonoRow();
+    ensureRGPD();
+    attachLightValidation();
+
+    // recalcular al inicio y en cambios relevantes
+    const again = ()=>window.tplRecalcSummary && window.tplRecalcSummary();
+    ['change','input'].forEach(ev=>{
+      ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
+        .forEach(id=>{ const el=$(id); if(el) el.addEventListener(ev, again); });
+    });
+    setTimeout(again, 80);
   }
 
-  // Exponemos y enganchamos eventos para forzar que esta recalc() sea la efectiva
-  window.recalc = recalc;
-  ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
-    .forEach(id=>{
-      const el = byId(id);
-      if (el){
-        el.addEventListener('change', recalc);
-        el.addEventListener('input', recalc);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+<!-- (Sigue en PARTE 5/6) -->
+<!-- (PARTE 5/6) ===================================================== -->
+<!-- ===== Parche seguro de etiquetas del desglose (por si quedaba el texto antiguo) ===== -->
+<script>
+(function(){
+  // Cambia “Festivos (auto)” -> “Festivos auton./nacionales (auto)”
+  try{
+    var rows = document.querySelectorAll('#summary .summary-row .summary-label');
+    rows.forEach(function(lbl){
+      var t = (lbl.textContent || '').trim().toLowerCase();
+      if (t === 'festivos (auto)'){
+        lbl.textContent = 'Festivos auton./nacionales (auto)';
       }
     });
-
-  // Primer cálculo al cargar
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ()=> setTimeout(recalc, 60));
-  } else {
-    setTimeout(recalc, 60);
-  }
+  }catch(_){}
 })();
 </script>
 
-<!-- CIERRE DEL DOCUMENTO -->
+<!-- ===== Inyector de NAVBAR (fallback si no está tpl-navbar.js externo) ===== -->
+<script>
+(function(){
+  var host = document.getElementById('tpl-navbar');
+  if (!host) return;
+
+  // Si ya hay algo (inyectado) no hacemos nada
+  if (host.dataset._tplReady === '1') return;
+
+  // Construimos un navbar consistente con tu diseño
+  host.innerHTML = `
+    <nav class="navbar" style="position:fixed;top:0;left:0;right:0;z-index:1000;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:14px;padding:10px 14px">
+      <div class="logo" style="display:flex;align-items:center">
+        <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none">
+          <img src="images/logo.png.png" alt="The Pets Lovers" style="height:34px;width:auto">
+          <strong style="color:#58425a">The Pets Lovers</strong>
+        </a>
+      </div>
+      <a href="index.html" class="home-button" style="margin-left:auto;color:#339496;text-decoration:none;font-weight:600">Inicio</a>
+      <ul class="nav-links" style="display:flex;gap:14px;list-style:none;margin:0 10px 0 10px;padding:0">
+        <li><a href="como-funciona.html" style="color:#58425a;text-decoration:none">Cómo funciona</a></li>
+        <li><a href="servicios.html" style="color:#58425a;text-decoration:none">Servicios</a></li>
+        <li><a href="index.html#contactanos" style="color:#58425a;text-decoration:none">Contáctanos</a></li>
+        <li><a href="index.html#hazte-cuidador" style="color:#58425a;text-decoration:none">Conviértete en cuidador</a></li>
+      </ul>
+      <a class="login-button" href="#iniciar-sesion" id="tpl-login-top" style="color:#fff;background:#339496;border-radius:999px;padding:8px 12px;text-decoration:none;font-weight:700">Iniciar sesión</a>
+    </nav>
+  `;
+  host.dataset._tplReady = '1';
+
+  // Si hay sesión, cambiar CTA
+  try{
+    if (typeof firebase !== 'undefined'){
+      firebase.auth().onAuthStateChanged(function(u){
+        var btn = document.getElementById('tpl-login-top');
+        if (!btn) return;
+        if (u){
+          btn.textContent = 'Mi perfil';
+          btn.href = 'perfil.html';
+        }else{
+          btn.textContent = 'Iniciar sesión';
+          btn.href = '#iniciar-sesion';
+        }
+      });
+    }
+  }catch(_){}
+})();
+</script>
+
+<!-- ===== FOOTER completo ===== -->
+<footer id="tpl-footer" style="margin-top:50px;background:#fff;border-top:1px solid #eee">
+  <div style="max-width:1100px;margin:0 auto;padding:24px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <img src="images/logo.png.png" alt="The Pets Lovers" style="height:34px;width:auto">
+        <strong style="color:#58425a">The Pets Lovers</strong>
+      </div>
+      <p style="color:#666;line-height:1.5;margin:0">
+        Cuidadores de confianza para tus peludos. Reservas seguras y soporte humano.
+      </p>
+      <p style="margin:10px 0 0;color:#999;font-size:.92rem">© <span id="tpl-year"></span> The Pets Lovers</p>
+    </div>
+
+    <div>
+      <strong style="color:#58425a">Enlaces</strong>
+      <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px">
+        <li><a href="index.html" style="text-decoration:none;color:#339496">Inicio</a></li>
+        <li><a href="servicios.html" style="text-decoration:none;color:#339496">Servicios</a></li>
+        <li><a href="como-funciona.html" style="text-decoration:none;color:#339496">Cómo funciona</a></li>
+        <li><a href="ayuda.html" style="text-decoration:none;color:#339496">Centro de ayuda</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <strong style="color:#58425a">Legal</strong>
+      <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px">
+        <li><a href="privacidad.html" style="text-decoration:none;color:#339496">Privacidad</a></li>
+        <li><a href="terminos.html" style="text-decoration:none;color:#339496">Términos y condiciones</a></li>
+        <li><a href="cookies.html" style="text-decoration:none;color:#339496">Cookies</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <strong style="color:#58425a">Contacto</strong>
+      <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px;color:#666">
+        <li><i class="fa-solid fa-envelope"></i> gestion@thepetslovers.es</li>
+        <li><i class="fa-brands fa-whatsapp"></i> +34 600 000 000</li>
+      </ul>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <a href="#" aria-label="Instagram" style="color:#339496"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" aria-label="Facebook" style="color:#339496"><i class="fa-brands fa-facebook"></i></a>
+        <a href="#" aria-label="TikTok" style="color:#339496"><i class="fa-brands fa-tiktok"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+<script>
+  (function(){ try{ document.getElementById('tpl-year').textContent = String(new Date().getFullYear()); }catch(_){}})();
+</script>
+<!-- (FIN PARTE 5/6) ================================================ -->
+<!-- (PARTE 6/6) ===================================================== -->
+<!-- ===== Fixers finales (idempotentes) ===== -->
+<script>
+(function(){
+  // 1) Asegura la fila "Precio bono" justo debajo de "Precio base"
+  try{
+    var grid = document.querySelector('#summary .summary-grid');
+    var baseRow = grid ? grid.querySelector('.summary-row:first-child .summary-label') : null;
+    var bonoRow = document.getElementById('rowBonoBase');
+    if (grid && baseRow && !bonoRow){
+      var wrap = document.createElement('div');
+      wrap.className = 'summary-row';
+      wrap.id = 'rowBonoBase';
+      wrap.style.display = 'none';
+      wrap.innerHTML = '<div class="summary-label">Precio bono</div><div class="summary-value"><span id="sumBonoBase">0.00</span> €</div>';
+
+      // Insertar tras la primera fila (Precio base)
+      var firstRow = grid.querySelector('.summary-row');
+      if (firstRow && firstRow.nextSibling){
+        grid.insertBefore(wrap, firstRow.nextSibling);
+      } else if (firstRow){
+        firstRow.after(wrap);
+      } else {
+        grid.appendChild(wrap);
+      }
+    }
+  }catch(_){}
+
+  // 2) Asegura el texto “Festivos auton./nacionales (auto)”
+  try{
+    var labels = document.querySelectorAll('#summary .summary-label');
+    labels.forEach(function(el){
+      var t = (el.textContent||'').trim().toLowerCase();
+      if (t === 'festivos (auto)'){
+        el.textContent = 'Festivos auton./nacionales (auto)';
+      }
+    });
+  }catch(_){}
+
+  // 3) Forzar un recálculo al terminar de construir el DOM
+  try{
+    if (typeof recalc === 'function'){
+      recalc();
+    } else if (typeof window.updateSummaryFromJS === 'function'){
+      window.updateSummaryFromJS();
+    }
+  }catch(_){}
+})();
+</script>
+
+<!-- ===== Cierre seguro ===== -->
 </body>
 </html>
