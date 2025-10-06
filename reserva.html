@@ -1616,6 +1616,90 @@
       </footer>
     </noscript>
   </div>
+  <script>
+/* TPL · HOOK PERFIL + RECÁLCULO DIFERIDO */
+(function(){
+  if (window.__TPL_HOOK_PERFIL__) return; window.__TPL_HOOK_PERFIL__ = true;
+
+  function safe(fn){ try{ fn&&fn(); }catch(e){ /*noop*/ } }
+
+  // Recalcula TODO tras cargar perfil por cualquier vía
+  async function refreshFromProfile(){
+    safe(window.autoFromWindowProfile);
+    safe(window.autoFromLocalProfile);
+    if (typeof window.autoFromFirebase === 'function') { await window.autoFromFirebase(); }
+    // Si el DOM ya está, fuerza recalcAll y reconstrucción de ocultos
+    if (typeof window.recalcAll === 'function') { await window.recalcAll(); }
+    if (typeof window.buildHiddenPackBeforeSend === 'function') { window.buildHiddenPackBeforeSend(); }
+  }
+
+  // 1) Si ya hay perfil en window
+  if (window.__TPL_PROFILE__) { refreshFromProfile(); }
+
+  // 2) Cuando se autentique con Firebase
+  if (window.firebase && firebase.auth) {
+    firebase.auth().onAuthStateChanged(function(u){
+      // pequeño debounce por si el perfil se hidrata justo después
+      setTimeout(refreshFromProfile, 200);
+    });
+  }
+
+  // 3) Al terminar tpl-auth (cuando ponga __TPL_PROFILE__)
+  document.addEventListener('tpl-profile-ready', refreshFromProfile);
+
+  // 4) Última red de seguridad tras DOM listo
+  if (document.readyState === 'complete') setTimeout(refreshFromProfile, 100);
+  else window.addEventListener('load', ()=>setTimeout(refreshFromProfile, 100));
+})();
+</script>
+<script>
+/* TPL · AUTORRELLENO PREFERENTE */
+(function(){
+  if (window.__TPL_FILL_OWNER_PATCH__) return; window.__TPL_FILL_OWNER_PATCH__ = true;
+
+  // Sobrescribe si el campo está vacío O si marcamos 'force'
+  window.tplSetField = function(el, val, force){
+    if (!el) return;
+    const v = (val==null) ? '' : String(val);
+    if (force) { el.value = v; return; }
+    if (!el.value && v) { el.value = v; }
+  };
+
+  // Enlaza con tu fillOwnerFromObj existente
+  const _fill = window.fillOwnerFromObj;
+  window.fillOwnerFromObj = function(d, opts){
+    const force = !!(opts && opts.force);
+    if (!d) return;
+    window.tplSetField(document.getElementById('firstName'), d.nombre || d.name || d.firstName, force);
+    window.tplSetField(document.getElementById('lastName'),  d.apellidos || d.lastName || d.surname, force);
+    window.tplSetField(document.getElementById('email'),     d.email, force);
+    window.tplSetField(document.getElementById('phone'),     d.telefono || d.phone, force);
+    if (typeof _fill === 'function') { try{ _fill(d); }catch(e){} } // conserva tu lógica original extra
+  };
+})();
+</script>
+<script>
+/* TPL · RECÁLCULO POR CAMBIOS INDIRECTOS */
+(function(){
+  if (window.__TPL_RECALC_PATCH__) return; window.__TPL_RECALC_PATCH__ = true;
+  function tryRecalc(){ if (typeof window.recalcAll === 'function') window.recalcAll(); }
+
+  // Dirección sugerida (autocompletado OSM)
+  document.addEventListener('click', function(e){
+    if (e.target && e.target.matches && e.target.matches('.tpl-addr-suggestion')) {
+      setTimeout(tryRecalc, 50);
+    }
+  });
+
+  // Cambios en lista de mascotas renderizadas dinámicamente
+  const petsRoot = document.getElementById('petsContainer') || document;
+  petsRoot.addEventListener('input', function(e){
+    const id = (e.target && e.target.id) || '';
+    if (/petName|petType|petAge|isPuppy/.test(id)) { tryRecalc(); }
+  });
+})();
+</script>
+
 
   <!-- Mini-injectors -->
   <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
