@@ -2,1708 +2,801 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Reserva · The Pets Lovers</title>
 
+  <!-- Estilos globales de tu web -->
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
-    :root{ --color-principal:#339496; --color-texto:#58425a; --fuente-texto:'Poppins',system-ui,sans-serif; }
-    body{ background:#fafafa; font-family:var(--fuente-texto); }
-    .booking-wrapper{ max-width: 980px; margin: 120px auto 60px; padding: 20px; background: #fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05);}
-    .booking-header{ text-align:center; margin-bottom: 18px; }
-    .booking-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
-    .booking-field{ display:flex; flex-direction:column; gap:6px; }
-    .booking-field label{ font-weight:700; font-size:.95rem; color: var(--color-texto); }
-    .booking-field input, .booking-field select, .booking-field textarea{
-      padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-family:var(--fuente-texto);
-    }
-    .booking-actions{ display:flex; gap:12px; justify-content:center; margin-top: 16px; flex-wrap: wrap; }
-    .cta-button{background:var(--color-principal);color:#fff;border:none;border-radius:999px;padding:10px 16px;cursor:pointer;font-weight:700}
-    .note{ font-size:.95rem; color:#666; text-align:center; margin: 10px 0 0; }
-
-    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
-    .auth-wall strong{ color: var(--color-texto); }
-    .disabled{ opacity:.6; pointer-events:none; }
-
-    .booking-field[hidden]{ display:none !important; }
-    .tpl-visitas-only{ display:none !important; }
-    .tpl-visitas-on .tpl-visitas-only{ display:block !important; }
-
-    .summary-panel{ margin-top: 16px; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:16px; }
-    .summary-grid{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
-    .summary-row{ display:contents; }
-    .summary-label{ color:#555; }
-    .summary-value{ font-weight:700; color: var(--color-texto); text-align:right; }
-    .summary-muted{ color:#999; font-weight:400; }
-    .summary-total{ border-top:1px solid #e7e7e7; margin-top:8px; padding-top:8px; font-size:1.05rem; }
-
-    .tpl-actions{ display:grid; grid-template-columns: 1fr auto 1fr; align-items:center; gap:12px; width:100%; }
-    .tpl-actions .tpl-spacer{ display:block; }
-    .tpl-actions .tpl-help{ font-size:.9rem; padding:8px 10px; border:2px solid var(--color-principal); color:var(--color-principal); background:#fff; border-radius:8px; justify-self:end; text-decoration:none }
-
-    .travel-bubble{ display:none; margin-top:6px; padding:10px 12px; border:1px dashed #bbb; border-radius:10px; background:#f9f9f9; color:#666; text-align:left;}
-
-    .tpl-section{ margin-top: 18px; }
-    .tpl-section h2{ margin: 6px 0 8px; font-size:1.15rem; }
-
-    #location{ width:100%; max-width:100%; }
-
-    /* Login inline (si no has iniciado sesión) */
-    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-    .tpl-login-title{margin:0 0 8px;color:#58425a;font-weight:700;font-size:1.05rem;text-align:center}
-    .tpl-socials{display:grid;gap:10px;margin-bottom:8px}
-    .tpl-btn-social{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #ddd;border-radius:999px;padding:10px 14px;background:#fff;cursor:pointer;font-weight:600;color:var(--color-principal)}
-    .tpl-btn-social i{font-size:1rem}
-    .tpl-sep{position:relative;text-align:center;margin:6px 0 8px;color:#999;font-size:.9rem}
-    .tpl-sep span{background:#fff;padding:0 8px;position:relative;z-index:1}
-    .tpl-sep::before{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:#eee}
-    .tpl-login-form{display:grid;gap:8px}
-    .tpl-login-form label{font-size:.9rem;color:#58425a}
-    .tpl-login-form input{border:1px solid #ddd;border-radius:10px;padding:10px 12px;font-size:1rem}
-    .tpl-btn{background:#339496;color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-    .tpl-btn-outline{background:#fff;color:#339496;border:1px solid #339496;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
-    .tpl-link{background:none;border:none;color:#339496;text-decoration:underline;cursor:pointer;padding:6px 0;justify-self:center}
-    .tpl-login-msg{min-height:1.2em;text-align:center;color:#58425a;margin-top:4px}
-
-    .tpl-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:9999; }
-    .tpl-overlay.on{ display:flex; }
-    .tpl-modal{ background:#fff; padding:20px; border-radius:12px; max-width:520px; box-shadow: 0 8px 30px rgba(0,0,0,.2); text-align:center; }
-    .tpl-modal p{ margin:0 0 12px; }
-    .tpl-addr-suggest{display:none; position:absolute; z-index:30; background:#fff; border:1px solid #eee; border-radius:10px; margin-top:6px; max-height:260px; overflow:auto; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
-    .tpl-addr-item{padding:10px 12px; cursor:pointer}
-    .tpl-addr-item:hover, .tpl-addr-item:focus{ background:#f4f7f8; outline:none }
-    .tpl-addr-wrap{ position:relative; }
+    /* Ajustes suaves por si tu CSS no los define */
+    :root{--tpl-brand:#111827;--tpl-muted:#6b7280;--tpl-border:#e5e7eb;--tpl-bg:#f9fafb}
+    body{background:#fff}
+    .wrap{max-width:1100px;margin:auto;padding:24px}
+    .hero{padding:18px 0 6px}
+    .sub{color:var(--tpl-muted);margin-top:4px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:16px;background:#fff}
+    label{font-size:14px;color:#374151}
+    input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
+    .btn-primary{background:var(--tpl-brand);color:#fff}
+    .btn-ghost{background:#fff;border:1px solid var(--tpl-border);color:#111827}
+    .muted{color:var(--tpl-muted);font-size:12px}
+    .section-title{font-weight:700;margin:4px 0 8px}
+    .disabled{opacity:.6;pointer-events:none;filter:grayscale(1)}
+    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--tpl-bg);border:1px solid var(--tpl-border);font-size:12px;color:#374151}
+    .summary{background:var(--tpl-bg)}
+    .summary .line{display:flex;justify-content:space-between;margin:6px 0}
+    .summary .total{font-weight:700;border-top:1px dashed var(--tpl-border);padding-top:8px;margin-top:6px}
+    .gate{border:2px dashed var(--tpl-border);background:#fffcee}
+    .pets-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media (min-width:900px){.pets-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+    .pet-card{display:flex;gap:12px;border:1px solid var(--tpl-border);border-radius:14px;padding:10px;align-items:center}
+    .pet-card input[type=checkbox]{width:18px;height:18px}
+    .pet-img{width:56px;height:56px;flex:0 0 56px;border-radius:50%;object-fit:cover;border:1px solid var(--tpl-border)}
+    .pet-meta{font-size:12px;color:#4b5563}
+    .badge{font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid var(--tpl-border);background:#eef2ff;color:#3730a3}
+    .danger{color:#b91c1c}
   </style>
 </head>
 <body>
 
-  <!-- Navbar (inyectada por tpl-navbar.js; deja este <noscript> por si acaso) -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
+  <!-- Nav de tu web (si lo incluyes por JS, déjalo) -->
+  <div id="tpl-navbar"></div>
 
-  <div class="booking-wrapper">
-    <div class="booking-header">
+  <main class="wrap">
+    <div class="hero">
       <h1>Reserva tu servicio</h1>
-      <p>Selecciona el servicio y la fecha. Para completar la reserva es necesario iniciar sesión y tener los datos de tu mascota guardados.</p>
+      <p class="sub">Selecciona el servicio y la fecha para completar la reserva.</p>
     </div>
 
-    <!-- Muro de autenticación (solo informa; el envío real requiere login más abajo) -->
-    <div id="authWall" class="auth-wall">
-      <p><strong>Inicia sesión para autocompletar tus datos y elegir tus mascotas guardadas.</strong></p>
-      <p class="note">También puedes rellenar el formulario; el envío se activará al iniciar sesión.</p>
-      <div id="tpl-inline-login"></div>
+    <!-- Puerta de sesión -->
+    <div id="sessionGate" class="card gate" style="display:none">
+      <h3 style="margin:0 0 8px">Inicia sesión para reservar</h3>
+      <p class="muted" style="margin:0 0 12px">Para continuar debes iniciar sesión o crear tu perfil.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn btn-primary" href="/login.html"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a>
+        <a class="btn btn-ghost" href="/crear-cuenta.html"><i class="fa-solid fa-user-plus"></i> Crear cuenta</a>
+      </div>
     </div>
 
     <!-- Formulario -->
-    <form
-      id="bookingForm"
-      novalidate
-      data-tpl-type="reserva"
-      data-tpl-success="Tu reserva se ha enviado. Podrás ver su estado en tu panel."
-      data-tpl-redirect="perfil.html"
-      data-tpl-wait="800"
-    >
-      <!-- ===== Datos del servicio ===== -->
-      <section class="tpl-section" aria-labelledby="sec-servicio">
-        <h2 id="sec-servicio">Datos del servicio</h2>
-        <div class="booking-grid">
-          <div class="booking-field">
-            <label for="service">Servicio</label>
-            <select id="service" name="Servicio" required>
-              <option value="">Elige un servicio…</option>
-              <option value="visitas">Visitas a domicilio (gatos)</option>
-              <option value="paseos">Paseos</option>
-              <option value="guarderia">Guardería de día</option>
-              <option value="alojamiento">Alojamiento (por día)</option>
-              <option value="bodas">Bodas y servicios exclusivos</option>
-              <option value="postquirurgico">Postquirúrgico</option>
-              <option value="transporte">Transporte</option>
-              <option value="exoticos">Exóticos</option>
-            </select>
-          </div>
-
-          <div class="booking-field">
-            <label for="startDate">Fecha de inicio</label>
-            <input type="date" id="startDate" name="Fecha_inicio" required>
-          </div>
-          <div class="booking-field">
-            <label for="endDate">Fecha de fin</label>
-            <input type="date" id="endDate" name="Fecha_fin" required>
-          </div>
-
-          <div class="booking-field">
-            <label for="start">Hora de inicio</label>
-            <input type="time" id="start" name="Hora_inicio" required>
-          </div>
-          <div class="booking-field">
-            <label for="end">Hora de fin</label>
-            <input type="time" id="end" name="Hora_fin" required>
-          </div>
-
-          <div class="booking-field" id="fieldNumPets">
-            <label for="numPets">Nº de mascotas</label>
-            <select id="numPets" name="N_mascotas">
-              <option value="1">1</option><option value="2">2</option>
-              <option value="3">3</option><option value="4">4</option>
-              <option value="5">5</option><option value="6+">6+</option>
-            </select>
-            <input type="number" id="numPetsExact" name="N_mascotas_exactas" min="6" step="1" placeholder="Indica cuántas" style="display:none;margin-top:6px;">
-          </div>
-
-          <div class="booking-field" id="fieldSpecies">
-            <label for="species">Tipo de animal</label>
-            <select id="species" name="Tipo_animal">
-              <option value="perro">Perro</option>
-              <option value="gato">Gato</option>
-              <option value="otros">Otros</option>
-            </select>
-          </div>
-
-          <!-- SOLO visitas (gatos) -->
-          <div class="booking-field tpl-visitas-only" id="fieldVisitDuration" hidden>
-            <label for="visitDuration">Duración de la visita (gatos)</label>
-            <select id="visitDuration" name="Visita_duracion">
-              <option value="60">60 minutos</option>
-              <option value="90">90 minutos</option>
-            </select>
-          </div>
-          <div class="booking-field tpl-visitas-only" id="fieldVisitDaily" hidden>
-            <label for="visitDaily">Visitas diarias</label>
-            <select id="visitDaily" name="Visitas_diarias">
-              <option value="1">1 visita/día</option>
-              <option value="2">2 visitas/día (2ª es medicación)</option>
-            </select>
-          </div>
-
-          <div class="booking-field" id="fieldIsPuppy">
-            <label for="isPuppy">¿Es cachorro (≤ 6 meses)?</label>
-            <select id="isPuppy" name="Cachorro" disabled title="Se calcula automáticamente según la edad de tu mascota">
-              <option value="no" selected>No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
+    <form id="reservaForm" class="card disabled">
+      <!-- Datos del servicio -->
+      <div class="section-title">Datos del servicio</div>
+      <div class="grid-3">
+        <div>
+          <label>Servicio</label>
+          <select id="serviceType" required>
+            <option value="">Selecciona…</option>
+            <option value="guarderia_dia">Guardería de día</option>
+            <option value="alojamiento_nocturno">Alojamiento nocturno</option>
+            <option value="paseo">Paseo (60’)</option>
+            <option value="visita_gato">Visita a domicilio (gato)</option>
+            <option value="exoticos_aves">Visita exóticos (aves)</option>
+            <option value="exoticos_reptiles">Visita exóticos (reptiles)</option>
+            <option value="exoticos_mamiferos">Visita exóticos (mamíferos pequeños)</option>
+            <option value="transporte">Transporte</option>
+          </select>
         </div>
-      </section>
-
-      <!-- ===== Mascotas ===== -->
-      <section class="tpl-section" aria-labelledby="sec-mascotas">
-        <h2 id="sec-mascotas">Mascotas</h2>
-        <div class="booking-grid" id="petsContainer"></div>
-        <datalist id="tplPetNamesList"></datalist>
-
-        <div class="booking-actions" style="justify-content:flex-start;margin-top:6px">
-          <button type="button" class="tpl-btn-outline" id="tpl-open-petpicker">
-            <i class="fa-solid fa-list-check"></i> Elegir de mis mascotas
-          </button>
+        <div>
+          <label>Fecha</label>
+          <input id="serviceDate" type="date" required>
         </div>
-      </section>
-
-      <!-- ===== Datos de la persona ===== -->
-      <section class="tpl-section" aria-labelledby="sec-titular">
-        <h2 id="sec-titular">Datos de la persona titular</h2>
-        <div class="booking-grid">
-          <div class="booking-field">
-            <label for="firstName">Nombre y Apellidos</label>
-            <input type="text" id="firstName" name="Nombre" placeholder="Tu nombre" autocomplete="given-name" required>
-          </div>
-          <div class="booking-field">
-            <label for="location">Dirección</label>
-            <div class="tpl-addr-wrap">
-              <input type="text" id="location" name="Direccion" placeholder="Calle y número, piso…" autocomplete="street-address" required aria-haspopup="listbox" aria-expanded="false">
-              <div id="tplAddrSuggest" class="tpl-addr-suggest" role="listbox" aria-label="Sugerencias de direcciones"></div>
-            </div>
-          </div>
-
-          <div class="booking-field">
-            <label for="region">Comunidad Autónoma</label>
-            <select id="region" name="CCAA" required>
-              <option value="" disabled hidden>Selecciona tu CCAA…</option>
-              <option value="madrid" selected>Comunidad de Madrid</option>
-              <option value="andalucia">Andalucía</option>
-              <option value="aragon">Aragón</option>
-              <option value="asturias">Asturias</option>
-              <option value="baleares">Illes Balears</option>
-              <option value="canarias">Canarias</option>
-              <option value="cantabria">Cantabria</option>
-              <option value="castilla-la-mancha">Castilla-La Mancha</option>
-              <option value="castilla-y-leon">Castilla y León</option>
-              <option value="cataluna">Cataluña</option>
-              <option value="valenciana">Comunitat Valenciana</option>
-              <option value="extremadura">Extremadura</option>
-              <option value="galicia">Galicia</option>
-              <option value="la-rioja">La Rioja</option>
-              <option value="melilla">Melilla</option>
-              <option value="murcia">Región de Murcia</option>
-              <option value="navarra">Navarra</option>
-              <option value="euskadi">País Vasco</option>
-              <option value="ceuta">Ceuta</option>
-              <option value="nacional">Solo festivos nacionales</option>
-            </select>
-          </div>
-          <div class="booking-field">
-            <label for="postalCode">Código Postal</label>
-            <input type="text" id="postalCode" name="CP" placeholder="Ej. 28001" inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code" required>
-          </div>
-
-          <div class="booking-field">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="Email" placeholder="Tu correo electrónico" autocomplete="email">
-          </div>
-          <div class="booking-field">
-            <label for="phone">Teléfono</label>
-            <input type="tel" id="phone" name="Telefono" placeholder="Tu número de teléfono" autocomplete="tel">
-          </div>
-
-          <div class="booking-field" style="grid-column: 1 / -1;">
-            <label>¿Por dónde prefieres que contactemos?</label>
-            <div>
-              <label><input type="radio" name="Preferencia_contacto" value="telefono"> Teléfono</label>
-              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="whatsapp"> WhatsApp</label>
-              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="email"> Email</label>
-              <label style="margin-left:12px;"><input type="radio" name="Preferencia_contacto" value="cualquiera" checked> Cualquiera</label>
-            </div>
-          </div>
-
-          <div class="booking-field">
-            <label for="contactTime">¿A qué hora prefieres que te contactemos?</label>
-            <input type="time" id="contactTime" name="Hora_preferida_contacto">
-          </div>
-
-          <div class="booking-field" style="grid-column: 1 / -1;">
-            <label for="needTravel">¿Necesitas desplazamiento?</label>
-            <select id="needTravel" name="Desplazamiento">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-            <div id="travelBubble" class="travel-bubble">
-              <i class="fa-solid fa-circle-info"></i>
-              El desplazamiento se cobrará cuando asignemos al cuidador/a más cercano y adecuado.
-              <br>Este importe quedará <strong>pendiente</strong> en la factura final.
-            </div>
-          </div>
-
-          <div class="booking-field" style="grid-column: 1 / -1;">
-            <label for="notes">Notas (opcional)</label>
-            <textarea id="notes" name="Notas" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
-          </div>
+        <div>
+          <label>Comunidad Autónoma</label>
+          <select id="region" required>
+            <option value="">Selecciona…</option>
+            <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
+            <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
+            <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
+            <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
+          </select>
         </div>
-      </section>
-
-      <!-- ===== Desglose ===== -->
-      <div class="summary-panel" id="summary">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <strong>Desglose preliminar</strong>
+        <div>
+          <label>Hora inicio</label>
+          <input id="startTime" type="time">
         </div>
-        <div class="summary-grid">
-          <div class="summary-row">
-            <div class="summary-label">Precio base</div>
-            <div class="summary-value"><span id="sumBase">—</span> €</div>
-          </div>
-          <div class="summary-row" id="rowVisit1" style="display:none;">
-            <div class="summary-label">1ª visita (60/90)</div>
-            <div class="summary-value"><span id="sumVisit1">0.00</span> €</div>
-          </div>
-          <div class="summary-row" id="rowVisit2" style="display:none;">
-            <div class="summary-label">2ª visita (medicación)</div>
-            <div class="summary-value"><span id="sumVisit2">0.00</span> €</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-label">Suplementos por mascotas</div>
-            <div class="summary-value"><span id="sumPets">0.00</span> €</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-label">Festivos (auto)</div>
-            <div class="summary-value"><span id="sumFestivo">0.00</span> €</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-label">Días especiales (auto)</div>
-            <div class="summary-value"><span id="sumSenalado">0.00</span> €</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-label">Desplazamiento</div>
-            <div class="summary-value"><span id="sumTravel" class="summary-muted">pendiente</span></div>
-          </div>
-          <div class="summary-row" id="rowBono" style="display:none;">
-            <div class="summary-label">Bono guardería (descuento)</div>
-            <div class="summary-value">−<span id="sumBono">0.00</span> €</div>
-          </div>
-          <div class="summary-row summary-total">
-            <div class="summary-label">Subtotal (sin desplazamiento)</div>
-            <div class="summary-value"><span id="sumSubtotal">—</span> €</div>
-          </div>
-          <div class="summary-row">
-            <div class="summary-label">Depósito a retener</div>
-            <div class="summary-value"><span id="sumDeposit">—</span> €</div>
-          </div>
+        <div>
+          <label>Hora fin</label>
+          <input id="endTime" type="time">
         </div>
-        <p class="note" style="margin-top:10px;">
-          Este cálculo es orientativo. El importe por kilometraje se añade al confirmar el cuidador más cercano.
-          El depósito se retiene y se captura tras aceptar la reserva.
-        </p>
+        <div>
+          <label>Dirección</label>
+          <input id="address" placeholder="Calle, nº, piso…">
+        </div>
+        <div>
+          <label>Código Postal</label>
+          <input id="postalCode" placeholder="28001">
+        </div>
+        <div>
+          <label>Observaciones</label>
+          <input id="notes" placeholder="Llaves, timbre, alergias…">
+        </div>
       </div>
 
-      <!-- Hidden para email -->
-      <input type="hidden" name="Desglose" id="summaryField">
-      <input type="hidden" name="Mascotas_lista" id="petsListHidden">
-      <input type="hidden" name="Mascotas_detalle" id="petsDetail">
-      <input type="hidden" name="Mascotas_detalle_json" id="petsDetailJson">
+      <!-- Mascotas -->
+      <div style="margin-top:14px" class="section-title">Mascotas (elige una o varias)</div>
+      <div id="petsGrid" class="pets-grid"></div>
+      <p class="muted" id="petsHint" style="margin-top:6px">Selecciona hasta 3 mascotas para esta reserva.</p>
 
-      <!-- Paquete ocultos EmailJS: Propietario_*, Mascota_*, Reserva_* -->
-      <div id="tpl-hidden-pack" aria-hidden="true" style="display:none"></div>
-
-      <!-- Acciones -->
-      <div class="booking-actions tpl-actions">
-        <span class="tpl-spacer" aria-hidden="true"></span>
-        <button type="submit" class="cta-button">Solicitar reserva</button>
-        <a class="tpl-help" href="ayuda.html#reservas" aria-label="Centro de ayuda">Centro de ayuda</a>
+      <!-- Datos titular -->
+      <div style="margin-top:14px" class="section-title">Datos del titular</div>
+      <div class="grid-3">
+        <div>
+          <label>Nombre y apellidos</label>
+          <input id="ownerFullName" required>
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" required>
+        </div>
+        <div>
+          <label>Teléfono</label>
+          <input id="phone" required>
+        </div>
+        <div>
+          <label>Preferencia de contacto</label>
+          <select id="contactPref">
+            <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
+          </select>
+        </div>
+        <div>
+          <label>Franja preferida</label>
+          <select id="contactTime">
+            <option>Mañana</option><option>Tarde</option><option>Noche</option>
+          </select>
+        </div>
+        <div>
+          <label>¿Necesitas desplazamiento?</label>
+          <select id="travelNeeded">
+            <option value="no">No</option>
+            <option value="si">Sí (se calculará al asignar cuidador)</option>
+          </select>
+        </div>
       </div>
 
-      <p class="note">Tras enviar, te llamaremos para confirmar detalles. La primera visita con el cuidador es gratuita.</p>
+      <!-- Desglose -->
+      <div class="card summary" style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><strong>Resumen</strong></div>
+          <span id="summaryContext" class="pill">—</span>
+        </div>
+        <div id="summaryLines" style="margin-top:8px"></div>
+        <div class="line total"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
+        <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
+        <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
+        <p class="muted" style="margin-top:8px">Solo abonarás una pequeña parte ahora. El resto se pagará <strong>12 días antes</strong> del inicio del servicio.</p>
+      </div>
 
-      <!-- RGPD -->
-      <div class="booking-field" style="grid-column:1 / -1; margin-top:12px;">
-        <label style="display:flex;align-items:flex-start;gap:8px;line-height:1.35">
-          <input type="checkbox" id="consent" required style="margin-top:2px">
-          <span>He leído y acepto la <a href="privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
-        </label>
+      <!-- CTA -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+        <button id="btnReserve" type="button" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
       </div>
     </form>
-  </div>
 
-  <!-- SDKs Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
-  <!-- Init Firebase -->
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14"
-    };
-    if (typeof firebase !== 'undefined') {
-      if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
-      try { firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL); } catch(_){}
-    }
-  </script>
-
-  <!-- EmailJS -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-  <script>
-    window.TPL_EMAILJS = {
-      publicKey: 'L2xAATfVuHJwj4EIV',
-      serviceId: 'service_odjqrfl',
-      templates: { reserva: 'template_rao5n0c' },
-      adminEmail: 'gestion@thepetslovers.es' // opcional
-    };
-    (function(){
-      const cfg = window.TPL_EMAILJS || {};
-      if (window.emailjs) {
-        const pub = cfg.publicKey || cfg.userId || null;
-        if (pub) { try{ emailjs.init({ publicKey: pub }); }catch(_){/* noop */} }
-      }
-    })();
-  </script>
-
-  <!-- ===== Precios y bonos ===== -->
-  <script>
-    const PRICES = {
-      // base (transporte base 20 € + km “pendiente”)
-      base: { visitas: 22, paseos: 12, guarderia: 15, alojamiento: 30, bodas: 0, postquirurgico: 0, transporte: 20, exoticos: 0 },
-      puppyBase: { guarderia: 20, alojamiento: 35 },
-
-      // visitas (gatos)
-      visita60: 22, visita90: 30,
-      visita60_larga: 18, visita90_larga: 27,
-      visitaMed: 12, visitaMed_larga: 10,
-
-      // paseos
-      paseoStd: 12,
-      paseoExtraPerro: 8,
-      paseoBonos: { 10:115, 15:168, 20:220, 25:270, 30:318 },
-
-      // alojamiento (desde día 11)
-      alojSegundoPerroDia: 25,
-      alojSegundoPerroD11: 22,
-
-      // depósito
-      depositPct: 0.30
-    };
-    const BUNDLE_GUARDERIA = {
-      adult:  { 10: 135, 20: 250, 30: 315 },
-      puppy:  { 10: 185, 20: 350, 30: 465 }
-    };
-
-    // Extras fijos opcionales para bonos guardería (si quieres anular 12€/día y 8€/día por defecto)
-    // window.TPL_GUARDERIA_BUNDLE_EXTRAS = {
-    //   adult: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} },
-    //   puppy: { 10:{second:120, thirdPlus:80}, 20:{second:240, thirdPlus:160}, 30:{second:360, thirdPlus:240} }
-    // };
-  </script>
-
-  <!-- ===== Lógica UI + cálculo + autorrelleno + envío ===== -->
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('bookingForm');
-    const wall = document.getElementById('authWall');
-
-    const els = {
-      service: byId('service'), region: byId('region'),
-      startDate: byId('startDate'), endDate: byId('endDate'),
-      start: byId('start'), end: byId('end'),
-      address: byId('location'), addrSuggest: byId('tplAddrSuggest'), postalCode: byId('postalCode'),
-      species: byId('species'), isPuppy: byId('isPuppy'),
-      numPets: byId('numPets'), numPetsExact: byId('numPetsExact'),
-      needTravel: byId('needTravel'), travelBubble: byId('travelBubble'),
-      visitDuration: byId('visitDuration'), visitDaily: byId('visitDaily'),
-      fieldVisitDuration: byId('fieldVisitDuration'), fieldVisitDaily: byId('fieldVisitDaily'),
-      firstName: byId('firstName'), lastName: byId('lastName'),
-      phone: byId('phone'), email: byId('email'), contactTime: byId('contactTime'),
-      petsContainer: byId('petsContainer'), petsListHidden: byId('petsListHidden'), petNamesList: byId('tplPetNamesList'),
-
-      sumBase: byId('sumBase'), sumVisit1: byId('sumVisit1'), sumVisit2: byId('sumVisit2'),
-      rowVisit1: byId('rowVisit1'), rowVisit2: byId('rowVisit2'),
-      sumPets: byId('sumPets'), sumFestivo: byId('sumFestivo'), sumSenalado: byId('sumSenalado'),
-      sumTravel: byId('sumTravel'), sumBono: byId('sumBono'), rowBono: byId('rowBono'),
-      sumSubtotal: byId('sumSubtotal'), sumDeposit: byId('sumDeposit'),
-      summaryField: byId('summaryField'),
-      hiddenPack: byId('tpl-hidden-pack')
-    };
-    function byId(id){ return document.getElementById(id); }
-    const qs = (k) => new URLSearchParams(location.search).get(k);
-    const currency = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2);
-
-    // --------- regiones / counties
-    const SPECIAL_MMDD = ['12-24','12-25','12-31','01-01'];
-    const REGION_TO_COUNTY = {
-      andalucia:'ES-AN', aragon:'ES-AR', asturias:'ES-AS', baleares:'ES-IB', canarias:'ES-CN', cantabria:'ES-CB',
-      'castilla-la-mancha':'ES-CM', 'castilla-y-leon':'ES-CL', cataluna:'ES-CT', ceuta:'ES-CE', valenciana:'ES-VC',
-      extremadura:'ES-EX', galicia:'ES-GA', 'la-rioja':'ES-RI', madrid:'ES-MD', melilla:'ES-ML', murcia:'ES-MC',
-      navarra:'ES-NC', euskadi:'ES-PV', nacional:null
-    };
-    const COUNTY_TO_REGIONKEY = {
-      'ES-AN':'AN','ES-AR':'AR','ES-AS':'AS','ES-IB':'IB','ES-CN':'CN','ES-CB':'CB','ES-CM':'CM','ES-CL':'CL','ES-CT':'CT','ES-VC':'VC',
-      'ES-EX':'EX','ES-GA':'GA','ES-RI':'RI','ES-MD':'MD','ES-MC':'MC','ES-NC':'NC','ES-PV':'PV','ES-CE':'CE','ES-ML':'ML'
-    };
-
-    function mmdd(d){ return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-    function eachDate(from,to){
-      const res=[]; if(!from||!to) return res;
-      const d1=new Date(from), d2=new Date(to);
-      if(isNaN(d1)||isNaN(d2)||d2<d1) return res;
-      const cur=new Date(d1); cur.setHours(0,0,0,0); d2.setHours(0,0,0,0);
-      while(cur<=d2){ res.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
-      return res;
-    }
-    function debounce(fn, wait=300){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), wait); }; }
-
-    // ---------- Preselección de servicio
-    function inferServiceFromReferrer(){
-      try{
-        const u = new URL(document.referrer || '');
-        const p = (u.pathname || '').toLowerCase();
-        if(p.includes('guarderia')) return 'guarderia';
-        if(p.includes('alojamiento') || p.includes('estancias')) return 'alojamiento';
-        if(p.includes('paseos')) return 'paseos';
-        if(p.includes('visitas')) return 'visitas';
-        if(p.includes('bodas')) return 'bodas';
-        if(p.includes('postquir')) return 'postquirurgico';
-        if(p.includes('transporte')) return 'transporte';
-        if(p.includes('exotico')) return 'exoticos';
-      }catch(_){}
-      return null;
-    }
-    (function presetService(){
-      const raw = (qs('service') || qs('svc') || '').toLowerCase();
-      const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
-      const map = {
-        visitas:'visitas','visitas-gatos':'visitas',
-        paseos:'paseos',
-        guarderia:'guarderia','guarderia-dia':'guarderia',
-        alojamiento:'alojamiento','estancias':'alojamiento',
-        bodas:'bodas',
-        postquirurgico:'postquirurgico','post-quirurgico':'postquirurgico','postquirugico':'postquirurgico',
-        transporte:'transporte',
-        exoticos:'exoticos','exotico':'exoticos'
-      };
-      let val = map[norm] || inferServiceFromReferrer();
-      if(val && els.service){ els.service.value = val; els.service.disabled = false; }
-    })();
-
-    function toggleFields(){
-      const svc = els.service?.value;
-      const isVisitas = (svc === 'visitas');
-      if(form){ form.classList.toggle('tpl-visitas-on', isVisitas); }
-      if(els.fieldVisitDuration){ els.fieldVisitDuration.hidden = !isVisitas; }
-      if(els.fieldVisitDaily){ els.fieldVisitDaily.hidden = !isVisitas; }
-      if(els.visitDuration){ els.visitDuration.disabled = !isVisitas; if(!isVisitas) els.visitDuration.value='60'; }
-      if(els.visitDaily){ els.visitDaily.disabled = !isVisitas; if(!isVisitas) els.visitDaily.value='1'; }
-      const species = els.species?.value || 'perro';
-      const puppyApplies = (svc === 'guarderia' || svc === 'alojamiento') && species !== 'otros' && !isVisitas;
-      if(els.isPuppy) els.isPuppy.parentElement.hidden = !puppyApplies;
-      if(isVisitas && els.species) els.species.value = 'gato';
-    }
-
-    function getNumMascotas(){
-      let n = els.numPets?.value || '1';
-      if(n === '6+') n = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6);
-      return parseInt(n,10);
-    }
-    function syncPetsExact(){
-      if(els.numPets?.value === '6+'){
-        els.numPetsExact.style.display = 'block';
-        els.numPetsExact.required = true;
-      }else{
-        els.numPetsExact.style.display = 'none';
-        els.numPetsExact.required = false;
-      }
-    }
-
-    // ------- datalist/selector de mascotas
-    let PROFILE_PET_NAMES = [];
-    function fillPetDatalist(){
-      if(!els.petNamesList) return;
-      els.petNamesList.innerHTML = (PROFILE_PET_NAMES||[])
-        .map(n => `<option value="${(n||'').replace(/"/g,'&quot;')}"></option>`).join('');
-    }
-    function renderPetNameFields(n){
-      n = Math.max(1, n|0);
-      const wrap = els.petsContainer; if(!wrap) return;
-      const current = wrap.querySelectorAll('[data-pet-row]').length;
-      for(let i=current+1;i<=n;i++){
-        const row = document.createElement('div');
-        row.className = 'booking-field';
-        row.setAttribute('data-pet-row', i.toString());
-        row.innerHTML = `
-          <label for="petName_${i}">Nombre de la mascota ${n>1?`#${i}`:''}</label>
-          <input type="text" id="petName_${i}" name="Mascota_${i}" list="tplPetNamesList" placeholder="Ej. Nala" autocomplete="off">
-        `;
-        wrap.appendChild(row);
-      }
-      const rows = wrap.querySelectorAll('[data-pet-row]');
-      rows.forEach(r=>{
-        const idx = parseInt(r.getAttribute('data-pet-row'),10);
-        if(idx>n) r.remove();
-      });
-      updatePetsListHidden();
-      wrap.querySelectorAll('input[id^="petName_"]').forEach(inp=>{
-        inp.addEventListener('input', updatePetsListHidden);
-      });
-    }
-    function updatePetsListHidden(){
-      const names = [...els.petsContainer.querySelectorAll('input[id^="petName_"]')].map(i=>i.value.trim()).filter(Boolean);
-      els.petsListHidden.value = names.join(', ');
-    }
-
-    function travelSync(){
-      if(els.travelBubble) els.travelBubble.style.display = els.needTravel?.value === 'si' ? 'block' : 'none';
-      if(els.sumTravel) els.sumTravel.textContent = (els.needTravel?.value === 'si') ? 'pendiente' : '—';
-    }
-
-    // ===== FESTIVOS (reforzado con 1/11) =====
-    const _festivosCache = new Map();
-    function FESTIVOS_NACIONALES(year){
-      const yy = String(year).padStart(4,'0');
-      return new Set([
-        `${yy}-01-01`, /* Año Nuevo */
-        `${yy}-01-06`, /* Reyes */
-        `${yy}-05-01`, /* Trabajo */
-        `${yy}-08-15`, /* Asunción */
-        `${yy}-10-12`, /* Fiesta Nacional */
-        `${yy}-11-01`, /* Todos los Santos */
-        `${yy}-12-06`, /* Constitución */
-        `${yy}-12-08`, /* Inmaculada */
-        `${yy}-12-25`  /* Navidad */
-      ]);
-    }
-    async function fetchLocalHolidays(year){
-      const urls = [`/festivos-es-${year}.json`, `festivos-es-${year}.json`];
-      for(const url of urls){
-        try{
-          const r = await fetch(url, {cache:'no-store'});
-          if(!r.ok) continue;
-          const data = await r.json();
-          const nacional = new Set((data.national || data.nacional || []).map(x => x.date || x));
-          const porCcaa = new Map();
-          if(data.regions){ Object.entries(data.regions).forEach(([k, arr])=>{ porCcaa.set(k, new Set((arr||[]).map(x => x.date || x))); }); }
-          nacional.add(`${year}-11-01`);
-          return { nacional, porCcaa, _src:'local' };
-        }catch(_){}
-      }
-      return null;
-    }
-    async function fetchNagerHolidays(year){
-      const r = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/ES`, {cache:'force-cache'});
-      if(!r.ok) throw new Error('Nager fail');
-      const data = await r.json();
-      const nacional = new Set();
-      const porCcaa = new Map();
-      for(const h of data){
-        const date = h.date;
-        if(!h.counties || !h.counties.length){ nacional.add(date); }
-        else{
-          for(const c of h.counties){
-            const key = COUNTY_TO_REGIONKEY[c] || c;
-            if(!porCcaa.has(key)) porCcaa.set(key, new Set());
-            porCcaa.get(key).add(date);
-          }
-        }
-      }
-      nacional.add(`${year}-11-01`);
-      return { nacional, porCcaa, _src:'nager' };
-    }
-    async function fetchHolidaysForYear(year){
-      if(_festivosCache.has(year)) return _festivosCache.get(year);
-      try{
-        const raw = localStorage.getItem(`tpl_festivos_${year}`);
-        if(raw){
-          const parsed = JSON.parse(raw);
-          if(parsed?.t && Date.now() - parsed.t <= 24*3600*1000){
-            const nacional = new Set(parsed.d || []);
-            const porCcaa  = new Map((parsed.r || []).map(([k,arr])=>[k, new Set(arr||[])]));
-            nacional.add(`${year}-11-01`);
-            const cached = {nacional, porCcaa, _src:'localStorage'};
-            _festivosCache.set(year, cached); return cached;
-          }
-        }
-      }catch(_){}
-      const local = await fetchLocalHolidays(year);
-      if(local){ 
-        _festivosCache.set(year, local);
-        try{
-          localStorage.setItem(`tpl_festivos_${year}`, JSON.stringify({ t:Date.now(), d:[...local.nacional], r:[...local.porCcaa.entries()].map(([k,v])=>[k,[...v]]) }));
-        }catch(_){}
-        return local;
-      }
-      try{
-        const nager = await fetchNagerHolidays(year);
-        _festivosCache.set(year, nager);
-        try{
-          localStorage.setItem(`tpl_festivos_${year}`, JSON.stringify({ t:Date.now(), d:[...nager.nacional], r:[...nager.porCcaa.entries()].map(([k,v])=>[k,[...v]]) }));
-        }catch(_){}
-        return nager;
-      }catch(_){}
-      const basic = { nacional: FESTIVOS_NACIONALES(year), porCcaa: new Map(), _src:'fallback' };
-      _festivosCache.set(year, basic); return basic;
-    }
-    async function calcFestivosAutoAsync(region, start, end){
-      const days = eachDate(start, end);
-      if(!days.length) return { festivo:0, senalado:0, nDias:0 };
-      let festivo = 0, senalado = 0;
-      for(const d of days){
-        const year = d.getFullYear();
-        const iso = ymd(d);
-        const pack = await fetchHolidaysForYear(year);
-        const county = REGION_TO_COUNTY[region || 'nacional'] || null;
-        const regKey = COUNTY_TO_REGIONKEY[county] || county;
-        const isNat = !!pack?.nacional?.has(iso);
-        const isReg = regKey ? !!(pack?.porCcaa?.get(regKey)?.has(iso) || pack?.porCcaa?.get(county)?.has(iso)) : false;
-        const isSpecial = SPECIAL_MMDD.includes(mmdd(d));
-        if(isNat || isReg) festivo += 10;
-        if(isSpecial) senalado += 30;
-      }
-      return { festivo, senalado, nDias: days.length };
-    }
-
-    // --------- reglas de cálculo (suplementos, bonos, etc.)
-    async function calcVisitas(visitDurationMin, dailyVisits, nDias){
-      const longStay = (nDias >= 11);
-      const price1 = (visitDurationMin === 90) ? (longStay ? PRICES.visita90_larga : PRICES.visita90) : (longStay ? PRICES.visita60_larga : PRICES.visita60);
-      const price2 = dailyVisits === 2 ? (longStay ? PRICES.visitaMed_larga : PRICES.visitaMed) : 0;
-      return { price1, price2 };
-    }
-    function calcPetSupplements(service, species, n){
-      if(n <= 1) return 0;
-      if(service === 'visitas'){
-        const extra = n - 1;
-        if(extra === 1) return 12;
-        if(extra === 2) return 8 * 2;
-        if(extra >= 3) return 6 * extra;
-        return 0;
-      }
-      if(service === 'paseos') return PRICES.paseoExtraPerro * (n - 1);
-      if(service === 'alojamiento' && species === 'perro') return PRICES.alojSegundoPerroDia * (n - 1);
-      return 0;
-    }
-    function getBasePrice(service, species, isPuppy){
-      if(service === 'visitas') return 0;
-      if(service === 'alojamiento'){
-        return isPuppy ? (PRICES.puppyBase.alojamiento ?? PRICES.base.alojamiento) : PRICES.base.alojamiento;
-      }
-      if(service === 'guarderia'){
-        return isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-      }
-      if(service === 'paseos') return 0;
-      return PRICES.base[service] || 0;
-    }
-    function calcBonoGuarderia(nDias, isPuppy){
-      const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-      const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
-      const bundlePrice = table[nDias];
-      if (!bundlePrice) return { descuento:0, baseBundle:null };
-      const normalTotal = perDay * nDias;
-      return { descuento: Math.max(0, normalTotal - bundlePrice), baseBundle: bundlePrice };
-    }
-
-    async function recalc(){
-      const svc = els.service?.value || '';
-      const species = (els.species?.value || 'perro');
-      const isExotic = species === 'otros';
-      const isVisitas = (svc === 'visitas');
-      const puppyAllowed = (svc === 'alojamiento' || svc === 'guarderia') && !isExotic && !isVisitas;
-      const isPuppy = puppyAllowed && (els.isPuppy?.value === 'si');
-
-      const nMasc = getNumMascotas();
-      const region = els.region?.value || 'nacional';
-      const start = els.startDate?.value;
-      const end   = els.endDate?.value;
-      const { festivo, senalado, nDias } = await calcFestivosAutoAsync(region, start, end);
-
-      let base = 0, visit1 = 0, visit2 = 0, bono = 0;
-
-      if(isVisitas){
-        const dur = parseInt(els.visitDuration?.value || '60', 10);
-        const daily = parseInt(els.visitDaily?.value || '1', 10);
-        const perDay = await calcVisitas(dur, daily, nDias);
-        visit1 = perDay.price1 * nDias;
-        visit2 = perDay.price2 * nDias;
-        base = 0;
-      } else if (svc === 'paseos'){
-        const walks = Math.max(1, nDias);
-        const bonoWalks = PRICES.paseoBonos[walks] || null;
-        const firstDog = bonoWalks ?? (walks * PRICES.paseoStd);
-        const extras = Math.max(0, nMasc-1) * (walks * PRICES.paseoExtraPerro);
-        base = firstDog + extras;
-      } else if (svc === 'guarderia'){
-        const { descuento, baseBundle } = calcBonoGuarderia(nDias, isPuppy);
-        const table  = isPuppy ? BUNDLE_GUARDERIA.puppy : BUNDLE_GUARDERIA.adult;
-        const bundle = table[nDias] || null;
-        const perDay = isPuppy ? (PRICES.puppyBase.guarderia ?? PRICES.base.guarderia) : PRICES.base.guarderia;
-
-        if (bundle){
-          const ov = (window.TPL_GUARDERIA_BUNDLE_EXTRAS && (window.TPL_GUARDERIA_BUNDLE_EXTRAS[isPuppy?'puppy':'adult']||{})[nDias]) || null;
-          const second = ov?.second ?? (12 * nDias);
-          const thirdP = ov?.thirdPlus ?? (8 * nDias);
-          let total = bundle;
-          if (nMasc>=2) total += second;
-          if (nMasc>=3) total += (nMasc-2) * thirdP;
-          base = total;
-          bono = Math.max(0, (perDay * nDias) - bundle);
-        } else {
-          base = perDay * nDias;
-          let extras = 0;
-          if (nMasc>=2) extras += 12 * nDias;
-          if (nMasc>=3) extras += (nMasc-2) * 8 * nDias;
-          base += extras;
-        }
-      } else if (svc === 'alojamiento'){
-        const dayBase = isPuppy ? PRICES.puppyBase.alojamiento : PRICES.base.alojamiento;
-        const dayLong = isPuppy ? 32 : 27;
-        const rate1 = (nDias>=11) ? dayLong : dayBase;
-        base = rate1 * nDias;
-        if (species==='perro' && nMasc>=2){
-          const extraRate = (nDias>=11) ? PRICES.alojSegundoPerroD11 : PRICES.alojSegundoPerroDia;
-          base += (nMasc-1) * extraRate * nDias;
-        }
-      } else if (svc === 'bodas' || svc === 'postquirurgico' || svc === 'exoticos'){
-        base = 0;
-      } else if (svc === 'transporte'){
-        base = PRICES.base.transporte;
-      } else {
-        base = getBasePrice(svc, species, isPuppy) * nDias;
-      }
-
-      const pets = (!isVisitas && svc!=='paseos' && svc!=='guarderia' && svc!=='alojamiento') ? calcPetSupplements(svc, species, nMasc) : 0;
-      const subtotal = (base + visit1 + visit2 + pets + festivo + senalado) - bono;
-      const deposit = subtotal * (PRICES.depositPct || 0.3);
-
-      els.sumBase.textContent = (svc==='visitas') ? '—' : (subtotal>0 ? currency(base) : '—');
-      els.rowVisit1.style.display = (svc==='visitas') ? '' : 'none';
-      els.rowVisit2.style.display = (svc==='visitas' && visit2 > 0) ? '' : 'none';
-      els.sumVisit1.textContent = currency(visit1);
-      els.sumVisit2.textContent = currency(visit2);
-      els.sumPets.textContent = currency(pets);
-      els.sumFestivo.textContent = currency(festivo);
-      els.sumSenalado.textContent = currency(senalado);
-      els.rowBono.style.display = (svc === 'guarderia' && bono > 0) ? '' : 'none';
-      els.sumBono.textContent = currency(bono);
-      els.sumSubtotal.textContent = (subtotal>0) ? currency(subtotal) : '—';
-      els.sumDeposit.textContent = (subtotal>0) ? currency(deposit) : '—';
-    }
-    async function recalcAll(){ toggleFields(); syncPetsExact(); renderPetNameFields(getNumMascotas()); await recalc(); }
-
-    // Eventos UI
-    ['change','input'].forEach(ev=>{
-      ['service','species','isPuppy','numPets','numPetsExact','region','startDate','endDate','visitDuration','visitDaily','needTravel']
-        .forEach(id=>{
-          const el = byId(id); if(el) el.addEventListener(ev, recalcAll);
-        });
-    });
-
-    // Init
-    renderPetNameFields(1);
-    recalcAll();
-
-    // -------- Autocompletado dirección OSM + accesibilidad
-    async function searchAddresses(q){
-      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=es&q=${encodeURIComponent(q)}`;
-      const r = await fetch(url, { headers: { 'Accept':'application/json' }});
-      if(!r.ok) return [];
-      return r.json();
-    }
-    function renderAddrSuggestions(list){
-      if(!els.addrSuggest) return;
-      if(!list.length){ els.addrSuggest.style.display='none'; els.addrSuggest.innerHTML=''; els.address.setAttribute('aria-expanded','false'); return; }
-      els.addrSuggest.innerHTML = list.map((it)=>(
-        `<div class="tpl-addr-item" role="option" tabindex="0" data-raw='${JSON.stringify(it).replace(/'/g,"&#39;")}'></div>`
-      )).join('');
-      els.addrSuggest.querySelectorAll('.tpl-addr-item').forEach(node=>{
-        const data = JSON.parse(node.dataset.raw.replace(/&#39;/g,"'"));
-        node.textContent = data.display_name || '';
-        node.addEventListener('click', ()=> chooseAddr(data));
-        node.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') chooseAddr(data); });
-      });
-      els.addrSuggest.style.display = 'block';
-      els.address.setAttribute('aria-expanded','true');
-    }
-    function chooseAddr(item){
-      els.address.value = (item?.display_name || '').replace(/, España$/,'');
-      const pc = item?.address?.postcode || '';
-      if(els.postalCode){ els.postalCode.value = pc; }
-      els.addrSuggest.style.display='none';
-      els.address.setAttribute('aria-expanded','false');
-    }
-    const addressInputHandler = debounce(async ()=>{
-      const q = (els.address?.value || '').trim();
-      if(q.length < 4){ renderAddrSuggestions([]); return; }
-      try{ renderAddrSuggestions(await searchAddresses(q) || []); }
-      catch(_){ renderAddrSuggestions([]); }
-    }, 380);
-    if(els.address){
-      els.address.addEventListener('input', addressInputHandler);
-      els.address.addEventListener('focus', addressInputHandler);
-      document.addEventListener('click', (e)=>{ if(!els.addrSuggest.contains(e.target) && e.target!==els.address){ els.addrSuggest.style.display='none'; els.address.setAttribute('aria-expanded','false'); }});
-    }
-
-    // ---------- AUTORRELLENO MULTI-ORIGEN
-    function getUid(){ try{ return firebase?.auth?.().currentUser?.uid || null; }catch(_){ return null; } }
-    function udbKey(uid, key){ return `tpl.udb.${uid||'default'}.${key}`; }
-    function safeParse(s, fb){ try{ return JSON.parse(s); }catch(_){ return fb; } }
-
-    function fillOwnerFromObj(d){
-      if(!d) return;
-      const setIfEmpty = (el, val)=>{ if(el && !el.value && val){ el.value = String(val||''); } };
-      setIfEmpty(els.firstName, d.nombre || d.name || d.firstName);
-      setIfEmpty(els.lastName,  d.apellidos || d.lastName || d.surname);
-      setIfEmpty(els.email,     d.email);
-      setIfEmpty(els.phone,     d.telefono || d.phone);
-      setIfEmpty(els.address,   d.direccion || d.address);
-      setIfEmpty(els.postalCode,d.cp || d.postal || d.zip);
-      if(els.region && d.ccaa){
-        const val = String(d.ccaa).toLowerCase();
-        if([...els.region.options].some(o=>o.value===val)) els.region.value = val;
-      }
-    }
-    function addPetNamesFromArray(arr){
-      const names = (Array.isArray(arr)?arr:[])
-        .map(p => (p?.nombre || p?.name || '').trim())
-        .filter(Boolean);
-      PROFILE_PET_NAMES = Array.from(new Set([...(PROFILE_PET_NAMES||[]), ...names]));
-      fillPetDatalist();
-    }
-
-    // >>>>>>>>>>>>> NUEVO: asegurar nombre completo si aún está vacío
-    function ensureFullName(){
-      const input = document.getElementById('firstName');
-      if (!input || (input.value && input.value.trim())) return;
-
-      // 1) displayName de Firebase
-      try {
-        const u = firebase?.auth?.().currentUser;
-        if (u?.displayName && u.displayName.trim()) {
-          input.value = u.displayName.trim();
-          return;
-        }
-      } catch(_){}
-
-      // 2) localStorage perfil
-      try {
-        const raw = localStorage.getItem('tpl.profile');
-        if (raw) {
-          const p = JSON.parse(raw);
-          const full = [p?.nombre, p?.apellidos].filter(Boolean).join(' ').trim()
-                    || p?.fullName || p?.name || '';
-          if (full) { input.value = full; return; }
-        }
-      } catch(_){}
-
-      // 3) __TPL_PROFILE__
-      try {
-        const p = (window.__TPL_PROFILE__ || {});
-        const full = [p?.nombre, p?.apellidos].filter(Boolean).join(' ').trim()
-                  || p?.fullName || p?.name || '';
-        if (full) { input.value = full; return; }
-      } catch(_){}
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // >>>>>>>>>>>>> MODIFICADO: autoFromFirebase crea nombre completo robusto
-    async function autoFromFirebase(){
-      try{
-        if(typeof firebase === 'undefined') return;
-        const u = firebase.auth().currentUser; if(!u) return;
-        const db = firebase.firestore();
-
-        // Owner
-        const doc = await db.collection('users').doc(u.uid).get();
-        const d = doc.exists ? doc.data() : {};
-
-        const fullName =
-          ([d?.nombre, d?.apellidos].filter(Boolean).join(' ').trim())
-          || d?.name || d?.firstName
-          || (u.displayName || '').trim() || '';
-
-        fillOwnerFromObj({
-          ...d,
-          nombre: fullName || d?.nombre || d?.name || d?.firstName,
-          email: d?.email || u.email,
-          telefono: d?.telefono || u.phoneNumber
-        });
-
-        // Pets
-        const petsSnap = await db.collection('users').doc(u.uid).collection('mascotas').get();
-        const pets = petsSnap.docs.map(x=>x.data()||{});
-        addPetNamesFromArray(pets);
-
-        // Cachorro auto (si hay birthdate)
-        try{
-          if(pets.length){
-            const p = pets[0];
-            if(p?.birthdate && els.isPuppy && !els.isPuppy.parentElement.hidden){
-              const b = new Date(p.birthdate), today = new Date();
-              const months = (today.getFullYear()-b.getFullYear())*12 + (today.getMonth()-b.getMonth());
-              els.isPuppy.value = (months < 6) ? 'si' : 'no';
-              await recalc();
-            }
-          }
-        }catch(_){}
-      }catch(_){}
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    function autoFromWindowProfile(){
-      const p = (window.__TPL_PROFILE__ || {});
-      if(!p || typeof p !== 'object') return;
-      fillOwnerFromObj(p);
-      if(Array.isArray(p.mascotas)) addPetNamesFromArray(p.mascotas);
-      else if(Array.isArray(p.pets)) addPetNamesFromArray(p.pets);
-    }
-    function autoFromLocalProfile(){
-      try{
-        const raw = localStorage.getItem('tpl.profile');
-        const obj = safeParse(raw, null);
-        if(!obj) return;
-        fillOwnerFromObj(obj);
-        if(Array.isArray(obj.mascotas)) addPetNamesFromArray(obj.mascotas);
-        if(Array.isArray(obj.pets)) addPetNamesFromArray(obj.pets);
-        const uid = getUid();
-        const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-        const arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]') :
-                              safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
-        if(Array.isArray(arr)) addPetNamesFromArray(arr);
-      }catch(_){}
-    }
-
-    (async function runAutoFill(){
-      await autoFromFirebase();
-      autoFromWindowProfile();
-      autoFromLocalProfile();
-      ensureFullName(); // <<< llamada adicional al cargar
-    })();
-
-    // >>>>>>>>>>>>> MODIFICADO: Auth UI + reintento de autorrelleno tras login
-    if (typeof firebase !== 'undefined') {
-      const auth = firebase.auth();
-      function updateAuthUI(user){
-        const logged = !!user;
-        if (wall) wall.style.display = logged ? 'none' : 'block';
-      }
-      async function handleAuth(user){
-        updateAuthUI(user);
-        if (user) {
-          try { await autoFromFirebase(); } catch(_){}
-          try { autoFromWindowProfile(); } catch(_){}
-          try { autoFromLocalProfile(); } catch(_){}
-          try { ensureFullName(); } catch(_){}
-        }
-      }
-      auth.onAuthStateChanged(handleAuth);
-    }
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-    // Preferencia de contacto + validación teléfono ES cuando procede
-    function normalizePhoneES(raw){ return String(raw||'').replace(/\s+/g,'').replace(/^(\+34)/,'').trim(); }
-    function validatePhoneES(s){ return /^[679]\d{8}$/.test(s); }
-    function validateContactPreference(e){
-      const pref = (new FormData(form).get('Preferencia_contacto')) || 'cualquiera';
-      const tel  = els.phone?.value?.trim();
-      const mail = els.email?.value?.trim();
-      if(pref === 'telefono' || pref === 'whatsapp'){
-        const t = normalizePhoneES(tel);
-        if(!validatePhoneES(t)){ e.preventDefault(); alert('Introduce un teléfono español válido (9 dígitos, empieza por 6/7/9).'); return false; }
-        els.phone.value = '+34 ' + t; // normalizamos
-      }else if(pref === 'email'){
-        if(!mail){ e.preventDefault(); alert('Por favor, indícanos tu correo para poder contactarte.'); return false; }
-      }
-      // RGPD
-      const consent = byId('consent');
-      if(!consent?.checked){ e.preventDefault(); alert('Debes aceptar la Política de Privacidad para continuar.'); return false; }
-      // Fechas coherentes
-      const s = new Date(els.startDate?.value || '');
-      const t = new Date(els.endDate?.value || '');
-      if (isNaN(s) || isNaN(t) || t < s) { e.preventDefault(); alert('Revisa las fechas: la fecha fin no puede ser anterior a la de inicio.'); return false; }
-      return true;
-    }
-
-    // -------- ocultos Propietario_*, Mascota_*, Reserva_* (para EmailJS)
-    function clearHiddenPack(){ if(els.hiddenPack) els.hiddenPack.innerHTML=''; }
-    function addHidden(name, value){
-      if(!els.hiddenPack) return;
-      const i = document.createElement('input');
-      i.type='hidden'; i.name = name; i.value = String(value ?? '');
-      els.hiddenPack.appendChild(i);
-    }
-    function collectChosenPets(){
-      const uid = getUid();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? safeParse(localStorage.getItem(udbKey(uid,'pets')),'[]')
-                        : safeParse(localStorage.getItem(udbKey(uid,'mascotas')),'[]');
-      if (!Array.isArray(arr)) arr = [];
-      const selectedNames = (els.petsListHidden?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-      if (selectedNames.length) return arr.filter(p => selectedNames.includes((p?.nombre||'').trim()));
-      if (arr.length === 1) return [arr[0]];
-      return [];
-    }
-    function regionText(){ try{ return els.region?.options?.[els.region.selectedIndex]?.text || ''; }catch(_){ return ''; } }
-    function serviceText(){ try{ return els.service?.options?.[els.service.selectedIndex]?.text || els.service?.value || ''; }catch(_){ return ''; } }
-
-    function buildHiddenPackBeforeSend(){
-      clearHiddenPack();
-      // Propietario_*
-      addHidden('Propietario_Nombre', els.firstName?.value || '');
-      addHidden('Propietario_Apellidos', els.lastName?.value || '');
-      addHidden('Propietario_Email', els.email?.value || '');
-      addHidden('Propietario_Telefono', els.phone?.value || '');
-      addHidden('Propietario_Direccion', els.address?.value || '');
-      addHidden('Propietario_CP', els.postalCode?.value || '');
-      addHidden('Propietario_CCAA', regionText());
-      try{ const u = firebase?.auth?.().currentUser; addHidden('Propietario_UID', u?.uid || ''); }catch(_){}
-
-      // Reserva_*
-      addHidden('Reserva_Tipo', serviceText());
-      addHidden('Reserva_Fechas', `${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
-      addHidden('Reserva_Horas', `${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      addHidden('Reserva_SubtotalEUR', byId('sumSubtotal')?.textContent || '');
-      addHidden('Reserva_DepositoEUR', byId('sumDeposit')?.textContent || '');
-
-      // Mascota_* (por índice a partir de las elegidas)
-      const chosen = collectChosenPets();
-      chosen.forEach((p, idx)=>{
-        const ix = idx+1;
-        addHidden(`Mascota_${ix}_Nombre`, (p?.nombre||'').trim());
-        addHidden(`Mascota_${ix}_Especie`, (p?.especie||p?.tipo||'').trim());
-        addHidden(`Mascota_${ix}_Raza`, (p?.raza||p?.tipoExotico||'').trim());
-        addHidden(`Mascota_${ix}_Sexo`, (p?.sexo||'').trim());
-        addHidden(`Mascota_${ix}_Edad`, (p?.edad||'').trim());
-        addHidden(`Mascota_${ix}_Peso`, (p?.peso||'').trim());
-        addHidden(`Mascota_${ix}_Tamano`, (p?.tamano||p?.tamaño||'').trim());
-        addHidden(`Mascota_${ix}_Esterilizado`, (p?.esterilizado||'').trim());
-        addHidden(`Mascota_${ix}_Microchip`, (p?.microchip||'').trim());
-        addHidden(`Mascota_${ix}_Patologias`, (p?.salud||p?.patologias||'').trim());
-        addHidden(`Mascota_${ix}_Medicacion`, (p?.tratamiento||p?.medicacion||'').trim());
-        addHidden(`Mascota_${ix}_Caracter`, (p?.comportamiento||'').trim());
-        addHidden(`Mascota_${ix}_Alergias`, (p?.alergias||'').trim());
-        addHidden(`Mascota_${ix}_Vacunas`, (p?.vacunas||'').trim());
-      });
-    }
-
-    // -------- resumen texto para correo
-    form.addEventListener('submit', (e)=>{
-      // guard de login duro (requerido para enviar)
-      try{
-        const u = firebase?.auth?.().currentUser;
-        if(!u){ e.preventDefault(); alert('Debes iniciar sesión para reservar.'); const inline = document.getElementById('tpl-inline-login'); if (inline) inline.scrollIntoView({behavior:'smooth', block:'center'}); return; }
-      }catch(_){}
-      if(!validateContactPreference(e)) return;
-      const regionTxt = regionText();
-      let petsVal = els.numPets?.value || '1';
-      if(petsVal === '6+') petsVal = Math.max(6, parseInt(els.numPetsExact?.value,10) || 6).toString();
-      updatePetsListHidden();
-
-      const lines = [];
-      lines.push(`Servicio: ${serviceText()}`);
-      lines.push(`Fechas: ${els.startDate?.value || '-'} a ${els.endDate?.value || '-'}`);
-      lines.push(`Hora: ${els.start?.value || '-'} a ${els.end?.value || '-'}`);
-      if(els.service?.value === 'visitas'){
-        lines.push(`Visita: ${els.visitDuration?.value || '60'} min, ${els.visitDaily?.value || '1'} visita(s)/día`);
-      }else{
-        const puppyAllowed = (els.service?.value === 'alojamiento' || els.service?.value === 'guarderia') && (els.species?.value !== 'otros');
-        lines.push(`Tipo de animal: ${els.species?.value || '-'}`);
-        lines.push(`Cachorro: ${puppyAllowed ? (els.isPuppy?.value || 'no') : 'no procede'}`);
-      }
-      lines.push(`Nº mascotas: ${petsVal}`);
-      const petNames = els.petsListHidden.value || '';
-      if(petNames) lines.push(`Nombres mascotas: ${petNames}`);
-      lines.push(`Dirección: ${els.address?.value || '-'}`);
-      lines.push(`CP: ${els.postalCode?.value || '-'}`);
-      lines.push(`CCAA: ${regionTxt}`);
-      lines.push(`Preferencia contacto: ${new FormData(form).get('Preferencia_contacto') || 'cualquiera'}`);
-      if(els.contactTime?.value) lines.push(`Hora preferida contacto: ${els.contactTime.value}`);
-      lines.push(`Festivos (auto): ${els.sumFestivo?.textContent || '0.00'} €`);
-      lines.push(`Días especiales (auto): ${els.sumSenalado?.textContent || '0.00'} €`);
-      if(els.service?.value === 'guarderia' && els.rowBono?.style.display !== 'none'){
-        lines.push(`Bono guardería (descuento): −${els.sumBono?.textContent || '0.00'} €`);
-      }
-      lines.push(`Subtotal (sin desplazamiento): ${els.sumSubtotal?.textContent || '0.00'} €`);
-      lines.push(`Depósito a retener: ${els.sumDeposit?.textContent || '0.00'} €`);
-      byId('summaryField').value = lines.join(' | ');
-
-      buildHiddenPackBeforeSend();
-    }, true);
-
-    // -------- envío robusto Firestore + EmailJS (éxito solo si uno funciona)
-    window.tryEmailJS = async function tryEmailJS(fd, extra){
-      if (!window.emailjs) return false;
-      try{
-        const cfg = window.TPL_EMAILJS || {};
-        const service  = cfg.serviceId || cfg.service;
-        const template = (cfg.templates && (cfg.templates.reserva || cfg.templates.booking)) || cfg.templateReserva || cfg.templateBooking || cfg.templateId;
-        const pubKey   = cfg.publicKey || cfg.userId;
-        const adminTo  = (cfg.adminEmail || '').trim();
-        if (!service || !template || !pubKey) return false;
-
-        const payload = Object.fromEntries(fd.entries());
-        const subtotalUI = (document.getElementById('sumSubtotal')?.textContent || '').trim();
-        const depositoUI = (document.getElementById('sumDeposit')?.textContent || '').trim();
-        const resumenUI  = (document.getElementById('summaryField')?.value || '').trim();
-
-        function genId(){ return 'R-' + Date.now().toString(36).toUpperCase().slice(-6) + '-' + Math.random().toString(36).slice(2,6).toUpperCase(); }
-        const reservaId = (extra && (extra.reserva_id || extra.doc_id)) || payload.reserva_id || genId();
-
-        const serviceText = document.getElementById('service')?.selectedOptions?.[0]?.text || (payload.Servicio || '');
-        const regionText  = document.getElementById('region')?.selectedOptions?.[0]?.text || (payload.CCAA || '');
-        const ownerNombre = ((payload.Nombre||'') + ' ' + (payload.Apellidos||'')).trim();
-
-        const baseParams = {
-          owner_nombre: ownerNombre,
-          owner_nombre_only: payload.Nombre || '',
-          owner_apellidos: payload.Apellidos || '',
-          owner_email: payload.Email || '',
-          owner_telefono: payload.Telefono || '',
-          owner_direccion: payload.Direccion || '',
-          owner_cp: payload.CP || '',
-          owner_ccaa: regionText || '',
-
-          mascotas: payload.Mascotas_lista || '',
-          mascotas_detalle: payload.Mascotas_detalle || '',
-          mascotas_detalle_json: payload.Mascotas_detalle_json || '[]',
-
-          servicio: serviceText || payload.Servicio || '',
-          fecha_inicio: payload.Fecha_inicio || '',
-          fecha_fin: payload.Fecha_fin || '',
-          hora_inicio: payload.Hora_inicio || '',
-          hora_fin: payload.Hora_fin || '',
-          subtotal: subtotalUI || payload.Subtotal || payload.subtotal || '',
-          deposito: depositoUI || payload.Deposito || payload.deposito || '',
-          resumen:  resumenUI || payload.Desglose || payload.Resumen || payload.resumen || '',
-          reserva_id: reservaId,
-
-          _estado: (extra && extra._estado) || payload._estado || 'enviada',
-          _page:   (extra && extra._page)   || payload._page || location.href
-        };
-
-        const recipients = [];
-        if (adminTo) recipients.push(adminTo);
-        if ((baseParams.owner_email||'').trim()) recipients.push(baseParams.owner_email.trim());
-        if (!recipients.length) return false;
-
-        let ok = 0;
-        for (const to of recipients){
-          const params = { ...baseParams, to_email: to };
-          const resp = await emailjs.send(service, template, params, pubKey);
-          if (resp && resp.status >= 200 && resp.status < 300) ok++;
-        }
-        return ok>0;
-      }catch(_){ return false; }
-    };
-
-    function showSuccessOverlay(){
-      const msg = form?.dataset?.tplSuccess || 'Tu solicitud se ha enviado correctamente.';
-      const go  = form?.dataset?.tplRedirect || 'perfil.html';
-      let wrap = document.getElementById('tpl-overlay');
-      if(!wrap){
-        wrap = document.createElement('div');
-        wrap.id = 'tpl-overlay';
-        wrap.className = 'tpl-overlay';
-        wrap.innerHTML = '<div class="tpl-modal" role="dialog" aria-live="polite"><p></p><button type="button" class="cta-button" id="tpl-ov-accept">Aceptar</button></div>';
-        document.body.appendChild(wrap);
-      }
-      wrap.querySelector('.tpl-modal p').textContent = msg;
-      wrap.classList.add('on');
-      wrap.querySelector('#tpl-ov-accept').onclick = function(){ location.href = go; };
-    }
-    window.showSuccessOverlay = showSuccessOverlay;
-
-    form.addEventListener('submit', async function (e) {
-      // Si validateContactPreference abortó, ya retornó arriba
-      e.preventDefault();
-      e.stopImmediatePropagation();
-
-      // reconstruye detalle mascotas
-      try{
-        const uid = (firebase?.auth?.().currentUser?.uid) || 'default';
-        const key = (k)=>`tpl.udb.${uid}.${k}`;
-        const hasPets = localStorage.getItem(key('pets')) !== null;
-        let arr = hasPets ? JSON.parse(localStorage.getItem(key('pets'))||'[]') : JSON.parse(localStorage.getItem(key('mascotas'))||'[]');
-        if (!Array.isArray(arr)) arr = [];
-        const selectedNames = (document.getElementById('petsListHidden')?.value || '').split(',').map(s=>s.trim()).filter(Boolean);
-        let chosen = [];
-        if (selectedNames.length){ chosen = arr.filter(p => selectedNames.includes((p?.nombre||'').trim())); }
-        else if (arr.length === 1){ chosen = [arr[0]]; }
-
-        const rows = chosen.map(p => ({
-          Nombre:(p?.nombre||'').trim(), Especie:(p?.especie||p?.tipo||'').trim(), Raza:(p?.raza||p?.tipoExotico||'').trim(),
-          Edad:(p?.edad||'').trim(), Peso:(p?.peso||'').trim(), Microchip:(p?.microchip||'').trim(), Esterilizado:(p?.esterilizado||'').trim(),
-          Vacunas:(p?.vacunas||'').trim(), Salud:(p?.salud||'').trim(), Tratamiento:(p?.tratamiento||'').trim(), Comportamiento:(p?.comportamiento||'').trim()
-        }));
-        const text = rows.map(r=>`Mascota: ${r.Nombre} | ${[r.Especie,r.Raza].filter(Boolean).join(' · ')}${r.Microchip? ' | Chip: '+r.Microchip:''}`).join(' || ');
-        document.getElementById('petsDetail').value = text;
-        document.getElementById('petsDetailJson').value = JSON.stringify(rows);
-      }catch(_){}
-
-      const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
-      let extra = { _page: location.href, _tipo: 'reserva', _estado: 'enviada' };
-
-      // Guarda en Firestore
-      let saved = false;
-      try{
-        if (firebase?.firestore){
-          const db = firebase.firestore();
-          const auth = firebase.auth?.();
-          const u = auth?.currentUser || null;
-          payload._page = location.href; payload._estado = 'enviada';
-          if (firebase.firestore.FieldValue) payload._createdAt = firebase.firestore.FieldValue.serverTimestamp();
-          if (u) { payload._uid = u.uid; payload._email = u.email || null; }
-          const docRef = await db.collection('reservas').add(payload);
-          extra.reserva_id = docRef.id; extra.doc_id = docRef.id;
-          saved = true;
-        }
-      }catch(err){ console.warn('No se pudo guardar en Firestore', err); }
-
-      // EmailJS
-      let mailed = false;
-      try{ mailed = await window.tryEmailJS(new FormData(form), extra); }
-      catch(err){ console.warn('EmailJS falló', err); }
-
-      if (saved || mailed) showSuccessOverlay();
-      else alert('No se pudo enviar la reserva. Por favor, inténtalo de nuevo en unos minutos.');
-    }, true);
-
-    // UI menores
-    els.numPets && els.numPets.addEventListener('change', ()=>{ syncPetsExact(); renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
-    els.numPetsExact && els.numPetsExact.addEventListener('input', ()=>{ renderPetNameFields(getNumMascotas()); updatePetsListHidden(); });
-    els.needTravel && els.needTravel.addEventListener('change', travelSync);
-    travelSync();
-  });
-  </script>
-
-  <!-- Login inline si no hay sesión -->
-  <script>
-    (function(){
-      if (typeof firebase === 'undefined') return;
-      const auth = firebase.auth();
-      const isIOS = /iP(ad|hone|od)/i.test(navigator.userAgent);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-      function renderInlineLogin(){
-        const host = document.getElementById('tpl-inline-login');
-        if(!host) return;
-        host.innerHTML = `
-          <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
-            <h3 class="tpl-login-title">Accede aquí mismo</h3>
-            <div class="tpl-socials">
-              <button type="button" class="tpl-btn-social" id="tpl-google-btn">
-                <i class="fa-brands fa-google"></i> Continuar con Google
-              </button>
-            </div>
-            <div class="tpl-sep"><span>o</span></div>
-            <form class="tpl-login-form" id="tpl-inline-form" novalidate>
-              <label>Email</label>
-              <input type="email" name="email" required autocomplete="email" />
-              <label>Contraseña</label>
-              <input type="password" name="password" required autocomplete="current-password" />
-              <button type="submit" class="tpl-btn">Iniciar sesión</button>
-              <a class="tpl-btn-outline" href="registro.html?next=reservas.html">Regístrate</a>
-              <button type="button" class="tpl-link" id="tpl-reset">¿Has olvidado la contraseña?</button>
-              <p class="tpl-login-msg" aria-live="polite"></p>
-            </form>
-          </div>
-        `;
-        const form = document.getElementById('tpl-inline-form');
-        const msg  = host.querySelector('.tpl-login-msg');
-        const btnG = document.getElementById('tpl-google-btn');
-        const btnReset = document.getElementById('tpl-reset');
-
-        form.addEventListener('submit', async (e)=>{
-          e.preventDefault();
-          msg.textContent = 'Accediendo…';
-          const email = form.email.value.trim();
-          const pass  = form.password.value;
-          try{
-            await auth.signInWithEmailAndPassword(email, pass);
-            msg.textContent = '¡Listo!';
-            location.reload();
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo iniciar sesión.';
-          }
-        });
-
-        btnG.addEventListener('click', async (e)=>{
-          e.preventDefault();
-          msg.textContent = 'Conectando con Google…';
-          try{
-            const provider = new firebase.auth.GoogleAuthProvider();
-            if (isIOS && isSafari) { await auth.signInWithRedirect(provider); }
-            else { await auth.signInWithPopup(provider); }
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo iniciar con Google.';
-          }
-        });
-
-        btnReset.addEventListener('click', async (e)=>{
-          e.preventDefault();
-          const email = form.email.value.trim();
-          if(!email){ msg.textContent='Escribe tu email arriba para enviarte el enlace.'; return; }
-          try{
-            await auth.sendPasswordResetEmail(email);
-            msg.textContent = 'Revisa tu correo para restablecer la contraseña.';
-          }catch(err){
-            msg.textContent = (err && err.message) || 'No se pudo enviar el email.';
-          }
-        });
-      }
-
-      auth.onAuthStateChanged(u=>{ if(!u) renderInlineLogin(); });
-    })();
-  </script>
-
-  <!-- Modal selector de mascotas -->
-  <div id="tpl-petpicker" class="tpl-overlay" aria-hidden="true" style="display:none">
-    <div class="tpl-modal" role="dialog" aria-labelledby="tpl-petpicker-title">
-      <h3 id="tpl-petpicker-title" style="margin-top:0">Elige tus mascotas</h3>
-      <div id="tpl-petpicker-list" style="display:grid;gap:10px;max-height:320px;overflow:auto;margin:10px 0"></div>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
-        <button type="button" class="tpl-btn" id="tpl-petpicker-apply">Usar selección</button>
-        <button type="button" class="tpl-btn-outline" id="tpl-petpicker-cancel">Cancelar</button>
-      </div>
+    <!-- Gracias -->
+    <div id="thanks" class="card" style="display:none">
+      <h3>¡Gracias! Tu solicitud está en revisión</h3>
+      <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. Una vez confirmado, pagarás el resto 12 días antes del inicio.</p>
+      <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
     </div>
-  </div>
 
-  <!-- Lógica selector mascotas -->
+  </main>
+
+  <!-- Footer de tu web -->
+  <div id="tpl-footer"></div>
+
+  <!-- (Opcional) EmailJS para correos de prueba -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
-  (function(){
-    'use strict';
-    if (window.__TPL_RESERV_PICKER__) return;
-    window.__TPL_RESERV_PICKER__ = true;
-
-    function getCurrentUserId(){
-      try{
-        const u = firebase?.auth?.().currentUser;
-        if (u && !u.isAnonymous && u.uid) return u.uid;
-      }catch(_){}
-      return 'default';
-    }
-    function udbKey(uid, key){ return `tpl.udb.${uid}.${key}`; }
-    function udbGet(uid, key, fallback){
-      try{ const v = localStorage.getItem(udbKey(uid,key)); return v ? JSON.parse(v) : fallback; }catch(_){ return fallback; }
-    }
-    function norm(s){ return String(s||'').trim(); }
-
-    function getPets(){
-      const uid = getCurrentUserId();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      let arr = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-      if (!Array.isArray(arr)) arr = [];
-      const seen = new Set(), out=[];
-      arr.forEach(p=>{
-        const key = `${norm(p?.nombre).toLowerCase()}|${norm(p?.microchip).toLowerCase()}|${norm(p?.especie||p?.tipo||'').toLowerCase()}`;
-        if (seen.has(key)) return; seen.add(key); out.push(p);
-      });
-      return out;
-    }
-
-    let SELECTED_INDEXES = [];
-    function openPetPicker(){
-      const pets = getPets();
-      if (!pets.length){ alert('No tienes mascotas guardadas todavía. Añádelas desde tu perfil.'); return; }
-
-      const overlay = document.getElementById('tpl-petpicker');
-      const list = document.getElementById('tpl-petpicker-list');
-      const btnApply = document.getElementById('tpl-petpicker-apply');
-      const btnCancel = document.getElementById('tpl-petpicker-cancel');
-      if (!overlay || !list || !btnApply || !btnCancel) return;
-
-      list.innerHTML = pets.map((p, i)=>{
-        const foto = (typeof p.foto === 'string' && p.foto) ? `<img src="${p.foto}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:50%;border:1px solid #eee">` : `<span style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid #eee;color:#9aa0a6"><i class="fa-solid fa-paw"></i></span>`;
-        const raza = norm(p.raza || p.tipoExotico || '');
-        const esp  = norm(p.especie || p.tipo || '');
-        const sub  = [esp, raza].filter(Boolean).join(' · ');
-        const checked = SELECTED_INDEXES.includes(i) ? 'checked' : '';
-        return `
-          <label style="display:flex;align-items:center;gap:10px;border:1px solid #eee;border-radius:10px;padding:8px 10px">
-            <input type="checkbox" class="tpl-petpick" value="${i}" ${checked} style="transform:scale(1.2)">
-            ${foto}
-            <span style="display:flex;flex-direction:column;line-height:1.25">
-              <strong>${norm(p.nombre)||'Sin nombre'}</strong>
-              <span style="color:#666;font-size:.92rem">${sub||''}</span>
-            </span>
-          </label>
-        `;
-      }).join('');
-
-      function close(){ overlay.classList.remove('on'); overlay.style.display='none'; document.body.style.overflow=''; overlay.setAttribute('aria-hidden','true'); }
-      overlay.classList.add('on'); overlay.style.display='flex'; document.body.style.overflow='hidden'; overlay.setAttribute('aria-hidden','false');
-
-      btnCancel.onclick = close;
-      overlay.addEventListener('click', (e)=>{ if (e.target === overlay) close(); });
-
-      btnApply.onclick = function(){
-        const checks = list.querySelectorAll('.tpl-petpick:checked');
-        if (!checks.length){ alert('Selecciona al menos una mascota.'); return; }
-        SELECTED_INDEXES = Array.from(checks).map(ch => parseInt(ch.value,10)).filter(n=>!isNaN(n));
-
-        const pets = getPets();
-        const names = SELECTED_INDEXES.map(ix => pets[ix]).filter(Boolean).map(p=>norm(p.nombre)).filter(Boolean);
-
-        const numSel = document.getElementById('numPets');
-        if (numSel){
-          const n = Math.min(5, Math.max(1, names.length));
-          numSel.value = String(n);
-          numSel.dispatchEvent(new Event('change', { bubbles:true }));
-        }
-
-        setTimeout(()=>{
-          names.forEach((n, idx)=>{
-            const inp = document.getElementById('petName_'+(idx+1));
-            if (inp){ inp.value = n; inp.dispatchEvent(new Event('input', { bubbles:true })); }
-          });
-        }, 120);
-
-        close();
-      };
-    }
-
-    function attachPickerButton(){
-      const btn = document.getElementById('tpl-open-petpicker');
-      if (!btn) return;
-      btn.addEventListener('click', function(e){ e.preventDefault(); openPetPicker(); });
-    }
-
-    function attachSubmitValidator(){
-      const form = document.getElementById('bookingForm');
-      if (!form) return;
-      form.addEventListener('submit', function(e){
-        try{
-          const uid = getCurrentUserId();
-          const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-          const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-          if (Array.isArray(pets) && pets.length >= 2){
-            const list = (document.getElementById('petsListHidden')?.value || '').trim();
-            if (!list){
-              e.preventDefault();
-              e.stopImmediatePropagation();
-              alert('Por favor, elige la(s) mascota(s) con el botón “Elegir de mis mascotas”.');
-              return false;
-            }
-          }
-        }catch(err){ console.warn('[TPL reservas] validación mascotas:', err); }
-      }, true);
-    }
-
-    function autoFillSinglePet(){
-      const uid = getCurrentUserId();
-      const hasPets = localStorage.getItem(udbKey(uid,'pets')) !== null;
-      const pets = hasPets ? (udbGet(uid,'pets',[])||[]) : (udbGet(uid,'mascotas',[])||[]);
-      if (Array.isArray(pets) && pets.length === 1){
-        const name = (pets[0]?.nombre || '').trim();
-        const numSel = document.getElementById('numPets');
-        if (numSel){
-          numSel.value = '1';
-          numSel.dispatchEvent(new Event('change', { bubbles:true }));
-        }
-        setTimeout(()=>{
-          const inp = document.getElementById('petName_1');
-          if (inp && !inp.value){
-            inp.value = name;
-            inp.dispatchEvent(new Event('input', { bubbles:true }));
-          }
-        }, 120);
-      }
-    }
-
-    function init(){ attachPickerButton(); attachSubmitValidator(); autoFillSinglePet(); }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  })();
+    // *** Configura estos IDs si quieres envío real de prueba (o deja mock) ***
+    const EMAILJS = {
+      enabled: false, // pon true si tienes IDs
+      service_id: "YOUR_SERVICE_ID",
+      template_cliente: "TEMPLATE_CLIENTE",
+      template_gestion: "TEMPLATE_GESTION",
+      public_key: "YOUR_PUBLIC_KEY"
+    };
+    try{ if(EMAILJS.enabled){ emailjs.init(EMAILJS.public_key); } }catch(e){}
   </script>
 
-  <!-- Footer (inyectado) -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
   <script>
-/* TPL · HOOK PERFIL + RECÁLCULO DIFERIDO */
-(function(){
-  if (window.__TPL_HOOK_PERFIL__) return; window.__TPL_HOOK_PERFIL__ = true;
+  /***** DATOS / TABLAS *****/
+  const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
+  const FESTIVO_NORMAL_PLUS = 10; // cliente
+  const FESTIVO_NORMAL_AUX = 8;
+  const BIG_DAY_PLUS = 30; // cliente
+  const BIG_DAY_AUX = 15;
+  const URGENCIA_PLUS = 10; // cliente (tu margen)
 
-  function safe(fn){ try{ fn&&fn(); }catch(e){ /*noop*/ } }
+  // Precios públicos (cliente)
+  const PUBLIC_PRICES = {
+    guarderia_dia: { adulto: 15, cachorro: 20,
+      bonos: { adult: {10:135,20:250,30:315}, puppy: {10:185,20:350,30:465} }
+    },
+    alojamiento_nocturno: {
+      std: { normal: 30, desde11: 27 },
+      puppy: { normal: 35, desde11: 32 },
+      segundo: { normal: 25, desde11: 22 }
+    },
+    paseo: {
+      base: 12, extra_mascota: 8,
+      bonos: {10:115,15:168,20:220,25:270,30:318}
+    },
+    visita_gato: {
+      base60: 22, base90: 30, d11_60: 18, d11_90: 27,
+      med15: 12, med15_d11: 10,
+      gatosExtra: { one:12, twoEach:8, moreEach:6 }
+    },
+    exoticos_aves: { base: 20 },
+    exoticos_reptiles: { base: 20 },
+    exoticos_mamiferos: { base: 25 },
+    transporte: { base: 20 } // cliente
+  };
 
-  // Recalcula TODO tras cargar perfil por cualquier vía
-  async function refreshFromProfile(){
-    safe(window.autoFromWindowProfile);
-    safe(window.autoFromLocalProfile);
-    if (typeof window.autoFromFirebase === 'function') { await window.autoFromFirebase(); }
-    // Si el DOM ya está, fuerza recalcAll y reconstrucción de ocultos
-    if (typeof window.recalcAll === 'function') { await window.recalcAll(); }
-    if (typeof window.buildHiddenPackBeforeSend === 'function') { window.buildHiddenPackBeforeSend(); }
+  // Pagos al auxiliar (interno, para calcular tu margen=resto)
+  const AUX_PAY = {
+    guarderia_dia: { adulto: 12, cachorro: 17, bonosAdult:{10:11,20:10,30:9}, bonosPuppy:{10:16,20:14,30:12} },
+    alojamiento_nocturno: {
+      std:{ normal:25, desde11:22 }, puppy:{ normal:30, desde11:27 }, segundo:{ normal:20, desde11:17 }
+    },
+    paseo: { base:10, extra_mascota:5, bonos:{10:8,15:7.5,20:7,25:6.5,30:6} },
+    visita_gato: {
+      base60:17, base90:25, d11_60:12, d11_90:21,
+      med15_publicEqualsAux:true,
+      gatosExtra:{ one:10, twoEach:6, moreEach:4 }
+    },
+    exoticos_aves:{ base:15 },
+    exoticos_reptiles:{ base:15 },
+    exoticos_mamiferos:{ base:20 },
+    transporte:{ base:15 }
+  };
+
+  // Depósito: hoy cobramos tu margen (se recalcula), aquí solo referencia por si luego quieres %.
+  const DEPOSITO_MODE = "margin"; // "margin" | "percent"
+  const DEPOSITO_PCT = { guarderia_dia:20, alojamiento_nocturno:20, paseo:0, visita_gato:0, exoticos_aves:0, exoticos_reptiles:0, exoticos_mamiferos:0, transporte:0 };
+
+  /***** SESIÓN / PERFIL (mock + integración) *****/
+  // Se considera sesión válida si existe window.__TPL_PROFILE__ o localStorage["tpl.profile"]
+  function getProfile(){
+    const fromWindow = (window.__TPL_PROFILE__ || null);
+    if(fromWindow) return fromWindow;
+    try{ return JSON.parse(localStorage.getItem("tpl.profile")||"null"); }catch(_){ return null; }
   }
 
-  // 1) Si ya hay perfil en window
-  if (window.__TPL_PROFILE__) { refreshFromProfile(); }
+  // Mascotas del perfil -> [{id,name,species:"perro|gato|exotico",birth:"YYYY-MM-DD", img:"url"}]
+  // Si tu auth ya lo rellena, perfecto. Si no, mock de ejemplo para ver cards:
+  function ensurePetsMock(profile){
+    if(profile && Array.isArray(profile.pets) && profile.pets.length) return profile;
+    const mock = profile || {};
+    mock.pets = [
+      {id:"luna", name:"Luna", species:"perro", birth:"2025-07-10", img:"https://images.unsplash.com/photo-1517849845537-4d257902454a?q=80&w=200"},
+      {id:"michi", name:"Michi", species:"gato", birth:"2022-05-01", img:"https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=200"},
+      {id:"kiko", name:"Kiko", species:"exotico", subtype:"ave", birth:"2021-03-03", img:"https://images.unsplash.com/photo-1501706362039-c06b2d715385?q=80&w=200"}
+    ];
+    return mock;
+  }
 
-  // 2) Cuando se autentique con Firebase
-  if (window.firebase && firebase.auth) {
-    firebase.auth().onAuthStateChanged(function(u){
-      // pequeño debounce por si el perfil se hidrata justo después
-      setTimeout(refreshFromProfile, 200);
+  function isLogged(){ return !!getProfile(); }
+
+  /***** UI HELPERS *****/
+  const $ = (s,root=document)=>root.querySelector(s);
+  const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+  const fmt = n => (typeof n!=="number"||isNaN(n))?"—":n.toFixed(2).replace(".",",")+" €";
+  const todayStr = ()=>{const d=new Date();const m=String(d.getMonth()+1).padStart(2,"0");const dd=String(d.getDate()).padStart(2,"0");return `${d.getFullYear()}-${m}-${dd}`};
+
+  function parseDate(val){ const d=new Date(val); return isNaN(d)?null:d; }
+  function diffMinutes(a,b){ return Math.round((a-b)/60000); }
+  function monthDayKey(dateStr){ const d=parseDate(dateStr); if(!d) return ""; const m=String(d.getMonth()+1).padStart(2,"0"); const dd=String(d.getDate()).padStart(2,"0"); return `${m}-${dd}`; }
+
+  function ageMonths(birth){
+    const d = parseDate(birth); if(!d) return null;
+    const now = new Date();
+    return (now.getFullYear()-d.getFullYear())*12 + (now.getMonth()-d.getMonth()) - (now.getDate()<d.getDate()?1:0);
+  }
+  function isPuppy(pet){
+    if(pet.species!=="perro") return false;
+    const m = ageMonths(pet.birth);
+    return (m!=null && m<=6);
+  }
+
+  /***** RENDER MASCOTAS *****/
+  function renderPets(profile){
+    const grid = $("#petsGrid"); grid.innerHTML = "";
+    const pets = (profile?.pets)||[];
+    pets.slice(0,50).forEach(p=>{
+      const puppy = isPuppy(p);
+      const card = document.createElement("label");
+      card.className = "pet-card";
+      card.innerHTML = `
+        <input type="checkbox" class="pet-check" data-id="${p.id}">
+        <img class="pet-img" src="${p.img||""}" alt="${p.name}">
+        <div style="flex:1">
+          <div><strong>${p.name||"Mascota"}</strong> ${
+            p.species==="perro" ? '<i class="fa-solid fa-dog"></i>' :
+            p.species==="gato" ? '<i class="fa-solid fa-cat"></i>' :
+            '<i class="fa-solid fa-kiwi-bird"></i>'
+          } ${ puppy ? '<span class="badge">Cachorro (≤6m)</span>' : '' }</div>
+          <div class="pet-meta">${(p.species==="exotico"?(p.subtype?("Exótico · "+p.subtype):"Exótico"):p.species)} · Nac: ${p.birth||"—"}</div>
+        </div>
+      `;
+      grid.appendChild(card);
     });
   }
 
-  // 3) Al terminar tpl-auth (cuando ponga __TPL_PROFILE__)
-  document.addEventListener('tpl-profile-ready', refreshFromProfile);
+  function selectedPets(profile){
+    const ids = $$(".pet-check:checked").map(x=>x.getAttribute("data-id"));
+    const all = (profile?.pets)||[];
+    return all.filter(p=>ids.includes(p.id)).slice(0,3);
+  }
 
-  // 4) Última red de seguridad tras DOM listo
-  if (document.readyState === 'complete') setTimeout(refreshFromProfile, 100);
-  else window.addEventListener('load', ()=>setTimeout(refreshFromProfile, 100));
-})();
-</script>
-<script>
-/* TPL · AUTORRELLENO PREFERENTE */
-(function(){
-  if (window.__TPL_FILL_OWNER_PATCH__) return; window.__TPL_FILL_OWNER_PATCH__ = true;
+  /***** CÁLCULO DE PRECIOS *****/
+  function hoursBetween(start,end){
+    if(!start || !end) return 0;
+    const [h1,m1]=start.split(":").map(Number); const [h2,m2]=end.split(":").map(Number);
+    let t = (h2*60+m2)-(h1*60+m1); if(t<0) t = 0;
+    return t/60;
+  }
 
-  // Sobrescribe si el campo está vacío O si marcamos 'force'
-  window.tplSetField = function(el, val, force){
-    if (!el) return;
-    const v = (val==null) ? '' : String(val);
-    if (force) { el.value = v; return; }
-    if (!el.value && v) { el.value = v; }
-  };
+  function calcPublicAndAux(payload){
+    // payload: {serviceType, date, startTime, endTime, region, pets[], notes, address, postalCode}
+    const s = payload.serviceType;
+    const date = payload.date;
+    const units = serviceUnits(payload); // días/horas/unidades
+    let linesPublic = [];
+    let linesAux = [];
+    let totalPublic = 0;
+    let totalAux = 0;
 
-  // Enlaza con tu fillOwnerFromObj existente
-  const _fill = window.fillOwnerFromObj;
-  window.fillOwnerFromObj = function(d, opts){
-    const force = !!(opts && opts.force);
-    if (!d) return;
-    window.tplSetField(document.getElementById('firstName'), d.nombre || d.name || d.firstName, force);
-    window.tplSetField(document.getElementById('lastName'),  d.apellidos || d.lastName || d.surname, force);
-    window.tplSetField(document.getElementById('email'),     d.email, force);
-    window.tplSetField(document.getElementById('phone'),     d.telefono || d.phone, force);
-    if (typeof _fill === 'function') { try{ _fill(d); }catch(e){} } // conserva tu lógica original extra
-  };
-})();
-</script>
-<script>
-/* TPL · RECÁLCULO POR CAMBIOS INDIRECTOS */
-(function(){
-  if (window.__TPL_RECALC_PATCH__) return; window.__TPL_RECALC_PATCH__ = true;
-  function tryRecalc(){ if (typeof window.recalcAll === 'function') window.recalcAll(); }
+    const big = BIG_DAYS.includes(monthDayKey(date));
+    const festivo = payload.festive === true; // podrías traerlo de un servicio, aquí demo con region+fecha si quisieras.
 
-  // Dirección sugerida (autocompletado OSM)
-  document.addEventListener('click', function(e){
-    if (e.target && e.target.matches && e.target.matches('.tpl-addr-suggestion')) {
-      setTimeout(tryRecalc, 50);
+    const pets = payload.pets||[];
+    const numPets = pets.length||1;
+    const anyPuppy = pets.some(p=>isPuppy(p));
+
+    // BASE por servicio
+    if(s==="guarderia_dia"){
+      const days = Math.max(1, units.days||0);
+      const puppy = anyPuppy;
+      // Bono auto si coincide exacto 10/20/30
+      const bonoPack = puppy ? PUBLIC_PRICES.guarderia_dia.bonos.puppy : PUBLIC_PRICES.guarderia_dia.bonos.adult;
+      const bonoAux = puppy ? AUX_PAY.guarderia_dia.bonosPuppy : AUX_PAY.guarderia_dia.bonosAdult;
+      const priceDay = puppy ? PUBLIC_PRICES.guarderia_dia.cachorro : PUBLIC_PRICES.guarderia_dia.adulto;
+      const auxDay = puppy ? AUX_PAY.guarderia_dia.cachorro : AUX_PAY.guarderia_dia.adulto;
+
+      if([10,20,30].includes(days)){
+        const bonoPrecio = bonoPack[days];
+        const ppx = bonoPrecio/days;
+        linesPublic.push({label:`Base (Guardería · ${days} días)`, calc:`Bono ${days} días (${ppx.toFixed(2)} €/día)`, amount:bonoPrecio});
+        totalPublic += bonoPrecio;
+
+        const auxPerDay = bonoAux[days];
+        const auxTotal = auxPerDay*days;
+        linesAux.push({label:`Auxiliar (bono ${days})`, amount:auxTotal});
+        totalAux += auxTotal;
+      }else{
+        const base = priceDay*days;
+        linesPublic.push({label:`Base (Guardería · ${days} días)`, calc:`${days} × ${priceDay.toFixed(2)}`, amount:base});
+        totalPublic += base;
+
+        const aux = auxDay*days;
+        linesAux.push({label:`Auxiliar (día)`, amount:aux});
+        totalAux += aux;
+      }
+      // Multipet: si deseas cobrar por más mascotas en guardería, ajusta aquí (ahora sin recargo público; aux interno def. si lo quieres)
     }
+
+    if(s==="alojamiento_nocturno"){
+      // Días 1–10 normal, desde 11 descuento; por mascota
+      const days = Math.max(1, units.days||0);
+      const petsCount = Math.max(1,numPets);
+      let remaining = days;
+      let dayIndex=1;
+      const forEachPet = (petIndex)=>{
+        const isSecondOrMore = (petIndex>=2);
+        const isPuppy = isPuppyPet(pets[petIndex-1]);
+        let pub=0, aux=0;
+        for(let d=1; d<=days; d++){
+          const tramoDesde11 = (d>=11);
+          // Precio público
+          let pPub=0, pAux=0;
+          if(isSecondOrMore){
+            pPub = tramoDesde11 ? PUBLIC_PRICES.alojamiento_nocturno.segundo.desde11 : PUBLIC_PRICES.alojamiento_nocturno.segundo.normal;
+            pAux = tramoDesde11 ? AUX_PAY.alojamiento_nocturno.segundo.desde11 : AUX_PAY.alojamiento_nocturno.segundo.normal;
+          }else if(isPuppy){
+            pPub = tramoDesde11 ? PUBLIC_PRICES.alojamiento_nocturno.puppy.desde11 : PUBLIC_PRICES.alojamiento_nocturno.puppy.normal;
+            pAux = tramoDesde11 ? AUX_PAY.alojamiento_nocturno.puppy.desde11 : AUX_PAY.alojamiento_nocturno.puppy.normal;
+          }else{
+            pPub = tramoDesde11 ? PUBLIC_PRICES.alojamiento_nocturno.std.desde11 : PUBLIC_PRICES.alojamiento_nocturno.std.normal;
+            pAux = tramoDesde11 ? AUX_PAY.alojamiento_nocturno.std.desde11 : AUX_PAY.alojamiento_nocturno.std.normal;
+          }
+          pub += pPub; aux += pAux;
+        }
+        linesPublic.push({label:`Base (Alojamiento · ${days} días · mascota ${petIndex})`, amount:pub});
+        totalPublic += pub;
+        linesAux.push({label:`Auxiliar (Alojamiento · mascota ${petIndex})`, amount:aux});
+        totalAux += aux;
+      };
+      for(let i=1;i<=petsCount;i++){ forEachPet(i); }
+    }
+
+    if(s==="paseo"){
+      const walks = Math.max(1, units.units||1);
+      // 1 perro entra en base; extras se cobran aparte por paseo
+      linesPublic.push({label:`Base (Paseo · ${walks} uds)`, calc:`${walks} × ${PUBLIC_PRICES.paseo.base.toFixed(2)}`, amount:PUBLIC_PRICES.paseo.base*walks});
+      totalPublic += PUBLIC_PRICES.paseo.base*walks;
+      linesAux.push({label:`Auxiliar (Paseo · ${walks})`, amount:AUX_PAY.paseo.base*walks});
+      totalAux += AUX_PAY.paseo.base*walks;
+
+      const extraPets = Math.max(0, numPets-1);
+      if(extraPets>0){
+        linesPublic.push({label:`Mascotas adicionales (${extraPets})`, calc:`${extraPets} × ${PUBLIC_PRICES.paseo.extra_mascota.toFixed(2)} × ${walks}`, amount:PUBLIC_PRICES.paseo.extra_mascota*extraPets*walks});
+        totalPublic += PUBLIC_PRICES.paseo.extra_mascota*extraPets*walks;
+
+        linesAux.push({label:`Aux extras (${extraPets})`, amount:AUX_PAY.paseo.extra_mascota*extraPets*walks});
+        totalAux += AUX_PAY.paseo.extra_mascota*extraPets*walks;
+      }
+
+      // Bonos (auto si marcas "usar bono" en el futuro): hoy informativo, podríamos autoaplicar si hay packs comprados.
+    }
+
+    if(s==="visita_gato"){
+      // duración por horas de start-end: 1.0 -> 60', 1.5->90'; medicación si units.med=true
+      const mins = Math.round((hoursBetween(payload.startTime,payload.endTime)||1)*60);
+      const use90 = mins>=90;
+      const from11 = payload.from11 === true;
+      if(payload.medication===true){
+        const p = from11 ? PUBLIC_PRICES.visita_gato.med15_d11 : PUBLIC_PRICES.visita_gato.med15;
+        const a = from11 ? PUBLIC_PRICES.visita_gato.med15_d11 : PUBLIC_PRICES.visita_gato.med15; // margen 0
+        linesPublic.push({label:`Visita medicación (15’)`, amount:p});
+        totalPublic+=p;
+        linesAux.push({label:`Aux medicación`, amount:a});
+        totalAux+=a;
+      }else{
+        const p = use90 ? (from11?PUBLIC_PRICES.visita_gato.d11_90:PUBLIC_PRICES.visita_gato.base90)
+                        : (from11?PUBLIC_PRICES.visita_gato.d11_60:PUBLIC_PRICES.visita_gato.base60);
+        const a = use90 ? (from11?AUX_PAY.visita_gato.d11_90:AUX_PAY.visita_gato.base90)
+                        : (from11?AUX_PAY.visita_gato.d11_60:AUX_PAY.visita_gato.base60);
+        linesPublic.push({label:`Base (Visita gato · ${use90?90:60}’)`, amount:p});
+        totalPublic+=p;
+        linesAux.push({label:`Aux visita gato`, amount:a});
+        totalAux+=a;
+
+        // gatos extra (público y auxiliar)
+        const cats = pets.filter(p=>p.species==="gato").length || 1;
+        const extraCats = Math.max(0,cats-1);
+        if(extraCats>0){
+          let perClient, perAux;
+          if(extraCats===1){ perClient=PUBLIC_PRICES.visita_gato.gatosExtra.one; perAux=AUX_PAY.visita_gato.gatosExtra.one; }
+          else if(extraCats===2){ perClient=PUBLIC_PRICES.visita_gato.gatosExtra.twoEach; perAux=AUX_PAY.visita_gato.gatosExtra.twoEach; }
+          else { perClient=PUBLIC_PRICES.visita_gato.gatosExtra.moreEach; perAux=AUX_PAY.visita_gato.gatosExtra.moreEach; }
+          const addC = perClient * extraCats;
+          const addA = perAux * extraCats;
+          linesPublic.push({label:`Gatos extra (${extraCats})`, amount:addC});
+          totalPublic+=addC;
+          linesAux.push({label:`Aux gatos extra`, amount:addA});
+          totalAux+=addA;
+        }
+      }
+    }
+
+    if(s==="exoticos_aves"||s==="exoticos_reptiles"||s==="exoticos_mamiferos"){
+      const base = PUBLIC_PRICES[s].base;
+      const aux = AUX_PAY[s].base;
+      linesPublic.push({label:`Base (${labelService(s)})`, amount:base});
+      totalPublic+=base;
+      linesAux.push({label:`Aux ${labelService(s)}`, amount:aux});
+      totalAux+=aux;
+    }
+
+    if(s==="transporte"){
+      const base = PUBLIC_PRICES.transporte.base;
+      const aux = AUX_PAY.transporte.base;
+      linesPublic.push({label:`Transporte`, amount:base});
+      totalPublic+=base;
+      linesAux.push({label:`Aux transporte`, amount:aux});
+      totalAux+=aux;
+    }
+
+    // SUPLEMENTOS AUTOMÁTICOS (cliente y auxiliar internamente)
+    // Urgencia (<2h hoy)
+    const now = new Date();
+    const today = todayStr();
+    if(date===today && payload.startTime){
+      const [hh,mm]=payload.startTime.split(":").map(Number);
+      const start = new Date(); start.setHours(hh||0,mm||0,0,0);
+      const minsDiff = diffMinutes(start, now);
+      if(minsDiff>0 && minsDiff<120){
+        linesPublic.push({label:"Suplemento urgencia (<2h)", amount:URGENCIA_PLUS});
+        totalPublic += URGENCIA_PLUS;
+        // Auxiliar no se incrementa por urgencia (tu margen)
+      }
+    }
+
+    const key = monthDayKey(date);
+    if(BIG_DAYS.includes(key)){
+      linesPublic.push({label:`Día señalado (${key})`, amount:BIG_DAY_PLUS});
+      totalPublic += BIG_DAY_PLUS;
+      linesAux.push({label:`Aux día señalado`, amount:BIG_DAY_AUX});
+      totalAux += BIG_DAY_AUX;
+    }else if(payload.festive===true){
+      linesPublic.push({label:`Festivo`, amount:FESTIVO_NORMAL_PLUS});
+      totalPublic += FESTIVO_NORMAL_PLUS;
+      linesAux.push({label:`Aux festivo`, amount:FESTIVO_NORMAL_AUX});
+      totalAux += FESTIVO_NORMAL_AUX;
+    }
+
+    // PENDIENTE de desplazamiento (solo nota, no suma)
+    if(payload.travelNeeded==="si"){
+      linesPublic.push({label:`Desplazamiento`, note:"pendiente"});
+    }
+
+    // PAY NOW = margen (o %)
+    let payNow = 0;
+    if(DEPOSITO_MODE==="margin"){
+      payNow = Math.max(0, totalPublic - totalAux);
+    }else{
+      const pct = (DEPOSITO_PCT[s]||0)/100;
+      payNow = Math.round(totalPublic*pct*100)/100;
+    }
+    const payLater = Math.max(0, totalPublic - payNow);
+
+    return {linesPublic,totalPublic,totalAux,payNow,payLater};
+  }
+
+  function serviceUnits(payload){
+    const s = payload.serviceType;
+    const d1 = parseDate(payload.date);
+    let units = { days:0, hours:0, units:0 };
+    if(s==="guarderia_dia"||s==="alojamiento_nocturno"){
+      // por simplicidad 1 día; si quisieras rango, añade endDate
+      units.days = 1;
+    }else if(s==="paseo"||s==="transporte"||s?.startsWith("exoticos")||s==="visita_gato"){
+      units.units = 1;
+      if(s==="visita_gato"){
+        units.hours = hoursBetween(payload.startTime,payload.endTime)||1;
+      }
+    }
+    return units;
+  }
+
+  function labelService(s){
+    return ({
+      guarderia_dia:"Guardería de día",
+      alojamiento_nocturno:"Alojamiento nocturno",
+      paseo:"Paseo",
+      visita_gato:"Visita gato",
+      exoticos_aves:"Visita exóticos (aves)",
+      exoticos_reptiles:"Visita exóticos (reptiles)",
+      exoticos_mamiferos:"Visita exóticos (mamíferos)",
+      transporte:"Transporte"
+    })[s]||s;
+  }
+
+  function isPuppyPet(p){ return p && p.species==="perro" && isPuppy(p); }
+
+  /***** RENDER DESGLOSE *****/
+  function renderSummary(calc, payload){
+    const ctx = `${labelService(payload.serviceType)} · ${payload.date||"—"}${payload.startTime?(" · "+payload.startTime):""}${payload.endTime?("–"+payload.endTime):""} · ${payload.pets?.length||0} mascota(s)`;
+    $("#summaryContext").textContent = ctx;
+
+    const box = $("#summaryLines"); box.innerHTML = "";
+    calc.linesPublic.forEach(l=>{
+      const row = document.createElement("div");
+      row.className = "line";
+      const right = (l.note==="pendiente") ? '<span class="muted">pendiente</span>' : fmt(l.amount);
+      row.innerHTML = `<span>${l.label}${l.calc?` <span class="muted">· ${l.calc}</span>`:""}</span><span>${right}</span>`;
+      box.appendChild(row);
+    });
+    $("#subtotalTxt").textContent = fmt(calc.totalPublic);
+    $("#payNowTxt").textContent = fmt(calc.payNow);
+    $("#payLaterTxt").textContent = fmt(calc.payLater);
+  }
+
+  /***** SIMULAR PAGO + EMAILS + PERFIL MOCK *****/
+  async function simulatePayment(reservation){
+    // Estado -> paid_review
+    reservation.status = "paid_review";
+    saveReservationMock(reservation);
+
+    // Emails
+    try{
+      const varsCliente = {
+        to_name: reservation.owner.fullName,
+        total: fmt(reservation.pricing.totalClient),
+        pay_now: fmt(reservation.pricing.payNow),
+        pay_later: fmt(reservation.pricing.payLater),
+        servicio: labelService(reservation.service.type),
+        fecha: reservation.dates.date + (reservation.dates.startTime?` ${reservation.dates.startTime}`:""),
+        mascotas: (reservation.pets||[]).map(p=>p.name).join(", ")||"—"
+      };
+      const varsGestion = {
+        cliente: reservation.owner.fullName + " · " + reservation.owner.email + " · " + reservation.owner.phone,
+        servicio: labelService(reservation.service.type),
+        total: fmt(reservation.pricing.totalClient),
+        pay_now: fmt(reservation.pricing.payNow),
+        pay_later: fmt(reservation.pricing.payLater),
+        json: JSON.stringify(reservation,null,2)
+      };
+      if(EMAILJS.enabled){
+        await emailjs.send(EMAILJS.service_id, EMAILJS.template_cliente, varsCliente);
+        await emailjs.send(EMAILJS.service_id, EMAILJS.template_gestion, varsGestion);
+      }else{
+        console.log("[EMAIL DEMO] Cliente:", varsCliente);
+        console.log("[EMAIL DEMO] Gestión:", varsGestion);
+      }
+    }catch(e){ console.warn("Email demo error", e); }
+
+    // UI
+    $("#reservaForm").style.display="none";
+    $("#thanks").style.display="block";
+  }
+
+  function saveReservationMock(r){
+    const key="tpl.reservas";
+    let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||"[]"); }catch(_){}
+    // prepend
+    arr.unshift(r);
+    localStorage.setItem(key, JSON.stringify(arr));
+  }
+
+  /***** FORM -> PAYLOAD *****/
+  function collectPayload(profile){
+    const petsSel = selectedPets(profile);
+    return {
+      serviceType: $("#serviceType").value,
+      date: $("#serviceDate").value,
+      startTime: $("#startTime").value,
+      endTime: $("#endTime").value,
+      region: $("#region").value,
+      notes: $("#notes").value,
+      address: $("#address").value,
+      postalCode: $("#postalCode").value,
+      festive: false, // si tienes tabla de festivos por comunidad, conéctala aquí
+      travelNeeded: $("#travelNeeded").value,
+      pets: petsSel
+    };
+  }
+
+  function buildReservation(profile, calc, payload){
+    return {
+      id: "resv_"+Date.now(),
+      status: "pending_payment",
+      createdAt: new Date().toISOString(),
+      service: { type: payload.serviceType },
+      dates: { date: payload.date, startTime: payload.startTime||null, endTime: payload.endTime||null },
+      region: payload.region,
+      owner: {
+        fullName: $("#ownerFullName").value.trim(),
+        email: $("#email").value.trim(),
+        phone: $("#phone").value.trim(),
+        address: $("#address").value.trim(),
+        postalCode: $("#postalCode").value.trim()
+      },
+      pets: payload.pets,
+      flags: {
+        urgency: calc.linesPublic.some(l=>l.label.includes("Urgencia")),
+        bigDay: BIG_DAYS.includes(monthDayKey(payload.date)),
+        festive: payload.festive===true,
+        travelNeeded: payload.travelNeeded==="si"
+      },
+      pricing: {
+        breakdownPublic: calc.linesPublic,
+        totalClient: round2(calc.totalPublic),
+        payNow: round2(calc.payNow),
+        payLater: round2(calc.payLater),
+        currency:"EUR"
+      },
+      internal: {
+        totalAux: round2(calc.totalAux||0),
+        margin: round2(calc.totalPublic - (calc.totalAux||0))
+      }
+    };
+  }
+  function round2(n){ return Math.round((n||0)*100)/100; }
+
+  /***** URL PORTADO *****/
+  function readQuery(){
+    const p = new URLSearchParams(location.search);
+    return {
+      service: p.get("service")||"",
+      date: p.get("date")||"",
+      start: p.get("start")||"",
+      end: p.get("end")||"",
+      pets: (p.get("pets")||"").split(",").filter(Boolean),
+      region: p.get("region")||"",
+      notes: p.get("notes")||""
+    };
+  }
+
+  function applyPort(profile, q){
+    if(q.service){ $("#serviceType").value = q.service; }
+    if(q.date){ $("#serviceDate").value = q.date; }
+    if(q.start){ $("#startTime").value = q.start; }
+    if(q.end){ $("#endTime").value = q.end; }
+    if(q.region){ $("#region").value = q.region; }
+    if(q.notes){ $("#notes").value = q.notes; }
+    // mascotas preseleccionadas por id
+    if(q.pets && q.pets.length){
+      const ids = q.pets;
+      $$(".pet-check").forEach(ch=>{
+        if(ids.includes(ch.getAttribute("data-id"))) ch.checked = true;
+      });
+    }
+  }
+
+  /***** INIT *****/
+  function fillOwner(profile){
+    const full = (profile?.fullName) || (profile?((profile.name||"")+" "+(profile.surname||"")).trim():"");
+    if(full) $("#ownerFullName").value = full;
+    if(profile?.email) $("#email").value = profile.email;
+    if(profile?.phone) $("#phone").value = profile.phone;
+    if(profile?.address) $("#address").value = profile.address;
+    if(profile?.postalCode) $("#postalCode").value = profile.postalCode;
+    if(profile?.region) $("#region").value = profile.region;
+  }
+
+  function bindRecalc(profile){
+    ["serviceType","serviceDate","startTime","endTime","region","notes","address","postalCode","travelNeeded"].forEach(id=>{
+      $("#"+id).addEventListener("input", ()=>doRecalc(profile));
+    });
+    $("#petsGrid").addEventListener("change", ()=>doRecalc(profile));
+  }
+
+  function doRecalc(profile){
+    const payload = collectPayload(profile);
+    if(!payload.serviceType || !payload.date){ renderSummary({linesPublic:[],totalPublic:0,payNow:0,payLater:0}, payload); return; }
+    const calc = calcPublicAndAux(payload);
+    renderSummary(calc, payload);
+    // Guardamos último cálculo por si recarga
+    sessionStorage.setItem("tpl.lastCalc", JSON.stringify({payload,calc}));
+  }
+
+  window.addEventListener("load", ()=>{
+    let profile = getProfile();
+    if(!profile){
+      // Mostrar gate
+      $("#sessionGate").style.display="block";
+      $("#reservaForm").classList.add("disabled");
+      profile = ensurePetsMock(profile); // aún así permite ver cards y UI (no enviar)
+    }else{
+      $("#sessionGate").style.display="none";
+      $("#reservaForm").classList.remove("disabled");
+    }
+
+    // Asegura mascotas
+    profile = ensurePetsMock(profile);
+    renderPets(profile);
+    fillOwner(profile);
+
+    // Portado por URL
+    applyPort(profile, readQuery());
+
+    // Recalc
+    bindRecalc(profile);
+    doRecalc(profile);
+
+    // Reservar ahora (simulado si no hay sesión -> alerta)
+    $("#btnReserve").addEventListener("click", ()=>{
+      if(!isLogged()){ alert("Inicia sesión o crea tu cuenta para completar la reserva."); return; }
+
+      // Validaciones mínimas
+      if(!$("#serviceType").value || !$("#serviceDate").value){ alert("Selecciona servicio y fecha."); return; }
+      const selPets = selectedPets(profile);
+      if(selPets.length===0){ alert("Elige al menos una mascota."); return; }
+
+      const payload = collectPayload(profile);
+      const calc = calcPublicAndAux(payload);
+      const reservation = buildReservation(profile, calc, payload);
+      simulatePayment(reservation); // Aquí luego sustituimos por Stripe Checkout real
+    });
   });
-
-  // Cambios en lista de mascotas renderizadas dinámicamente
-  const petsRoot = document.getElementById('petsContainer') || document;
-  petsRoot.addEventListener('input', function(e){
-    const id = (e.target && e.target.id) || '';
-    if (/petName|petType|petAge|isPuppy/.test(id)) { tryRecalc(); }
-  });
-})();
-</script>
-
-
-  <!-- Mini-injectors -->
-  <script>document.querySelectorAll('.year-span').forEach(s=>s.textContent=new Date().getFullYear())</script>
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
+  </script>
 </body>
 </html>
