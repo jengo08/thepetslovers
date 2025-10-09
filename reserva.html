@@ -1,3 +1,12 @@
+<!-- Force .html if entran por /reservas -->
+<script>
+(function(){
+  var p = location.pathname.replace(/\/+$/,'');
+  if (p === "/reservas") {
+    location.replace("/reservas.html" + location.search + location.hash);
+  }
+})();
+</script>
 <!DOCTYPE html>
 <html lang="es">
 <head>
