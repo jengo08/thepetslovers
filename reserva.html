@@ -1,71 +1,270 @@
 <!DOCTYPE html>
-<label for="postalCode">Código Postal</label>
-<input id="postalCode" name="postalCode" autocomplete="postal-code" />
-</div>
-<div>
-<label for="observations">Observaciones</label>
-<input id="observations" name="observations" placeholder="Alergias, horarios, etc." />
-</div>
-</div>
-<!-- Opcionales futuros: preferencia de contacto, franja, desplazamiento -->
-</fieldset>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reservas · The Pets Lovers</title>
+  <meta name="description" content="Reserva guardería de día, alojamiento nocturno, paseos, visitas a domicilio, exóticos y transporte. Solo pagas una pequeña parte ahora; el resto 12 días antes." />
+  <link rel="canonical" href="https://www.thepetslovers.es/reservas.html" />
 
+  <!-- Tipografías y estilos base del sitio -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
 
-<!-- 4) Desglose (siempre visible) -->
-<fieldset class="card fieldset" id="fsDesglose">
-<legend>Desglose</legend>
-<div id="breakdown" class="grid"></div>
-<p class="muted">Nota: Solo abonarás una pequeña parte ahora. El resto se pagará 12 días antes del inicio del servicio.</p>
-</fieldset>
+  <!-- Navbar/Footer inyectados (¡no pegues HTML del nav/footer aquí!) -->
+  <script defer src="/js/tpl-navbar.js"></script>
+  <script defer src="/js/tpl-footer.js"></script>
 
+  <!-- Config pública Firebase (sustituye si en tu proyecto son otras) -->
+  <script>
+    window.TPL_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+      authDomain: "thepetslovers-c1111.firebaseapp.com",
+      projectId: "thepetslovers-c1111",
+      storageBucket: "thepetslovers-c1111.appspot.com",
+      messagingSenderId: "415914577533",
+      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+      measurementId: "G-FXPD69KXBG"
+    };
+  </script>
 
-<!-- 5) CTA -->
-<div class="card cta-row">
-<button type="button" class="btn" id="btnBack">⟵ Atrás</button>
-<button type="submit" class="btn primary" id="btnSubmit">Reservar ahora</button>
-</div>
-</form>
-</main>
+  <!-- SEO JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"ReservationPage",
+    "name":"Reservas · The Pets Lovers",
+    "description":"Reserva servicios de cuidado de mascotas.",
+    "breadcrumb":{"@type":"BreadcrumbList","itemListElement":[
+      {"@type":"ListItem","position":1,"name":"Inicio","item":"https://www.thepetslovers.es/"},
+      {"@type":"ListItem","position":2,"name":"Reservas","item":"https://www.thepetslovers.es/reservas.html"}
+    ]},
+    "about":{"@type":"Organization","name":"The Pets Lovers","url":"https://www.thepetslovers.es"}
+  }
+  </script>
 
+  <style>
+    /* ——— Ajustes mínimos locales; lo demás vive en style.css ——— */
+    :root{ --tpl-green:#18a05e; --tpl-dark:#111; --tpl-muted:#6b7280; }
+    body{ font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Montserrat',sans-serif; }
+    .container{ max-width:1080px; margin:0 auto; padding:1.5rem; }
+    .hero{ text-align:center; padding:3.2rem 1rem 2rem; }
+    .hero h1{ font-family:'Montserrat',sans-serif; font-weight:700; font-size:clamp(1.6rem,2.5vw,2.2rem); margin:0 0 .5rem; }
+    .hero p{ color:var(--tpl-muted); margin:.25rem 0 1rem; }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.8rem 1rem; border-radius:999px; border:1px solid #e5e7eb; background:#fff; cursor:pointer; font-weight:600; }
+    .btn.primary{ background:var(--tpl-green); color:#fff; border-color:var(--tpl-green); }
+    .grid{ display:grid; gap:1rem; }
+    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1rem; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+    .fieldset{ display:grid; gap:.75rem; }
+    .fieldset legend{ font-weight:700; font-family:'Montserrat',sans-serif; margin-bottom:.5rem; }
+    label{ font-size:.95rem; color:#111; font-weight:600; }
+    input,select,textarea{ width:100%; border:1px solid #e5e7eb; border-radius:.75rem; padding:.7rem .9rem; font-size:.95rem; background:#fff; }
+    input[readonly]{ background:#f9fafb; color:#6b7280; }
+    .row{ display:grid; gap:.75rem; grid-template-columns:1fr; }
+    @media(min-width:720px){ .row.two{grid-template-columns:repeat(2,1fr);} .row.three{grid-template-columns:repeat(3,1fr);} }
+    .muted{ color:var(--tpl-muted); font-size:.9rem; }
+    .badge{ display:inline-block; font-size:.75rem; background:#ecfdf5; color:#065f46; padding:.2rem .5rem; border-radius:.5rem; border:1px solid #a7f3d0; }
+    .pet-item{ display:flex; align-items:center; justify-content:space-between; border:1px dashed #e5e7eb; border-radius:.75rem; padding:.6rem .8rem; }
 
-<!-- FOOTER -->
-<div id="tpl-footer" style="margin-top:3rem"></div>
+    /* Auth wall */
+    #authWall{ display:none; background:#fff; border:1px solid #e5e7eb; border-radius:1rem; padding:1rem; text-align:center; }
+    #authWall h3{ font-family:'Montserrat',sans-serif; font-weight:700; margin-bottom:.5rem; }
+    #authWall p{ color:var(--tpl-muted); margin-bottom:1rem; }
 
+    /* Cookie mini modal */
+    .cookie{ position:fixed; right:1rem; bottom:1rem; max-width:360px; background:#111; color:#fff; padding:.9rem 1rem; border-radius:.75rem; font-size:.9rem; box-shadow:0 8px 20px rgba(0,0,0,.25); }
 
-<!-- Cookie mini modal (no intrusivo) -->
-<div id="cookieMini" class="cookie" style="display:none;">
-Usamos cookies técnicas para mejorar tu experiencia. <button class="btn primary" id="acceptCookies">Aceptar</button>
-</div>
+    /* Disabled overlay */
+    .disabled-overlay{ position:relative; }
+    .disabled-overlay::after{ content:""; position:absolute; inset:0; background:rgba(255,255,255,.6); backdrop-filter:blur(2px); border-radius:1rem; display:none; }
+    .disabled-overlay[data-disabled="true"]::after{ display:block; }
 
+    .cta-row{ display:flex; gap:.75rem; flex-wrap:wrap; justify-content:flex-end; }
+    .hidden{ display:none !important; }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <div id="tpl-navbar"></div>
 
-<!-- SDKs Firebase compat -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script>
-(function(){
-if (typeof firebase!=='undefined' && !firebase.apps.length && window.TPL_FIREBASE_CONFIG) {
-firebase.initializeApp(window.TPL_FIREBASE_CONFIG);
-}
-})();
-</script>
+  <!-- HERO -->
+  <section class="hero container">
+    <h1>Reserva tu servicio</h1>
+    <p>Elige servicio y fechas → mascotas → datos → desglose → ¡Listo! Solo pagas una pequeña parte ahora; el resto 12 días antes.</p>
+    <button class="btn primary" id="ctaStart">Empezar</button>
+  </section>
 
+  <main class="container grid" style="grid-template-columns:1fr;">
+    <!-- AUTH WALL → se muestra si no hay sesión -->
+    <section id="authWall" class="card">
+      <h3>Accede para reservar</h3>
+      <p>Necesitas una cuenta para continuar. Puedes crearla en 1 minuto.</p>
+      <div style="display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap;">
+        <button class="btn primary" id="btnLogin">Iniciar sesión</button>
+        <button class="btn" id="btnRegister">Crear cuenta</button>
+      </div>
+    </section>
 
-<!-- EmailJS -->
-<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-<script>
-window.TPL_EMAILJS = {
-serviceId: "service_odjqrfl",
-publicKey: "L2xAATfVuHJwj4EIV",
-templates: { cliente: "template_rao5n0c", gestion: "template_rao5n0c" },
-adminEmail: "gestion@thepetslovers.es"
-};
-try { emailjs.init(window.TPL_EMAILJS.publicKey); } catch(e) {}
-</script>
+    <!-- FORMULARIO (bloques) -->
+    <form id="reservaForm" class="grid disabled-overlay" data-disabled="true">
 
+      <!-- 1) Datos del servicio -->
+      <fieldset class="card fieldset" id="fsServicio">
+        <legend>Datos del servicio</legend>
+        <div class="row two">
+          <div>
+            <label for="service">Servicio</label>
+            <select id="service" name="service" required>
+              <option value="">— Selecciona —</option>
+              <option value="daycare">Guardería de día</option>
+              <option value="overnight">Alojamiento nocturno</option>
+              <option value="walk60">Paseo (60’)</option>
+              <option value="visita_gato">Visita a domicilio (gato)</option>
+              <option value="exoticos">Exóticos (visitas)</option>
+              <option value="transporte">Transporte</option>
+            </select>
+            <p class="muted" style="margin:.25rem 0 0;">Si llegaste desde una ficha, se preselecciona.</p>
+          </div>
+          <div class="row two">
+            <div>
+              <label for="startDate">Fecha inicio</label>
+              <input type="date" id="startDate" name="startDate" required />
+            </div>
+            <div>
+              <label for="endDate">Fecha fin</label>
+              <input type="date" id="endDate" name="endDate" required />
+            </div>
+          </div>
+        </div>
+        <div class="row two">
+          <div>
+            <label for="startTime">Hora inicio</label>
+            <input type="time" id="startTime" name="startTime" />
+          </div>
+          <div>
+            <label for="endTime">Hora fin</label>
+            <input type="time" id="endTime" name="endTime" />
+          </div>
+        </div>
+        <!-- Especie / Subtipo según servicio -->
+        <div id="speciesRow" class="row two" style="display:none;">
+          <div>
+            <label for="species">Especie</label>
+            <input id="species" name="species" placeholder="Gato (auto para Visitas)" readonly />
+          </div>
+          <div id="exoticosSubtypeWrap" style="display:none;">
+            <label for="exoticosSubtype">Tipo (exóticos)</label>
+            <select id="exoticosSubtype" name="exoticosSubtype">
+              <option value="aves">Aves</option>
+              <option value="reptiles">Reptiles</option>
+              <option value="pequenos_mamiferos">Pequeños mamíferos</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+        </div>
 
-<!-- Bridge de auth/UI y lógica de reservas -->
-<script defer src="/js/tpl-auth-bridge.js"></script>
-<script defer src="/js/tpl-reservas.js"></script>
+        <!-- Controles dinámicos (bonos, paseos, visitas gato, suplementos) -->
+        <div id="inlineControls" class="row two" style="margin-top:.25rem;"></div>
+      </fieldset>
+
+      <!-- 2) Mascotas -->
+      <fieldset class="card fieldset" id="fsMascotas">
+        <legend>Mascotas</legend>
+        <div id="petsList" class="grid"></div>
+        <p class="muted">Selecciona una o varias. El badge “Cachorro” (≤6 meses) se calcula automáticamente.</p>
+      </fieldset>
+
+      <!-- 3) Datos del titular -->
+      <fieldset class="card fieldset" id="fsTitular">
+        <legend>Datos del titular</legend>
+        <div class="row two">
+          <div>
+            <label for="fullName">Nombre y apellidos</label>
+            <input id="fullName" name="fullName" autocomplete="name" required />
+          </div>
+          <div>
+            <label for="phone">Teléfono</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" required />
+          </div>
+        </div>
+        <div class="row two">
+          <div>
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div>
+            <label for="region">Comunidad Autónoma</label>
+            <select id="region" name="region" required>
+              <option value="">— Selecciona —</option>
+              <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Islas Baleares</option>
+              <option>Islas Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
+              <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
+              <option>La Rioja</option><option>Comunidad de Madrid</option><option>Región de Murcia</option><option>Navarra</option>
+              <option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
+            </select>
+          </div>
+        </div>
+        <div class="row three">
+          <div>
+            <label for="address">Dirección</label>
+            <input id="address" name="address" autocomplete="street-address" />
+          </div>
+          <div>
+            <label for="postalCode">Código Postal</label>
+            <input id="postalCode" name="postalCode" autocomplete="postal-code" />
+          </div>
+          <div>
+            <label for="observations">Observaciones</label>
+            <input id="observations" name="observations" placeholder="Alergias, horarios, etc." />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 4) Desglose (dinámico) -->
+      <fieldset class="card fieldset" id="fsDesglose">
+        <legend>Desglose</legend>
+        <div id="breakdown" class="grid"></div>
+        <p class="muted">Nota: Solo abonarás una pequeña parte ahora. El resto se pagará 12 días antes del inicio del servicio.</p>
+      </fieldset>
+
+      <!-- 5) CTA -->
+      <div class="card cta-row">
+        <button type="button" class="btn" id="btnBack">⟵ Atrás</button>
+        <button type="submit" class="btn primary" id="btnSubmit">Reservar ahora</button>
+      </div>
+    </form>
+  </main>
+
+  <!-- FOOTER -->
+  <div id="tpl-footer" style="margin-top:3rem"></div>
+
+  <!-- Cookie mini modal -->
+  <div id="cookieMini" class="cookie" style="display:none;">
+    Usamos cookies técnicas para mejorar tu experiencia. <button class="btn primary" id="acceptCookies">Aceptar</button>
+  </div>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script>
+    (function(){ if (typeof firebase!=='undefined' && !firebase.apps.length && window.TPL_FIREBASE_CONFIG) { firebase.initializeApp(window.TPL_FIREBASE_CONFIG); } })();
+  </script>
+
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    window.TPL_EMAILJS = {
+      serviceId: "service_odjqrfl",           // ⬅️ Sustituir si usas otro
+      publicKey:  "L2xAATfVuHJwj4EIV",        // ⬅️ Sustituir si usas otra
+      templates: { cliente: "template_rao5n0c", gestion: "template_rao5n0c" },
+      adminEmail: "gestion@thepetslovers.es"
+    };
+    try { emailjs.init(window.TPL_EMAILJS.publicKey); } catch(e) {}
+  </script>
+
+  <!-- App -->
+  <script defer src="/js/tpl-auth-bridge.js"></script>
+  <script defer src="/js/tpl-reservas.js"></script>
 </body>
 </html>
