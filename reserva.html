@@ -6,6 +6,7 @@
   <title>Reserva · The Pets Lovers</title>
   <meta name="description" content="Reserva guardería, alojamiento, paseos, visitas a gatos, exóticos o transporte con The Pets Lovers.">
 
+  <!-- SEO/OG básicos -->
   <link rel="canonical" href="https://www.thepetslovers.es/reservas.html">
   <meta name="robots" content="index,follow">
   <meta property="og:title" content="Reserva · The Pets Lovers">
@@ -13,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://www.thepetslovers.es/images/og-petslovers.jpg">
 
-  <!-- Estilos globales -->
+  <!-- Estilos globales del sitio -->
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
@@ -27,6 +28,7 @@
     .tpl-form h1{ margin:0 0 4px; font-size:1.35rem; }
     .tpl-lead{ color:#555; margin:0 0 12px; font-size:.96rem; }
     .tpl-badge{ display:inline-flex; gap:6px; align-items:center; background:#f5fbfb; color:var(--tpl-primary); padding:6px 9px; border:1px solid #d7efef; border-radius:999px; font-weight:700; font-size:.85rem; }
+
     .tpl-grid{ display:grid; gap:10px; grid-template-columns:1fr; }
     @media (min-width: 900px){ .tpl-grid{ grid-template-columns:1fr 1fr; } }
     .tpl-field{ display:flex; flex-direction:column; gap:4px; }
@@ -60,7 +62,7 @@
 </head>
 <body>
 
-  <!-- Navbar inyectado -->
+  <!-- Navbar inyectado (mismos ficheros del sitio) -->
   <div id="tpl-navbar"></div>
 
   <main class="container tpl-page">
@@ -118,7 +120,7 @@
             </div>
           </div>
 
-          <!-- Visita a gatos: duración y nº visitas/día -->
+          <!-- Visita a gatos: duración y nº visitas/día (2ª visita = 15') -->
           <div id="visitCatControls" class="tpl-grid" style="margin-top:6px; display:none">
             <div class="tpl-field">
               <label for="vgDuration">Duración</label>
@@ -134,6 +136,18 @@
         <!-- 2) Mascotas -->
         <fieldset class="tpl-fieldset">
           <legend>2) Mascotas</legend>
+
+          <div class="tpl-grid" style="margin-bottom:6px">
+            <div class="tpl-field" style="max-width:220px">
+              <label for="petsCount">Número de mascotas</label>
+              <select id="petsCount">
+                <option>1</option><option>2</option><option>3</option><option>4</option>
+                <option>5</option><option>6</option><option>7</option><option>8</option>
+              </select>
+              <small class="tpl-lead" style="font-size:.85rem;color:#666">Podrás marcar hasta este máximo.</small>
+            </div>
+          </div>
+
           <div id="petsGrid" class="pets-grid"></div>
         </fieldset>
 
@@ -229,7 +243,7 @@
     </section>
   </main>
 
-  <!-- Footer y Navbar -->
+  <!-- Footer y Navbar inyectados -->
   <div id="tpl-footer"></div>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
@@ -239,7 +253,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js" defer></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js" defer></script>
 
-  <!-- Init Firebase (calcado de candidaturas) -->
+  <!-- Init Firebase (igual que candidaturas) -->
   <script defer>
     (function(){
       try{
