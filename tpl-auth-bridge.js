@@ -1,65 +1,59 @@
-<!-- Archivo: tpl-auth-bridge.js -->
-<!-- TPL: INICIO BLOQUE NUEVO [Puente de sesión unificada (Firebase + localStorage)] -->
+/*
+TPL · Auth bridge + Perfil → Autorrelleno y mascotas
+- Muestra/oculta el muro de login según sesión
+- Login/Registro mínimos en modal sin redirección
+- Carga perfil (propietarios/{uid}) y mascotas → window.TPL_SESSION
+*/
 (function(){
-  if (window.__TPL_AUTH_BRIDGE__) return; window.__TPL_AUTH_BRIDGE__=true;
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  function normEmail(s){ return String(s||'').trim().toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
-  const ADMIN_EMAILS = (window.__TPL_ADMIN_EMAILS || [
-    '4b.jenny.gomez@gmail.com',
-    'gestion@thepetslovers.es'
-  ]).map(normEmail);
+// Estado global mínimo
+window.TPL_SESSION = { user: null, profile: null, pets: [] };
 
-  const st = window.__TPL_AUTH_STATE = window.__TPL_AUTH_STATE || {
-    ready:false, user:null, email:null, isAdmin:false, uid:null
-  };
 
-  function apply(email, uid){
-    const e = email ? String(email) : null;
-    st.user  = e ? {email:e, uid: uid||null} : null;
-    st.email = e;
-    st.uid   = uid||null;
-    st.isAdmin = ADMIN_EMAILS.includes(normEmail(e));
-    st.ready = true;
-    try { localStorage.setItem('tpl.auth.email', e||''); } catch(_){}
-    try {
-      document.body.setAttribute('data-auth', e ? 'in' : 'out');
-    }catch(_){}
-    window.dispatchEvent(new CustomEvent('tpl-auth-change', { detail:{ user: st.user } }));
-  }
+// UI refs
+const authWall = document.getElementById('authWall');
+const formWrap = document.getElementById('reservaForm');
+const btnLogin = document.getElementById('btnLogin');
+const btnRegister = document.getElementById('btnRegister');
+const ctaStart = document.getElementById('ctaStart');
 
-  function initWithFirebase(){
-    if (typeof firebase === 'undefined' || !firebase.auth) return false;
-    try{
-      firebase.auth().onAuthStateChanged(function(user){
-        if(user && user.email){ apply(user.email, user.uid||null); }
-        else { apply(null, null); }
-      });
-    }catch(e){ console.warn('AUTH-BRIDGE: Firebase auth listener error', e); }
-    return true;
-  }
 
-  function initWithLocal(){
-    try{
-      const e = localStorage.getItem('tpl.profile.email') || localStorage.getItem('tpl.auth.email') || null;
-      if(e) apply(e, null); else apply(null, null);
-    }catch(_){ apply(null, null); }
-  }
+// Simple modal
+const modal = document.createElement('dialog');
+modal.innerHTML = `
+<form method="dialog" style="min-width:320px; max-width:420px; border:none; padding:0;">
+<div style="padding:1rem;">
+<h3 style="margin:0 0 .5rem; font-weight:700; font-family:Montserrat, sans-serif;">Accede a tu cuenta</h3>
+<div style="display:grid; gap:.5rem;">
+<input id="mEmail" type="email" placeholder="Email" required />
+<input id="mPass" type="password" placeholder="Contraseña" required />
+</div>
+<div style="display:flex; gap:.5rem; justify-content:flex-end; margin-top:.75rem;">
+<button class="btn">Cancelar</button>
+<button id="mDoLogin" class="btn primary" value="login">Iniciar sesión</button>
+<button id="mDoRegister" class="btn" value="register">Crear cuenta</button>
+</div>
+<p id="mError" class="muted" style="color:#ef4444; display:none; margin-top:.5rem;"></p>
+</div>
+</form>`;
+document.body.appendChild(modal);
 
-  // Exponer helpers mínimos
-  window.TPL_AUTH = {
-    get state(){ return Object.assign({}, st); },
-    isLogged(){ return !!st.email; },
-    email(){ return st.email||null; },
-    uid(){ return st.uid||null; },
-    isAdmin(){ return !!st.isAdmin; }
-  };
 
-  // Inicio
-  document.addEventListener('DOMContentLoaded', function(){
-    const ok = initWithFirebase();
-    if(!ok) initWithLocal();
-    window.dispatchEvent(new CustomEvent('tpl-auth-ready'));
-  });
+const show = el => el && (el.style.display = 'block');
+const hide = el => el && (el.style.display = 'none');
+
+
+function setDisabledForm(disabled){
+formWrap?.setAttribute('data-disabled', disabled ? 'true' : 'false');
+[...formWrap.querySelectorAll('input,select,textarea,button')].forEach(el => {
+if (el.id === 'btnBack') return; // permitir atrás
+if (el.closest('#authWall')) return;
+el.disabled = !!disabled;
+});
+}
+
+
 })();
