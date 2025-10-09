@@ -1,428 +1,415 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reservas · The Pets Lovers</title>
+// js/reservas.js
+// Flujo: 1) Servicio/fechas 2) Mascotas 3) Titular 4) Desglose 5) CTA.
+// Login-wall (Firebase), autocompletado desde perfil, cálculo de márgenes y guardado + EmailJS.
 
-  <!-- Mismo CSS y fuentes que el resto del sitio -->
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+(function(){
+  'use strict';
 
-  <!-- TPL: Canónico + kill-switch -->
-  <script>
-    (function(){
-      try{
-        var qs = new URLSearchParams(location.search||'');
-        if (qs.get('safe') === '1') {
-          window.__TPL_SAFE_MODE__ = true;
-          window.__TPL_DISABLE_CANON__ = true;
-        }
-      }catch(_){}
-      var CANON = 'www.thepetslovers.es';
-      var host  = location.hostname || '';
-      var IS_DEV = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host) || /github\.io$/i.test(host);
-      if (!window.__TPL_DISABLE_CANON__ && !IS_DEV && host && host !== CANON) {
-        location.replace(location.protocol + '//' + CANON + location.pathname + location.search + location.hash);
-        return;
-      }
-    })();
-  </script>
+  /* ===== Utils ===== */
+  const €fmt = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'});
+  const currency = (n)=> (Math.round((+n||0)*100)/100).toFixed(2);
+  const fmtEUR = (n)=> €fmt.format(Math.round((+n||0)*100)/100);
+  const $  = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const parseDateSafe=(str)=>{ if(!str) return null; const d=new Date(str); return isNaN(d)?null:d; };
+  const todayStr=()=>{const d=new Date();const m=String(d.getMonth()+1).padStart(2,"0");const dd=String(d.getDate()).padStart(2,"0");return `${d.getFullYear()}-${m}-${dd}`};
 
-  <!-- TPL: SEO on-page para Reservas -->
-  <meta name="description" content="Reserva guardería, paseos, visitas a domicilio y alojamiento nocturno con auxiliares veterinarios titulados.">
-  <meta property="og:title" content="Reserva tu servicio · The Pets Lovers">
-  <meta property="og:description" content="Selecciona servicio, fechas y mascotas. Pago de señal ahora y resto 12 días antes.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://www.thepetslovers.es/reservas.html">
-  <meta property="og:image" content="https://www.thepetslovers.es/images/hero.jpg.png">
-  <meta name="twitter:card" content="summary_large_image">
+  function monthDayKey(date){const d=parseDateSafe(date); if(!d) return ""; const m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0"); return `${m}-${dd}`;}
+  const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // Días señalados (cliente +30 / auxiliar +15)
 
-  <!-- TPL: JSON-LD (igual que home) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "LocalBusiness",
-    "name": "The Pets Lovers",
-    "url": "https://www.thepetslovers.es/",
-    "logo": "https://www.thepetslovers.es/images/logo.png.png",
-    "sameAs": ["https://www.instagram.com/guarderiamascotasthepetslovers/"],
-    "areaServed": "España",
-    "serviceArea": {"@type":"Country","name":"España"},
-    "description": "Guardería de mascotas y cuidadores profesionales. Auxiliares veterinarios titulados."
+  /* ===== Servicio y fechas ===== */
+  function svcKey(){
+    const raw = ($('#service')?.value || '').toString().trim().toLowerCase();
+    const map = {
+      'guarderia':'guarderia','guardería':'guarderia','daycare':'guarderia',
+      'alojamiento':'alojamiento','estancias':'alojamiento','estancia':'alojamiento',
+      'paseos':'paseos','paseo':'paseos','walks':'paseos',
+      'visitas':'visitas','visita':'visitas','gatos':'visitas',
+      'exoticos':'exoticos','exóticos':'exoticos','exotico':'exoticos',
+      'transporte':'transporte','postquirurgico':'postquirurgico','bodas':'bodas'
+    };
+    return map[raw] || raw;
   }
-  </script>
+  function getDays(){
+    const s=$('#startDate')?.value, e=$('#endDate')?.value;
+    if(!s||!e) return 0;
+    const d1=new Date(s), d2=new Date(e); if(isNaN(d1)||isNaN(d2)) return 0;
+    const diff=Math.floor((d2-d1)/(1000*60*60*24));
+    return diff>=0 ? diff+1 : 0;
+  }
+  function updateDaysRow(nDias){
+    const td=$('#sumSenalado')?.parentElement;
+    if(td) td.innerHTML=`<span id="sumSenalado">${nDias===1?'1 día':`${nDias} días`}</span>`;
+  }
 
-  <!-- TPL: Config Firebase global — (la misma que en tu home) -->
-  <script>
-    window.TPL_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
-  </script>
+  /* ===== Nombre y apellidos en un campo visible ===== */
+  function unifyNameFields(){
+    const first=$('#firstName'), last=$('#lastName'); if(!first||!last) return;
+    const lab=document.querySelector('label[for="firstName"]'); if(lab) lab.textContent='Nombre y apellidos';
+    if(first.placeholder) first.placeholder='Nombre y apellidos';
+    const up=()=>{ const parts=first.value.trim().split(/\s+/); last.value=(parts.length>=2)?parts.slice(1).join(' '):''; };
+    const merge=()=>{ const n=(first.value||'').trim(), s=(last.value||'').trim(); if(s && !n.toLowerCase().includes(s.toLowerCase())) first.value=`${n} ${s}`.trim(); };
+    const hide=()=>{ const c=last.closest('.booking-field')||last.parentElement; if(c) c.style.display='none'; };
+    setTimeout(()=>{ merge(); hide(); up(); }, 600);
+    first.addEventListener('input', up); last.addEventListener('input', ()=>{ merge(); hide(); up(); });
+  }
 
-  <!-- TPL: Hardening anti-overlay -->
-  <style>
-    #cookie-modal-overlay[hidden],
-    #cookie-modal-overlay[aria-hidden="true"]{display:none !important;visibility:hidden !important;pointer-events:none !important;}
-    #tpl-form-overlay:not(.show), .tpl-overlay:not(.on){pointer-events:none !important;}
-    html, body { pointer-events:auto !important; }
-    a, button { pointer-events:auto !important; }
-    /* Ajustes mínimos para que el formulario respire con tu style.css */
-    .section { padding: 40px 0; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
-    .card { background:#fff; border-radius:12px; border:1px solid #e5e7eb; padding:16px; margin-bottom:16px; }
-    .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    @media (max-width: 768px){ .grid-2 { grid-template-columns: 1fr; } }
-    .btn { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; border-radius:10px; border:0; cursor:pointer; font-weight:600; }
-    .btn-primary { background:#16a34a; color:#fff; }
-    .btn-ghost { background:#fff; border:1px solid #e5e7eb; }
-    .muted { color:#6b7280; }
-    .disabled { opacity:.55; pointer-events:none; }
-    label { display:block; margin:6px 0; font-weight:600; }
-    input, select, textarea { width:100%; padding:10px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; }
-    textarea { min-height:110px; resize:vertical; }
-    table.summary{ width:100%; border-collapse:separate; border-spacing:0 6px }
-    table.summary th, table.summary td{ padding:8px 10px; border-bottom:1px dashed #e5e7eb; text-align:left }
-    table.summary tr.total th, table.summary tr.total td { font-weight:700; border-bottom:none }
-    .pets-grid{ display:grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap:12px }
-    @media(min-width:900px){ .pets-grid{ grid-template-columns: repeat(3,minmax(0,1fr)); } }
-    .pet-card{ display:flex; gap:10px; align-items:center; border:1px solid #e5e7eb; border-radius:12px; padding:10px; background:#fff }
-    .pet-card img{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:1px solid #e5e7eb }
-    .badge{ font-size:11px; border-radius:999px; padding:2px 6px; border:1px solid #c7d2fe; background:#eef2ff; color:#3730a3; margin-left:6px }
-  </style>
-</head>
-<body>
-
-  <!-- Navbar (inyectada por tu JS, SIN CAMBIOS) -->
-  <div id="tpl-navbar">
-    <noscript>
-      <nav class="navbar">
-        <div class="logo">
-          <a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a>
-        </div>
-        <a href="index.html" class="home-button">Inicio</a>
-        <ul class="nav-links">
-          <li><a href="como-funciona.html">Cómo funciona</a></li>
-          <li><a href="servicios.html">Servicios</a></li>
-          <li><a href="index.html#contactanos">Contáctanos</a></li>
-          <li><a href="index.html#hazte-cuidador">Conviértete en cuidador</a></li>
-        </ul>
-        <a class="login-button" href="iniciar-sesion.html?next=perfil.html">Iniciar sesión</a>
-      </nav>
-    </noscript>
-  </div>
-
-  <!-- Hero con tu misma estética -->
-  <header class="hero-section">
-    <div class="hero-content">
-      <h1>Reserva tu servicio</h1>
-      <p>Selecciona servicio, fechas y mascotas. Pago de señal ahora y resto 12 días antes.</p>
-      <a href="#formulario" class="cta-button">Empezar</a>
-    </div>
-  </header>
-
-  <!-- Muro de login -->
-  <section class="section">
-    <div class="container">
-      <div id="authWall" class="card" style="display:none">
-        <h2 style="margin:0 0 8px">Inicia sesión para reservar</h2>
-        <p class="muted">Para continuar debes iniciar sesión o crear tu cuenta.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn btn-primary" href="iniciar-sesion.html?next=reservas.html"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a>
-          <a class="btn btn-ghost" href="crear-cuenta.html"><i class="fa-solid fa-user-plus"></i> Crear cuenta</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Formulario -->
-  <section id="formulario" class="section">
-    <div class="container">
-      <button type="button" class="btn btn-ghost" id="btnBack" style="margin-bottom:12px">
-        <i class="fa-solid fa-arrow-left"></i> Atrás
-      </button>
-
-      <form id="bookingForm" class="card disabled" data-tpl-redirect="perfil.html" data-tpl-wait="800">
-        <!-- Datos del servicio -->
-        <div class="card">
-          <h2>Datos del servicio</h2>
-          <div class="grid-2">
-            <div>
-              <label for="service">Servicio</label>
-              <select id="service" name="service" required>
-                <option value="">Selecciona…</option>
-                <option value="guarderia">Guardería de día</option>
-                <option value="alojamiento">Alojamiento nocturno</option>
-                <option value="paseos">Paseo (60’)</option>
-                <option value="visitas">Visita a domicilio (gato)</option>
-                <option value="exoticos">Exóticos</option>
-                <option value="transporte">Transporte</option>
-              </select>
-            </div>
-            <div>
-              <label for="startDate">Fecha inicio</label>
-              <input id="startDate" name="startDate" type="date" required>
-            </div>
-            <div>
-              <label for="endDate">Fecha fin</label>
-              <input id="endDate" name="endDate" type="date" required>
-            </div>
-            <div>
-              <label for="startTime">Hora inicio</label>
-              <input id="startTime" name="Hora_inicio" type="time">
-            </div>
-            <div>
-              <label for="endTime">Hora fin</label>
-              <input id="endTime" name="Hora_fin" type="time">
-            </div>
+  /* ===== Mascotas (sin imágenes) ===== */
+  function ensurePetsList(){ let list=$('#petsList'); if(!list){ const a=$('#petsAnchor')||$('#bookingForm')||document.body; list=document.createElement('section'); list.id='petsList'; list.className='pets-list'; a.appendChild(list);} return list; }
+  function ageMonths(b){ const d=parseDateSafe(b); if(!d) return null; const n=new Date(); let m=(n.getFullYear()-d.getFullYear())*12+(n.getMonth()-d.getMonth()); if(n.getDate()<d.getDate()) m--; return m; }
+  function isPuppyPet(p){ return p?.species==="perro" && (ageMonths(p.birth)??99) <= 6; }
+  function ensurePetsMock(profile){
+    if(profile && Array.isArray(profile.pets) && profile.pets.length) return profile;
+    const mock=profile||{}; mock.pets=[
+      {id:"luna", name:"Luna", species:"perro", birth:"2025-07-10"},
+      {id:"michi", name:"Michi", species:"gato",  birth:"2022-05-01"},
+      {id:"kiko", name:"Kiko", species:"exotico",subtype:"ave", birth:"2021-03-03"}
+    ]; return mock;
+  }
+  function renderPets(profile){
+    const list=ensurePetsList(); list.innerHTML="";
+    const pets=(profile?.pets)||[];
+    pets.slice(0,50).forEach(p=>{
+      const puppy=isPuppyPet(p);
+      const line=document.createElement('label'); line.className='pet-line';
+      line.innerHTML = `
+        <input type="checkbox" class="pet-check" data-id="${p.id}">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <strong>${p.name||"Mascota"}</strong>
+          <div class="pet-meta">
+            <span class="muted">${p.species==="exotico"?(p.subtype?("Exótico · "+p.subtype):"Exótico"):p.species}${p.birth?(" · Nac: "+p.birth):""}</span>
+            ${puppy?'<span class="badge">Cachorro (≤6m)</span>':''}
           </div>
         </div>
+      `;
+      list.appendChild(line);
+    });
+    list.addEventListener('change', ()=>computeCosts());
+  }
+  function selectedPets(profile){ const ids=$$('.pet-check:checked').map(x=>x.getAttribute('data-id')); const all=(profile?.pets)||[]; return all.filter(p=>ids.includes(p.id)).slice(0,3); }
+  function getNumMascotas(){ return Math.max(1, $$('.pet-check:checked').length || 1); }
 
-        <!-- Datos del titular -->
-        <div class="card">
-          <h2>Datos del titular</h2>
-          <div class="grid-2">
-            <div>
-              <label for="firstName">Nombre y apellidos</label>
-              <input id="firstName" name="firstName" required>
-              <input id="lastName" name="lastName" style="display:none">
-            </div>
-            <div>
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" required>
-            </div>
-            <div>
-              <label for="phone">Teléfono</label>
-              <input id="phone" name="phone" required>
-            </div>
-            <div>
-              <label for="region">Comunidad Autónoma</label>
-              <select id="region" name="region" required>
-                <option value="">Selecciona…</option>
-                <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
-                <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
-                <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
-                <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option>
-                <option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
-              </select>
-            </div>
-            <div>
-              <label for="address">Dirección</label>
-              <input id="address" name="address" placeholder="Calle, nº, piso…">
-            </div>
-            <div>
-              <label for="postalCode">Código Postal</label>
-              <input id="postalCode" name="postalCode" placeholder="28001">
-            </div>
-            <div class="full">
-              <label for="observations">Observaciones</label>
-              <textarea id="observations" name="observations" placeholder="Llaves, timbre, alergias…"></textarea>
-            </div>
-          </div>
-        </div>
+  /* ===== Especie visible según servicio ===== */
+  function toggleSpeciesVisibility(){
+    const svc=svcKey(), block=$('#speciesBlock'), sp=$('#species'); if(!block||!sp) return;
+    if(svc==='visitas'){ block.style.display='block'; sp.value='gato'; sp.disabled=true; }
+    else if(svc==='exoticos'){ block.style.display='block'; sp.disabled=false; }
+    else { block.style.display='none'; }
+  }
 
-        <!-- Mascotas -->
-        <div class="card" id="petsAnchor">
-          <h2>Mascotas</h2>
-          <div id="speciesBlock" style="display:none; margin-bottom:10px">
-            <label for="species">Especie</label>
-            <select id="species" name="species">
-              <option value="gato">Gato</option>
-              <option value="perro">Perro</option>
-              <option value="conejo">Conejo</option>
-              <option value="pajaro">Pájaro</option>
-              <option value="huron">Hurón</option>
-              <option value="iguana">Iguana</option>
-              <option value="otro">Otro exótico</option>
-            </select>
-          </div>
-          <section id="petsGrid" class="pets-grid"></section>
-          <p class="muted">Selecciona hasta 3 mascotas para esta reserva.</p>
-        </div>
+  /* ===== Tarifas públicas + auxiliar ===== */
+  const PRICES={
+    base:{visitas:22,paseos:12,guarderia:15,alojamiento:30,bodas:0,postquirurgico:0,transporte:20,exoticos:0},
+    puppyBase:{guarderia:20,alojamiento:35},
+    visita60:22, visita90:30, visita60_larga:18, visita90_larga:27, visitaMed:12, visitaMed_larga:10,
+    paseoStd:12, paseoExtraPerro:8, paseoBonos:{10:115,15:168,20:220,25:270,30:318},
+    alojSegundoPerroDia:25, alojSegundoPerroD11:22
+  };
+  const BUNDLE_GUARDERIA={ adult:{10:135,20:250,30:315}, puppy:{10:185,20:350,30:465} };
+  const EXOTIC_PRICES={conejo:25,pajaro:20,huron:25,iguana:20,otro:null};
+  const AUX={
+    guarderia:{adulto:12,cachorro:17,bonosAdult:{10:11,20:10,30:9},bonosPuppy:{10:16,20:14,30:12}},
+    alojamiento:{std:{normal:25,desde11:22},puppy:{normal:30,desde11:27},segundo:{normal:20,desde11:17}},
+    paseo:{base:10,extra_mascota:5,bonos:{10:8,15:7.5,20:7,25:6.5,30:6}},
+    visitas:{base60:17,base90:25,d11_60:12,d11_90:21,med15_publicEqualsAux:true,gatosExtra:{one:10,twoEach:6,moreEach:4}},
+    exoticos:{aves:15,reptiles:15,mamiferos:20},
+    transporte:{base:15}
+  };
+  const URGENCIA_PLUS=10, FESTIVO_NORMAL_PLUS=10, FESTIVO_NORMAL_AUX=8, BIG_DAY_PLUS=30, BIG_DAY_AUX=15;
 
-        <!-- Desglose -->
-        <div class="card">
-          <h2>Desglose</h2>
-          <table class="summary">
-            <thead><tr><th>Concepto</th><th>Importe</th></tr></thead>
-            <tbody id="summaryBody">
-              <tr><th>Base suelto</th><td id="sumBase">0.00</td></tr>
-              <tr><th>Visitas (principal)</th><td id="sumVisit1">0.00</td></tr>
-              <tr><th>Visitas (medicación)</th><td id="sumVisit2">0.00</td></tr>
-              <tr><th>Suplementos/bono</th><td id="sumFestivo">0.00</td></tr>
-              <tr><th>Días</th><td id="sumSenalado">0</td></tr>
-              <tr><th>Suplementos mascotas</th><td id="sumPets">0.00</td></tr>
-              <tr class="total"><th>Subtotal</th><td id="sumSubtotal">0.00</td></tr>
-              <tr class="total"><th>A pagar ahora</th><td id="sumDeposit">0.00</td></tr>
-              <tr class="total"><th>Pendiente (12 días antes)</th><td id="sumResto">0.00</td></tr>
-            </tbody>
-          </table>
-          <input type="hidden" id="summaryField" name="summaryField" value="">
-          <p class="muted" style="margin-top:8px">
-            Solo abonarás una pequeña parte ahora. El resto se pagará <strong>12 días antes</strong> del inicio del servicio.
-          </p>
-        </div>
+  function getVisitDuration(){ return 60; } // si añades selector visible, cámbialo
+  function getVisitDaily(){ return 1; }
 
-        <!-- CTA -->
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
-        </div>
-      </form>
-    </div>
-  </section>
+  /* ===== Cálculo de costes ===== */
+  function computeCosts(){
+    const svc=svcKey();
+    const species=($('#species')?.value||'perro');
+    const visitDur=getVisitDuration();
+    const visitDaily=getVisitDaily();
+    const nMasc=getNumMascotas();
 
-  <!-- Footer (inyectado cuando no hay JS) -->
-  <div id="tpl-footer">
-    <noscript>
-      <footer class="site-footer">
-        <div class="container footer-row">
-          <div class="footer-left">
-            <nav class="footer-links-row">
-              <a href="sobre-nosotros.html">Sobre nosotros</a><span class="sep">|</span>
-              <a href="contacto.html">Contacta con nosotros</a><span class="sep">|</span>
-              <a href="donde-estamos.html">Dónde estamos</a><span class="sep">|</span>
-              <a href="trabaja-con-nosotros.html">Trabaja con nosotros</a><span class="sep">|</span>
-              <a href="privacidad.html">Política de Privacidad</a><span class="sep">|</span>
-              <a href="condiciones.html">Condiciones de Servicio</a><span class="sep">|</span>
-              <a href="digital-services-act.html">Digital Services Act</a>
-            </nav>
-            <div class="footer-help">¿Necesitas ayuda? <a href="ayuda.html">Centro de ayuda</a></div>
-          </div>
-          <div class="footer-right socials">
-            <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="TikTok"><i class="fab fa-tiktok"></i></a>
-          </div>
-        </div>
-        <div class="footer-bottom footer-bottom--inline">
-          <div class="footer-bottom-left">© <span class="year-span"></span> The Pets Lovers — Todos los derechos reservados</div>
-          <nav class="footer-bottom-right legal-links">
-            <a href="aviso-legal.html">Aviso legal</a><span class="sep">|</span>
-            <a href="privacidad.html">Privacidad</a><span class="sep">|</span>
-            <a href="cookies.html">Cookies</a><span class="sep">|</span>
-            <a href="canal-denuncias.html">Canal de denuncias</a>
-          </nav>
-        </div>
-      </footer>
-    </noscript>
-  </div>
+    let nDias=getDays(); if(!Number.isFinite(nDias)||nDias<=0){ nDias=(['transporte','bodas','postquirurgico','exoticos','visitas','paseos'].includes(svc))?1:0; }
+    updateDaysRow(nDias);
 
-  <script>document.querySelectorAll('.year-span').forEach(s => s.textContent = new Date().getFullYear());</script>
+    let baseCost=0, visit1Cost=0, visit2Cost=0, supplementPetsCost=0, packCost=0, exoticUnpriced=false, auxTotal=0;
 
-  <!-- Firebase compat (solo si aún no están en el layout global) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script>
-    (function(){
-      if (typeof firebase !== 'undefined' && !firebase.apps.length && window.TPL_FIREBASE_CONFIG) {
-        firebase.initializeApp(window.TPL_FIREBASE_CONFIG);
+    const sDate=$('#startDate')?.value||todayStr(), eDate=$('#endDate')?.value||sDate;
+    const mdS=monthDayKey(sDate), mdE=monthDayKey(eDate);
+
+    let plusFestivoCliente=0, plusFestivoAux=0;
+    if(BIG_DAYS.includes(mdS)||BIG_DAYS.includes(mdE)){ plusFestivoCliente+=BIG_DAY_PLUS; plusFestivoAux+=BIG_DAY_AUX; }
+    const plusUrgencia=0; // si luego conectamos con hora actual y <2h, aplicar URGENCIA_PLUS
+
+    if(svc==='visitas'){
+      const long=nDias>=11;
+      const tarifa1=(visitDur===90)?(long?PRICES.visita90_larga:PRICES.visita90):(visitDur===15)?(long?PRICES.visitaMed_larga:PRICES.visitaMed):(long?PRICES.visita60_larga:PRICES.visita60);
+      visit1Cost = tarifa1*nDias;
+      const aux1=(visitDur===90)?(long?AUX.visitas.d11_90:AUX.visitas.base90):(visitDur===15)?(AUX.visitas.med15_publicEqualsAux?(long?PRICES.visitaMed_larga:PRICES.visitaMed):0):(long?AUX.visitas.d11_60:AUX.visitas.base60);
+      auxTotal += aux1*nDias;
+
+      const extras=Math.max(0,visitDaily-1);
+      if(extras>0){ const tMed= long?PRICES.visitaMed_larga:PRICES.visitaMed; visit2Cost=tMed*nDias*extras; auxTotal+=tMed*nDias*extras; }
+
+      const totalVis=nDias*Math.max(1,visitDaily);
+      if(nMasc>1){
+        const extra=nMasc-1; let perC=0, perA=0;
+        if(extra===1){ perC=12; perA=AUX.visitas.gatosExtra.one; }
+        else if(extra===2){ perC=8; perA=AUX.visitas.gatosExtra.twoEach; }
+        else { perC=6; perA=AUX.visitas.gatosExtra.moreEach; }
+        supplementPetsCost = perC*extra*totalVis;
+        auxTotal           += perA*extra*totalVis;
       }
-    })();
-  </script>
 
-  <!-- EmailJS (se usará si TPL_EMAILJS existe globalmente) -->
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    // Si ya lo defines globalmente en otra parte, no toques. Si no, puedes dejarlo aquí:
-    window.TPL_EMAILJS = window.TPL_EMAILJS || {
-      serviceId: "service_odjqrfl",
-      publicKey: "L2xAATfVuHJwj4EIV",
-      templates: { cliente: "template_rao5n0c", gestion: "template_rao5n0c" },
-      adminEmail: "gestion@thepetslovers.es"
-    };
-    try{ if(window.TPL_EMAILJS.publicKey){ emailjs.init(window.TPL_EMAILJS.publicKey); } }catch(e){}
-  </script>
+    } else if(svc==='paseos'){
+      const pp=PRICES.paseoStd; let pack=0;
+      if(nDias>=30)pack=30; else if(nDias>=25)pack=25; else if(nDias>=20)pack=20; else if(nDias>=15)pack=15; else if(nDias>=10)pack=10;
+      if(pack>0){ const price=PRICES.paseoBonos[pack]; const rem=nDias-pack; packCost=price; baseCost=rem*pp; auxTotal+=AUX.paseo.bonos[pack]*pack + AUX.paseo.base*rem; }
+      else { baseCost=nDias*pp; auxTotal+=AUX.paseo.base*nDias; }
+      if(nMasc>1){ supplementPetsCost=(nMasc-1)*nDias*PRICES.paseoExtraPerro; auxTotal+=(nMasc-1)*nDias*AUX.paseo.extra_mascota; }
 
-  <!-- Scripts existentes del sitio (SIN CAMBIOS) -->
-  <script src="script.js"></script>
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-  <script src="tpl-auth.js" defer></script>
+    } else if(svc==='guarderia'){
+      const anyPuppy = selectedPets(currentProfile).some(isPuppyPet);
+      const perDay=anyPuppy?PRICES.puppyBase.guarderia:PRICES.base.guarderia;
+      const table=anyPuppy?BUNDLE_GUARDERIA.puppy:BUNDLE_GUARDERIA.adult;
+      const auxDay=anyPuppy?AUX.guarderia.cachorro:AUX.guarderia.adulto;
+      const auxB=anyPuppy?AUX.guarderia.bonosPuppy:AUX.guarderia.bonosAdult;
+      let pack=0; if(nDias>=30)pack=30; else if(nDias>=20)pack=20; else if(nDias>=10)pack=10;
+      if(pack>0){ const price=table[pack]; const rem=nDias-pack; packCost=price; baseCost=rem*perDay; auxTotal+=auxB[pack]*pack + auxDay*rem; }
+      else { baseCost=perDay*nDias; auxTotal+=auxDay*nDias; }
 
-  <!-- Lógica de Reservas -->
-  <script src="js/reservas.js" defer></script>
-
-  <!-- Antibloqueo base + ultra (igual que en tu página) -->
-  <script>
-    (function(){
-      try{
-        document.documentElement.classList.remove('tpl-auth-boot');
-        var ov = document.getElementById('tpl-form-overlay'); if (ov) ov.classList.remove('show');
-        var cov = document.getElementById('cookie-modal-overlay'); if (cov){ cov.hidden = true; cov.style.display = 'none'; cov.setAttribute('aria-hidden','true'); }
-        window.addEventListener('load', function(){
-          document.documentElement.classList.remove('tpl-auth-boot');
-          var ov2 = document.getElementById('tpl-form-overlay'); if (ov2) ov2.classList.remove('show');
-          var cov2 = document.getElementById('cookie-modal-overlay'); if (cov2){ cov2.hidden = true; cov2.style.display = 'none'; cov2.setAttribute('aria-hidden','true'); }
-        });
-      }catch(_){}
-    })();
-  </script>
-  <script>
-    (function(){
-      function off(el){
-        try{
-          el.style.setProperty('pointer-events','none','important');
-          if (!/(^|\s)(on|show|active)(\s|$)/i.test(el.className||'')) {
-            el.style.setProperty('display','none','important');
-            el.setAttribute('aria-hidden','true');
+    } else if(svc==='alojamiento'){
+      const petsCount=Math.max(1,nMasc);
+      for(let i=1;i<=petsCount;i++){
+        const isSecond=(i>=2);
+        for(let d=1; d<=nDias; d++){
+          const d11=(d>=11); let pPub=0,pAux=0;
+          if(isSecond){ pPub=d11?PRICES.alojSegundoPerroD11:PRICES.alojSegundoPerroDia; pAux=d11?AUX.alojamiento.segundo.desde11:AUX.alojamiento.segundo.normal; }
+          else{
+            const anyPup = selectedPets(currentProfile).some(isPuppyPet);
+            pPub = d11 ? (anyPup?32:27) : (anyPup?PRICES.puppyBase.alojamiento:PRICES.base.alojamiento);
+            pAux = d11 ? (anyPup?AUX.alojamiento.puppy.desde11:AUX.alojamiento.std.desde11)
+                       : (anyPup?AUX.alojamiento.puppy.normal:AUX.alojamiento.std.normal);
           }
-        }catch(_){}
+          baseCost += pPub; auxTotal += pAux;
+        }
       }
-      function isCover(el){
-        if (!el || !el.getBoundingClientRect) return false;
-        var r = el.getBoundingClientRect(), w = innerWidth, h = innerHeight;
-        var cs = getComputedStyle(el), pos = cs.position;
-        var big = (r.width >= w*0.85 && r.height >= h*0.85);
-        var covering = (pos==='fixed' || pos==='absolute') && big && cs.display!=='none' && cs.visibility!=='hidden';
-        var id = (el.id||'') + ' ' + (el.className||'');
-        var isNav = /navbar/.test(id) || el.closest && el.closest('.navbar');
-        return covering && !isNav;
-      }
-      function topAt(x,y){
-        var el = document.elementFromPoint(x,y);
-        return el && el.nodeType===3 ? el.parentElement : el;
-      }
-      function scan(){
-        document.documentElement.style.setProperty('pointer-events','auto','important');
-        document.body.style.setProperty('pointer-events','auto','important');
-        document.body.removeAttribute('inert');
 
-        var cov = document.getElementById('cookie-modal-overlay');
-        if (cov && cov.getAttribute('aria-hidden')==='true') off(cov);
-        var ov = document.getElementById('tpl-form-overlay');
-        if (ov && !ov.classList.contains('show')) off(ov);
-        document.querySelectorAll('.tpl-overlay').forEach(function(el){
-          if (!el.classList.contains('on')) off(el);
-        });
+    } else if(svc==='exoticos'){
+      const type=($('#species')?.value)||'otro', price=EXOTIC_PRICES[type];
+      if(price!=null){ const vxd=Math.max(1,getVisitDaily()); baseCost=price*nDias*vxd;
+        const aux=(type==="pajaro")?AUX.exoticos.aves:(type==="iguana")?AUX.exoticos.reptiles:(type==="conejo"||type==="huron")?AUX.exoticos.mamiferos:0;
+        auxTotal+=aux*nDias*vxd;
+      } else { exoticUnpriced=true; baseCost=0; }
 
-        var pts = [[8,8],[innerWidth/2,56],[innerWidth/2,innerHeight/2],[innerWidth-8,8],[innerWidth/2,innerHeight-8]];
-        pts.forEach(function(p){
-          var el = topAt(p[0], p[1]);
-          if (el){
-            var cur = el;
-            for (var i=0;i<5 && cur;i++){
-              if (isCover(cur)) { off(cur); break; }
-              cur = cur.parentElement;
+    } else if(svc==='transporte'){
+      baseCost=PRICES.base.transporte; auxTotal+=AUX.transporte.base;
+
+    } else {
+      baseCost=PRICES.base[svc]||0;
+    }
+
+    const supCliente = plusUrgencia + plusFestivoCliente;
+    const supAux     = plusFestivoAux;
+
+    const subtotal = (!exoticUnpriced)?(baseCost+visit1Cost+visit2Cost+supplementPetsCost+packCost+supCliente):0;
+    const payNow   = Math.max(0, subtotal - (auxTotal + supAux)); // tu margen ahora
+    const payLater = Math.max(0, subtotal - payNow);              // resto 12 días antes
+
+    $('#sumBase')?.textContent    = (!exoticUnpriced?currency(baseCost):'—');
+    $('#sumVisit1')?.textContent  = currency(visit1Cost);
+    $('#sumVisit2')?.textContent  = currency(visit2Cost);
+    $('#sumFestivo')?.textContent = currency(packCost + supCliente);
+    $('#sumSenalado')?.textContent= (nDias>0)?(nDias===1?'1 día':`${nDias} días`):'0';
+    $('#sumPets')?.textContent    = currency(supplementPetsCost);
+    $('#sumSubtotal')?.textContent= (!exoticUnpriced?currency(subtotal):'—');
+    $('#sumDeposit')?.textContent = (!exoticUnpriced?currency(payNow):'—');
+    $('#sumResto')?.textContent   = (!exoticUnpriced?currency(payLater):'—');
+
+    const hidden=$('#summaryField');
+    if(hidden){
+      const s=[];
+      s.push(`Días: ${nDias}`);
+      if(!exoticUnpriced){
+        if(packCost>0) s.push(`Coste del bono: ${currency(packCost)} €`);
+        if(baseCost>0) s.push(`Base suelto: ${currency(baseCost)} €`);
+        if(visit1Cost>0) s.push(`Visitas (principal): ${currency(visit1Cost)} €`);
+        if(visit2Cost>0) s.push(`Visitas (medicación): ${currency(visit2Cost)} €`);
+        if(supplementPetsCost>0) s.push(`Suplementos mascotas: ${currency(supplementPetsCost)} €`);
+        if(supCliente>0) s.push(`Suplementos varios: ${currency(supCliente)} €`);
+        s.push(`Subtotal: ${currency(subtotal)} €`);
+        s.push(`A pagar ahora: ${currency(payNow)} €`);
+        s.push(`Pendiente: ${currency(payLater)} €`);
+      } else { s.push('Precio a consultar'); }
+      hidden.value=s.join(' | ');
+    }
+
+    try{ sessionStorage.setItem("tpl.lastCalc", JSON.stringify({svc,nDias,nMasc,baseCost,visit1Cost,visit2Cost,supplementPetsCost,packCost, supCliente, subtotal, auxTotal, supAux, payNow, payLater})); }catch(_){}
+  }
+
+  /* ===== Perfil / Autorelleno ===== */
+  function getProfile(){ try{ return JSON.parse(localStorage.getItem("tpl.profile")||"null"); }catch(_){ return null; } }
+  let currentProfile=null;
+  function fillOwnerFromProfile(p){
+    $('#firstName')&&p?.fullName &&($('#firstName').value=p.fullName);
+    $('#lastName')&&($('#lastName').value='');
+    $('#email')&&p?.email &&($('#email').value=p.email);
+    $('#phone')&&p?.phone &&($('#phone').value=p.phone);
+    $('#address')&&p?.address &&($('#address').value=p.address);
+    $('#postalCode')&&p?.postalCode&&($('#postalCode').value=p.postalCode);
+    $('#region')&&p?.region&&($('#region').value=p.region);
+  }
+
+  /* ===== Eventos y arranque ===== */
+  function bindEvents(){
+    ['service','species','startDate','endDate','startTime','endTime'].forEach(id=>{
+      const el=document.getElementById(id); if(!el) return;
+      const h=()=>{ toggleSpeciesVisibility(); computeCosts(); };
+      el.addEventListener('change',h); el.addEventListener('input',h);
+    });
+    $('#btnBack')?.addEventListener('click', ()=>{ if(document.referrer) history.back(); else location.href='servicios.html'; });
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    unifyNameFields();
+    bindEvents();
+    toggleSpeciesVisibility();
+    computeCosts();
+    setTimeout(computeCosts,300);
+
+    const form=$('#bookingForm'), wall=$('#authWall');
+
+    // Auth helpers (Firebase compat)
+    const isLogged = ()=>{ try{return !!(firebase?.auth()?.currentUser);}catch(_){return false;} };
+    const getUID   = ()=>{ try{return firebase?.auth()?.currentUser?.uid||null;}catch(_){return null;} };
+    const getMail  = ()=>{ try{return firebase?.auth()?.currentUser?.email||null;}catch(_){return null;} };
+
+    function applyAuthUI(logged){
+      form?.classList.toggle('disabled', !logged);
+      if(wall) wall.style.display = logged ? 'none' : 'block';
+    }
+
+    async function hydrateProfile(){
+      const logged=isLogged();
+      applyAuthUI(logged);
+      const uid=getUID();
+
+      if(logged && typeof firebase!=='undefined' && firebase.firestore && uid){
+        try{
+          const snap=await firebase.firestore().collection('propietarios').doc(uid).get();
+          const owner=snap.exists?snap.data():null;
+          currentProfile=ensurePetsMock(owner || getProfile() || {});
+        }catch(_){
+          currentProfile=ensurePetsMock(getProfile() || {});
+        }
+      }else{
+        currentProfile=ensurePetsMock(getProfile() || {});
+      }
+      fillOwnerFromProfile(currentProfile);
+      renderPets(currentProfile);
+      computeCosts();
+    }
+
+    try{
+      if(firebase?.auth){
+        firebase.auth().onAuthStateChanged(()=>{ hydrateProfile(); });
+      } else { hydrateProfile(); }
+    }catch(_){ hydrateProfile(); }
+
+    // Envío
+    if(form){
+      form.addEventListener('submit', async (ev)=>{
+        ev.preventDefault(); ev.stopPropagation();
+        if(!isLogged()){ alert('Debes iniciar sesión para reservar.'); return; }
+
+        // Requiere perfil en Firestore
+        try{
+          const uid=getUID();
+          if(uid && firebase?.firestore){
+            const doc=await firebase.firestore().collection('propietarios').doc(uid).get();
+            if(!doc.exists){
+              alert('Completa tu perfil antes de hacer una reserva.');
+              if(location.pathname.indexOf('perfil')===-1) location.href='perfil.html';
+              return;
             }
           }
-        });
-      }
-      if (document.readyState!=='loading') scan(); else document.addEventListener('DOMContentLoaded', scan);
-      addEventListener('load', scan);
-      setTimeout(scan, 200); setTimeout(scan, 700); setTimeout(scan, 1500);
-      document.addEventListener('click', function once(){ scan(); document.removeEventListener('click', once); });
-    })();
-  </script>
-</body>
-</html>
+        }catch(_){}
+
+        computeCosts();
+
+        // Recopilar datos
+        const fd=new FormData(form); const payload={}; for(const [k,v] of fd.entries()) payload[k]=v;
+
+        let calc=null; try{ calc=JSON.parse(sessionStorage.getItem("tpl.lastCalc")||"null"); }catch(_){}
+        const subtotal=calc?.subtotal||0, payNow=calc?.payNow||0, payLater=calc?.payLater||Math.max(0, subtotal-payNow);
+
+        payload._estado='paid_review'; // solicitud en revisión tras abonar señal
+        payload._uid=getUID();
+        payload._email=getMail() || payload.email || null;
+        payload._createdAt=(firebase?.firestore?.FieldValue)?firebase.firestore.FieldValue.serverTimestamp():new Date().toISOString();
+        payload.total_cliente=Number(subtotal.toFixed(2));
+        payload.pagar_ahora=Number(payNow.toFixed(2));
+        payload.pendiente=Number(payLater.toFixed(2));
+
+        // Guardar
+        let saved=false, docId=null;
+        try{
+          if(firebase?.firestore){
+            const ref=await firebase.firestore().collection('reservas').add(payload);
+            saved=true; docId=ref.id;
+          }
+        }catch(err){ console.warn('Firestore error',err); }
+
+        // Copia local (para mostrar en perfil aunque falle correo)
+        try{
+          const key="tpl.reservas";
+          const r={ id:docId||("resv_"+Date.now()), status:payload._estado, createdAt:new Date().toISOString(),
+            service: payload.service||svcKey(),
+            dates:{start:payload.startDate||todayStr(), end:payload.endDate||payload.startDate||todayStr()},
+            owner:{name:(payload.firstName||'').trim(), email:(payload.email||getMail()||''), phone:(payload.phone||'')},
+            petsCount:getNumMascotas(), pricing:{ total:subtotal, payNow, payLater } };
+          let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||"[]"); }catch(_){}
+          arr.unshift(r); localStorage.setItem(key, JSON.stringify(arr));
+        }catch(_){}
+
+        // Emails (si configurado)
+        let mailed=false;
+        try{
+          if(window.emailjs && window.TPL_EMAILJS){
+            const cfg=window.TPL_EMAILJS;
+            const service=cfg.serviceId, pub=cfg.publicKey;
+            const tplC=(cfg.templates&&cfg.templates.cliente);
+            const tplG=(cfg.templates&&cfg.templates.gestion);
+            if(service && pub && tplC){
+              const params=Object.assign({}, payload, {
+                reserva_id: docId,
+                total_txt: fmtEUR(subtotal),
+                pay_now_txt: fmtEUR(payNow),
+                pay_later_txt: fmtEUR(payLater),
+                admin_email: cfg.adminEmail || 'gestion@thepetslovers.es'
+              });
+              const r1=await emailjs.send(service, tplC, params, pub);
+              let ok1=(r1 && r1.status>=200 && r1.status<300);
+              let ok2=true;
+              if(tplG){ const r2=await emailjs.send(service, tplG, params, pub); ok2=(r2 && r2.status>=200 && r2.status<300); }
+              mailed = ok1 && ok2;
+            }
+          }
+        }catch(err){ console.warn('EmailJS error',err); }
+
+        if(saved || mailed){
+          alert('Tu reserva se ha registrado y está en revisión.');
+          const redirect=form.dataset.tplRedirect||form.getAttribute('data-tpl-redirect');
+          const wait=parseInt(form.dataset.tplWait||form.getAttribute('data-tpl-wait')||'800',10);
+          if(redirect){ setTimeout(()=>{ location.href=redirect; }, wait); }
+          else { form.reset(); computeCosts(); }
+        } else {
+          alert('No se pudo enviar la reserva. Inténtalo de nuevo.');
+        }
+      });
+    }
+
+    // Seguridad: si algo no montó todavía, no bloquees el form en pruebas
+    setTimeout(()=>{ try{ $('#bookingForm')?.classList.remove('disabled'); $('#authWall')&&( $('#authWall').style.display='none'); }catch(_){}} ,1000);
+  });
+
+})();
