@@ -1,12 +1,12 @@
 /* TPL · Reservas (v2)
    - Autorrelleno desde propietarios/{uid} (mapea nombres alternativos)
    - Servicio preseleccionado: ?service= o ?svc= o localStorage['tpl.lastService']
-   - Fechas inicio/fin + horas
+   - Fechas inicio/fin + horas (juntas)
    - Visita gato: si vgPerDay=2 -> segunda visita = medicación 15' (12€ / 10€ desde día 11)
-   - Guardería: bonos auto 10/20/30
+   - Guardería: bonos auto 10/20/30 días
    - Alojamiento: descuento desde día 11 aplicado día a día
-   - Selector Número de mascotas (#petsCount) limita la selección de tarjetas
-   - EmailJS: un único template para cliente y gestión (ya configurado en HTML)
+   - Selector "Número de mascotas" (#petsCount) limita la selección de tarjetas
+   - EmailJS: un único template para cliente y gestión (config en HTML)
 */
 (function(){
   /* ==== Helpers ==== */
@@ -33,7 +33,7 @@
     paseo: { base:12, secondPet:8 },
     visita_gato: {
       base60:{d1_10:22,d11p:18}, base90:{d1_10:30,d11p:27},
-      med15:{d1_10:12,d11p:10}, // <-- segunda visita
+      med15:{d1_10:12,d11p:10}, // segunda visita
       extraCats:{ oneMore:12, twoEach:8, threePlusEach:6 }
     },
     exoticos_aves:20, exoticos_reptiles:20, exoticos_mamiferos:25,
@@ -73,11 +73,10 @@
         return base;
       }
       const p = snap.data()||{};
-      // Mapear nombres alternativos por si tu colección los usa
+      // Mapeo alternativo por si tu perfil usa otros nombres
       const pets = Array.isArray(p.pets) ? p.pets
         : Array.isArray(p.mascotas) ? p.mascotas
         : [];
-      // Normalizar cada mascota
       const petsNorm = pets.map((x,i)=>({
         id: x.id || x.uid || `pet_${i}`,
         name: x.name || x.nombre || "Mascota",
@@ -105,7 +104,7 @@
     }
   }
 
-  /* ==== Gate y controles específicos ==== */
+  /* ==== Gate + controles específicos ==== */
   function setGate(on){
     const gate = $("#sessionGate"), form=$("#reservaForm");
     if(on){ gate.style.display="block"; form.classList.add("disabled"); }
@@ -142,13 +141,12 @@
       grid.appendChild(el);
     });
 
-    // Límite de selección por #petsCount
+    // Límite por #petsCount
     $("#petsGrid").addEventListener("change", ()=>{
       const max = parseInt($("#petsCount").value||"1",10);
       const checks = $$(".pet-check");
       const selected = checks.filter(c=>c.checked);
       if(selected.length>max){
-        // Desmarca el último que marcaste
         const last = checks.findLast ? checks.findLast(c=>c.checked) : selected[selected.length-1];
         if(last){ last.checked = false; }
         alert(`Puedes seleccionar como máximo ${max} mascota(s).`);
@@ -196,7 +194,7 @@
     const anyPuppy = pets.some(p=> (p?.species==='perro') && (ageMonths(p.birth)<=6) );
     const priceTier = (dIndex)=> dIndex>=11 ? 'd11p' : 'd1_10';
 
-    // Guardería (bono exacto 10/20/30 por total de días, multiplicado por nº mascotas seleccionadas)
+    // Guardería (bonos 10/20/30 por días exactos, multiplicado por nº mascotas seleccionadas)
     if(payload.serviceType==='guarderia_dia'){
       if([10,20,30].includes(days)){
         const bonoPub = anyPuppy ? PUBLIC.guarderia_dia.bonosPuppy[days] : PUBLIC.guarderia_dia.bonosAdult[days];
@@ -214,7 +212,7 @@
       }
     }
 
-    // Alojamiento (día a día: desde día 11 cambia precio)
+    // Alojamiento (día a día; desde día 11 cambia precio)
     if(payload.serviceType==='alojamiento_nocturno' && days>0){
       const dogs = Math.max(1, numDogs||pets.length||1);
       for(let i=1;i<=dogs;i++){
@@ -238,7 +236,7 @@
       linesAux.push({label:`Aux paseo`, amount:a}); aux+=a;
       const extra = Math.max(0, (pets.length||1)-1);
       if(extra>0){
-        const ep = PUBLIC.paseo.secondPet*extra*walks, ea = AUX.paseo.secondPet*extra*walks;
+        const ep = PUBLIC.paseo.secondPet*extra*walks, ea=AUX.paseo.secondPet*extra*walks;
         lines.push({label:`Mascotas adicionales (${extra})`, amount:ep}); total+=ep;
         linesAux.push({label:`Aux extra mascotas`, amount:ea}); aux+=ea;
       }
@@ -251,18 +249,18 @@
       const D = Math.max(1,days||1);
       for(let d=1; d<=D; d++){
         const t=priceTier(d);
-        // Primera visita (duración elegida)
+        // Primera visita
         const p1=PUBLIC.visita_gato[dur][t], a1=AUX.visita_gato[dur][t];
         lines.push({label:`Base (Visita gato · ${dur==='base90'?'90':'60'}’ · día ${d})`, amount:p1}); total+=p1;
         linesAux.push({label:`Aux visita gato · día ${d}`, amount:a1}); aux+=a1;
-        // Segunda visita (si aplica): medicación 15'
+        // Segunda visita (si aplica)
         if(perDay>=2){
           const p2=PUBLIC.visita_gato.med15[t], a2=AUX.visita_gato.med15[t];
           lines.push({label:`Segunda visita (15’) · día ${d}`, amount:p2}); total+=p2;
           linesAux.push({label:`Aux segunda visita (15’) · día ${d}`, amount:a2}); aux+=a2;
         }
       }
-      // Gatos extra (sobre nº de gatos)
+      // Gatos extra
       const extraCats = Math.max(0, numCats-1);
       if(extraCats>0){
         let perC, perA;
@@ -336,7 +334,7 @@
   function collect(profile){
     const max = parseInt($("#petsCount").value||"1",10);
     let sel = selectedPets(profile?.pets||[]);
-    if(sel.length>max) sel = sel.slice(0,max); // seguridad
+    if(sel.length>max) sel = sel.slice(0,max);
     return {
       serviceType: $("#serviceType").value,
       startDate: $("#startDate").value,
@@ -384,7 +382,7 @@
     await emailjs.send(EJ.service_id, EJ.template_id, varsGestion);
   }
 
-  /* ==== Guardado mock ==== */
+  /* ==== Guardado mock (perfil) ==== */
   function saveReservationMock(r){
     const key="tpl.reservas";
     let arr=[]; try{ arr=JSON.parse(localStorage.getItem(key)||"[]"); }catch(_){}
@@ -461,10 +459,12 @@
 
   /* ==== Inicio ==== */
   async function start(){
+    // Bloque específico de servicio (mostrar controles visita gato)
     bindServiceSpecific();
 
     if(!hasFB()){ setGate(true); renderPets([]); return; }
 
+    // Exigir login y volver a reservas tras autenticarse
     if(!window.__TPL_AUTH_BRIDGE__ || !__TPL_AUTH_BRIDGE__.ensureLogged({loginUrl:"/login.html"})){
       setGate(true); renderPets([]); return;
     }
@@ -492,7 +492,7 @@
       fillOwner(profile);
       renderPets(profile.pets||[]);
 
-      // Selección previa de mascotas (URL/bridge)
+      // Preselección de mascotas (URL/bridge)
       const idsFromBridge = bridged && bridged.pets ? String(bridged.pets).split(",").filter(Boolean) : [];
       const wantIds = new Set([...(directPetIds||[]), ...(idsFromBridge||[])]);
       if(wantIds.size){
