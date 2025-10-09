@@ -3,104 +3,107 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reserva · The Pets Lovers</title>
+  <title>Reservas · The Pets Lovers</title>
+  <meta name="description" content="Reserva guardería, alojamiento, paseos, visitas a domicilio, exóticos y transporte. Solo pagas una parte ahora; el resto 12 días antes.">
 
-  <!-- Estilos del sitio -->
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <!-- Forzar https+www canónico (igual a candidaturas) -->
+  <script>
+    (function(){
+      var wantHost = 'www.thepetslovers.es';
+      if (location.protocol !== 'https:' || location.host !== wantHost) {
+        var target = 'https://' + wantHost + location.pathname + location.search + location.hash;
+        location.replace(target);
+      }
+    })();
+  </script>
 
-  <!-- Ajustes mínimos locales (respetando tu línea visual) -->
-  <style>
-    :root{
-      --color-principal:#339496;
-      --color-texto:#58425a;
-      --fuente-texto:'Poppins',system-ui,sans-serif;
-    }
-    body{ background:#fafafa; font-family:var(--fuente-texto); }
-    .booking-wrapper{ max-width: 980px; margin: 120px auto 60px; background:#fff; border:1px solid #eee; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
-    .booking-header{ text-align:center; padding: 22px 18px 10px; border-bottom:1px solid #f0f0f0; }
-    .booking-header h1{ margin:0; font-family:'Montserrat',sans-serif; font-size:1.6rem; color:var(--color-texto); }
-    .booking-header p{ margin:.4rem 0 0; color:#7a6a7c; font-size:.95rem; }
-    .booking-grid{ display:grid; gap:16px; padding: 18px; }
-    .booking-section{ border:1px solid #eee; border-radius:10px; padding:14px; background:#fff; }
-    .booking-section legend, .section-title{ font-weight:700; color:var(--color-texto); font-family:'Montserrat',sans-serif; margin-bottom:8px; }
-    label{ font-weight:600; color:#3e3440; font-size:.95rem; }
-    input,select,textarea{ width:100%; border:1px solid #e8e6ea; border-radius:10px; padding:10px 12px; font-size:.95rem; background:#fff; color:#3e3440; }
-    input[readonly]{ background:#f8f8f8; color:#8b8690; }
-    .row{ display:grid; grid-template-columns:1fr; gap:10px; }
-    @media(min-width:760px){ .row.two{ grid-template-columns:1fr 1fr; } .row.three{ grid-template-columns:1fr 1fr 1fr; } }
-    .muted{ color:#8b8690; font-size:.9rem; }
-    .pet-item{ display:flex; align-items:center; justify-content:space-between; border:1px dashed #e5e5e5; border-radius:10px; padding:10px 12px; }
-    .badge{ background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; font-size:.75rem; padding:.15rem .45rem; border-radius:.5rem; }
+  <!-- SEO canónico + OG/Twitter -->
+  <link rel="canonical" href="https://www.thepetslovers.es/reservas.html">
+  <meta name="robots" content="index,follow">
+  <meta property="og:title" content="Reservas · The Pets Lovers">
+  <meta property="og:description" content="Elige tu servicio para tu mascota y reserva: solo pagas una parte ahora; el resto 12 días antes.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.thepetslovers.es/reservas.html">
+  <meta property="og:image" content="https://www.thepetslovers.es/images/og-petslovers.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Reservas · The Pets Lovers">
+  <meta name="twitter:description" content="Reserva guardería, alojamiento, paseos, visitas a domicilio, exóticos y transporte.">
+  <meta name="twitter:image" content="https://www.thepetslovers.es/images/og-petslovers.jpg">
 
-    /* Auth wall */
-    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px; }
-    .auth-wall strong{ color: var(--color-texto); }
-    .disabled{ opacity:.6; pointer-events:none; }
-
-    /* Ocultos condicionales */
-    .booking-field[hidden]{ display:none !important; }
-    .tpl-visitas-only{ display:none !important; } /* se activa con .tpl-visitas-on */
-    .tpl-visitas-on .tpl-visitas-only{ display:block !important; }
-
-    /* Desglose */
-    .summary-panel{ margin-top: 8px; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:16px; }
-    .summary-grid{ display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
-    .summary-row{ display:contents; }
-    .summary-label{ color:#555; }
-    .summary-value{ font-weight:700; color: var(--color-texto); text-align:right; }
-
-    /* CTAs */
-    .cta-row{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
-    .btn{ display:inline-flex; align-items:center; gap:.5rem; border-radius:999px; padding:.7rem 1rem; border:1px solid #e5e5e5; background:#fff; color:#3e3440; font-weight:700; }
-    .btn.primary{ background: var(--color-principal); border-color: var(--color-principal); color:#fff; }
-  </style>
-
-  <!-- SEO básico -->
-  <link rel="canonical" href="https://www.thepetslovers.es/reserva.html">
+  <!-- JSON-LD Organization + ReservationPage -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"Organization",
+    "name":"The Pets Lovers",
+    "url":"https://www.thepetslovers.es",
+    "logo":"https://www.thepetslovers.es/images/logo.png.png",
+    "sameAs":["https://www.instagram.com/guarderiamascotasthepetslovers"]
+  }
+  </script>
   <script type="application/ld+json">
   {
     "@context":"https://schema.org",
     "@type":"ReservationPage",
-    "name":"Reserva · The Pets Lovers",
-    "description":"Reserva guardería, alojamiento, paseos, visitas, exóticos y transporte.",
-    "about":{"@type":"Organization","name":"The Pets Lovers","url":"https://www.thepetslovers.es"}
+    "name":"Reservas · The Pets Lovers",
+    "description":"Reserva servicios de cuidado de mascotas."
   }
   </script>
+
+  <!-- Estilos globales del sitio -->
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Estilos scoped de Reservas (clonado del patrón candidaturas) -->
+  <link rel="stylesheet" href="assets/css/reservas.css">
 </head>
 <body>
 
-  <!-- NAVBAR (igual que el resto del sitio si ya lo inyectas con tu JS global) -->
-  <div id="tpl-navbar"></div>
+  <!-- Navbar (igual a candidaturas) -->
+  <div id="tpl-navbar">
+    <noscript>
+      <nav class="navbar">
+        <div class="logo"><a href="index.html"><img src="images/logo.png.png" alt="The Pets Lovers"></a></div>
+        <a href="index.html" class="home-button">Inicio</a>
+        <ul class="nav-links">
+          <li><a href="como-funciona.html">Cómo funciona</a></li>
+          <li><a href="servicios.html">Servicios</a></li>
+          <li><a href="trabaja-con-nosotros.html">Trabaja con nosotros</a></li>
+          <li><a href="ayuda.html">¿Necesitas ayuda?</a></li>
+        </ul>
+        <a class="login-button" href="#iniciar-sesion">Iniciar sesión</a>
+      </nav>
+    </noscript>
+  </div>
 
-  <div class="booking-wrapper">
-    <div class="booking-header">
-      <h1>Reserva</h1>
-      <p>Selecciona servicio y fechas → mascotas → datos → desglose → reservar. Solo pagas una parte ahora; el resto 12 días antes.</p>
-    </div>
+  <main class="container tpl-page">
+    <section class="tpl-form" aria-labelledby="r-title">
+      <p class="tpl-badge"><i class="fa-solid fa-paw"></i> Reservas de servicios</p>
+      <h1 id="r-title">🐾 RESERVA TU SERVICIO – THE PETS LOVERS</h1>
+      <p class="tpl-lead">
+        Selecciona servicio y fechas → mascotas → datos del titular → desglose → reservar. Solo abonas una parte ahora; el resto 12 días antes del inicio.
+      </p>
 
-    <div class="booking-grid">
-      <!-- Muro de login -->
-      <section id="authWall" class="auth-wall" style="display:none">
-        <p><strong>Inicia sesión o crea tu cuenta</strong> para completar la reserva.</p>
-        <div style="display:flex; gap:.5rem; justify-content:center; flex-wrap:wrap;">
-          <button class="btn primary" id="btnLogin">Iniciar sesión</button>
-          <button class="btn" id="btnRegister">Crear cuenta</button>
+      <!-- Auth wall (sin redirigir, como pediste) -->
+      <section id="authWall" class="auth-wall" style="display:none" aria-live="polite">
+        <p><strong>Inicia sesión o crea tu cuenta</strong> para reservar.</p>
+        <div class="tpl-actions">
+          <button class="cta-button" id="btnLogin">Iniciar sesión</button>
+          <button class="cta-button ghost" id="btnRegister">Crear cuenta</button>
         </div>
       </section>
 
-      <!-- Formulario -->
-      <form id="bookingForm" class="disabled">
+      <!-- Formulario de reservas -->
+      <form id="tpl-form-reservas" novalidate data-redirect="perfil.html">
         <!-- 1) Datos del servicio -->
-        <section class="booking-section" id="sec-servicio">
-          <div class="section-title">Datos del servicio</div>
-
-          <div class="row two">
-            <div>
-              <label for="service">Servicio</label>
+        <fieldset class="tpl-fieldset">
+          <legend>🧩 DATOS DEL SERVICIO</legend>
+          <div class="tpl-grid">
+            <div class="tpl-field">
+              <label for="service" class="tpl-required">Servicio</label>
               <select id="service" name="service" required>
-                <option value="">— Selecciona —</option>
+                <option value="">Selecciona</option>
                 <option value="daycare">Guardería de día</option>
                 <option value="overnight">Alojamiento nocturno</option>
                 <option value="walk60">Paseo (60’)</option>
@@ -108,81 +111,74 @@
                 <option value="exoticos">Exóticos (visitas)</option>
                 <option value="transporte">Transporte</option>
               </select>
-              <p class="muted">Si vienes desde una ficha de servicio, se preselecciona automáticamente.</p>
+              <small class="tpl-help">Si vienes desde una ficha, lo preseleccionamos.</small>
             </div>
-            <div class="row two">
-              <div>
-                <label for="startDate">Fecha inicio</label>
-                <input type="date" id="startDate" name="startDate" required />
-              </div>
-              <div>
-                <label for="endDate">Fecha fin</label>
-                <input type="date" id="endDate" name="endDate" required />
-              </div>
-            </div>
-          </div>
 
-          <div class="row two">
-            <div>
+            <div class="tpl-field">
+              <label for="startDate" class="tpl-required">Fecha inicio</label>
+              <input id="startDate" type="date" required>
+            </div>
+            <div class="tpl-field">
+              <label for="endDate" class="tpl-required">Fecha fin</label>
+              <input id="endDate" type="date" required>
+            </div>
+
+            <div class="tpl-field">
               <label for="startTime">Hora inicio</label>
-              <input type="time" id="startTime" name="startTime" />
+              <input id="startTime" type="time">
             </div>
-            <div>
+            <div class="tpl-field">
               <label for="endTime">Hora fin</label>
-              <input type="time" id="endTime" name="endTime" />
+              <input id="endTime" type="time">
             </div>
-          </div>
 
-          <!-- Especie / Subtipo (condicional) -->
-          <div class="row two" id="speciesRow" hidden>
-            <div>
+            <!-- Especie / subtipo condicional -->
+            <div class="tpl-field" id="speciesField" hidden>
               <label for="species">Especie</label>
-              <input id="species" name="species" placeholder="Gato (auto para Visitas)" readonly />
+              <input id="species" placeholder="Gato (auto en Visitas)" readonly>
             </div>
-            <div id="exoticosSubtypeWrap" hidden>
+            <div class="tpl-field" id="exoSubtypeField" hidden>
               <label for="exoticosSubtype">Tipo (exóticos)</label>
-              <select id="exoticosSubtype" name="exoticosSubtype">
+              <select id="exoticosSubtype">
                 <option value="aves">Aves</option>
                 <option value="reptiles">Reptiles</option>
                 <option value="pequenos_mamiferos">Pequeños mamíferos</option>
                 <option value="otro">Otro</option>
               </select>
             </div>
-          </div>
 
-          <!-- Controles dinámicos (bonos, paseos, visitas gato, suplementos) -->
-          <div id="inlineControls"></div>
-        </section>
+            <!-- Controles dinámicos por servicio -->
+            <div class="tpl-field tpl-full" id="svcInlineControls"></div>
+          </div>
+        </fieldset>
 
         <!-- 2) Mascotas -->
-        <section class="booking-section" id="sec-mascotas">
-          <div class="section-title">Mascotas</div>
-          <div id="petsList" class="grid"></div>
-          <p class="muted">Selecciona una o varias. Si alguna es cachorro (≤6m), se marca automáticamente.</p>
-        </section>
+        <fieldset class="tpl-fieldset">
+          <legend>🐶 MASCOTAS</legend>
+          <div id="petsList" class="tpl-grid"></div>
+          <p class="tpl-help">Selecciona una o varias. Marcamos “Cachorro ≤6m” automáticamente.</p>
+        </fieldset>
 
         <!-- 3) Titular -->
-        <section class="booking-section" id="sec-titular">
-          <div class="section-title">Datos del titular</div>
-          <div class="row two">
-            <div>
-              <label for="fullName">Nombre y apellidos</label>
-              <input id="fullName" name="fullName" autocomplete="name" required />
+        <fieldset class="tpl-fieldset">
+          <legend>👤 DATOS DEL TITULAR</legend>
+          <div class="tpl-grid">
+            <div class="tpl-field">
+              <label for="fullName" class="tpl-required">Nombre y apellidos</label>
+              <input id="fullName" autocomplete="name" required>
             </div>
-            <div>
-              <label for="phone">Teléfono</label>
-              <input id="phone" name="phone" type="tel" autocomplete="tel" required />
+            <div class="tpl-field">
+              <label for="phone" class="tpl-required">Teléfono</label>
+              <input id="phone" type="tel" autocomplete="tel" required>
             </div>
-          </div>
-          <div class="row two">
-            <div>
-              <label for="email">Email</label>
-              <input id="email" name="email" type="email" autocomplete="email" required />
+            <div class="tpl-field">
+              <label for="email" class="tpl-required">Email</label>
+              <input id="email" type="email" autocomplete="email" required>
             </div>
-            <div>
-              <label for="region">Comunidad Autónoma</label>
-              <select id="region" name="region" required>
-                <option value="">— Selecciona —</option>
+            <div class="tpl-field">
+              <label for="region" class="tpl-required">Comunidad Autónoma</label>
+              <select id="region" required>
+                <option value="">Selecciona</option>
                 <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Islas Baleares</option>
                 <option>Islas Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
                 <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
@@ -190,63 +186,67 @@
                 <option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
               </select>
             </div>
-          </div>
-          <div class="row three">
-            <div>
+            <div class="tpl-field">
               <label for="address">Dirección</label>
-              <input id="address" name="address" autocomplete="street-address" />
+              <input id="address" autocomplete="street-address">
             </div>
-            <div>
+            <div class="tpl-field">
               <label for="postalCode">Código Postal</label>
-              <input id="postalCode" name="postalCode" autocomplete="postal-code" />
+              <input id="postalCode" autocomplete="postal-code">
             </div>
-            <div>
+            <div class="tpl-field tpl-full">
               <label for="observations">Observaciones</label>
-              <input id="observations" name="observations" placeholder="Alergias, horarios, etc." />
+              <textarea id="observations" rows="2" placeholder="Alergias, horarios, etc."></textarea>
             </div>
           </div>
-        </section>
+        </fieldset>
 
         <!-- 4) Desglose -->
-        <section class="booking-section" id="sec-desglose">
-          <div class="section-title">Desglose</div>
-          <div id="breakdown" class="summary-panel">
+        <fieldset class="tpl-fieldset">
+          <legend>🧮 DESGLOSE</legend>
+          <div class="summary-panel">
             <div class="summary-grid" id="summaryGrid"></div>
-            <p class="muted" style="margin:.5rem 0 0;">Solo abonarás una parte ahora. El resto se pagará 12 días antes del inicio del servicio.</p>
+            <p class="tpl-note">Solo abonarás una parte ahora. El resto se pagará 12 días antes del inicio del servicio.</p>
           </div>
-        </section>
+        </fieldset>
 
         <!-- CTA -->
-        <section class="booking-section">
-          <div class="cta-row">
-            <button type="button" class="btn" id="btnBack">⟵ Atrás</button>
-            <button type="submit" class="btn primary" id="btnSubmit">Reservar ahora</button>
-          </div>
-        </section>
+        <div class="tpl-actions">
+          <button type="button" class="cta-button ghost" id="btnBack">⟵ Atrás</button>
+          <button type="submit" class="cta-button" id="btnSubmit">Reservar ahora</button>
+        </div>
       </form>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <!-- FOOTER -->
-  <div id="tpl-footer"></div>
+  <!-- Footer (igual a candidaturas) -->
+  <div id="tpl-footer">
+    <noscript>
+      <footer class="site-footer"></footer>
+    </noscript>
+  </div>
 
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
-    window.TPL_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-      authDomain: "thepetslovers-c1111.firebaseapp.com",
-      projectId: "thepetslovers-c1111",
-      storageBucket: "thepetslovers-c1111.appspot.com",
-      messagingSenderId: "415914577533",
-      appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-      measurementId: "G-FXPD69KXBG"
-    };
-    if (typeof firebase!=='undefined' && !firebase.apps.length) {
-      firebase.initializeApp(window.TPL_FIREBASE_CONFIG);
-    }
+    (function(){
+      try{
+        if (window.firebase && !firebase.apps.length){
+          const cfg = {
+            apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+            authDomain: "thepetslovers-c1111.firebaseapp.com",
+            projectId: "thepetslovers-c1111",
+            storageBucket: "thepetslovers-c1111.appspot.com",
+            messagingSenderId: "415914577533",
+            appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+            measurementId: "G-FXPD69KXBG"
+          };
+          firebase.initializeApp(cfg);
+        }
+      }catch(_){}
+    })();
   </script>
 
   <!-- EmailJS -->
@@ -261,10 +261,12 @@
     try { emailjs.init(window.TPL_EMAILJS.publicKey); } catch(e) {}
   </script>
 
-  <!-- App -->
-  <script defer src="js/tpl-navbar.js"></script>
-  <script defer src="js/tpl-footer.js"></script>
-  <script defer src="tpl-auth-bridge.v2.js"></script>
-  <script defer src="tpl-reservas.v2.js"></script>
+  <!-- Navbar/Footer (los tuyos) -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- Lógica de Reservas -->
+  <script src="assets/js/tpl-auth.reservas.js" defer></script>
+  <script src="assets/js/tpl-reservas.core.js" defer></script>
 </body>
 </html>
