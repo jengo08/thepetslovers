@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
-  <!-- Estilos locales más compactos -->
+  <!-- Estilos locales compactos -->
   <style>
     :root{ --tpl-primary:#339496; --tpl-ink:#3d3650; --tpl-border:#e6e6e6; --tpl-bg:#f9fbfb; }
     body{ background:#fff; }
@@ -61,7 +61,7 @@
 <body>
 
   <!-- Navbar inyectado -->
-  <div id="tpl-navbar"><noscript><!-- navbar fallback --></noscript></div>
+  <div id="tpl-navbar"></div>
 
   <main class="container tpl-page">
     <section class="tpl-form" aria-labelledby="tpl-t">
@@ -118,21 +118,15 @@
             </div>
           </div>
 
-          <!-- Controles específicos de VISITA GATO -->
+          <!-- Visita a gatos: duración y nº visitas/día -->
           <div id="visitCatControls" class="tpl-grid" style="margin-top:6px; display:none">
             <div class="tpl-field">
               <label for="vgDuration">Duración</label>
-              <select id="vgDuration">
-                <option value="60">60 minutos</option>
-                <option value="90">90 minutos</option>
-              </select>
+              <select id="vgDuration"><option value="60">60 minutos</option><option value="90">90 minutos</option></select>
             </div>
             <div class="tpl-field">
               <label for="vgPerDay">Visitas por día</label>
-              <select id="vgPerDay">
-                <option value="1">1 visita/día</option>
-                <option value="2">2 visitas/día</option>
-              </select>
+              <select id="vgPerDay"><option value="1">1 visita/día</option><option value="2">2 visitas/día</option></select>
             </div>
           </div>
         </fieldset>
@@ -143,7 +137,7 @@
           <div id="petsGrid" class="pets-grid"></div>
         </fieldset>
 
-        <!-- 3) Datos del titular (incluye CA, dirección, CP, desplazamiento, observaciones) -->
+        <!-- 3) Datos del titular -->
         <fieldset class="tpl-fieldset">
           <legend>3) Datos del titular</legend>
           <div class="tpl-grid">
@@ -235,46 +229,51 @@
     </section>
   </main>
 
-  <!-- Footer inyectado -->
-  <div id="tpl-footer"><noscript><footer class="site-footer"></footer></noscript></div>
-
-  <!-- Navbar/Footer -->
+  <!-- Footer y Navbar -->
+  <div id="tpl-footer"></div>
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase compat + init (asegúrate de tener estos scripts ANTES del JS de reservas) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script>
+  <!-- Firebase compat (mismas versiones que candidaturas) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js" defer></script>
+
+  <!-- Init Firebase (calcado de candidaturas) -->
+  <script defer>
     (function(){
-      const cfg = {
-        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-        authDomain: "thepetslovers-c1111.firebaseapp.com",
-        projectId: "thepetslovers-c1111",
-        storageBucket: "thepetslovers-c1111.appspot.com",
-        messagingSenderId: "415914577533",
-        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-        measurementId: "G-FXPD69KXBG"
-      };
-      if (typeof firebase!=='undefined' && !firebase.apps.length) firebase.initializeApp(cfg);
+      try{
+        if (window.firebase && !firebase.apps.length){
+          const firebaseConfig = {
+            apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+            authDomain: "thepetslovers-c1111.firebaseapp.com",
+            projectId: "thepetslovers-c1111",
+            storageBucket: "thepetslovers-c1111.appspot.com",
+            messagingSenderId: "415914577533",
+            appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+            measurementId: "G-FXPD69KXBG"
+          };
+          firebase.initializeApp(firebaseConfig);
+        }
+      }catch(_){}
     })();
   </script>
 
-  <!-- EmailJS (1 único template para ambos envíos) -->
+  <!-- EmailJS (un único template para cliente y gestión) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     window.EMAILJS = {
       enabled: true,
       service_id: "service_odjqrfl",
-      template_id: "template_rao5n0c",  // <- ÚNICO TEMPLATE
+      template_id: "template_rao5n0c",
       public_key: "L2xAATfVuHJwj4EIV",
       admin_email: "gestion@thepetslovers.es"
     };
     try{ emailjs.init(EMAILJS.public_key); }catch(e){}
   </script>
 
-  <!-- JS de reservas -->
+  <!-- Bridge de sesión/portado y JS de reservas -->
+  <script src="tpl-auth-bridge.js" defer></script>
   <script src="tpl-atun-tpl-reservas-tpl.js" defer></script>
 </body>
 </html>
