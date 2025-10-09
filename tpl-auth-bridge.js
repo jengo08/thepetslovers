@@ -1,47 +1,50 @@
-// Puerta de sesión + portado de parámetros (service,date,start,end,pets,region,notes)
+<script>
 (function(){
-  const RETURN_KEY = "tpl.return.afterLogin";
-  const STATE_KEY  = "tpl.port.state";
+  var RETURN_KEY = "tpl.return.afterLogin";
+  var STATE_KEY  = "tpl.port.state";
 
   function readPortParams(){
-    const p = new URLSearchParams(location.search);
-    const o = {};
-    ["service","svc","date","start","end","pets","region","notes","startDate","endDate"].forEach(k=>{
-      const v = p.get(k); if(v) o[k]=v;
-    });
+    var p = new URLSearchParams(location.search), o = {};
+    ["service","svc","date","start","end","startDate","endDate","pets","region","notes"]
+      .forEach(function(k){ var v=p.get(k); if(v) o[k]=v; });
     return o;
   }
 
   function rememberReturn(){
-    const url = location.pathname + location.search + location.hash;
-    sessionStorage.setItem(RETURN_KEY, url);
-    const state = readPortParams();
-    if(Object.keys(state).length){
-      sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
-    }
+    try{
+      sessionStorage.setItem(RETURN_KEY, "/reservas.html" + location.search + location.hash);
+      var state = readPortParams();
+      if(Object.keys(state).length){
+        sessionStorage.setItem(STATE_KEY, JSON.stringify(state));
+      }
+    }catch(_){}
   }
 
-  function applyPortState(){
+  function popState(){
     try{
-      const raw = sessionStorage.getItem(STATE_KEY);
+      var raw = sessionStorage.getItem(STATE_KEY);
       if(!raw) return null;
-      const obj = JSON.parse(raw);
       sessionStorage.removeItem(STATE_KEY);
-      return obj;
+      return JSON.parse(raw);
     }catch(_){ return null; }
   }
 
   window.__TPL_AUTH_BRIDGE__ = {
-    ensureLogged: function({loginUrl="/login.html"}={}){
+    ensureLogged: function(opts){
+      opts = opts || {};
+      var loginUrl = opts.loginUrl || "/login.html";
       try{
         if(!window.firebase || !firebase.auth) return true;
-        const u = firebase.auth().currentUser;
+        var u = firebase.auth().currentUser;
         if(u) return true;
         rememberReturn();
-        location.href = loginUrl + "?next=reservas";
+        // Siempre con .html
+        var next = encodeURIComponent("/reservas.html");
+        location.href = loginUrl + "?next=" + next;
         return false;
       }catch(_){ return true; }
     },
-    getPortState: applyPortState
+    getPortState: popState
   };
 })();
+</script>
