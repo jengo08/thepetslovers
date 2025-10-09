@@ -6,7 +6,7 @@
   function readPortParams(){
     const p = new URLSearchParams(location.search);
     const o = {};
-    ["service","date","start","end","pets","region","notes"].forEach(k=>{
+    ["service","svc","date","start","end","pets","region","notes"].forEach(k=>{
       const v = p.get(k); if(v) o[k]=v;
     });
     return o;
