@@ -19,7 +19,7 @@
       --tpl-card:#fff;
       --tpl-radius:14px;
       --tpl-shadow:0 2px 12px rgba(0,0,0,.06);
-      --nav-offset:96px;
+      --nav-offset:96px; /* baja el H1 si tu navbar tapa */
     }
 
     body{ background:#fff; }
@@ -101,8 +101,8 @@
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
     .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
 
-    /* CTA */
-    .actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+    /* CTA en resumen */
+    .actions-summary{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
     .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700 }
     .btn-primary{ background:var(--tpl-accent); color:var(--tpl-accent-on) }
     .btn-ghost{ background:#fff; border:1px solid var(--tpl-border); color:#111827 }
@@ -287,16 +287,10 @@
               <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
             </div>
           </div>
-
-          <div class="actions">
-            <button id="btnReserve" type="button" class="btn btn-primary">
-              <i class="fa-solid fa-lock"></i> Reservar ahora
-            </button>
-          </div>
         </section>
       </form>
 
-      <!-- RESUMEN / DESGLOSE ABAJO (TAL CUAL LO QUERÍAS) -->
+      <!-- RESUMEN / DESGLOSE ABAJO (TAL CUAL, CON BOTÓN DENTRO) -->
       <section class="card summary">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="section-title" style="margin:0"><i class="fa-solid fa-receipt"></i> Resumen</div>
@@ -306,6 +300,13 @@
         <div class="line total"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
         <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
         <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
+
+        <div class="actions-summary">
+          <button id="btnReserve" type="button" class="btn btn-primary">
+            <i class="fa-solid fa-lock"></i> Reservar ahora
+          </button>
+        </div>
+
         <p class="muted" style="margin-top:8px">Solo abonarás una parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio.</p>
       </section>
     </div>
@@ -347,7 +348,7 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Lógica de reservas (el JS que ya tienes) -->
+  <!-- Lógica de reservas (tu JS ya completo, sin cambios) -->
   <script src="tpl-reservas.js" defer></script>
 </body>
 </html>
