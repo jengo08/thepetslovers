@@ -36,7 +36,7 @@ const PUBLIC_PRICES = {
   transporte: { base: 20 }
 };
 
-// Pagos al auxiliar (interno; para margen=total - aux - festivoAux)
+// Pagos al auxiliar (interno)
 const AUX_PAY = {
   guarderia_dia: { adulto: 12, cachorro: 17, bonosAdult:{10:11,20:10,30:9}, bonosPuppy:{10:16,20:14,30:12} },
   alojamiento_nocturno: {
@@ -86,6 +86,21 @@ async function awaitAuthUser(){
   });
 }
 
+/* Selecciona valor en <select>, inyectando la opción si no existe */
+function setSelectValue(selectId, value) {
+  const el = document.getElementById(selectId);
+  if (!el || !value) return;
+  const has = Array.from(el.options).some(o => (o.value || o.text).trim() === String(value).trim());
+  if (has) { el.value = value; return; }
+  const opt = document.createElement("option");
+  opt.value = String(value).trim();
+  opt.text = String(value).trim();
+  opt.setAttribute("data-injected","true");
+  el.appendChild(opt);
+  el.value = opt.value;
+  console.warn(`[${selectId}] Valor no listado; inyectado: "${opt.value}"`);
+}
+
 async function getOwnerDoc(uid){
   const db = firebase.firestore();
 
@@ -99,7 +114,9 @@ async function getOwnerDoc(uid){
     }
   }
 
-  let hit = await readDocFrom("propietarios")
+  // 👉 buscamos primero en 'users', que es lo que tienes en Firestore
+  let hit = await readDocFrom("users")
+         || await readDocFrom("propietarios")
          || await readDocFrom("owners")
          || await readDocFrom("usuarios")
          || await readDocFrom("perfiles");
@@ -110,14 +127,14 @@ async function getOwnerDoc(uid){
   }
 
   const d = hit.data||{};
-  const nombre   = d.nombre || d.name || "";
-  const apellido = d.apellido || d.apellidos || d.surname || "";
+  const nombre   = d.nombre   || d.name     || d.Nombre    || "";
+  const apellido = d.apellido || d.apellidos|| d.surname   || d.Apellidos || "";
   const fullName = d.fullName || [nombre,apellido].filter(Boolean).join(" ").trim() || (firebase.auth().currentUser?.displayName||"");
-  const phone    = d.phone || d.telefono || d.tlf || "";
-  const region   = d.region || d.comunidad || d.comunidadAutonoma || d.ccaa || "";
-  const address  = d.address || d.direccion || "";
-  const postal   = d.postalCode || d.cp || d.codigo_postal || d.codigoPostal || "";
-  const email    = d.email || firebase.auth().currentUser?.email || "";
+  const phone    = d.phone    || d.telefono || d.tlf       || d.Telefono  || "";
+  const region   = d.region   || d.comunidad|| d.comunidadAutonoma || d.ccaa || d.CCAA || "";
+  const address  = d.address  || d.direccion|| d.Direccion || "";
+  const postal   = d.postalCode || d.cp     || d.codigo_postal || d.codigoPostal || d.CP || "";
+  const email    = d.email    || firebase.auth().currentUser?.email || "";
 
   let pets = Array.isArray(d.pets) ? d.pets : (Array.isArray(d.mascotas) ? d.mascotas : []);
 
@@ -211,12 +228,24 @@ function selectedPets(all){
 }
 
 function fillOwner(owner){
-  $("#ownerFullName").value = owner.fullName || "";
-  $("#email").value = owner.email || "";
-  $("#phone").value = owner.phone || "";
-  $("#region").value = owner.region || "";
-  $("#address").value = owner.address || "";
-  $("#postalCode").value = owner.postalCode || "";
+  console.debug("[owner] Rellenando formulario con:", owner);
+
+  const safe = (v) => (v == null ? "" : String(v));
+
+  const fullName = safe(owner.fullName || "");
+  const email    = safe(owner.email || firebase.auth().currentUser?.email || "");
+  const phone    = safe(owner.phone || "");
+  const address  = safe(owner.address || "");
+  const postal   = safe(owner.postalCode || "");
+
+  const nameEl = $("#ownerFullName"); if (nameEl) nameEl.value = fullName;
+  const emailEl = $("#email");         if (emailEl) emailEl.value = email;
+  const phoneEl = $("#phone");         if (phoneEl) phoneEl.value = phone;
+
+  setSelectValue("region", owner.region || "");
+
+  const addrEl = $("#address");        if (addrEl) addrEl.value = address;
+  const pcEl   = $("#postalCode");     if (pcEl) pcEl.value = postal;
 }
 
 /***** PORTADO DESDE SERVICIOS *****/
@@ -287,12 +316,11 @@ function calcPublicAndAux(payload){
   const numDays = Math.max(1, daysInclusive(startDate,endDate));
   const pets = payload.pets||[];
   const cats = pets.filter(p=>p.species==="gato").length || 0;
-  const numPets = Math.max(1,pets.length||1); // paseo/aloja/guardería
+  const numPets = Math.max(1,pets.length||1); 
   const anyPuppy = pets.some(isPuppyPet);
 
   let linesPublic=[], linesAux=[], totalPublic=0, totalAux=0;
 
-  // Guardería de día con bonos automáticos (10/20/30). Si son 11 días: bono 10 + 1 suelto, etc.
   if(s==="guarderia_dia"){
     const isPuppy = anyPuppy;
     const pDay = isPuppy ? PUBLIC_PRICES.guarderia_dia.cachorro : PUBLIC_PRICES.guarderia_dia.adulto;
@@ -319,7 +347,6 @@ function calcPublicAndAux(payload){
     }
   }
 
-  // Alojamiento nocturno: 1–10 normal; desde 11: “desde11”
   if(s==="alojamiento_nocturno"){
     const petsCount = Math.max(1, numPets);
     for(let i=0;i<petsCount;i++){
@@ -348,9 +375,8 @@ function calcPublicAndAux(payload){
     }
   }
 
-  // Paseos (60'): base + extras por mascota
   if(s==="paseo"){
-    const walks = 1; // unidad
+    const walks = 1;
     linesPublic.push({label:`Paseo (60’) · ${walks} uds`, amount:PUBLIC_PRICES.paseo.base*walks});
     linesAux.push({label:`Aux paseo`, amount:AUX_PAY.paseo.base*walks});
     totalPublic += PUBLIC_PRICES.paseo.base*walks;
@@ -365,7 +391,6 @@ function calcPublicAndAux(payload){
     }
   }
 
-  // Visita a gato: 60/90 y 2ª visita medicación 15’ (12 € / 10 € desde día 11)
   if(s==="visita_gato"){
     const use90 = String($("#visitDuration").value||"60")==="90";
     const from11 = (numDays>=11);
@@ -378,7 +403,6 @@ function calcPublicAndAux(payload){
     linesAux.push({label:`Aux visita gato`, amount:a});
     totalPublic += p; totalAux += a;
 
-    // Gatos extra
     const cats = pets.filter(p=>p.species==="gato").length || 0;
     const extraCats = Math.max(0, cats-1);
     if(extraCats>0){
@@ -393,7 +417,6 @@ function calcPublicAndAux(payload){
       totalPublic+=addC; totalAux+=addA;
     }
 
-    // 2ª visita medicación
     if(($("#secondMedVisit").value||"no")==="si"){
       const pm = from11 ? PUBLIC_PRICES.visita_gato.med15_d11 : PUBLIC_PRICES.visita_gato.med15;
       const am = pm; // margen 0
@@ -403,7 +426,6 @@ function calcPublicAndAux(payload){
     }
   }
 
-  // Exóticos
   if(s==="exoticos_aves"||s==="exoticos_reptiles"||s==="exoticos_mamiferos"){
     const base = PUBLIC_PRICES[s].base;
     const aux = AUX_PAY[s].base;
@@ -412,7 +434,6 @@ function calcPublicAndAux(payload){
     totalPublic+=base; totalAux+=aux;
   }
 
-  // Transporte
   if(s==="transporte"){
     const base = PUBLIC_PRICES.transporte.base;
     const aux  = AUX_PAY.transporte.base;
@@ -421,8 +442,7 @@ function calcPublicAndAux(payload){
     totalPublic+=base; totalAux+=aux;
   }
 
-  // SUPLEMENTOS AUTOMÁTICOS
-  // Urgencia (<2h hoy)
+  // SUPLEMENTOS
   const today = todayStr();
   if(startDate===today && payload.startTime){
     const [hh,mm]=payload.startTime.split(":").map(Number);
@@ -430,11 +450,10 @@ function calcPublicAndAux(payload){
     const minsDiff = Math.round((start - new Date())/60000);
     if(minsDiff>0 && minsDiff<120){
       linesPublic.push({label:"Suplemento urgencia (<2h)", amount:URGENCIA_PLUS});
-      totalPublic += URGENCIA_PLUS; // solo cliente (tu margen)
+      totalPublic += URGENCIA_PLUS;
     }
   }
 
-  // Festivos “tochos” y normales
   const keyStart = fmtMD(startDate), keyEnd = fmtMD(endDate);
   const isBig = BIG_DAYS.includes(keyStart) || BIG_DAYS.includes(keyEnd);
   if(isBig){
@@ -447,12 +466,10 @@ function calcPublicAndAux(payload){
     totalPublic += FESTIVO_NORMAL_PLUS; totalAux += FESTIVO_NORMAL_AUX;
   }
 
-  // Nota de desplazamiento (no suma)
   if(payload.travelNeeded==="si"){
     linesPublic.push({label:`Desplazamiento`, note:"pendiente"});
   }
 
-  // PAY NOW = margen
   const payNow = Math.max(0, totalPublic - totalAux);
   const payLater = Math.max(0, totalPublic - payNow);
 
@@ -488,7 +505,7 @@ function collectPayload(statePets){
     notes: $("#notes").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-    festive: false, // si conectas festivos por CCAA, marca aquí
+    festive: false,
     travelNeeded: $("#travelNeeded").value,
     pets: selectedPets(statePets)
   };
@@ -534,7 +551,7 @@ function buildReservation(calc, payload){
   };
 }
 
-/***** EMAILJS (usa un único template) *****/
+/***** EMAILJS *****/
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) { console.log("[EmailJS] desactivado"); return; }
   const svc = labelService(reservation.service.type);
@@ -586,11 +603,10 @@ async function sendEmails(reservation){
 function doRecalc(){
   const state = window.__STATE__ || {};
   const payload = collectPayload(state.pets||[]);
-  if(!payload.serviceType || !payload.startDate || !payload.endDate){ 
-    renderSummary({linesPublic:[],totalPublic:0,payNow:0,payLater:0}, payload); 
-    return; 
+  if(!payload.serviceType || !payload.startDate || !payload.endDate){
+    renderSummary({linesPublic:[],totalPublic:0,payNow:0,payLater:0}, payload);
+    return;
   }
-  // Visita gato: mostrar/ocultar controles
   $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
 
   const calc = calcPublicAndAux(payload);
@@ -606,7 +622,18 @@ function bindRecalc(){
 
 /***** INIT *****/
 window.addEventListener("load", async ()=>{
+  console.log("[INIT] Cargando reservas…");
+  try {
+    if (!firebase.apps.length) {
+      console.error("[INIT] Firebase no está inicializado antes de tpl-reservas.js");
+    } else {
+      console.log("[INIT] Firebase apps:", firebase.apps.map(a=>a.name));
+    }
+  } catch (e) { console.warn("[INIT] Error comprobando apps", e); }
+
   const user = await awaitAuthUser();
+  console.log("[AUTH] Usuario:", user ? user.uid : null);
+
   if(!user){
     $("#sessionGate").style.display="block";
     $("#reservaForm").classList.add("disabled");
@@ -615,13 +642,16 @@ window.addEventListener("load", async ()=>{
   $("#sessionGate").style.display="none";
   $("#reservaForm").classList.remove("disabled");
 
+  console.log("[READ] Leyendo perfil en: users/", user.uid, " (fallback: propietarios/owners/usuarios/perfiles)");
   const owner = await getOwnerDoc(user.uid);
+  console.log("[READ] Owner OK. Mascotas:", (owner.pets||[]).length);
+
   window.__STATE__ = { owner, pets: owner.pets || [] };
 
   renderPets(window.__STATE__.pets);
   fillOwner(owner);
 
-  // Prefijar servicio si viene de servicios o referrer
+  // Prefijar servicio
   const qs = new URLSearchParams(location.search);
   const svcQS = canonicalizeService(qs.get("service")||qs.get("svc"));
   if(svcQS){ $("#serviceType").value = svcQS; }
@@ -631,7 +661,7 @@ window.addEventListener("load", async ()=>{
   }
   $("#visitCatControls").style.display = ($("#serviceType").value==="visita_gato") ? "" : "none";
 
-  // Fechas: si cambias inicio y fin queda antes, ajustamos
+  // Fechas: sincronización básica
   $("#startDate").addEventListener("change", ()=>{
     if(!$("#endDate").value) $("#endDate").value = $("#startDate").value;
     if($("#endDate").value && parseDate($("#endDate").value) < parseDate($("#startDate").value)){
@@ -661,7 +691,7 @@ window.addEventListener("load", async ()=>{
     const calc = calcPublicAndAux(payload);
     const reservation = buildReservation(calc, payload);
 
-    // MOCK persistencia local para que en perfil aparezca
+    // Guardado local (demo)
     try{
       const key="tpl.reservas";
       const list = JSON.parse(localStorage.getItem(key)||"[]");
@@ -669,6 +699,7 @@ window.addEventListener("load", async ()=>{
       localStorage.setItem(key, JSON.stringify(list));
     }catch(_){}
 
+    // Envío emails
     await sendEmails(reservation);
 
     $("#reservaForm").style.display="none";
