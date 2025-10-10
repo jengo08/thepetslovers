@@ -8,7 +8,7 @@ const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
 const FESTIVO_NORMAL_PLUS = 10; // cliente
 const FESTIVO_NORMAL_AUX = 8;
 const BIG_DAY_PLUS = 30; // cliente
-thepets_BIG_DAY_AUX = 15; // auxiliar
+const BIG_DAY_AUX = 15;  // auxiliar
 const URGENCIA_PLUS = 10; // cliente (tu margen)
 
 // Precios públicos (cliente)
@@ -17,7 +17,7 @@ const PUBLIC_PRICES = {
     bonos: { adult: {10:135,20:250,30:315}, puppy: {10:185,20:350,30:465} }
   },
   alojamiento_nocturno: {
-    std: { normal: 30, desde11: 28 },   // ← 28 € desde día 11 (tu petición)
+    std: { normal: 30, desde11: 28 },   // 28 € desde día 11
     puppy: { normal: 35, desde11: 32 },
     segundo: { normal: 25, desde11: 22 }
   },
@@ -88,9 +88,15 @@ async function awaitAuthUser(){
 
 async function getOwnerDoc(uid){
   const db = firebase.firestore();
+
   async function readDocFrom(coll){
-    const snap = await db.collection(coll).doc(uid).get();
-    return snap.exists ? {data:snap.data(), ref:snap.ref, coll} : null;
+    try{
+      const snap = await db.collection(coll).doc(uid).get();
+      return snap.exists ? {data:snap.data(), ref:snap.ref, coll} : null;
+    }catch(e){
+      console.warn("[perfil] error leyendo", coll, e);
+      return null;
+    }
   }
 
   let hit = await readDocFrom("propietarios")
@@ -100,7 +106,7 @@ async function getOwnerDoc(uid){
 
   if(!hit){
     console.warn("[perfil] no hay documento para uid", uid);
-    return { email: firebase.auth().currentUser?.email || "", pets: [] };
+    return { fullName:"", email: firebase.auth().currentUser?.email || "", phone:"", region:"", address:"", postalCode:"", pets: [] };
   }
 
   const d = hit.data||{};
@@ -115,7 +121,8 @@ async function getOwnerDoc(uid){
 
   let pets = Array.isArray(d.pets) ? d.pets : (Array.isArray(d.mascotas) ? d.mascotas : []);
 
-  if(!pets.length){
+  // Subcolección 'mascotas' (si no hay array)
+  if(!pets.length && hit.ref){
     try{
       const sub = await hit.ref.collection("mascotas").get();
       pets = sub.docs.map((doc,i)=>{
@@ -130,7 +137,9 @@ async function getOwnerDoc(uid){
         };
       });
       if(pets.length) console.debug("[perfil] mascotas por subcolección:", pets.length);
-    }catch(e){ console.warn("[perfil] subcolección mascotas no accesible:", e); }
+    }catch(e){
+      console.warn("[perfil] subcolección mascotas no accesible (rules):", e);
+    }
   }
 
   pets = pets.map((p,i)=>({
@@ -278,12 +287,12 @@ function calcPublicAndAux(payload){
   const numDays = Math.max(1, daysInclusive(startDate,endDate));
   const pets = payload.pets||[];
   const cats = pets.filter(p=>p.species==="gato").length || 0;
-  const numPets = Math.max(1,pets.length||1); // para paseo/aloja/guardería
+  const numPets = Math.max(1,pets.length||1); // paseo/aloja/guardería
   const anyPuppy = pets.some(isPuppyPet);
 
   let linesPublic=[], linesAux=[], totalPublic=0, totalAux=0;
 
-  // Guardería de día con bonos automáticos (10/20/30). Si son 11 días: aplica bono 10 + 1 día suelto, etc.
+  // Guardería de día con bonos automáticos (10/20/30). Si son 11 días: bono 10 + 1 suelto, etc.
   if(s==="guarderia_dia"){
     const isPuppy = anyPuppy;
     const pDay = isPuppy ? PUBLIC_PRICES.guarderia_dia.cachorro : PUBLIC_PRICES.guarderia_dia.adulto;
@@ -310,7 +319,7 @@ function calcPublicAndAux(payload){
     }
   }
 
-  // Alojamiento nocturno: tramo 1–10 precio normal; desde 11: precio “desde11”
+  // Alojamiento nocturno: 1–10 normal; desde 11: “desde11”
   if(s==="alojamiento_nocturno"){
     const petsCount = Math.max(1, numPets);
     for(let i=0;i<petsCount;i++){
@@ -358,9 +367,8 @@ function calcPublicAndAux(payload){
 
   // Visita a gato: 60/90 y 2ª visita medicación 15’ (12 € / 10 € desde día 11)
   if(s==="visita_gato"){
-    // Determinar duración por selector o por horas entre start-end
     const use90 = String($("#visitDuration").value||"60")==="90";
-    const from11 = (numDays>=11); // si es un plan de múltiples días (rango) aplicamos desde 11
+    const from11 = (numDays>=11);
 
     const p = use90 ? (from11?PUBLIC_PRICES.visita_gato.d11_90:PUBLIC_PRICES.visita_gato.base90)
                     : (from11?PUBLIC_PRICES.visita_gato.d11_60:PUBLIC_PRICES.visita_gato.base60);
@@ -371,6 +379,7 @@ function calcPublicAndAux(payload){
     totalPublic += p; totalAux += a;
 
     // Gatos extra
+    const cats = pets.filter(p=>p.species==="gato").length || 0;
     const extraCats = Math.max(0, cats-1);
     if(extraCats>0){
       let perClient, perAux;
@@ -387,8 +396,7 @@ function calcPublicAndAux(payload){
     // 2ª visita medicación
     if(($("#secondMedVisit").value||"no")==="si"){
       const pm = from11 ? PUBLIC_PRICES.visita_gato.med15_d11 : PUBLIC_PRICES.visita_gato.med15;
-      // margen 0: auxiliar igual al público para medicación
-      const am = pm;
+      const am = pm; // margen 0
       linesPublic.push({label:`2ª visita (medicación 15’)`, amount:pm});
       linesAux.push({label:`Aux medicación 15’`, amount:am});
       totalPublic+=pm; totalAux+=am;
@@ -422,18 +430,17 @@ function calcPublicAndAux(payload){
     const minsDiff = Math.round((start - new Date())/60000);
     if(minsDiff>0 && minsDiff<120){
       linesPublic.push({label:"Suplemento urgencia (<2h)", amount:URGENCIA_PLUS});
-      // no aumenta aux, es tu margen
-      totalPublic += URGENCIA_PLUS;
+      totalPublic += URGENCIA_PLUS; // solo cliente (tu margen)
     }
   }
 
-  // Festivos “tochos”
+  // Festivos “tochos” y normales
   const keyStart = fmtMD(startDate), keyEnd = fmtMD(endDate);
   const isBig = BIG_DAYS.includes(keyStart) || BIG_DAYS.includes(keyEnd);
   if(isBig){
     linesPublic.push({label:`Día señalado`, amount:BIG_DAY_PLUS});
-    linesAux.push({label:`Aux día señalado`, amount:thepets_BIG_DAY_AUX});
-    totalPublic += BIG_DAY_PLUS; totalAux += thepets_BIG_DAY_AUX;
+    linesAux.push({label:`Aux día señalado`, amount:BIG_DAY_AUX});
+    totalPublic += BIG_DAY_PLUS; totalAux += BIG_DAY_AUX;
   }else if(payload.festive===true){
     linesPublic.push({label:`Festivo`, amount:FESTIVO_NORMAL_PLUS});
     linesAux.push({label:`Aux festivo`, amount:FESTIVO_NORMAL_AUX});
@@ -531,8 +538,6 @@ function buildReservation(calc, payload){
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) { console.log("[EmailJS] desactivado"); return; }
   const svc = labelService(reservation.service.type);
-  const rangoFechas = reservation.dates.startDate + (reservation.dates.endDate?` — ${reservation.dates.endDate}`:"");
-  const horario = (reservation.dates.startTime||"") + (reservation.dates.endTime?`–${reservation.dates.endTime}`:"");
   const mascotas = (reservation.pets||[]).map(p=>p.name).join(", ")||"—";
 
   const baseVars = {
@@ -542,7 +547,7 @@ async function sendEmails(reservation){
     endDate: reservation.dates.endDate || reservation.dates.startDate,
     Hora_inicio: reservation.dates.startTime || "",
     Hora_fin: reservation.dates.endTime || "",
-    species: mascotas, // reutilizamos
+    species: mascotas,
     summaryField: JSON.stringify(reservation.pricing.breakdownPublic.map(l=>`${l.label}${l.amount?`: ${l.amount}€`:""}`), null, 2),
 
     firstName: reservation.owner.fullName,
@@ -626,18 +631,19 @@ window.addEventListener("load", async ()=>{
   }
   $("#visitCatControls").style.display = ($("#serviceType").value==="visita_gato") ? "" : "none";
 
-  // Si no hay fecha fin, igualar a inicio por defecto
+  // Fechas: si cambias inicio y fin queda antes, ajustamos
   $("#startDate").addEventListener("change", ()=>{
     if(!$("#endDate").value) $("#endDate").value = $("#startDate").value;
-    // Validación fin >= inicio
     if($("#endDate").value && parseDate($("#endDate").value) < parseDate($("#startDate").value)){
       $("#endDate").value = $("#startDate").value;
     }
+    doRecalc();
   });
   $("#endDate").addEventListener("change", ()=>{
     if($("#startDate").value && parseDate($("#endDate").value) < parseDate($("#startDate").value)){
       $("#endDate").value = $("#startDate").value;
     }
+    doRecalc();
   });
 
   bindRecalc();
@@ -645,7 +651,6 @@ window.addEventListener("load", async ()=>{
 
   // CTA Reservar (demo: guarda + emails + gracias)
   $("#btnReserve").addEventListener("click", async ()=>{
-    // Validaciones mínimas
     if(!$("#serviceType").value || !$("#startDate").value || !$("#endDate").value){
       alert("Selecciona servicio y fechas de inicio/fin."); return;
     }
