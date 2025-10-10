@@ -19,96 +19,98 @@
       --tpl-card:#fff;
       --tpl-radius:14px;
       --tpl-shadow:0 2px 12px rgba(0,0,0,.06);
-      --nav-offset:96px; /* ajusta si tu navbar tapa el H1 */
+      --nav-offset:96px; /* si la navbar tapa el H1, sube/baja esto */
+      --col-gap:18px;
+      --row-gap:14px;
+      --field-gap:8px;
+      --input-max: 320px;
     }
 
     body{ background:#fff; }
     .page{ max-width:1040px; margin:0 auto; padding:20px; }
 
-    /* Cabecera centrada con aire */
+    /* Cabecera centrada, sin subtítulo */
     .booking-header{ margin: calc(var(--nav-offset)) auto 22px; text-align:center; }
-    .booking-header h1{ margin:0 0 8px; }
-    .booking-sub{ color:var(--tpl-muted); margin:0; }
+    .booking-header h1{ margin:0; }
 
-    /* Tarjeta única superior */
+    /* Contenedor y tarjeta única superior */
+    .shell{ background:var(--tpl-card); border:1px solid var(--tpl-border); border-radius: var(--tpl-radius); box-shadow: var(--tpl-shadow); padding:18px; }
     .card{
       border:1px solid var(--tpl-border);
       border-radius: var(--tpl-radius);
       background:#fff;
       box-shadow: var(--tpl-shadow);
+      padding:18px;
     }
-    .shell{ background:var(--tpl-card); border:1px solid var(--tpl-border); border-radius: var(--tpl-radius); box-shadow: var(--tpl-shadow); padding:18px; }
-
-    .card-one{ padding:18px; }
     .section-title{
       font-weight:700; font-size:1.06rem; margin:0 0 12px;
       display:flex; align-items:center; gap:8px;
     }
     .section-title i{ color:var(--tpl-accent); }
 
-    /* separadores suaves dentro de la tarjeta única */
-    .divider{ border-top:1px dashed var(--tpl-border); margin:14px 0; }
+    /* Separadores internos para dar aire entre bloques */
+    .divider{ border-top:1px dashed var(--tpl-border); margin:16px 0; }
 
-    /* Grids limpios y aireados */
-    .grid{ display:grid; gap:16px; }
+    /* Grids por bloque, con aire */
+    .grid{ display:grid; gap: var(--row-gap) var(--col-gap); }
+    .g-1{ grid-template-columns: 1fr; }
     .g-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
     .g-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
-    .g-4{ grid-template-columns: repeat(4, minmax(0,1fr)); }
-    @media (max-width: 980px){ .g-2,.g-3,.g-4{ grid-template-columns:1fr; } }
+    @media (max-width: 980px){ .g-2,.g-3{ grid-template-columns:1fr; } }
 
-    .field{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .field{ display:flex; flex-direction:column; gap: var(--field-gap); min-width:0; }
     label{ font-size:.95rem; color:#374151; }
     input,select,textarea{
       width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;
       font-size:15px; line-height:1.35; background:#fff;
+      max-width: var(--input-max);
     }
+    textarea{ max-width:100%; }
     input::placeholder,textarea::placeholder{ color:#9ca3af }
 
-    /* Filas compactas: inputs NO gigantes ni desbordados */
-    .row-2{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; }
-    .row-2 input{ max-width: 220px; }
+    /* Filas compactas (parejas) controladas para que no desborden */
+    .row-2{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:12px; }
+    .row-2 > * input{ max-width: 220px; }
     @media (max-width:640px){
       .row-2{ grid-template-columns:1fr; }
-      .row-2 input{ max-width:100%; }
+      .row-2 > * input{ max-width:100%; }
     }
 
-    /* Anchuras controladas (para que nada “se salga”) */
+    /* Ajustes específicos que se salían */
     #ownerFullName{ max-width:560px }
     #email,#phone,#postalCode,#emergencyPhone{ max-width:320px }
     #address,#emergencyName{ max-width:360px }
 
-    /* Mascotas: lista compacta */
+    /* Mascotas */
     .pets-list{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
-    .pet-item{
+    .tpl-pet-item{
       display:flex; gap:10px; align-items:center; padding:10px 12px;
       border:1px solid #ececec; border-radius:12px; background:#fff;
     }
-    .pet-thumb{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #ececec; }
-    .pet-icon{
+    .tpl-pet-thumb{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #ececec; }
+    .tpl-pet-icon{
       width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
       border:2px solid #ececec; color:#9aa0a6; font-size:20px;
     }
     .muted{ color:var(--tpl-muted); font-size:.9rem; }
 
-    /* Resumen abajo (sin cambios) */
+    /* Resumen abajo (tal cual) */
     .summary{ background:var(--tpl-bg); margin-top:18px; padding:18px; }
     .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
     .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
 
-    /* CTA en resumen */
+    /* CTA resumen */
     .actions-summary{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
     .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700 }
     .btn-primary{ background:var(--tpl-accent); color:var(--tpl-accent-on) }
     .btn-ghost{ background:#fff; border:1px solid var(--tpl-border); color:#111827 }
 
-    /* Auth wall */
+    /* Auth */
     .auth-wall{ padding:16px; border:1px dashed #bbb; border-radius:12px; text-align:center; background:#fafafa; margin:0 0 16px; }
 
-    /* Estados */
+    /* Estados y validación */
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
-
-    /* Validación amistosa */
     input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db; }
     input:focus:invalid, select:invalid, textarea:invalid:focus{ border-color:#ef4444; }
   </style>
@@ -121,7 +123,7 @@
   <div class="page">
     <header class="booking-header">
       <h1>Reserva tu servicio</h1>
-      <p class="booking-sub">Selecciona el servicio, fechas y mascotas. Tus datos se autocompletan desde el perfil.</p>
+      <!-- subtítulo eliminado a petición -->
     </header>
 
     <!-- Auth wall -->
@@ -132,12 +134,13 @@
 
     <div class="shell">
       <!-- TARJETA ÚNICA SUPERIOR -->
-      <form id="reservaForm" class="card card-one disabled" novalidate>
-        <!-- DATOS DEL SERVICIO -->
+      <form id="reservaForm" class="card disabled" novalidate>
+
+        <!-- DATOS DEL SERVICIO (secuenciado en 4 filas) -->
         <div class="section-title"><i class="fa-solid fa-list-check"></i> Datos del servicio</div>
 
-        <div class="grid g-3">
-          <!-- Servicio -->
+        <!-- Fila 1: Servicio -->
+        <div class="grid g-1">
           <div class="field">
             <label for="serviceType">Servicio</label>
             <select id="serviceType" required>
@@ -152,26 +155,32 @@
               <option value="transporte">Transporte</option>
             </select>
           </div>
+        </div>
 
-          <!-- Fechas (inicio / fin) -->
+        <!-- Fila 2: Fechas -->
+        <div class="grid g-1">
           <div class="field">
-            <label>Fecha</label>
+            <label>Fechas</label>
             <div class="row-2">
-              <input id="startDate" type="date" aria-label="Fecha inicio" required>
-              <input id="endDate"   type="date" aria-label="Fecha fin" required>
+              <div class="field"><input id="startDate" type="date" aria-label="Fecha inicio" required></div>
+              <div class="field"><input id="endDate"   type="date" aria-label="Fecha fin" required></div>
             </div>
           </div>
+        </div>
 
-          <!-- Horario (inicio / fin) -->
+        <!-- Fila 3: Horarios -->
+        <div class="grid g-1">
           <div class="field">
-            <label>Horario</label>
+            <label>Horarios</label>
             <div class="row-2">
-              <input id="startTime" type="time" aria-label="Hora inicio">
-              <input id="endTime"   type="time" aria-label="Hora fin">
+              <div class="field"><input id="startTime" type="time" aria-label="Hora inicio"></div>
+              <div class="field"><input id="endTime"   type="time" aria-label="Hora fin"></div>
             </div>
           </div>
+        </div>
 
-          <!-- Nº mascotas (1–5) -->
+        <!-- Fila 4: Nº mascotas + Cachorro -->
+        <div class="grid g-2">
           <div class="field">
             <label for="numPets">Número de mascotas</label>
             <select id="numPets">
@@ -181,53 +190,51 @@
               <option value="4">4</option>
               <option value="5">5</option>
             </select>
-            <small class="muted">Se sincroniza con la selección de abajo.</small>
           </div>
-
-          <!-- Cachorro (auto) -->
           <div class="field">
             <label for="isPuppyDisplay">Cachorro (≤ 6 meses)</label>
             <select id="isPuppyDisplay" disabled>
               <option value="no" selected>No</option>
               <option value="si">Sí</option>
             </select>
-            <small class="muted">Se calcula automáticamente según la(s) mascota(s).</small>
           </div>
+        </div>
 
-          <!-- Controles extra solo para visitas a gato -->
-          <div class="field" id="vcWrap" style="display:none">
-            <label>Visita (gato)</label>
-            <div class="row-2">
-              <select id="visitDuration" aria-label="Duración">
-                <option value="60">60 minutos</option>
-                <option value="90">90 minutos</option>
-              </select>
-              <select id="secondMedVisit" aria-label="2ª visita medicación">
-                <option value="no">Sin 2ª (medicación)</option>
-                <option value="si">Con 2ª (15’)</option>
-              </select>
-            </div>
+        <!-- Extra de visitas gato (debajo) -->
+        <div id="visitCatControls" class="grid g-2" style="margin-top:6px; display:none">
+          <div class="field">
+            <label for="visitDuration">Duración</label>
+            <select id="visitDuration">
+              <option value="60">60 minutos</option>
+              <option value="90">90 minutos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="secondMedVisit">2ª visita (medicación 15’)</label>
+            <select id="secondMedVisit">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
           </div>
         </div>
 
         <div class="divider"></div>
 
-        <!-- ELIGE TUS MASCOTAS (dentro de la misma tarjeta) -->
+        <!-- ELIGE TUS MASCOTAS -->
         <div class="section-title"><i class="fa-solid fa-paw"></i> Elige tus mascotas</div>
         <div id="petsGrid" class="pets-list"></div>
-        <p class="muted" id="petsHint" style="margin-top:4px">Marca una o varias de tus mascotas guardadas en el perfil.</p>
+        <!-- tips eliminados -->
 
         <div class="divider"></div>
 
-        <!-- DATOS DEL TITULAR (en la misma tarjeta) -->
+        <!-- DATOS DEL TITULAR (ahora 2 columnas para que respire) -->
         <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
 
-        <div class="grid g-3">
+        <div class="grid g-2">
           <div class="field">
             <label for="ownerFullName">Nombre y apellidos</label>
             <input id="ownerFullName" autocomplete="name" required>
           </div>
-
           <div class="field">
             <label for="email">Email</label>
             <input id="email" type="email" autocomplete="email" required>
@@ -237,21 +244,6 @@
             <label for="phone">Teléfono</label>
             <input id="phone" autocomplete="tel" required>
           </div>
-
-          <div class="field">
-            <label for="contactPref">Preferencia de contacto</label>
-            <select id="contactPref">
-              <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="contactTime">Franja preferida</label>
-            <select id="contactTime">
-              <option>Mañana</option><option>Tarde</option><option>Noche</option>
-            </select>
-          </div>
-
           <div class="field">
             <label for="region">Comunidad Autónoma</label>
             <select id="region" required>
@@ -267,17 +259,21 @@
             <label for="address">Dirección</label>
             <input id="address" placeholder="Calle, nº, piso…">
           </div>
-
           <div class="field">
             <label for="postalCode">Código Postal</label>
             <input id="postalCode" placeholder="28001">
           </div>
 
           <div class="field">
-            <label for="travelNeeded">¿Necesitas desplazamiento?</label>
-            <select id="travelNeeded">
-              <option value="no">No</option>
-              <option value="si">Sí (se calculará al asignar cuidador)</option>
+            <label for="contactPref">Preferencia de contacto</label>
+            <select id="contactPref">
+              <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="contactTime">Franja preferida</label>
+            <select id="contactTime">
+              <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
           </div>
 
@@ -285,7 +281,6 @@
             <label for="emergencyName">Contacto de emergencia</label>
             <input id="emergencyName" placeholder="Nombre y parentesco">
           </div>
-
           <div class="field">
             <label for="emergencyPhone">Teléfono de emergencia</label>
             <input id="emergencyPhone" placeholder="600 000 000">
@@ -298,7 +293,7 @@
         </div>
       </form>
 
-      <!-- RESUMEN / DESGLOSE (ABAJO) -->
+      <!-- RESUMEN / DESGLOSE (sin tocar) -->
       <section class="card summary">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="section-title" style="margin:0"><i class="fa-solid fa-receipt"></i> Resumen</div>
@@ -328,7 +323,7 @@
   <!-- Footer -->
   <div id="tpl-footer"></div>
 
-  <!-- Firebase compat -->
+  <!-- Firebase compat (idéntico a lo tuyo) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -354,22 +349,21 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Tu lógica (no tocada) -->
+  <!-- Tu lógica (cálculo y autocompletado) -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- Mini JS de integración de UI (no cambia Firestore/EmailJS) -->
+  <!-- Mini integración de UI: preselección servicio + mostrar controles visitas + “cachorro” auto -->
   <script>
-    // 1) Mostrar controles de visita solo si corresponde
+    // Mostrar controles de visita si corresponde
     function toggleVisitControls(){
-      var v = document.getElementById('visitCatControls') || document.getElementById('vcWrap');
+      var v = document.getElementById('visitCatControls');
       var s = document.getElementById('serviceType');
       if(!v || !s) return;
-      var on = (s.value === 'visita_gato');
-      v.style.display = on ? '' : 'none';
+      v.style.display = (s.value === 'visita_gato') ? '' : 'none';
     }
     document.getElementById('serviceType').addEventListener('change', toggleVisitControls);
 
-    // 2) Preselección de servicio desde ?service=... o referrer
+    // Preselección desde ?service=... o referrer
     (function presetService(){
       var sel = document.getElementById('serviceType'); if(!sel) return;
       var qs = new URLSearchParams(location.search);
@@ -400,36 +394,12 @@
       toggleVisitControls();
     })();
 
-    // 3) Sincronizar Nº de mascotas (select) con la lista marcada abajo
-    (function syncNumPets(){
-      var numSel = document.getElementById('numPets');
-      var grid = document.getElementById('petsGrid');
-      if(!numSel || !grid) return;
-
-      // si cambias el select, marcamos las N primeras mascotas visibles
-      numSel.addEventListener('change', function(){
-        var n = parseInt(numSel.value,10) || 1;
-        var checks = grid.querySelectorAll('.pet-check');
-        checks.forEach((ch, i)=>{ ch.checked = (i < n); });
-        grid.dispatchEvent(new Event('change', { bubbles:true }));
-      });
-
-      // si marcas/desmarcas abajo, reflejamos el contador
-      grid.addEventListener('change', function(){
-        var n = grid.querySelectorAll('.pet-check:checked').length || 0;
-        if(n>0 && numSel.value !== String(n)) numSel.value = String(Math.min(5,n));
-        // actualizar cachorro auto
-        updatePuppyDisplay();
-      });
-    })();
-
-    // 4) “Cachorro sí/no” automático (≤ 6 meses y especie perro)
+    // “Cachorro sí/no” calculado automáticamente en base a mascotas seleccionadas
     function updatePuppyDisplay(){
       var disp = document.getElementById('isPuppyDisplay');
       var cards = document.querySelectorAll('#petsGrid .tpl-pet-item');
-      if(!disp || !cards.length){ disp.value='no'; return; }
+      if(!disp || !cards.length){ if(disp) disp.value='no'; return; }
 
-      // buscamos checks activos y leemos data-birth/species si existen
       var any = false;
       cards.forEach(function(card){
         var chk = card.querySelector('.pet-check');
@@ -449,29 +419,29 @@
       disp.value = any ? 'si' : 'no';
     }
 
-    // 5) Cuando tu JS pinte las mascotas, añadimos data-* (si no estuvieran)
-    //    (tu tpl-reservas.js ya mete badges; esto solo ayuda al punto 4 si hay datos)
-    const _origRenderPets = window.renderPets;
-    if (typeof _origRenderPets === 'function'){
-      window.renderPets = function(pets){
-        _origRenderPets(pets);
-        // después de pintar, enriquecemos cada item con birth/species si existen
-        var grid = document.getElementById('petsGrid');
-        if(grid){
-          var items = grid.querySelectorAll('.tpl-pet-item');
-          items.forEach(function(el){
-            var id = el.querySelector('.pet-check')?.getAttribute('data-id');
-            var p = (pets||[]).find(x=> String(x.id)===String(id));
-            if(p){
-              if(p.birth)   el.setAttribute('data-birth', String(p.birth));
-              if(p.species) el.setAttribute('data-species', String(p.species));
-            }
-          });
-          updatePuppyDisplay();
-        }
-      };
-    }
-
+    // Hook tras pintar mascotas por tu JS (si existe window.renderPets)
+    (function enhancePets(){
+      const _orig = window.renderPets;
+      if(typeof _orig === 'function'){
+        window.renderPets = function(pets){
+          _orig(pets);
+          var grid = document.getElementById('petsGrid');
+          if(grid){
+            var items = grid.querySelectorAll('.tpl-pet-item');
+            items.forEach(function(el){
+              var id = el.querySelector('.pet-check')?.getAttribute('data-id');
+              var p = (pets||[]).find(x=> String(x.id)===String(id));
+              if(p){
+                if(p.birth)   el.setAttribute('data-birth', String(p.birth));
+                if(p.species) el.setAttribute('data-species', String(p.species));
+              }
+            });
+            updatePuppyDisplay();
+            grid.addEventListener('change', updatePuppyDisplay, { once:true });
+          }
+        };
+      }
+    })();
   </script>
 </body>
 </html>
