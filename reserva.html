@@ -11,21 +11,35 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
-    /* Ajustes suaves (misma estética, más aire) */
-    :root{--tpl-brand:#111827;--tpl-muted:#6b7280;--tpl-border:#e5e7eb;--tpl-bg:#f9fafb}
+    :root{
+      --tpl-brand:#111827;
+      --tpl-muted:#6b7280;
+      --tpl-border:#e5e7eb;
+      --tpl-bg:#f9fafb;
+      --tpl-accent:#6D28D9;       /* MORADO. Para verde usa: #059669 */
+      --navbar-space:72px;        /* espacio para que no tape el título */
+    }
     body{background:#fff}
     .wrap{max-width:1200px;margin:auto;padding:28px}
-    .hero{padding:14px 0 6px}
+    .hero{padding:14px 0 6px; text-align:center; margin-top:var(--navbar-space);}
+    .hero h1{margin:0;}
     .sub{color:var(--tpl-muted);margin-top:6px}
     .card{border:1px solid var(--tpl-border);border-radius:14px;padding:22px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.04)}
     .section-title{font-weight:700;margin:14px 0 12px;font-size:1.05rem}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+
+    /* Grids robustas para que no se pisen */
+    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+    /* grupos específicos con más aire entre columnas */
+    .grid-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:10px}
+    .grid-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:10px}
+
     label{font-size:14px;color:#374151;margin-bottom:8px;display:block}
     input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;line-height:1.35}
     input::placeholder,textarea::placeholder{color:#9ca3af}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
-    .btn-primary{background:var(--tpl-brand);color:#fff}
+    .btn-primary{background:var(--tpl-accent);color:#fff}
+    .btn-primary:hover{filter:brightness(1.05)}
     .btn-ghost{background:#fff;border:1px solid var(--tpl-border);color:#111827}
     .muted{color:var(--tpl-muted);font-size:12px}
     .disabled{opacity:.6;pointer-events:none;filter:grayscale(1)}
@@ -35,7 +49,7 @@
     .summary .total{font-weight:700;border-top:1px dashed var(--tpl-border);padding-top:8px;margin-top:6px}
     .gate{border:2px dashed var(--tpl-border);background:#fffcee;margin-bottom:14px}
 
-    /* Tarjetas de mascotas (idénticas al perfil) */
+    /* Tarjetas de mascotas */
     .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
     .tpl-pet-item {
       display:flex; gap:10px; align-items:center; padding:8px;
@@ -55,16 +69,20 @@
     .tpl-pet-sub{ color:#666; font-size:.95rem; }
     .badge{ font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid #e5e7eb;background:#eef2ff;color:#3730a3;margin-left:6px }
 
-    /* Campos más estrechos donde conviene */
+    /* Campos más estrechos para que NO sobresalgan */
     #phone,#email,#postalCode,#emergencyPhone{ max-width:320px }
     #ownerFullName{ max-width:560px }
-
-    /* Observaciones ocupa la tarjeta sin desbordar */
-    #notes { width: 100%; }
+    #address{ max-width:360px }
+    #emergencyName{ max-width:320px }
 
     /* Evitar “todo rojo” al cargar: solo rojo cuando el campo es inválido y tiene foco */
     input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db; }
     input:focus:invalid, select:focus:invalid, textarea:focus:invalid{ border-color:#ef4444; }
+
+    /* Pequeño empuje del email hacia la derecha en desktop para que no pise el nombre */
+    @media (min-width: 920px){
+      .field-email { padding-left: 8px; }
+    }
   </style>
 </head>
 <body>
@@ -92,6 +110,7 @@
     <form id="reservaForm" class="card disabled" novalidate>
       <!-- Datos del servicio -->
       <div class="section-title">Datos del servicio</div>
+
       <div class="grid-3">
         <div>
           <label for="serviceType">Servicio</label>
@@ -107,8 +126,11 @@
             <option value="transporte">Transporte</option>
           </select>
         </div>
+        <div></div>
+        <div></div>
+      </div>
 
-        <!-- Fechas INICIO/FIN juntos -->
+      <div class="grid-dates" style="margin-top:6px">
         <div>
           <label>Fecha inicio</label>
           <input id="startDate" type="date" required>
@@ -117,7 +139,9 @@
           <label>Fecha fin</label>
           <input id="endDate" type="date" required>
         </div>
+      </div>
 
+      <div class="grid-times" style="margin-top:6px">
         <div>
           <label>Hora inicio</label>
           <input id="startTime" type="time">
@@ -129,7 +153,7 @@
       </div>
 
       <!-- Controles específicos de visitas gato -->
-      <div id="visitCatControls" class="grid-3" style="margin-top:8px;display:none">
+      <div id="visitCatControls" class="grid-3" style="margin-top:10px;display:none">
         <div>
           <label for="visitDuration">Duración</label>
           <select id="visitDuration">
@@ -158,7 +182,7 @@
           <label for="ownerFullName">Nombre y apellidos</label>
           <input id="ownerFullName" autocomplete="name" required>
         </div>
-        <div>
+        <div class="field-email">
           <label for="email">Email</label>
           <input id="email" type="email" autocomplete="email" required>
         </div>
@@ -272,7 +296,7 @@
     })();
   </script>
 
-  <!-- EmailJS (tu template existente) -->
+  <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
