@@ -1,13 +1,13 @@
 /****************************************************
- * TPL · RESERVAS (COMPLETO)
- * - Autenticación inline (no redirige)
- * - Autocompletar titular desde Firestore (users/… o propietarios/…)
- *   + subcolección mascotas (…/mascotas)
- *   + fallback a “perfil local” (localStorage)
- * - Picker de mascotas por tarjetas
- * - Cálculo y resumen (subtotal, pagar ahora, pendiente)
- * - Guardado local de la reserva (para mostrar en perfil)
- * - (Opcional) EmailJS si TPL_EMAILJS.enabled === true
+ * TPL · RESERVAS (COMPLETO · para reservas.html remaquetado)
+ * - Mantiene IDs y comportamiento del flujo actual
+ * - Autorelleno titular + mascotas (Firestore users/… o propietarios/… + subcolección mascotas)
+ * - Picker de mascotas (tarjetas con checkbox)
+ * - Preselección de servicio desde ?service= / ?svc= o referrer
+ * - Cálculo y resumen (Subtotal / Pagar ahora / Pendiente)
+ * - Login inline sin salir de la página
+ * - Guarda localmente la reserva para mostrar en perfil
+ * - EmailJS opcional (solo si window.TPL_EMAILJS.enabled === true)
  ****************************************************/
 
 /************** Helpers **************/
@@ -29,17 +29,7 @@ function fmtMD(dateStr){
   return `${m}-${dd}`;
 }
 
-/************** Constantes de precios (público) **************/
-const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
-
-const PRICES_PUBLIC = {
-  paseo: { base:12, extra:8 },
-  transporte: { base:20 },
-  guarderia: { adult:15, puppy:20 },
-  alojamiento: { std:30, puppy:35, segundo:25 },
-  visita: { base60:22, base90:30, d11_60:18, d11_90:27, med15:12, med15_d11:10 }
-};
-
+/************** Etiquetas y precios públicos **************/
 function labelService(s){
   return ({
     guarderia_dia:"Guardería de día",
@@ -51,6 +41,62 @@ function labelService(s){
     exoticos_mamiferos:"Visita exóticos (mamíferos)",
     transporte:"Transporte"
   })[s]||s;
+}
+
+const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
+const PRICES_PUBLIC = {
+  paseo: { base:12, extra:8 },
+  transporte: { base:20 },
+  guarderia: { adult:15, puppy:20 },
+  alojamiento: { std:30, puppy:35, segundo:25 },
+  visita: { base60:22, base90:30, d11_60:18, d11_90:27, med15:12, med15_d11:10 }
+};
+
+/************** Preselección de servicio **************/
+function canonicalizeService(raw){
+  if(!raw) return "";
+  const s = String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const map = {
+    'paseo':'paseo','paseos':'paseo',
+    'guarderia':'guarderia_dia','guarderia-de-dia':'guarderia_dia','guarderia_dia':'guarderia_dia',
+    'alojamiento':'alojamiento_nocturno','estancias':'alojamiento_nocturno','nocturnas':'alojamiento_nocturno','estancias-nocturnas':'alojamiento_nocturno',
+    'visitas':'visita_gato','visita-gato':'visita_gato','visita':'visita_gato',
+    'exoticos':'exoticos_aves','exoticos-aves':'exoticos_aves','aves':'exoticos_aves',
+    'exoticos-reptiles':'exoticos_reptiles','reptiles':'exoticos_reptiles',
+    'exoticos-mamiferos':'exoticos_mamiferos','mamiferos':'exoticos_mamiferos',
+    'transporte':'transporte'
+  };
+  const allowed = new Set(['paseo','guarderia_dia','alojamiento_nocturno','visita_gato','exoticos_aves','exoticos_reptiles','exoticos_mamiferos','transporte']);
+  if(allowed.has(s)) return s;
+  return map[s] || "";
+}
+function inferServiceFromReferrer(){
+  try{
+    const r = document.referrer ? new URL(document.referrer) : null;
+    if(!r) return "";
+    const p = (r.pathname || "").toLowerCase();
+    if(/paseo|paseos/.test(p)) return 'paseo';
+    if(/guarderia/.test(p)) return 'guarderia_dia';
+    if(/estancia|estancias|alojamiento|noche|nocturn/.test(p)) return 'alojamiento_nocturno';
+    if(/visita/.test(p) && /gato/.test(p)) return 'visita_gato';
+    if(/exotico|exoticos/.test(p) && /ave|aves/.test(p)) return 'exoticos_aves';
+    if(/exotico|exoticos/.test(p) && /reptil|reptiles/.test(p)) return 'exoticos_reptiles';
+    if(/exotico|exoticos/.test(p) && /mamifer/.test(p)) return 'exoticos_mamiferos';
+    if(/transporte/.test(p)) return 'transporte';
+  }catch(_){}
+  return "";
+}
+function preselectService(){
+  const el = $("#serviceType"); if(!el) return;
+  const qs = new URLSearchParams(location.search);
+  let raw = qs.get('service') || qs.get('svc');
+  if(!raw) raw = inferServiceFromReferrer();
+  if(!raw){ try{ raw = localStorage.getItem('tpl.lastService') || ""; }catch(_){ raw=""; } }
+  const canon = canonicalizeService(raw);
+  if(canon){
+    el.value = canon;
+    try{ localStorage.setItem('tpl.lastService', canon); }catch(_){}
+  }
 }
 
 /************** Auth **************/
@@ -73,7 +119,6 @@ async function readOwnerAndPets(uid){
     }
   }
 
-  // busca primero en "users" (tu cole actual) y luego alternativas
   const hit = await readDoc("users")
           || await readDoc("propietarios")
           || await readDoc("owners")
@@ -81,7 +126,6 @@ async function readOwnerAndPets(uid){
           || await readDoc("perfiles");
 
   const d = hit?.data || {};
-
   const nombre   = d.nombre || d.name || d.Nombre || "";
   const apellido = d.apellido || d.apellidos || d.surname || d.Apellidos || "";
   const fullName = d.fullName || [nombre,apellido].filter(Boolean).join(" ").trim() || (firebase.auth().currentUser?.displayName||"");
@@ -93,7 +137,6 @@ async function readOwnerAndPets(uid){
 
   let pets = Array.isArray(d.pets) ? d.pets : (Array.isArray(d.mascotas)? d.mascotas : []);
 
-  // si no hay array, prueba subcolección 'mascotas'
   if(!pets.length && hit?.ref){
     try{
       const sub = await hit.ref.collection("mascotas").get();
@@ -112,7 +155,6 @@ async function readOwnerAndPets(uid){
     }
   }
 
-  // normaliza
   pets = pets.map((p,i)=>({
     id: p.id || p.uid || String(i+1),
     nombre: p.nombre || p.name || "Mascota",
@@ -124,7 +166,7 @@ async function readOwnerAndPets(uid){
   return { owner:{ fullName, email, phone, region, address, postalCode:postal }, pets };
 }
 
-/************** Fallback “perfil local” (localStorage) **************/
+/************** Fallback localStorage **************/
 function getUID(){
   try{ return firebase.auth().currentUser?.uid || localStorage.getItem('tpl_auth_uid') || 'default'; }
   catch(_){ return 'default'; }
@@ -151,7 +193,7 @@ function fillOwner(owner){
   $("#postalCode").value = owner.postalCode || "";
 }
 
-/************** Mascotas (estado + render) **************/
+/************** Estado + render mascotas **************/
 const STATE = { owner:null, pets:[], selectedPetIds:[] };
 
 function renderPetsGrid(pets){
@@ -160,17 +202,17 @@ function renderPetsGrid(pets){
 
   (pets||[]).forEach(p=>{
     const iconHtml = p.foto
-      ? `<img class="tpl-pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
-      : `<div class="tpl-pet-icon"><i class="fa-solid fa-paw"></i></div>`;
+      ? `<img class="pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
+      : `<div class="pet-icon"><i class="fa-solid fa-paw"></i></div>`;
 
     const el=document.createElement("label");
-    el.className="tpl-pet-item";
+    el.className="pet-item";
     el.innerHTML = `
       <input type="checkbox" class="pet-check" data-id="${p.id}" style="margin-right:6px;width:18px;height:18px">
       ${iconHtml}
       <div style="display:flex;flex-direction:column;line-height:1.25">
         <strong>${p.nombre||"Mascota"}</strong>
-        <span style="color:#666">${(p.especie||'').toLowerCase()}</span>
+        <span class="muted">${(p.especie||'').toLowerCase()}</span>
       </div>
     `;
     grid.appendChild(el);
@@ -178,7 +220,7 @@ function renderPetsGrid(pets){
 
   if(!(pets||[]).length){
     grid.innerHTML = `
-      <div class="tpl-pet-item">
+      <div class="pet-item">
         <div><strong style="color:#666">No hay mascotas en tu perfil</strong>
         <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div>
       </div>`;
@@ -277,7 +319,6 @@ function calc(payload){
     total+=PRICES_PUBLIC.transporte.base;
   }
 
-  // Festivos especiales/predefinidos
   const big = BIG_DAYS.includes(fmtMD(payload.startDate)) || BIG_DAYS.includes(fmtMD(payload.endDate));
   if(big){ lines.push({label:"Día señalado", amount:30}); total+=30; }
 
@@ -285,7 +326,7 @@ function calc(payload){
     lines.push({label:"Desplazamiento", note:"pendiente"});
   }
 
-  const payNow   = Math.max(0, total * 0.20); // depósito/margen orientativo
+  const payNow   = Math.max(0, total * 0.20);
   const payLater = Math.max(0, total - payNow);
   return { linesPublic:lines, totalPublic:total, payNow, payLater };
 }
@@ -309,7 +350,6 @@ function renderSummary(calc, payload){
 
 function doRecalc(){
   const payload = collectPayload();
-  // Mostrar/ocultar controles para visita gato
   $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
 
   if(!payload.serviceType || !payload.startDate || !payload.endDate){
@@ -320,7 +360,7 @@ function doRecalc(){
   renderSummary(c, payload);
 }
 
-/************** EmailJS (opcional) **************/
+/************** EmailJS (opcional, respeta tu config) **************/
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
   const svc = labelService(reservation.service.type);
@@ -368,7 +408,7 @@ async function sendEmails(reservation){
   }
 }
 
-/************** Login inline (no saca de la página) **************/
+/************** Login inline (no redirige) **************/
 function mountInlineLogin(){
   const host=$("#tpl-inline-login"); if(!host) return;
   host.innerHTML = `
@@ -430,6 +470,9 @@ window.addEventListener("load", ()=>{
     doRecalc();
   });
 
+  // Preselección de servicio antes de cualquier recálculo
+  preselectService();
+
   // Binds de recálculo
   ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit"]
     .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
@@ -453,7 +496,7 @@ window.addEventListener("load", ()=>{
     try{
       let {owner, pets} = await readOwnerAndPets(u.uid);
 
-      // Relleno si falta con fallback local
+      // Fallback local si falta algo
       if((!owner?.fullName || !owner?.phone) && udbGet("owner",null)){
         const fb=udbGet("owner",{});
         owner = {
@@ -467,7 +510,7 @@ window.addEventListener("load", ()=>{
       }
       fillOwner(owner||{});
 
-      // Mezcla mascotas firestore + locales (sin duplicar por nombre|especie)
+      // Mezcla mascotas firestore + locales (evitar duplicados)
       const localPets = udbGet("pets", []) || udbGet("mascotas", []) || [];
       const merged = [
         ...(pets||[]),
@@ -483,6 +526,10 @@ window.addEventListener("load", ()=>{
     }catch(e){
       console.warn("[init] owner/pets", e);
     }
+
+    // Mostrar controles visita gato si aplica (por la preselección)
+    $("#visitCatControls").style.display =
+      ($("#serviceType").value==="visita_gato") ? "" : "none";
 
     doRecalc();
 
@@ -536,7 +583,7 @@ window.addEventListener("load", ()=>{
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
 
-      // Envío emails (opcional)
+      // Envío emails (opcional, según tu config existente)
       try{ await sendEmails(reservation); }catch(_){}
 
       // UI gracias
