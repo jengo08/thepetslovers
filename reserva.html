@@ -59,26 +59,6 @@
 
     #reservaForm.compact.card{ padding:16px; }
 
-    /* ===== Mascotas compactas (malla) ===== */
-    #reservaForm.compact #petsGrid{
-      display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px;
-    }
-    @media (max-width: 1100px){ #reservaForm.compact #petsGrid{ grid-template-columns: repeat(2,1fr); } }
-    @media (max-width: 680px){  #reservaForm.compact #petsGrid{ grid-template-columns: 1fr; } }
-
-    #reservaForm.compact .tpl-pet-item{
-      position:relative; display:flex; align-items:center; gap:10px;
-      border:1px solid #ece8f0; background:#fff; border-radius:10px; padding:8px 10px;
-      box-shadow:0 1px 6px rgba(0,0,0,.04);
-    }
-    #reservaForm.compact .tpl-pet-thumb{ width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
-    #reservaForm.compact .tpl-pet-icon{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:18px; }
-    #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; min-width:0; }
-    #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
-    #reservaForm.compact .badge{ font-size:10px; padding:1px 6px; border-radius:999px; }
-
     /* ===== Resumen (igual que tenías) ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
     .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
@@ -95,19 +75,80 @@
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
   </style>
 
-  <!-- OVERRIDE: tarjetas mascotas más pequeñas -->
+  <!-- OVERRIDE: “Elige tus mascotas” como LISTA VERTICAL compacta -->
   <style>
-    #petsGrid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
-    @media (max-width: 1100px){ #petsGrid{ grid-template-columns: repeat(2,1fr); } }
-    @media (max-width: 680px){  #petsGrid{ grid-template-columns: 1fr; } }
-
-    #petsGrid .tpl-pet-item{ padding:6px 8px; gap:8px; border-radius:10px; }
-    #petsGrid .tpl-pet-thumb{ width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
-    #petsGrid .tpl-pet-icon{  width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:15px; }
-    #petsGrid .tpl-pet-meta{ line-height:1.15; }
-    #petsGrid .tpl-pet-name{ font-size:.95rem; }
-    #petsGrid .tpl-pet-sub{ font-size:.84rem; }
-    #petsGrid .pet-check{ position:absolute; top:6px; left:6px; width:15px; height:15px; }
+    /* contenedor en columna (una por fila) */
+    #petsGrid{
+      display:flex !important;
+      flex-direction:column !important;
+      gap:8px !important;
+    }
+    /* tarjeta horizontal, estrecha y limpia */
+    #petsGrid .tpl-pet-item{
+      display:flex !important;
+      align-items:center !important;
+      gap:10px !important;
+      padding:8px 10px !important;
+      border:1px solid #ece8f0 !important;
+      background:#fff !important;
+      border-radius:10px !important;
+      box-shadow:0 1px 5px rgba(0,0,0,.04) !important;
+      min-height:auto !important;
+    }
+    /* checkbox en línea (no absoluto) */
+    #petsGrid .tpl-pet-item .pet-check{
+      position:static !important;
+      width:16px !important;
+      height:16px !important;
+      margin:0 6px 0 0 !important;
+      transform:none !important;
+      flex:0 0 auto !important;
+    }
+    /* mini-foto */
+    #petsGrid .tpl-pet-thumb{
+      width:30px !important;
+      height:30px !important;
+      border-radius:50% !important;
+      object-fit:cover !important;
+      border:2px solid #eee !important;
+      flex:0 0 auto !important;
+    }
+    #petsGrid .tpl-pet-icon{
+      width:30px !important;
+      height:30px !important;
+      border-radius:50% !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      border:2px solid #eee !important;
+      color:#9aa0a6 !important;
+      font-size:14px !important;
+      flex:0 0 auto !important;
+    }
+    /* bloque de textos */
+    #petsGrid .tpl-pet-meta{
+      display:flex !important;
+      flex-direction:column !important;
+      line-height:1.2 !important;
+      min-width:0 !important;
+    }
+    #petsGrid .tpl-pet-name{
+      font-weight:700 !important;
+      color:#453a49 !important;
+      font-size:.94rem !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      margin:0 !important;
+    }
+    #petsGrid .tpl-pet-sub{
+      color:#7b6f86 !important;
+      font-size:.82rem !important;
+      white-space:nowrap !important;
+      overflow:hidden !important;
+      text-overflow:ellipsis !important;
+      margin-top:2px !important;
+    }
   </style>
 </head>
 <body>
@@ -314,7 +355,7 @@
   <!-- Lógica principal (tu JS existente, sin tocar) -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- UI helpers: preselección servicio + visitas + cachorro (sin tocar cálculo), y ENHANCER de tarjetas -->
+  <!-- Helpers de UI + ENHANCER tarjetas verticales -->
   <script>
     function toggleVisitControls(){
       var v = document.getElementById('visitCatControls');
@@ -354,7 +395,7 @@
       toggleVisitControls();
     })();
 
-    // Cachorro (solo lectura) por selección de mascotas
+    // Cachorro (solo lectura) por selección de mascotas (sigue igual)
     function __updatePuppyDisplay(){
       var disp = document.getElementById('isPuppyDisplay');
       var grid = document.getElementById('petsGrid');
@@ -379,21 +420,20 @@
     }
     document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
 
-    /* ===== ENHANCER: hace las tarjetas más informativas (Nombre ya existe; añadimos Raza · Edad · Sexo)
-       - No toca tpl-reservas.js: usa window.renderPets original y lo “posprocesa”.
-       - Mantiene data-birth/data-species para tu cálculo de cachorro. */
+    /* ===== ENHANCER: lista vertical + “Raza · Edad · Sexo” sin tocar tu JS ===== */
     (function enhancePets(){
-      function __ageYears(dateStr){
+      function ageYears(dateStr){
         if(!dateStr) return "";
         var d = new Date(dateStr);
         if(isNaN(d)) return "";
         var now = new Date();
         var years = (now - d) / (365.25 * 24 * 3600 * 1000);
         if (years < 0) return "";
+        // 0-2 con decimales, luego entero
         if (years < 2) return (Math.round(years * 10) / 10) + " años";
         return Math.round(years) + " años";
       }
-      function __sexoText(v){
+      function sexoText(v){
         var s = String(v||"").toLowerCase().trim();
         if (!s) return "";
         if (/(hembra|female|f)$/.test(s)) return "Hembra";
@@ -411,17 +451,44 @@
         var grid = document.getElementById('petsGrid');
         if(!grid) return;
 
+        // Fuerza lista vertical via clases/estilos (por si el original trae grid)
+        grid.style.display = 'flex';
+        grid.style.flexDirection = 'column';
+        grid.style.gap = '8px';
+
         grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
+          // Layout horizontal: checkbox · thumb · textos
+          el.style.display = 'flex';
+          el.style.alignItems = 'center';
+          el.style.gap = '10px';
+          el.style.padding = '8px 10px';
+
+          var chk = el.querySelector('.pet-check');
+          if(chk){
+            chk.style.position = 'static';
+            chk.style.width = '16px';
+            chk.style.height = '16px';
+            chk.style.marginRight = '6px';
+          }
+
           var id  = el.querySelector('.pet-check')?.getAttribute('data-id');
           var p   = (pets||[]).find(function(x){ return String(x.id)===String(id); }) || {};
 
-          // Campos habituales
+          // Mini-foto / icono
+          var thumb = el.querySelector('.tpl-pet-thumb');
+          var icon  = el.querySelector('.tpl-pet-icon');
+          if(thumb){ thumb.style.width='30px'; thumb.style.height='30px'; }
+          if(icon){
+            icon.style.width='30px'; icon.style.height='30px';
+            icon.style.fontSize='14px';
+          }
+
+          // Subtexto con raza · edad · sexo
           var raza   = p.raza || p.breed || p.tipoExotico || "";
           var birth  = p.nacimiento || p.birth || p.birthdate || p.fecha_nac || "";
-          var edad   = __ageYears(birth);
-          var sexo   = __sexoText(p.sexo || p.genero || p.gender || "");
-
-          var parts = [];
+          var edad   = ageYears(birth);
+          var sexo   = sexoText(p.sexo || p.genero || p.gender || "");
+          var parts  = [];
           if (raza) parts.push(raza);
           if (edad) parts.push(edad);
           if (sexo) parts.push(sexo);
@@ -429,24 +496,28 @@
 
           var meta = el.querySelector('.tpl-pet-meta');
           if (meta){
-            // Asegura estructura
+            meta.style.display='flex';
+            meta.style.flexDirection='column';
+            meta.style.lineHeight='1.2';
             var nameNode = meta.querySelector('.tpl-pet-name');
             var subNode  = meta.querySelector('.tpl-pet-sub');
             if (!nameNode){
-              var n = document.createElement('strong');
-              n.className = 'tpl-pet-name';
-              n.textContent = (p.nombre || 'Mascota');
-              meta.prepend(n);
+              nameNode = document.createElement('strong');
+              nameNode.className='tpl-pet-name';
+              nameNode.textContent = (p.nombre || 'Mascota');
+              meta.prepend(nameNode);
             }
             if (!subNode){
               subNode = document.createElement('span');
-              subNode.className = 'tpl-pet-sub';
+              subNode.className='tpl-pet-sub';
               meta.appendChild(subNode);
             }
+            nameNode.style.fontSize='.94rem';
+            subNode.style.fontSize='.82rem';
             subNode.textContent = subTxt;
           }
 
-          // Para el display “cachorro”
+          // Atributos para el display “cachorro”
           if (birth)   el.setAttribute('data-birth', String(birth));
           var specieVal = p.especie || p.species || p.tipo || "";
           if (specieVal) el.setAttribute('data-species', String(specieVal).toLowerCase());
