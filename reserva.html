@@ -11,44 +11,70 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
+    /* Ajustes suaves (misma estética, más aire) */
     :root{--tpl-brand:#111827;--tpl-muted:#6b7280;--tpl-border:#e5e7eb;--tpl-bg:#f9fafb}
     body{background:#fff}
-    .wrap{max-width:1100px;margin:auto;padding:24px}
-    .hero{padding:18px 0 6px}
-    .sub{color:var(--tpl-muted);margin-top:4px}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:14px 16px;background:#fff}
-    label{font-size:14px;color:#374151;display:block;margin:0 0 6px}
-    input,select,textarea{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;line-height:1.25}
+    .wrap{max-width:1200px;margin:auto;padding:28px}
+    .hero{padding:14px 0 6px}
+    .sub{color:var(--tpl-muted);margin-top:6px}
+    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:18px 20px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+    .section-title{font-weight:700;margin:14px 0 12px;font-size:1.05rem}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    label{font-size:14px;color:#374151;margin-bottom:6px;display:block}
+    input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;line-height:1.35}
+    input::placeholder,textarea::placeholder{color:#9ca3af}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
     .btn-primary{background:var(--tpl-brand);color:#fff}
     .btn-ghost{background:#fff;border:1px solid var(--tpl-border);color:#111827}
     .muted{color:var(--tpl-muted);font-size:12px}
-    .section-title{font-weight:700;margin:8px 0 10px}
     .disabled{opacity:.6;pointer-events:none;filter:grayscale(1)}
     .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--tpl-bg);border:1px solid var(--tpl-border);font-size:12px;color:#374151}
-    .summary{background:var(--tpl-bg)}
+    .summary{background:var(--tpl-bg);margin-top:18px}
     .summary .line{display:flex;justify-content:space-between;margin:6px 0}
     .summary .total{font-weight:700;border-top:1px dashed var(--tpl-border);padding-top:8px;margin-top:6px}
-    .gate{border:2px dashed var(--tpl-border);background:#fffcee}
-    .pets-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    @media (min-width:900px){.pets-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
-    .pet-card{display:flex;gap:12px;border:1px solid var(--tpl-border);border-radius:14px;padding:10px;align-items:center}
-    .pet-card input[type=checkbox]{width:18px;height:18px}
-    .pet-img{width:48px;height:48px;flex:0 0 48px;border-radius:50%;object-fit:cover;border:1px solid var(--tpl-border)}
-    .pet-meta{font-size:12px;color:#4b5563}
-    .badge{font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid var(--tpl-border);background:#eef2ff;color:#3730a3}
+    .gate{border:2px dashed var(--tpl-border);background:#fffcee;margin-bottom:14px}
 
-    /* Aire entre filas */
-    #reservaForm .grid-3 > div, #reservaForm .grid-2 > div { margin-bottom:10px }
+    /* Tarjetas de mascotas (idénticas al perfil) */
+    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+    .tpl-pet-item {
+      display:flex; gap:10px; align-items:center; padding:8px;
+      border:1px solid #ececec; border-radius:12px; background:#fff; position:relative;
+    }
+    .tpl-pet-thumb {
+      width:56px; height:56px; flex:0 0 56px; border-radius:50%; object-fit:cover;
+      border:2px solid #ececec; background:#fff;
+    }
+    .tpl-pet-icon {
+      width:56px; height:56px; flex:0 0 56px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      border:2px solid #ececec; background:#fafafa; color:#9aa0a6; font-size:22px;
+    }
+    .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
+    .tpl-pet-name{ font-weight:700; color:#222; }
+    .tpl-pet-sub{ color:#666; font-size:.95rem; }
+    .badge{ font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid #e5e7eb;background:#eef2ff;color:#3730a3;margin-left:6px }
 
-    /* Campos estrechos razonables */
-    #phone, #email, #postalCode, #emergencyPhone { max-width:260px }
+    /* Campos más estrechos donde conviene */
+    #phone,#email,#postalCode,#emergencyPhone{ max-width:280px }
+    #ownerFullName{ max-width:520px }
 
-    /* Visita gato */
-    .pet-subtype{margin-top:4px}
+    /* Limitar ancho del propio form en desktop */
+    @media (min-width:1100px){ #reservaForm{ max-width:980px; margin-left:auto; margin-right:auto } }
+
+    /* Accesibilidad mínima */
+    input:invalid, select:invalid, textarea:invalid{ border-color:#ef4444; outline: none }
   </style>
+
+  <!-- Redirección segura si entran por /reservas o /reservas.html -->
+  <script>
+    (function(){
+      var path = location.pathname.replace(/\/+$/,'').toLowerCase();
+      if (path==='/reservas' || path==='/reservas.html') {
+        location.replace('/reserva.html'+location.search+location.hash);
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -58,10 +84,10 @@
   <main class="wrap">
     <div class="hero">
       <h1>Reserva tu servicio</h1>
-      <p class="sub">Selecciona el servicio y las fechas para completar la reserva.</p>
+      <p class="sub">Selecciona el servicio, fechas y mascotas. Tus datos se autocompletan desde el perfil.</p>
     </div>
 
-    <!-- Gate de sesión -->
+    <!-- Puerta de sesión -->
     <div id="sessionGate" class="card gate" style="display:none">
       <h3 style="margin:0 0 8px">Inicia sesión para reservar</h3>
       <p class="muted" style="margin:0 0 12px">Para continuar debes iniciar sesión o crear tu perfil.</p>
@@ -72,8 +98,8 @@
     </div>
 
     <!-- Formulario -->
-    <form id="reservaForm" class="card disabled" autocomplete="on">
-      <!-- Datos del servicio (solo estos campos) -->
+    <form id="reservaForm" class="card disabled" novalidate>
+      <!-- Datos del servicio -->
       <div class="section-title">Datos del servicio</div>
       <div class="grid-3">
         <div>
@@ -90,69 +116,88 @@
             <option value="transporte">Transporte</option>
           </select>
         </div>
+
+        <!-- Fechas INICIO/FIN juntos -->
         <div>
-          <label for="startDate">Fecha inicio</label>
+          <label>Fecha inicio</label>
           <input id="startDate" type="date" required>
         </div>
         <div>
-          <label for="endDate">Fecha fin</label>
+          <label>Fecha fin</label>
           <input id="endDate" type="date" required>
         </div>
+
         <div>
-          <label for="startTime">Hora inicio</label>
+          <label>Hora inicio</label>
           <input id="startTime" type="time">
         </div>
         <div>
-          <label for="endTime">Hora fin</label>
+          <label>Hora fin</label>
           <input id="endTime" type="time">
         </div>
       </div>
 
-      <!-- Controles: Visitas a domicilio (gato) -->
-      <div id="visitCatControls" class="card" style="display:none;margin-top:12px">
-        <div class="section-title">Visitas a domicilio (gato)</div>
-        <div class="grid-3">
-          <div>
-            <label for="vgDuration">Duración</label>
-            <select id="vgDuration">
-              <option value="60">60 minutos</option>
-              <option value="90">90 minutos</option>
-            </select>
-          </div>
-          <div>
-            <label for="vgPerDay">Visitas por día</label>
-            <select id="vgPerDay">
-              <option value="1">1 visita / día</option>
-              <option value="2">2 visitas (2ª de 15’)</option>
-            </select>
-          </div>
+      <!-- Controles específicos de visitas gato -->
+      <div id="visitCatControls" class="grid-3" style="margin-top:8px;display:none">
+        <div>
+          <label for="visitDuration">Duración</label>
+          <select id="visitDuration">
+            <option value="60">60 minutos</option>
+            <option value="90">90 minutos</option>
+          </select>
         </div>
-        <p class="muted" style="margin-top:6px">
-          La 2ª visita es de 15’ y cuesta 12€ (10€ desde el día 11).
-        </p>
+        <div>
+          <label for="secondMedVisit">¿Añadir 2ª visita (medicación 15’)?</label>
+          <select id="secondMedVisit">
+            <option value="no">No</option>
+            <option value="si">Sí (12 € · desde día 11 → 10 €)</option>
+          </select>
+        </div>
       </div>
 
-      <!-- Mascotas (todas las del perfil) -->
+      <!-- Mascotas -->
       <div style="margin-top:14px" class="section-title">Mascotas (elige una o varias)</div>
-      <div id="petsGrid" class="pets-grid"></div>
-      <p class="muted" id="petsHint" style="margin-top:6px">Selecciona tus mascotas del perfil.</p>
+      <div id="petsGrid" class="tpl-pet-list"></div>
+      <p class="muted" id="petsHint" style="margin-top:8px">Selecciona tus mascotas guardadas en el perfil.</p>
 
       <!-- Datos del titular -->
       <div style="margin-top:14px" class="section-title">Datos del titular</div>
       <div class="grid-3">
-        <div class="full">
-          <label for="ownerFullName">Nombre y apellido</label>
-          <input id="ownerFullName" required autocomplete="name">
+        <div>
+          <label for="ownerFullName">Nombre y apellidos</label>
+          <input id="ownerFullName" autocomplete="name" required>
         </div>
-        <div class="full">
-          <label for="phone">Teléfono</label>
-          <input id="phone" required autocomplete="tel">
-        </div>
-        <div class="full">
+        <div>
           <label for="email">Email</label>
-          <input id="email" type="email" required autocomplete="email">
+          <input id="email" type="email" autocomplete="email" required>
         </div>
-        <div class="full">
+        <div>
+          <label for="phone">Teléfono</label>
+          <input id="phone" autocomplete="tel" required>
+        </div>
+
+        <div>
+          <label for="contactPref">Preferencia de contacto</label>
+          <select id="contactPref">
+            <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
+          </select>
+        </div>
+        <div>
+          <label for="contactTime">Franja preferida</label>
+          <select id="contactTime">
+            <option>Mañana</option><option>Tarde</option><option>Noche</option>
+          </select>
+        </div>
+        <div>
+          <label for="emergencyName">Contacto de emergencia</label>
+          <input id="emergencyName" placeholder="Nombre y parentesco">
+        </div>
+
+        <div>
+          <label for="emergencyPhone">Teléfono de emergencia</label>
+          <input id="emergencyPhone" placeholder="600 000 000">
+        </div>
+        <div>
           <label for="region">Comunidad Autónoma</label>
           <select id="region" required>
             <option value="">Selecciona…</option>
@@ -162,49 +207,32 @@
             <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
           </select>
         </div>
-        <div class="full">
+        <div>
           <label for="address">Dirección</label>
           <input id="address" placeholder="Calle, nº, piso…">
         </div>
-        <div class="full">
+        <div>
           <label for="postalCode">Código Postal</label>
           <input id="postalCode" placeholder="28001">
         </div>
-        <div class="full">
-          <label for="notes">Observaciones</label>
-          <input id="notes" placeholder="Observaciones para el servicio">
-        </div>
-        <div class="full">
-          <label for="contactPref">Preferencia de contacto</label>
-          <select id="contactPref">
-            <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
-          </select>
-        </div>
-        <div class="full">
-          <label for="contactTime">Franja preferida</label>
-          <select id="contactTime">
-            <option>Mañana</option><option>Tarde</option><option>Noche</option>
-          </select>
-        </div>
-        <div class="full">
-          <label for="emergencyName">Contacto de emergencia</label>
-          <input id="emergencyName" placeholder="Nombre y apellido">
-        </div>
-        <div class="full">
-          <label for="emergencyPhone">Teléfono de emergencia</label>
-          <input id="emergencyPhone" placeholder="Ej.: 600123456">
-        </div>
-        <div class="full">
+
+        <div>
           <label for="travelNeeded">¿Necesitas desplazamiento?</label>
           <select id="travelNeeded">
             <option value="no">No</option>
             <option value="si">Sí (se calculará al asignar cuidador)</option>
           </select>
         </div>
+        <div class="grid-2" style="grid-column:1/-1;gap:16px">
+          <div>
+            <label for="notes">Observaciones</label>
+            <textarea id="notes" rows="2" placeholder="Cualquier detalle útil para el servicio"></textarea>
+          </div>
+        </div>
       </div>
 
       <!-- Desglose -->
-      <div class="card summary" style="margin-top:16px">
+      <div class="card summary">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div><strong>Resumen</strong></div>
           <span id="summaryContext" class="pill">—</span>
@@ -234,42 +262,45 @@
   <!-- Footer -->
   <div id="tpl-footer"></div>
 
-  <!-- Navbar/Footer inyectados -->
-  <script src="tpl-navbar.js" defer></script>
-  <script src="tpl-footer.js" defer></script>
-
-  <!-- Firebase compat + init -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
     (function(){
-      // Fuerza https+www para no perder sesión entre dominios
-      var wantHost='www.thepetslovers.es';
-      if (location.protocol!=='https:' || location.host!==wantHost){
-        location.replace('https://'+wantHost+location.pathname+location.search+location.hash);
-      }
-      try{
-        if (typeof firebase!=='undefined' && !firebase.apps.length){
-          const firebaseConfig = {
-            apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
-            authDomain: "thepetslovers-c1111.firebaseapp.com",
-            projectId: "thepetslovers-c1111",
-            storageBucket: "thepetslovers-c1111.appspot.com",
-            messagingSenderId: "415914577533",
-            appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
-            measurementId: "G-FXPD69KXBG"
-          };
-          firebase.initializeApp(firebaseConfig);
-        }
-      }catch(e){ console.warn("Firebase init:", e); }
+      const cfg = {
+        apiKey: "AIzaSyDW73aFuz2AFS9VeWg_linHIRJYN4YMgTk",
+        authDomain: "thepetslovers-c1111.firebaseapp.com",
+        projectId: "thepetslovers-c1111",
+        storageBucket: "thepetslovers-c1111.appspot.com",
+        messagingSenderId: "415914577533",
+        appId: "1:415914577533:web:0b7a056ebaa4f1de28ab14",
+        measurementId: "G-FXPD69KXBG"
+      };
+      if (typeof firebase!=='undefined' && !firebase.apps.length){ firebase.initializeApp(cfg); }
     })();
   </script>
 
-  <!-- EmailJS (1 único template para cliente y gestión) -->
+  <!-- EmailJS (usa tu template existente) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    // Activa si quieres envío real de prueba. Usa tu template existente "template_rao5n0c"
+    window.TPL_EMAILJS = {
+      enabled: true,
+      serviceId: "service_odjqrfl",
+      publicKey:  "L2xAATfVuHJwj4EIV",
+      templateIdCliente: "template_rao5n0c",  // mismo template
+      templateIdGestion: "template_rao5n0c",   // puedes reutilizarlo o duplicarlo si quieres otro asunto
+      adminEmail: "gestion@thepetslovers.es"
+    };
+    try{ if(window.TPL_EMAILJS.enabled){ emailjs.init(window.TPL_EMAILJS.publicKey); } }catch(e){}
+  </script>
 
-  <!-- Lógica completa reservas -->
+  <!-- Tu navbar/footer -->
+  <script src="tpl-navbar.js" defer></script>
+  <script src="tpl-footer.js" defer></script>
+
+  <!-- Lógica de la reserva -->
   <script src="tpl-reservas.js" defer></script>
 </body>
 </html>
