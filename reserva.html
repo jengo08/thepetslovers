@@ -47,6 +47,20 @@
     .pet-img{width:46px;height:46px;flex:0 0 46px;border-radius:50%;object-fit:cover;border:1px solid var(--tpl-border)}
     .pet-meta{font-size:12px;color:#4b5563}
     .badge{font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid var(--tpl-border);background:#eefaf9;color:#0f766e}
+    <style>
+  /* Más aire entre inputs sin hacerlos gigantes */
+  #reservaForm .grid-3 > div,
+  #reservaForm .grid-2 > div {
+    margin-bottom: 10px;
+  }
+  #reservaForm label { margin-bottom: 4px; }
+  /* Compacta un pelín inputs y textarea */
+  #reservaForm input, #reservaForm select, #reservaForm textarea {
+    padding: 10px;
+    line-height: 1.25;
+  }
+</style>
+
   </style>
 
   <!-- Redirección defensiva si alguien entra en /reservas (sin .html) -->
