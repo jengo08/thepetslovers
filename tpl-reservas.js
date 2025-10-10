@@ -1,24 +1,87 @@
-/***** Helpers *****/
-const $ = (s,root=document)=>root.querySelector(s);
-const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
-const fmt = n => (typeof n!=="number"||isNaN(n))?"—":n.toFixed(2).replace(".",",")+" €";
-const parseDate = v => { const d=new Date(v); return isNaN(d)?null:d; };
-function nowISO(){ return new Date().toISOString(); }
-function daysInclusive(a,b){ const A=parseDate(a), B=parseDate(b||a); if(!A||!B) return 0; const d=Math.round((B-A)/86400000); return d>=0?d+1:0; }
+/****************************************************
+ * TPL · RESERVAS (COMPLETO)
+ * - Autenticación inline (no redirige)
+ * - Autocompletar titular desde Firestore (users/… o propietarios/…)
+ *   + subcolección mascotas (…/mascotas)
+ *   + fallback a “perfil local” (localStorage)
+ * - Picker de mascotas por tarjetas
+ * - Cálculo y resumen (subtotal, pagar ahora, pendiente)
+ * - Guardado local de la reserva (para mostrar en perfil)
+ * - (Opcional) EmailJS si TPL_EMAILJS.enabled === true
+ ****************************************************/
 
-/***** Auth *****/
-function onAuth(cb){
-  try{ return firebase.auth().onAuthStateChanged(cb); }catch(_){ cb(null); return ()=>{}; }
+/************** Helpers **************/
+const $  = (s,root=document)=>root.querySelector(s);
+const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+const fmtMoney = n => (typeof n!=="number"||isNaN(n))?"—":n.toFixed(2).replace(".",",")+" €";
+const parseDate = v => { const d=new Date(v); return isNaN(d)?null:d; };
+const nowISO    = ()=> new Date().toISOString();
+
+function daysInclusive(a,b){
+  const A=parseDate(a), B=parseDate(b||a);
+  if(!A||!B) return 0;
+  const diff = Math.round((B-A)/86400000);
+  return diff>=0 ? diff+1 : 0;
+}
+function fmtMD(dateStr){
+  const d=parseDate(dateStr); if(!d) return "";
+  const m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
+  return `${m}-${dd}`;
 }
 
-/***** Firestore owner+pets (lee primero users/{uid}) *****/
+/************** Constantes de precios (público) **************/
+const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
+
+const PRICES_PUBLIC = {
+  paseo: { base:12, extra:8 },
+  transporte: { base:20 },
+  guarderia: { adult:15, puppy:20 },
+  alojamiento: { std:30, puppy:35, segundo:25 },
+  visita: { base60:22, base90:30, d11_60:18, d11_90:27, med15:12, med15_d11:10 }
+};
+
+function labelService(s){
+  return ({
+    guarderia_dia:"Guardería de día",
+    alojamiento_nocturno:"Alojamiento nocturno",
+    paseo:"Paseo",
+    visita_gato:"Visita gato",
+    exoticos_aves:"Visita exóticos (aves)",
+    exoticos_reptiles:"Visita exóticos (reptiles)",
+    exoticos_mamiferos:"Visita exóticos (mamíferos)",
+    transporte:"Transporte"
+  })[s]||s;
+}
+
+/************** Auth **************/
+function onAuth(cb){
+  try{ return firebase.auth().onAuthStateChanged(cb); }
+  catch(_){ cb(null); return ()=>{}; }
+}
+
+/************** Firestore: owner + pets **************/
 async function readOwnerAndPets(uid){
   const db=firebase.firestore();
-  async function read(coll){
-    try{ const s=await db.collection(coll).doc(uid).get(); return s.exists?{ref:s.ref,data:s.data()}:null; }catch(_){ return null; }
+
+  async function readDoc(coll){
+    try{
+      const snap = await db.collection(coll).doc(uid).get();
+      return snap.exists ? {ref:snap.ref, data:snap.data()||{}, coll} : null;
+    }catch(e){
+      console.warn(`[perfil] error leyendo ${coll}`, e);
+      return null;
+    }
   }
-  const hit = await read("users") || await read("propietarios") || await read("owners") || await read("usuarios") || await read("perfiles");
+
+  // busca primero en "users" (tu cole actual) y luego alternativas
+  const hit = await readDoc("users")
+          || await readDoc("propietarios")
+          || await readDoc("owners")
+          || await readDoc("usuarios")
+          || await readDoc("perfiles");
+
   const d = hit?.data || {};
+
   const nombre   = d.nombre || d.name || d.Nombre || "";
   const apellido = d.apellido || d.apellidos || d.surname || d.Apellidos || "";
   const fullName = d.fullName || [nombre,apellido].filter(Boolean).join(" ").trim() || (firebase.auth().currentUser?.displayName||"");
@@ -28,28 +91,56 @@ async function readOwnerAndPets(uid){
   const postal   = d.postalCode || d.cp || d.codigo_postal || d.codigoPostal || d.CP || "";
   const email    = d.email || firebase.auth().currentUser?.email || "";
 
-  let pets = Array.isArray(d.pets)?d.pets:(Array.isArray(d.mascotas)?d.mascotas:[]);
+  let pets = Array.isArray(d.pets) ? d.pets : (Array.isArray(d.mascotas)? d.mascotas : []);
+
+  // si no hay array, prueba subcolección 'mascotas'
   if(!pets.length && hit?.ref){
     try{
-      const sub=await hit.ref.collection("mascotas").get();
-      pets=sub.docs.map((doc,i)=>({ id: doc.id, nombre: (doc.data().nombre||"Mascota"), especie: (doc.data().especie||doc.data().tipo||"").toLowerCase(), foto: doc.data().foto||"", nacimiento: doc.data().birthdate||doc.data().nacimiento||"" }));
-    }catch(e){ console.warn("[mascotas] subcolección inaccesible:", e); }
+      const sub = await hit.ref.collection("mascotas").get();
+      pets = sub.docs.map((doc,i)=>{
+        const x=doc.data()||{};
+        return {
+          id: doc.id || String(i+1),
+          nombre: x.nombre || x.name || "Mascota",
+          especie: (x.especie || x.tipo || "").toLowerCase(),
+          nacimiento: x.birthdate || x.nacimiento || "",
+          foto: x.foto || x.img || ""
+        };
+      });
+    }catch(e){
+      console.warn("[perfil] subcolección 'mascotas' inaccesible por reglas:", e);
+    }
   }
-  return { owner:{fullName,email,phone,region,address,postalCode:postal}, pets };
+
+  // normaliza
+  pets = pets.map((p,i)=>({
+    id: p.id || p.uid || String(i+1),
+    nombre: p.nombre || p.name || "Mascota",
+    especie: (p.especie || p.tipo || "").toLowerCase(),
+    nacimiento: p.nacimiento || p.birthdate || "",
+    foto: p.foto || p.img || ""
+  }));
+
+  return { owner:{ fullName, email, phone, region, address, postalCode:postal }, pets };
 }
 
-/***** Fallback perfil local (udb) *****/
-function getUID(){ try{ return firebase.auth().currentUser?.uid || localStorage.getItem('tpl_auth_uid') || 'default'; }catch(_){ return 'default'; } }
+/************** Fallback “perfil local” (localStorage) **************/
+function getUID(){
+  try{ return firebase.auth().currentUser?.uid || localStorage.getItem('tpl_auth_uid') || 'default'; }
+  catch(_){ return 'default'; }
+}
 function udbKey(k){ return `tpl.udb.${getUID()}.${k}`; }
 function udbGet(k,fb){ try{ const v=localStorage.getItem(udbKey(k)); return v?JSON.parse(v):fb; }catch(_){ return fb; } }
 
-/***** UI: rellenar titular *****/
+/************** UI titular **************/
 function setSelectValue(selectId, value){
   const el = document.getElementById(selectId);
-  if (!el || !value) return;
-  const hit = Array.from(el.options).some(o => (o.value||o.text).trim().toLowerCase() === String(value).trim().toLowerCase());
-  if(hit){ el.value = Array.from(el.options).find(o=> (o.value||o.text).trim().toLowerCase()===String(value).trim().toLowerCase()).value; return; }
-  const opt=document.createElement("option"); opt.value=String(value); opt.text=String(value); opt.dataset.injected="1"; el.appendChild(opt); el.value=opt.value;
+  if(!el || !value) return;
+  const target = String(value).trim().toLowerCase();
+  const hit = Array.from(el.options).find(o => (o.value||o.text).trim().toLowerCase()===target);
+  if(hit){ el.value = hit.value; return; }
+  const opt=document.createElement("option"); opt.value=String(value); opt.text=String(value);
+  opt.dataset.injected="1"; el.appendChild(opt); el.value=opt.value;
 }
 function fillOwner(owner){
   $("#ownerFullName").value = owner.fullName || "";
@@ -60,36 +151,46 @@ function fillOwner(owner){
   $("#postalCode").value = owner.postalCode || "";
 }
 
-/***** Mascotas – vista tipo “tarjetas” + picker *****/
-let STATE = { owner:null, pets:[], selectedPetIds:[] };
+/************** Mascotas (estado + render) **************/
+const STATE = { owner:null, pets:[], selectedPetIds:[] };
 
 function renderPetsGrid(pets){
-  const grid=$("#petsGrid"); grid.innerHTML="";
+  const grid=$("#petsGrid");
+  grid.innerHTML="";
+
   (pets||[]).forEach(p=>{
-    const icon = p.foto ? `<img class="tpl-pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
-                        : `<div class="tpl-pet-icon"><i class="fa-solid fa-paw"></i></div>`;
-    const el=document.createElement("label"); el.className="tpl-pet-item";
+    const iconHtml = p.foto
+      ? `<img class="tpl-pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
+      : `<div class="tpl-pet-icon"><i class="fa-solid fa-paw"></i></div>`;
+
+    const el=document.createElement("label");
+    el.className="tpl-pet-item";
     el.innerHTML = `
       <input type="checkbox" class="pet-check" data-id="${p.id}" style="margin-right:6px;width:18px;height:18px">
-      ${icon}
-      <div style="display:flex;flex-direction:column">
+      ${iconHtml}
+      <div style="display:flex;flex-direction:column;line-height:1.25">
         <strong>${p.nombre||"Mascota"}</strong>
         <span style="color:#666">${(p.especie||'').toLowerCase()}</span>
-      </div>`;
+      </div>
+    `;
     grid.appendChild(el);
   });
-  grid.addEventListener("change", ()=>{ STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id); doRecalc(); });
+
   if(!(pets||[]).length){
-    grid.innerHTML = `<div class="tpl-pet-item"><div><strong style="color:#666">No hay mascotas en tu perfil</strong><div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div></div>`;
+    grid.innerHTML = `
+      <div class="tpl-pet-item">
+        <div><strong style="color:#666">No hay mascotas en tu perfil</strong>
+        <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div>
+      </div>`;
   }
+
+  grid.addEventListener("change", ()=>{
+    STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
+    doRecalc();
+  }, { once:true });
 }
 
-/***** Cálculo (usamos tu resumen) *****/
-const BIG_DAYS = ["12-24","12-25","12-31","01-01"];
-const PRICES_PUBLIC = { paseo:{base:12, extra:8}, transporte:{base:20}, guarderia:{adult:15, puppy:20}, alojamiento:{std:30, puppy:35, segundo:25}, visita:{base60:22, base90:30, d11_60:18, d11_90:27, med15:12, med15_d11:10} };
-function fmtMD(dateStr){ const d=parseDate(dateStr); if(!d)return""; const m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0"); return `${m}-${dd}`; }
-function labelService(s){ return ({guarderia_dia:"Guardería de día", alojamiento_nocturno:"Alojamiento nocturno", paseo:"Paseo", visita_gato:"Visita gato", exoticos_aves:"Visita exóticos (aves)", exoticos_reptiles:"Visita exóticos (reptiles)", exoticos_mamiferos:"Visita exóticos (mamíferos)", transporte:"Transporte"})[s]||s; }
-
+/************** Recogida de payload **************/
 function collectPayload(){
   const pets = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
   return {
@@ -108,6 +209,7 @@ function collectPayload(){
   };
 }
 
+/************** Cálculo + resumen **************/
 function calc(payload){
   const s = payload.serviceType;
   const nDays = Math.max(1, daysInclusive(payload.startDate, payload.endDate));
@@ -119,19 +221,34 @@ function calc(payload){
     if(extra) lines.push({label:"Mascotas adicionales", amount:extra});
     total += PRICES_PUBLIC.paseo.base + extra;
   }
+
   if(s==="guarderia_dia"){
-    const puppy = payload.pets.some(p=>p.especie==="perro" && p.nacimiento && ((Date.now()-new Date(p.nacimiento))/2629800000)<=6);
-    const perDay = puppy?PRICES_PUBLIC.guarderia.puppy:PRICES_PUBLIC.guarderia.adult;
+    const anyPuppy = payload.pets.some(p=>{
+      if(p.especie!=="perro" || !p.nacimiento) return false;
+      const months = (Date.now() - new Date(p.nacimiento).getTime()) / 2629800000;
+      return months <= 6;
+    });
+    const perDay = anyPuppy ? PRICES_PUBLIC.guarderia.puppy : PRICES_PUBLIC.guarderia.adult;
     lines.push({label:`Guardería · ${nDays} día(s)`, amount:perDay*nDays});
     total += perDay*nDays;
   }
+
   if(s==="alojamiento_nocturno"){
-    const first = payload.pets[0]; const secondCount=Math.max(0,(payload.pets.length-1));
-    const firstPuppy = first && first.especie==="perro" && first.nacimiento && ((Date.now()-new Date(first.nacimiento))/2629800000)<=6;
+    const first = payload.pets[0];
+    const firstPuppy = first && first.especie==="perro" && first.nacimiento &&
+      ( (Date.now()-new Date(first.nacimiento).getTime())/2629800000 <= 6 );
     const firstPrice = firstPuppy?PRICES_PUBLIC.alojamiento.puppy:PRICES_PUBLIC.alojamiento.std;
-    lines.push({label:`Alojamiento · 1ª mascota · ${nDays} día(s)`, amount:firstPrice*nDays}); total+=firstPrice*nDays;
-    if(secondCount>0){ lines.push({label:`Alojamiento · ${secondCount} mascota(s) extra`, amount:PRICES_PUBLIC.alojamiento.segundo*nDays*secondCount}); total+=PRICES_PUBLIC.alojamiento.segundo*nDays*secondCount; }
+    lines.push({label:`Alojamiento · 1ª mascota · ${nDays} día(s)`, amount:firstPrice*nDays});
+    total+=firstPrice*nDays;
+
+    const secondCount=Math.max(0,(payload.pets.length-1));
+    if(secondCount>0){
+      const add = PRICES_PUBLIC.alojamiento.segundo * nDays * secondCount;
+      lines.push({label:`Alojamiento · ${secondCount} mascota(s) extra`, amount:add});
+      total+=add;
+    }
   }
+
   if(s==="visita_gato"){
     const use90 = payload.visitDuration==="90";
     const long = nDays>=11;
@@ -139,121 +256,292 @@ function calc(payload){
                        : (long?PRICES_PUBLIC.visita.d11_60:PRICES_PUBLIC.visita.base60);
     lines.push({label:`Visita gato · ${use90?90:60}’`, amount:base});
     total+=base;
+
     if(payload.secondMedVisit==="si"){
-      lines.push({label:`2ª visita medicación 15’`, amount: long?PRICES_PUBLIC.visita.med15_d11:PRICES_PUBLIC.visita.med15});
-      total += long?PRICES_PUBLIC.visita.med15_d11:PRICES_PUBLIC.visita.med15;
+      const med = long?PRICES_PUBLIC.visita.med15_d11:PRICES_PUBLIC.visita.med15;
+      lines.push({label:`2ª visita medicación 15’`, amount:med});
+      total+=med;
     }
-    const extraCats = Math.max(0,(payload.pets.filter(p=>p.especie==="gato").length||1)-1);
-    if(extraCats>0){ const add = extraCats===1?12: (extraCats===2?16:6*extraCats); lines.push({label:`Gatos extra (${extraCats})`, amount:add}); total+=add; }
+
+    const cats = payload.pets.filter(p=>p.especie==="gato").length || payload.pets.length || 1;
+    const extraCats = Math.max(0, cats-1);
+    if(extraCats>0){
+      const add = extraCats===1 ? 12 : (extraCats===2 ? 16 : 6*extraCats);
+      lines.push({label:`Gatos extra (${extraCats})`, amount:add});
+      total+=add;
+    }
   }
-  if(s==="transporte"){ lines.push({label:"Transporte", amount:PRICES_PUBLIC.transporte.base}); total+=PRICES_PUBLIC.transporte.base; }
 
-  const big = BIG_DAYS.includes(fmtMD(payload.startDate))||BIG_DAYS.includes(fmtMD(payload.endDate));
+  if(s==="transporte"){
+    lines.push({label:"Transporte", amount:PRICES_PUBLIC.transporte.base});
+    total+=PRICES_PUBLIC.transporte.base;
+  }
+
+  // Festivos especiales/predefinidos
+  const big = BIG_DAYS.includes(fmtMD(payload.startDate)) || BIG_DAYS.includes(fmtMD(payload.endDate));
   if(big){ lines.push({label:"Día señalado", amount:30}); total+=30; }
-  if(payload.travelNeeded==="si"){ lines.push({label:"Desplazamiento", note:"pendiente"}); }
 
-  const payNow = Math.max(0, total*0.2); // margen/deposito simple para el resumen
+  if(payload.travelNeeded==="si"){
+    lines.push({label:"Desplazamiento", note:"pendiente"});
+  }
+
+  const payNow   = Math.max(0, total * 0.20); // depósito/margen orientativo
   const payLater = Math.max(0, total - payNow);
   return { linesPublic:lines, totalPublic:total, payNow, payLater };
 }
 
 function renderSummary(calc, payload){
-  $("#summaryContext").textContent = `${labelService(payload.serviceType)} · ${payload.startDate||"—"}${payload.endDate?(" — "+payload.endDate):""}`;
+  $("#summaryContext").textContent =
+    `${labelService(payload.serviceType)} · ${payload.startDate||"—"}${payload.endDate?(" — "+payload.endDate):""}${payload.startTime?(" · "+payload.startTime):""}${payload.endTime?("–"+payload.endTime):""} · ${(payload.pets||[]).length||0} mascota(s)`;
+
   const box=$("#summaryLines"); box.innerHTML="";
   calc.linesPublic.forEach(l=>{
-    const row=document.createElement("div"); row.className="line";
-    row.innerHTML=`<span>${l.label}</span><span>${l.note?'<span class="muted">pendiente</span>':fmt(l.amount)}</span>`;
+    const row=document.createElement("div");
+    row.className="line";
+    row.innerHTML = `<span>${l.label}</span><span>${l.note?'<span class="muted">pendiente</span>':fmtMoney(l.amount)}</span>`;
     box.appendChild(row);
   });
-  $("#subtotalTxt").textContent=fmt(calc.totalPublic);
-  $("#payNowTxt").textContent=fmt(calc.payNow);
-  $("#payLaterTxt").textContent=fmt(calc.payLater);
+
+  $("#subtotalTxt").textContent = fmtMoney(calc.totalPublic);
+  $("#payNowTxt").textContent   = fmtMoney(calc.payNow);
+  $("#payLaterTxt").textContent = fmtMoney(calc.payLater);
 }
 
 function doRecalc(){
-  const payload=collectPayload();
-  if(!payload.serviceType || !payload.startDate || !payload.endDate){ renderSummary({linesPublic:[],totalPublic:0,payNow:0,payLater:0}, payload); return; }
-  const c=calc(payload); renderSummary(c,payload);
+  const payload = collectPayload();
+  // Mostrar/ocultar controles para visita gato
+  $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
+
+  if(!payload.serviceType || !payload.startDate || !payload.endDate){
+    renderSummary({linesPublic:[],totalPublic:0,payNow:0,payLater:0}, payload);
+    return;
+  }
+  const c = calc(payload);
+  renderSummary(c, payload);
 }
 
-/***** Login inline (no redirige) *****/
+/************** EmailJS (opcional) **************/
+async function sendEmails(reservation){
+  if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
+  const svc = labelService(reservation.service.type);
+  const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
+
+  const vars = {
+    reserva_id: reservation.id,
+    service: svc,
+    startDate: reservation.dates.startDate,
+    endDate: reservation.dates.endDate || reservation.dates.startDate,
+    Hora_inicio: reservation.dates.startTime || "",
+    Hora_fin: reservation.dates.endTime || "",
+    species: mascotas,
+    summaryField: JSON.stringify(reservation.pricing.breakdownPublic.map(l=>`${l.label}${l.amount?`: ${l.amount}€`:""}`), null, 2),
+
+    firstName: reservation.owner.fullName,
+    email: reservation.owner.email,
+    phone: reservation.owner.phone,
+    region: reservation.region || $("#region").value || "",
+    address: reservation.owner.address,
+    postalCode: reservation.owner.postalCode,
+    observations: $("#notes").value || "",
+
+    total_cliente: reservation.pricing.totalClient,
+    pagar_ahora: reservation.pricing.payNow,
+    pendiente: reservation.pricing.payLater,
+
+    total_txt: fmtMoney(reservation.pricing.totalClient).replace(" €","€"),
+    pay_now_txt: fmtMoney(reservation.pricing.payNow).replace(" €","€"),
+    pay_later_txt: fmtMoney(reservation.pricing.payLater).replace(" €","€"),
+
+    _estado: reservation.status || "paid_review",
+    _uid: firebase.auth().currentUser?.uid || "",
+    _email: firebase.auth().currentUser?.email || "",
+
+    admin_email: (TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
+  };
+
+  try{
+    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdCliente, vars);
+    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdGestion, vars);
+    console.log("[EmailJS] enviados");
+  }catch(e){
+    console.warn("[EmailJS] error", e);
+  }
+}
+
+/************** Login inline (no saca de la página) **************/
 function mountInlineLogin(){
   const host=$("#tpl-inline-login"); if(!host) return;
   host.innerHTML = `
-    <div class="tpl-login-card">
+    <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
       <h3 class="tpl-login-title">Accede aquí mismo</h3>
-      <form id="tpl-inline-form" class="tpl-login-form" style="display:grid;gap:8px">
+      <form id="tpl-inline-form" class="tpl-login-form" novalidate style="display:grid;gap:8px">
         <label>Email</label>
-        <input type="email" name="email" required autocomplete="email"/>
+        <input type="email" name="email" required autocomplete="email" />
         <label>Contraseña</label>
-        <input type="password" name="password" required autocomplete="current-password"/>
+        <input type="password" name="password" required autocomplete="current-password" />
         <button type="submit" class="tpl-btn">Iniciar sesión</button>
         <button type="button" class="tpl-btn-outline" id="tpl-google-btn"><i class="fa-brands fa-google"></i> Google</button>
         <p class="tpl-login-msg" aria-live="polite"></p>
       </form>
-    </div>`;
-  const form=$("#tpl-inline-form"), msg=host.querySelector(".tpl-login-msg"), gbtn=$("#tpl-google-btn");
+    </div>
+  `;
+  const form=$("#tpl-inline-form");
+  const msg = host.querySelector(".tpl-login-msg");
+  const gbtn=$("#tpl-google-btn");
+
   form.addEventListener("submit", async (e)=>{
-    e.preventDefault(); msg.textContent="Accediendo…";
-    try{ await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value); msg.textContent="¡Listo!"; location.reload(); }
-    catch(err){ msg.textContent = err?.message || "No se pudo iniciar sesión."; }
+    e.preventDefault();
+    msg.textContent = "Accediendo…";
+    try{
+      await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value);
+      msg.textContent = "¡Listo!";
+      location.reload();
+    }catch(err){
+      msg.textContent = (err && err.message) || "No se pudo iniciar sesión.";
+    }
   });
+
   gbtn.addEventListener("click", async ()=>{
-    msg.textContent="Conectando con Google…"; const provider=new firebase.auth.GoogleAuthProvider();
-    try{ await firebase.auth().signInWithPopup(provider); location.reload(); }catch(err){ msg.textContent=err?.message||"No se pudo iniciar con Google."; }
+    msg.textContent="Conectando con Google…";
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await firebase.auth().signInWithPopup(provider);
+      location.reload();
+    }catch(err){
+      msg.textContent = (err && err.message) || "No se pudo iniciar con Google.";
+    }
   });
 }
 
-/***** INIT *****/
+/************** INIT **************/
 window.addEventListener("load", ()=>{
-  // Mostrar/ocultar muro auth y preparar formulario
+  // Fechas coherentes
+  $("#startDate").addEventListener("change", ()=>{
+    if(!$("#endDate").value) $("#endDate").value = $("#startDate").value;
+    if($("#endDate").value && parseDate($("#endDate").value) < parseDate($("#startDate").value)){
+      $("#endDate").value = $("#startDate").value;
+    }
+    doRecalc();
+  });
+  $("#endDate").addEventListener("change", ()=>{
+    if($("#startDate").value && parseDate($("#endDate").value) < parseDate($("#startDate").value)){
+      $("#endDate").value = $("#startDate").value;
+    }
+    doRecalc();
+  });
+
+  // Binds de recálculo
+  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit"]
+    .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
+
+  // Auth gate
   onAuth(async (u)=>{
-    const gate=$("#sessionGate"); const wall=$("#authWall"); const form=$("#reservaForm");
-    if(!u){ gate.style.display="none"; wall.style.display="block"; form.classList.add("disabled"); mountInlineLogin(); return; }
-    wall.style.display="none"; form.classList.remove("disabled");
+    const wall=$("#authWall");
+    const form=$("#reservaForm");
 
-    // Owner + mascotas (Firestore + fallback local)
+    if(!u){
+      wall.style.display="block";
+      form.classList.add("disabled");
+      mountInlineLogin();
+      return;
+    }
+
+    wall.style.display="none";
+    form.classList.remove("disabled");
+
+    // Cargar owner + mascotas
     try{
-      let {owner,pets} = await readOwnerAndPets(u.uid);
-      if(!owner?.fullName && udbGet("owner",null)){ const fb=udbGet("owner",{}); owner={ fullName: (fb.nombre||"") + (fb.apellidos?(" "+fb.apellidos):""), email:fb.email||"", phone:fb.telefono||"", region:fb.ccaa||"", address:fb.direccion||"", postalCode:fb.cp||"" }; }
+      let {owner, pets} = await readOwnerAndPets(u.uid);
+
+      // Relleno si falta con fallback local
+      if((!owner?.fullName || !owner?.phone) && udbGet("owner",null)){
+        const fb=udbGet("owner",{});
+        owner = {
+          fullName: (fb.nombre||"") + (fb.apellidos?(" "+fb.apellidos):""),
+          email: fb.email || owner.email,
+          phone: fb.telefono || owner.phone,
+          region: fb.ccaa || owner.region,
+          address: fb.direccion || owner.address,
+          postalCode: fb.cp || owner.postalCode
+        };
+      }
       fillOwner(owner||{});
-      // mascotas: mezcla firestore + local sin duplicar
+
+      // Mezcla mascotas firestore + locales (sin duplicar por nombre|especie)
       const localPets = udbGet("pets", []) || udbGet("mascotas", []) || [];
-      const all = [...pets, ...localPets.map((p,i)=>({id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), foto:p.foto||""}))];
-      // quitar duplicados por nombre+especie
-      const seen=new Set(); STATE.pets = all.filter(p=>{ const k=(p.nombre||"").toLowerCase()+"|"+(p.especie||""); if(seen.has(k)) return false; seen.add(k); return true; });
+      const merged = [
+        ...(pets||[]),
+        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", foto:p.foto||"" }))
+      ];
+      const seen=new Set();
+      STATE.pets = merged.filter(p=>{
+        const key = `${(p.nombre||"").toLowerCase()}|${p.especie||""}`;
+        if(seen.has(key)) return false; seen.add(key); return true;
+      });
+
       renderPetsGrid(STATE.pets);
-    }catch(e){ console.warn("[init] owner/pets", e); }
-
-    // binds
-    ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit"].forEach(id=>{
-      const el=$("#"+id); if(el) el.addEventListener("input", doRecalc);
-    });
-
-    // Fechas sincronizadas
-    $("#startDate").addEventListener("change", ()=>{ if(!$("#endDate").value) $("#endDate").value=$("#startDate").value; if(parseDate($("#endDate").value)<parseDate($("#startDate").value)) $("#endDate").value=$("#startDate").value; doRecalc(); });
-    $("#endDate").addEventListener("change",   ()=>{ if($("#startDate").value && parseDate($("#endDate").value)<parseDate($("#startDate").value)) $("#endDate").value=$("#startDate").value; doRecalc(); });
+    }catch(e){
+      console.warn("[init] owner/pets", e);
+    }
 
     doRecalc();
 
-    // CTA reservar → guardado local (si quieres, aquí puedes añadir Firestore .add)
-    $("#btnReserve").addEventListener("click", ()=>{
+    // CTA reservar
+    $("#btnReserve").addEventListener("click", async ()=>{
       const payload=collectPayload();
-      if(!payload.serviceType || !payload.startDate || !payload.endDate){ alert("Selecciona servicio y fechas de inicio/fin."); return; }
-      if(!STATE.selectedPetIds.length){ alert("Elige al menos una mascota."); return; }
-      const calcRes=calc(payload);
+      if(!payload.serviceType || !payload.startDate || !payload.endDate){
+        alert("Selecciona servicio y fechas de inicio/fin."); return;
+      }
+      if(!STATE.selectedPetIds.length){
+        alert("Elige al menos una mascota."); return;
+      }
+
+      const c=calc(payload);
       const reservation = {
-        id:"resv_"+Date.now(), createdAt:nowISO(), service:{type:payload.serviceType},
-        dates:{startDate:payload.startDate,endDate:payload.endDate,startTime:payload.startTime||null,endTime:payload.endTime||null},
-        owner:{
-          fullName:$("#ownerFullName").value.trim(), email:$("#email").value.trim(), phone:$("#phone").value.trim(),
-          address:$("#address").value.trim(), postalCode:$("#postalCode").value.trim(),
-          contactPref:$("#contactPref")?.value||"Cualquiera", contactTime:$("#contactTime")?.value||""
+        id: "resv_"+Date.now(),
+        status: "paid_review",
+        createdAt: nowISO(),
+        region: payload.region,
+        service: { type: payload.serviceType },
+        dates: {
+          startDate: payload.startDate,
+          endDate: payload.endDate,
+          startTime: payload.startTime || null,
+          endTime: payload.endTime || null
         },
-        pets:payload.pets, pricing:{breakdownPublic:calcRes.linesPublic,totalClient:+(calcRes.totalPublic.toFixed(2)),payNow:+(calcRes.payNow.toFixed(2)),payLater:+(calcRes.payLater.toFixed(2)),currency:"EUR"}
+        owner: {
+          fullName: $("#ownerFullName").value.trim(),
+          email: $("#email").value.trim(),
+          phone: $("#phone").value.trim(),
+          address: $("#address").value.trim(),
+          postalCode: $("#postalCode").value.trim(),
+          contactPref: $("#contactPref")?.value || "Cualquiera",
+          contactTime: $("#contactTime")?.value || ""
+        },
+        pets: payload.pets,
+        pricing: {
+          breakdownPublic: c.linesPublic,
+          totalClient: Number(c.totalPublic.toFixed(2)),
+          payNow: Number(c.payNow.toFixed(2)),
+          payLater: Number(c.payLater.toFixed(2)),
+          currency:"EUR"
+        }
       };
-      try{ const key="tpl.reservas"; const list=JSON.parse(localStorage.getItem(key)||"[]"); list.unshift(reservation); localStorage.setItem(key, JSON.stringify(list)); }catch(_){}
-      $("#reservaForm").style.display="none"; $("#thanks").style.display="block";
+
+      // Guarda una copia local para mostrar en perfil
+      try{
+        const key="tpl.reservas";
+        const list = JSON.parse(localStorage.getItem(key)||"[]");
+        list.unshift(reservation);
+        localStorage.setItem(key, JSON.stringify(list));
+      }catch(_){}
+
+      // Envío emails (opcional)
+      try{ await sendEmails(reservation); }catch(_){}
+
+      // UI gracias
+      $("#reservaForm").style.display="none";
+      $("#thanks").style.display="block";
     });
   });
 });
