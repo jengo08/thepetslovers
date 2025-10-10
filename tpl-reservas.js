@@ -29,6 +29,20 @@ function fmtMD(dateStr){
   return `${m}-${dd}`;
 }
 
+/* Edad amable para tarjeta de mascota */
+function petAgeText(birthISO){
+  if(!birthISO) return "";
+  const d = parseDate(birthISO); if(!d) return "";
+  const now = new Date();
+  let months = (now.getFullYear()-d.getFullYear())*12 + (now.getMonth()-d.getMonth());
+  if(now.getDate() < d.getDate()) months--;
+  if(months < 0) return "";
+  if(months < 12) return `${months} ${months===1?'mes':'meses'}`;
+  const years = Math.floor(months/12), rem = months%12;
+  return rem ? `${years} ${years===1?'año':'años'} · ${rem} m` : `${years} ${years===1?'año':'años'}`;
+}
+function titleCase(s){ s=String(s||'').trim(); return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ""; }
+
 /************** Etiquetas y precios públicos **************/
 function labelService(s){
   return ({
@@ -147,6 +161,7 @@ async function readOwnerAndPets(uid){
           nombre: x.nombre || x.name || "Mascota",
           especie: (x.especie || x.tipo || "").toLowerCase(),
           nacimiento: x.birthdate || x.nacimiento || "",
+          sexo: (x.sexo || x.sex || x.genero || "").toLowerCase(),
           foto: x.foto || x.img || ""
         };
       });
@@ -160,6 +175,7 @@ async function readOwnerAndPets(uid){
     nombre: p.nombre || p.name || "Mascota",
     especie: (p.especie || p.tipo || "").toLowerCase(),
     nacimiento: p.nacimiento || p.birthdate || "",
+    sexo: (p.sexo || p.sex || p.genero || "").toLowerCase(),
     foto: p.foto || p.img || ""
   }));
 
@@ -196,6 +212,7 @@ function fillOwner(owner){
 /************** Estado + render mascotas **************/
 const STATE = { owner:null, pets:[], selectedPetIds:[] };
 
+/* RENDER compacto: Nombre · Especie · Edad · Sexo (sin microchip) */
 function renderPetsGrid(pets){
   const grid=$("#petsGrid");
   grid.innerHTML="";
@@ -205,14 +222,19 @@ function renderPetsGrid(pets){
       ? `<img class="pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
       : `<div class="pet-icon"><i class="fa-solid fa-paw"></i></div>`;
 
+    const especie  = titleCase(p.especie||"");
+    const edadTxt  = petAgeText(p.nacimiento);
+    const sexoTxt  = titleCase(p.sexo||"");
+    const subline  = [especie, edadTxt, sexoTxt].filter(Boolean).join(" · ");
+
     const el=document.createElement("label");
     el.className="pet-item";
     el.innerHTML = `
       <input type="checkbox" class="pet-check" data-id="${p.id}" style="margin-right:6px;width:18px;height:18px">
       ${iconHtml}
-      <div style="display:flex;flex-direction:column;line-height:1.25">
-        <strong>${p.nombre||"Mascota"}</strong>
-        <span class="muted">${(p.especie||'').toLowerCase()}</span>
+      <div class="pet-meta">
+        <strong class="pet-name">${p.nombre||"Mascota"}</strong>
+        <span class="pet-sub muted">${subline || "&nbsp;"}</span>
       </div>
     `;
     grid.appendChild(el);
@@ -221,13 +243,21 @@ function renderPetsGrid(pets){
   if(!(pets||[]).length){
     grid.innerHTML = `
       <div class="pet-item">
-        <div><strong style="color:#666">No hay mascotas en tu perfil</strong>
-        <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div>
+        <div class="pet-meta">
+          <strong style="color:#666">No hay mascotas en tu perfil</strong>
+          <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div>
+        </div>
       </div>`;
   }
 
+  // Escucha única para toda la cuadrícula
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
+    // si usas <select id="numPets"> sincronizamos a número de checks
+    const numSel = $("#numPets");
+    if(numSel && STATE.selectedPetIds.length){
+      numSel.value = String(Math.min(5, STATE.selectedPetIds.length));
+    }
     doRecalc();
   }, { once:true });
 }
@@ -514,7 +544,7 @@ window.addEventListener("load", ()=>{
       const localPets = udbGet("pets", []) || udbGet("mascotas", []) || [];
       const merged = [
         ...(pets||[]),
-        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", foto:p.foto||"" }))
+        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", sexo:(p.sexo||p.sex||p.genero||"").toLowerCase(), foto:p.foto||"" }))
       ];
       const seen=new Set();
       STATE.pets = merged.filter(p=>{
