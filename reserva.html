@@ -16,16 +16,16 @@
     .wrap{max-width:1100px;margin:auto;padding:24px}
     .hero{padding:18px 0 6px}
     .sub{color:var(--tpl-muted);margin-top:4px}
-    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:16px;background:#fff}
-    label{font-size:14px;color:#374151}
-    input,select,textarea{width:100%;padding:10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:14px 16px;background:#fff}
+    label{font-size:14px;color:#374151;display:block;margin:0 0 6px}
+    input,select,textarea{width:100%;padding:9px 10px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;line-height:1.25}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
     .btn-primary{background:var(--tpl-brand);color:#fff}
     .btn-ghost{background:#fff;border:1px solid var(--tpl-border);color:#111827}
     .muted{color:var(--tpl-muted);font-size:12px}
-    .section-title{font-weight:700;margin:4px 0 8px}
+    .section-title{font-weight:700;margin:8px 0 10px}
     .disabled{opacity:.6;pointer-events:none;filter:grayscale(1)}
     .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--tpl-bg);border:1px solid var(--tpl-border);font-size:12px;color:#374151}
     .summary{background:var(--tpl-bg)}
@@ -39,16 +39,15 @@
     .pet-img{width:48px;height:48px;flex:0 0 48px;border-radius:50%;object-fit:cover;border:1px solid var(--tpl-border)}
     .pet-meta{font-size:12px;color:#4b5563}
     .badge{font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid var(--tpl-border);background:#eef2ff;color:#3730a3}
-    .danger{color:#b91c1c}
-    /* Compactación suave + más aire */
+
+    /* Aire entre filas */
     #reservaForm .grid-3 > div, #reservaForm .grid-2 > div { margin-bottom:10px }
-    #reservaForm label { margin-bottom:4px }
-    #reservaForm input, #reservaForm select, #reservaForm textarea { padding:10px; line-height:1.25 }
-    #reservaForm .grid-3 { gap:14px } #reservaForm .grid-2 { gap:12px }
-    /* Campos “estrechos” */
-    #postalCode, #phone, #emergencyPhone { max-width: 220px }
-    /* Subcontroles visita gato y subtipo exóticos */
-    .pet-subtype { margin-top:4px }
+
+    /* Campos estrechos razonables */
+    #phone, #email, #postalCode, #emergencyPhone { max-width:260px }
+
+    /* Visita gato */
+    .pet-subtype{margin-top:4px}
   </style>
 </head>
 <body>
@@ -74,7 +73,7 @@
 
     <!-- Formulario -->
     <form id="reservaForm" class="card disabled" autocomplete="on">
-      <!-- Datos del servicio (SOLO estos campos) -->
+      <!-- Datos del servicio (solo estos campos) -->
       <div class="section-title">Datos del servicio</div>
       <div class="grid-3">
         <div>
@@ -133,12 +132,12 @@
         </p>
       </div>
 
-      <!-- Mascotas (sin filtro, todas las del perfil) -->
+      <!-- Mascotas (todas las del perfil) -->
       <div style="margin-top:14px" class="section-title">Mascotas (elige una o varias)</div>
       <div id="petsGrid" class="pets-grid"></div>
       <p class="muted" id="petsHint" style="margin-top:6px">Selecciona tus mascotas del perfil.</p>
 
-      <!-- Datos del titular (aquí van dirección/CP/CA/observaciones) -->
+      <!-- Datos del titular -->
       <div style="margin-top:14px" class="section-title">Datos del titular</div>
       <div class="grid-3">
         <div class="full">
@@ -245,6 +244,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <script>
     (function(){
+      // Fuerza https+www para no perder sesión entre dominios
+      var wantHost='www.thepetslovers.es';
+      if (location.protocol!=='https:' || location.host!==wantHost){
+        location.replace('https://'+wantHost+location.pathname+location.search+location.hash);
+      }
       try{
         if (typeof firebase!=='undefined' && !firebase.apps.length){
           const firebaseConfig = {
@@ -262,11 +266,8 @@
     })();
   </script>
 
-  <!-- EmailJS -->
+  <!-- EmailJS (1 único template para cliente y gestión) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
-  <!-- Bridge de login (opcional si lo usas) -->
-  <script src="tpl-auth-bridge.js" defer></script>
 
   <!-- Lógica completa reservas -->
   <script src="tpl-reservas.js" defer></script>
