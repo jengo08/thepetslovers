@@ -12,77 +12,76 @@
 
   <style>
     :root{
-      --tpl-brand:#111827;
+      /* Usa tu paleta global si existe; si no, fallback al verde del sitio */
+      --tpl-accent: var(--color-principal, #339496);
+      --tpl-accent-on: #fff;
       --tpl-muted:#6b7280;
       --tpl-border:#e5e7eb;
       --tpl-bg:#f9fafb;
-      --tpl-accent:#6D28D9;       /* MORADO. Para verde usa: #059669 */
-      --navbar-space:72px;        /* espacio para que no tape el título */
+      --navbar-space: 80px; /* separa el h1 de la barra superior */
     }
-    body{background:#fff}
-    .wrap{max-width:1200px;margin:auto;padding:28px}
-    .hero{padding:14px 0 6px; text-align:center; margin-top:var(--navbar-space);}
-    .hero h1{margin:0;}
-    .sub{color:var(--tpl-muted);margin-top:6px}
-    .card{border:1px solid var(--tpl-border);border-radius:14px;padding:22px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.04)}
-    .section-title{font-weight:700;margin:14px 0 12px;font-size:1.05rem}
 
-    /* Grids robustas para que no se pisen */
-    .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
-    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-    /* grupos específicos con más aire entre columnas */
-    .grid-dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:10px}
-    .grid-times{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:10px}
+    body{ background:#fff }
+    .wrap{ max-width:1200px; margin:auto; padding:28px }
+    .hero{ text-align:center; margin-top:var(--navbar-space); }
+    .hero h1{ margin:0 0 6px }
+    .sub{ color:var(--tpl-muted); margin-top:6px }
 
-    label{font-size:14px;color:#374151;margin-bottom:8px;display:block}
-    input,select,textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;font-size:15px;line-height:1.35}
-    input::placeholder,textarea::placeholder{color:#9ca3af}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;border:0;cursor:pointer;font-weight:600}
-    .btn-primary{background:var(--tpl-accent);color:#fff}
-    .btn-primary:hover{filter:brightness(1.05)}
-    .btn-ghost{background:#fff;border:1px solid var(--tpl-border);color:#111827}
-    .muted{color:var(--tpl-muted);font-size:12px}
-    .disabled{opacity:.6;pointer-events:none;filter:grayscale(1)}
-    .pill{display:inline-block;padding:3px 8px;border-radius:999px;background:var(--tpl-bg);border:1px solid var(--tpl-border);font-size:12px;color:#374151}
-    .summary{background:var(--tpl-bg);margin-top:18px}
-    .summary .line{display:flex;justify-content:space-between;margin:6px 0}
-    .summary .total{font-weight:700;border-top:1px dashed var(--tpl-border);padding-top:8px;margin-top:6px}
-    .gate{border:2px dashed var(--tpl-border);background:#fffcee;margin-bottom:14px}
+    .card{ border:1px solid var(--tpl-border); border-radius:14px; padding:22px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.04) }
+    .section-title{ font-weight:700; margin:14px 0 12px; font-size:1.05rem }
 
-    /* Tarjetas de mascotas */
-    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-    .tpl-pet-item {
-      display:flex; gap:10px; align-items:center; padding:8px;
-      border:1px solid #ececec; border-radius:12px; background:#fff; position:relative;
-    }
-    .tpl-pet-thumb {
-      width:56px; height:56px; flex:0 0 56px; border-radius:50%; object-fit:cover;
-      border:2px solid #ececec; background:#fff;
-    }
-    .tpl-pet-icon {
-      width:56px; height:56px; flex:0 0 56px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      border:2px solid #ececec; background:#fafafa; color:#9aa0a6; font-size:22px;
-    }
-    .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; }
-    .tpl-pet-name{ font-weight:700; color:#222; }
-    .tpl-pet-sub{ color:#666; font-size:.95rem; }
-    .badge{ font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid #e5e7eb;background:#eef2ff;color:#3730a3;margin-left:6px }
+    /* Grids compactas */
+    .grid-3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px }
+    .grid-2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px }
+    .grid-dates,.grid-times{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px }
 
-    /* Campos más estrechos para que NO sobresalgan */
+    label{ font-size:14px; color:#374151; margin-bottom:8px; display:block }
+    input,select,textarea{ width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; line-height:1.35 }
+    input::placeholder,textarea::placeholder{ color:#9ca3af }
+
+    /* Inputs de fecha/hora más cortos para no salirse */
+    .grid-dates input,.grid-times input{ max-width:220px }
+
+    /* Campos más estrechos para que “no se salgan” */
     #phone,#email,#postalCode,#emergencyPhone{ max-width:320px }
     #ownerFullName{ max-width:560px }
-    #address{ max-width:360px }
-    #emergencyName{ max-width:320px }
+    #address,#emergencyName{ max-width:360px }
 
-    /* Evitar “todo rojo” al cargar: solo rojo cuando el campo es inválido y tiene foco */
-    input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db; }
-    input:focus:invalid, select:focus:invalid, textarea:focus:invalid{ border-color:#ef4444; }
-
-    /* Pequeño empuje del email hacia la derecha en desktop para que no pise el nombre */
+    /* Email un pelín a la derecha en desktop */
     @media (min-width: 920px){
-      .field-email { padding-left: 8px; }
+      .field-email{ padding-left:8px }
     }
+
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:600 }
+    .btn-primary{ background: var(--tpl-accent); color: var(--tpl-accent-on) }
+    .btn-primary:hover{ filter:brightness(1.05) }
+    .btn-ghost{ background:#fff; border:1px solid var(--tpl-border); color:#111827 }
+
+    .muted{ color:var(--tpl-muted); font-size:12px }
+    .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:12px; color:#374151 }
+
+    /* Resumen (mantenemos el tuyo) */
+    .summary{ background:var(--tpl-bg); margin-top:18px }
+    .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
+    .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
+
+    /* Muro de sesión + login inline */
+    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px }
+    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+    .tpl-login-title{margin:0 0 8px;font-weight:700;font-size:1.05rem;text-align:center}
+    .tpl-btn{background:var(--tpl-accent);color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .tpl-btn-outline{background:#fff;color:var(--tpl-accent);border:1px solid var(--tpl-accent);border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
+
+    /* Tarjetas de mascotas (como te gustaban) */
+    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+    .tpl-pet-item { display:flex; gap:10px; align-items:center; padding:8px; border:1px solid #ececec; border-radius:12px; background:#fff; }
+    .tpl-pet-thumb { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #ececec; }
+    .tpl-pet-icon { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #ececec; color:#9aa0a6; font-size:22px }
+
+    /* Evitar “todo rojo” al cargar */
+    input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db }
+    input:focus:invalid, select:focus:invalid, textarea:focus:invalid{ border-color:#ef4444 }
   </style>
 </head>
 <body>
@@ -96,14 +95,16 @@
       <p class="sub">Selecciona el servicio, fechas y mascotas. Tus datos se autocompletan desde el perfil.</p>
     </div>
 
-    <!-- Puerta de sesión -->
-    <div id="sessionGate" class="card gate" style="display:none">
+    <!-- Puerta de sesión (si usabas esta) -->
+    <div id="sessionGate" class="card" style="display:none">
       <h3 style="margin:0 0 8px">Inicia sesión para reservar</h3>
-      <p class="muted" style="margin:0 0 12px">Para continuar debes iniciar sesión o crear tu perfil.</p>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a class="btn btn-primary" href="/login.html"><i class="fa-solid fa-right-to-bracket"></i> Iniciar sesión</a>
-        <a class="btn btn-ghost" href="/crear-cuenta.html"><i class="fa-solid fa-user-plus"></i> Crear cuenta</a>
-      </div>
+      <p class="muted" style="margin:0">Puedes usar el formulario de abajo sin salir de esta página.</p>
+    </div>
+
+    <!-- Login inline (solo se muestra si NO hay sesión) -->
+    <div id="authWall" class="auth-wall" style="display:none">
+      <p><strong>Para reservar debes iniciar sesión.</strong></p>
+      <div id="tpl-inline-login"></div>
     </div>
 
     <!-- Formulario -->
@@ -126,34 +127,26 @@
             <option value="transporte">Transporte</option>
           </select>
         </div>
-        <div></div>
-        <div></div>
-      </div>
 
-      <div class="grid-dates" style="margin-top:6px">
         <div>
           <label>Fecha inicio</label>
-          <input id="startDate" type="date" required>
+          <div class="grid-dates">
+            <input id="startDate" type="date" required>
+            <input id="endDate" type="date" required>
+          </div>
         </div>
-        <div>
-          <label>Fecha fin</label>
-          <input id="endDate" type="date" required>
-        </div>
-      </div>
 
-      <div class="grid-times" style="margin-top:6px">
         <div>
-          <label>Hora inicio</label>
-          <input id="startTime" type="time">
-        </div>
-        <div>
-          <label>Hora fin</label>
-          <input id="endTime" type="time">
+          <label>Hora</label>
+          <div class="grid-times">
+            <input id="startTime" type="time">
+            <input id="endTime" type="time">
+          </div>
         </div>
       </div>
 
       <!-- Controles específicos de visitas gato -->
-      <div id="visitCatControls" class="grid-3" style="margin-top:10px;display:none">
+      <div id="visitCatControls" class="grid-3" style="margin-top:8px;display:none">
         <div>
           <label for="visitDuration">Duración</label>
           <select id="visitDuration">
@@ -177,15 +170,18 @@
 
       <!-- Datos del titular -->
       <div style="margin-top:14px" class="section-title">Datos del titular</div>
+
       <div class="grid-3">
         <div>
           <label for="ownerFullName">Nombre y apellidos</label>
           <input id="ownerFullName" autocomplete="name" required>
         </div>
+
         <div class="field-email">
           <label for="email">Email</label>
           <input id="email" type="email" autocomplete="email" required>
         </div>
+
         <div>
           <label for="phone">Teléfono</label>
           <input id="phone" autocomplete="tel" required>
@@ -197,21 +193,14 @@
             <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
           </select>
         </div>
+
         <div>
           <label for="contactTime">Franja preferida</label>
           <select id="contactTime">
             <option>Mañana</option><option>Tarde</option><option>Noche</option>
           </select>
         </div>
-        <div>
-          <label for="emergencyName">Contacto de emergencia</label>
-          <input id="emergencyName" placeholder="Nombre y parentesco">
-        </div>
 
-        <div>
-          <label for="emergencyPhone">Teléfono de emergencia</label>
-          <input id="emergencyPhone" placeholder="600 000 000">
-        </div>
         <div>
           <label for="region">Comunidad Autónoma</label>
           <select id="region" required>
@@ -222,10 +211,12 @@
             <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
           </select>
         </div>
+
         <div>
           <label for="address">Dirección</label>
           <input id="address" placeholder="Calle, nº, piso…">
         </div>
+
         <div>
           <label for="postalCode">Código Postal</label>
           <input id="postalCode" placeholder="28001">
@@ -238,7 +229,19 @@
             <option value="si">Sí (se calculará al asignar cuidador)</option>
           </select>
         </div>
-        <div class="grid-2" style="grid-column:1/-1;gap:18px">
+
+        <div class="grid-2" style="grid-column:1/-1;gap:16px">
+          <div>
+            <label for="emergencyName">Contacto de emergencia</label>
+            <input id="emergencyName" placeholder="Nombre y parentesco">
+          </div>
+          <div>
+            <label for="emergencyPhone">Teléfono de emergencia</label>
+            <input id="emergencyPhone" placeholder="600 000 000">
+          </div>
+        </div>
+
+        <div class="grid-2" style="grid-column:1/-1;gap:16px">
           <div>
             <label for="notes">Observaciones</label>
             <textarea id="notes" rows="2" placeholder="Cualquier detalle útil para el servicio"></textarea>
@@ -246,7 +249,7 @@
         </div>
       </div>
 
-      <!-- Desglose -->
+      <!-- Resumen -->
       <div class="card summary">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div><strong>Resumen</strong></div>
@@ -261,17 +264,18 @@
 
       <!-- CTA -->
       <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
-        <button id="btnReserve" type="button" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
+        <button id="btnReserve" type="button" class="btn btn-primary">
+          <i class="fa-solid fa-lock"></i> Reservar ahora
+        </button>
       </div>
     </form>
 
     <!-- Gracias -->
     <div id="thanks" class="card" style="display:none">
       <h3>¡Gracias! Tu solicitud está en revisión</h3>
-      <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. Una vez confirmado, pagarás el resto 12 días antes del inicio.</p>
+      <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. El resto se paga 12 días antes del inicio.</p>
       <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
     </div>
-
   </main>
 
   <!-- Footer -->
@@ -296,11 +300,11 @@
     })();
   </script>
 
-  <!-- EmailJS -->
+  <!-- EmailJS (opcional; tu template actual) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
-      enabled: true,
+      enabled: true,                            // pon false si no quieres enviar ahora
       serviceId: "service_odjqrfl",
       publicKey:  "L2xAATfVuHJwj4EIV",
       templateIdCliente: "template_rao5n0c",
@@ -314,7 +318,7 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Lógica de la reserva -->
+  <!-- Lógica de la reserva (el JS que te pasé) -->
   <script src="tpl-reservas.js" defer></script>
 </body>
 </html>
