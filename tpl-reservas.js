@@ -1,28 +1,18 @@
 /*!
- * TPL · reservas
- * Requisitos:
- *  - Firebase compat: app-compat.js, auth-compat.js, firestore-compat.js
- *  - EmailJS (opcional, si quieres correos reales): email.min.js
- *  - Config EmailJS debajo (usa tu service/template/public key)
- *
- * Funcionalidad:
- *  - Gate de sesión (desbloquea formulario si hay login)
- *  - Autorrelleno titular desde propietarios/{uid}
- *  - Render tarjetas de mascotas desde propietarios/{uid}.pets o .mascotas
- *  - Precarga desde servicios vía query (?service=&startDate=&endDate=&start=&end=&pets=&region=&notes=)
- *  - Cálculo de precios: bonos guardería (10/20/30), desde día 11 en alojamiento y visitas,
- *    urgencia <2h (hoy), festivos normales y días señalados (24/12,25/12,31/12,01/01),
- *    2ª visita de 15' en visita gato (12€ ó 10€ desde día 11)
- *  - A pagar ahora = Subtotal – (coste auxiliar + festivo_aux)
- *  - Guardado en Firestore (colección "reservas"), estado "paid_review"
- *  - Envío de emails con un único template (cliente y gestión cambiando "to_email")
+ * TPL · reservas (completo)
+ * - Login gate + autorrelleno dueño desde propietarios/{uid}
+ * - Mascotas desde perfil (pets|mascotas), tarjetas con badges y subtipo exóticos inline
+ * - Precarga desde servicios (?service=&startDate=&endDate=&start=&end=&pets=&region=&notes=)
+ * - Cálculo: bonos, desde día 11, urgencia <2h, festivos y señalados, 2ª visita 15' en gatos
+ * - A pagar ahora = Subtotal – (coste auxiliar + festivo_aux)
+ * - Guarda en Firestore (reservas) y envía EmailJS (un template para cliente y gestión)
  */
 
 /*** CONFIG EMAILJS ***/
 window.EMAILJS = window.EMAILJS || {
   enabled: true,
   service_id: "service_odjqrfl",
-  template_id: "template_rao5n0c",   // tu plantilla única
+  template_id: "template_rao5n0c",
   public_key: "L2xAATfVuHJwj4EIV",
   admin_email: "gestion@thepetslovers.es"
 };
@@ -104,22 +94,26 @@ const AUX_PAY = {
 /*** PERFIL / LOGIN ***/
 function isLogged(){ try{ return !!firebase.auth().currentUser; }catch(_){ return false; } }
 
+/* Intenta leer propietarios/{uid} y normaliza nombres de campos frecuentes */
 async function getOwnerDoc(){
   const u = firebase.auth().currentUser;
   if(!u) return null;
   try{
     const snap = await firebase.firestore().collection("propietarios").doc(u.uid).get();
-    if(!snap.exists) return null;
+    if(!snap.exists){
+      console.warn("[reservas] No existe propietarios/{uid}. ¿Creaste el perfil?");
+      return { email: u.email || "", pets: [] };
+    }
     const data = snap.data() || {};
 
-    // Normaliza nombre completo
+    // Nombre completo: fullName o nombre+apellidos o displayName
     const fullName = data.fullName
       || [data.nombre, data.apellidos].filter(Boolean).join(" ").trim()
-      || [data.name, data.surname].filter(Boolean).join(" ").trim()
-      || "";
+      || (u.displayName || "")
+      || [data.name, data.surname].filter(Boolean).join(" ").trim();
 
     const owner = {
-      fullName,
+      fullName: fullName || "",
       email: data.email || u.email || "",
       phone: data.phone || data.telefono || "",
       address: data.address || data.direccion || "",
@@ -127,21 +121,24 @@ async function getOwnerDoc(){
       region: data.region || data.comunidad || ""
     };
 
-    // Toma mascotas desde 'pets' o 'mascotas'
+    // Mascotas: 'pets' o 'mascotas'
     let pets = Array.isArray(data.pets) ? data.pets : (Array.isArray(data.mascotas) ? data.mascotas : []);
     pets = pets.map((p,i)=>({
       id: p.id || p.uid || String(i+1),
       name: p.name || p.nombre || "Mascota",
       species: (p.species || p.especie || p.tipo || "").toLowerCase(), // perro|gato|exotico
       birth: p.birth || p.nacimiento || p.fechaNacimiento || "",
-      subtype: p.subtype || p.subtipo || "",
+      subtype: p.subtype || p.subtipo || "", // ave|reptil|mamifero|otro
       img: p.img || p.foto || ""
     }));
 
+    console.log("[reservas] ownerDoc:", owner);
+    console.log("[reservas] pets:", pets);
+
     return { ...owner, pets };
   }catch(e){
-    console.warn("propietarios/{uid} no disponible:", e);
-    return null;
+    console.warn("[reservas] Error leyendo propietario:", e);
+    return { email: u.email || "", pets: [] };
   }
 }
 
@@ -158,6 +155,9 @@ function isPuppyPet(p){
   return m!=null && m<=6;
 }
 
+/* Subtipos temporales de exóticos elegidos en UI (si faltan en perfil) */
+const ExoticSubtypeState = new Map(); // petId -> subtype
+
 function renderPets(pets){
   const grid = $("#petsGrid");
   grid.innerHTML = "";
@@ -167,6 +167,10 @@ function renderPets(pets){
   (pets||[])
     .filter(p=>!filter || p.species===filter)
     .forEach(p=>{
+      const puppy = isPuppyPet(p);
+      const currentSubtype = p.subtype || ExoticSubtypeState.get(p.id) || "";
+      const needsSubtype = (p.species==="exotico" && !currentSubtype);
+
       const lab = document.createElement("label");
       lab.className = "pet-card";
       lab.innerHTML = `
@@ -177,18 +181,48 @@ function renderPets(pets){
             ${p.species==="perro" ? '<i class="fa-solid fa-dog"></i>' :
               p.species==="gato" ? '<i class="fa-solid fa-cat"></i>' :
               '<i class="fa-solid fa-kiwi-bird"></i>'}
-            ${isPuppyPet(p) ? '<span class="badge">Cachorro (≤6m)</span>' : ''}
+            ${puppy ? '<span class="badge">Cachorro (≤6m)</span>' : ''}
           </div>
-          <div class="pet-meta">${(p.species==="exotico"?(p.subtype?("Exótico · "+p.subtype):"Exótico"):p.species)} · Nac: ${p.birth||"—"}</div>
+          <div class="pet-meta">${
+            p.species==="exotico"
+              ? `Exótico ${currentSubtype?("· "+currentSubtype):""}`
+              : (p.species||"")
+          } · Nac: ${p.birth||"—"}</div>
+
+          ${
+            needsSubtype
+              ? `
+              <div class="pet-subtype">
+                <label class="muted" style="display:block;margin-bottom:4px">Tipo de exótico</label>
+                <select data-exotic="${p.id}" class="exotic-select" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px">
+                  <option value="">Selecciona…</option>
+                  <option value="ave">Ave</option>
+                  <option value="reptil">Reptil</option>
+                  <option value="mamífero pequeño">Mamífero pequeño</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>`
+              : ""
+          }
         </div>`;
+
       grid.appendChild(lab);
+      if(currentSubtype){
+        ExoticSubtypeState.set(p.id, currentSubtype);
+      }
     });
 
-  grid.addEventListener("change", ()=>{
+  // Limita selección al máximo indicado
+  grid.addEventListener("change", (ev)=>{
+    if(ev.target && ev.target.matches(".exotic-select")){
+      const pid = ev.target.getAttribute("data-exotic");
+      ExoticSubtypeState.set(pid, ev.target.value);
+      return;
+    }
     const checks = $$(".pet-check", grid);
     const sel = checks.filter(x=>x.checked);
     if(sel.length>maxSel){
-      sel.pop().checked = false; // limita al máximo elegido
+      sel.pop().checked = false;
     }
     doRecalc();
   }, {once:true});
@@ -203,7 +237,15 @@ function renderPets(pets){
 
 function selectedPets(allPets){
   const ids = new Set($$(".pet-check:checked").map(x=>x.getAttribute("data-id")));
-  return (allPets||[]).filter(p=>ids.has(p.id));
+  return (allPets||[]).filter(p=>{
+    if(!ids.has(p.id)) return false;
+    // Si es exotico y no trae subtipo, toma el elegido en UI
+    if(p.species==="exotico" && !p.subtype){
+      const chosen = ExoticSubtypeState.get(p.id) || "";
+      p = Object.assign(p, { subtype: chosen });
+    }
+    return true;
+  });
 }
 
 /*** PORTADO DESDE SERVICIOS ***/
@@ -454,10 +496,8 @@ async function sendEmails(reservation){
   if(!window.emailjs || !EMAILJS || !EMAILJS.enabled) return;
 
   const vars = {
-    // destinatario (lo cambiaremos para gestión)
     to_email: reservation.owner.email,
 
-    // visibles
     firstName: reservation.owner.fullName,
     service: labelService(reservation.service.type),
     startDate: reservation.dates.startDate,
@@ -469,10 +509,8 @@ async function sendEmails(reservation){
     postalCode: reservation.owner.postalCode || "",
     observations: reservation.notes || "",
     summaryField: (reservation.pricing.breakdownPublic||[])
-      .map(l=>`${l.label}${l.amount?`: ${l.amount.toFixed(2)}€`:""}`)
-      .join(" · "),
+      .map(l=>`${l.label}${l.amount?`: ${l.amount.toFixed(2)}€`:""}`).join(" · "),
 
-    // importes
     total_cliente: reservation.pricing.totalClient,
     pagar_ahora: reservation.pricing.payNow,
     pendiente: reservation.pricing.payLater,
@@ -480,7 +518,6 @@ async function sendEmails(reservation){
     pay_now_txt: fmt(reservation.pricing.payNow),
     pay_later_txt: fmt(reservation.pricing.payLater),
 
-    // sistema
     reserva_id: reservation.id,
     _estado: reservation._estado,
     _uid: reservation._uid,
@@ -488,10 +525,8 @@ async function sendEmails(reservation){
     admin_email: EMAILJS.admin_email || "gestion@thepetslovers.es"
   };
 
-  // Cliente
-  await emailjs.send(EMAILJS.service_id, EMAILJS.template_id, vars);
-  // Gestión (mismo template, cambiando destinatario)
-  await emailjs.send(EMAILJS.service_id, EMAILJS.template_id, {...vars, to_email: EMAILJS.admin_email});
+  await emailjs.send(EMAILJS.service_id, EMAILJS.template_id, vars);                         // Cliente
+  await emailjs.send(EMAILJS.service_id, EMAILJS.template_id, {...vars, to_email: EMAILJS.admin_email}); // Gestión
 }
 
 /*** FIRESTORE ***/
@@ -602,57 +637,59 @@ function doRecalc(){
 
 /*** INIT ***/
 window.addEventListener("load", async ()=>{
-  // Redirección defensiva si han entrado por /reservas (sin .html)
+
+  // 1) Defensa por si entran en /reservas sin .html
   try{
     var p = location.pathname.replace(/\/+$/,'');
     if(p==="/reservas"){ location.replace("/reservas.html"+location.search+location.hash); return; }
   }catch(_){}
 
-  // Espera a Firebase Auth
+  // 2) Espera Auth
   let user = null;
   await new Promise(res=>{
-    try{
-      firebase.auth().onAuthStateChanged(u=>{ user=u||null; res(); });
-    }catch(_){ res(); }
+    try{ firebase.auth().onAuthStateChanged(u=>{ user=u||null; res(); }); }
+    catch(_){ res(); }
   });
 
   if(!user){
-    // Gate ON
-    const gate = $("#sessionGate"); if(gate) gate.style.display="block";
-    const form = $("#reservaForm"); if(form) form.classList.add("disabled");
-    // Si usas el bridge, puedes forzar aquí:
-    // if(window.__TPL_AUTH_BRIDGE__) __TPL_AUTH_BRIDGE__.ensureLogged();
+    $("#sessionGate").style.display="block";
+    $("#reservaForm").classList.add("disabled");
     return;
   }
 
-  // Gate OFF
-  const gate = $("#sessionGate"); if(gate) gate.style.display="none";
-  const form = $("#reservaForm"); if(form) form.classList.remove("disabled");
+  $("#sessionGate").style.display="none";
+  $("#reservaForm").classList.remove("disabled");
 
-  // Perfil + mascotas
+  // 3) Recolocar “¿Necesitas desplazamiento?” debajo de emergencia
+  try{
+    const travelDiv = $("#travelNeeded")?.closest("div");
+    const emPhoneDiv = $("#emergencyPhone")?.closest("div");
+    if(travelDiv && emPhoneDiv){ emPhoneDiv.after(travelDiv); }
+  }catch(_){}
+
+  // 4) Perfil + mascotas
   const ownerDoc = await getOwnerDoc();
   window.__STATE__ = { owner: ownerDoc||{}, pets: (ownerDoc?.pets)||[] };
 
-  // Render mascotas + filtros
+  // 5) Render mascotas + filtros
   renderPets(window.__STATE__.pets);
   $("#petsFilter")?.addEventListener("input", ()=>renderPets(window.__STATE__.pets));
   $("#petsCount")?.addEventListener("input", ()=>renderPets(window.__STATE__.pets));
 
-  // Autorrelleno
-  const fallbackOwner = { email: user?.email || "" };
-  fillOwner(ownerDoc || fallbackOwner);
+  // 6) Autorrelleno (nombre, tel, dirección, CA, CP)
+  fillOwner(ownerDoc || { email: user?.email || "" });
 
-  // Precarga si vienes de servicios
+  // 7) Precarga si vienes de servicios
   applyPort(readQuery(), window.__STATE__.pets);
 
-  // Mostrar controles visita gato si procede
+  // 8) Mostrar controles visita gato si procede
   $("#visitCatControls").style.display = ($("#serviceType").value==="visita_gato") ? "" : "none";
 
-  // Bind + recálculo
+  // 9) Bind + recálculo
   bindRecalc(window.__STATE__.pets);
   doRecalc();
 
-  // CTA Reservar
+  // 10) CTA Reservar
   $("#btnReserve").addEventListener("click", async ()=>{
     const payload = collectPayload(window.__STATE__.pets);
 
@@ -667,20 +704,17 @@ window.addEventListener("load", async ()=>{
     const calc = calcPricing(payload);
     const reservation = buildReservation(user, ownerDoc, calc, payload);
 
-    // Guarda en Firestore
     const newId = await saveReservation(reservation);
     if(newId){ reservation._docId = newId; }
 
-    // Emails (cliente + gestión con un único template)
     await sendEmails(reservation);
 
-    // UI
     $("#reservaForm").style.display="none";
     $("#thanks").style.display="block";
   });
 });
 
-/*** AUTORRELLENO CAMPOS TITULAR ***/
+/*** AUTORRELLENO TITULAR ***/
 function fillOwner(owner){
   if(!owner) return;
   if(owner.fullName) $("#ownerFullName").value = owner.fullName;
