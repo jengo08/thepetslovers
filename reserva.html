@@ -5,283 +5,339 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Reservas · The Pets Lovers</title>
 
-  <!-- Estilos globales -->
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
     :root{
-      /* Usa tu paleta global si existe; si no, fallback al verde del sitio */
       --tpl-accent: var(--color-principal, #339496);
       --tpl-accent-on: #fff;
       --tpl-muted:#6b7280;
       --tpl-border:#e5e7eb;
       --tpl-bg:#f9fafb;
-      --navbar-space: 80px; /* separa el h1 de la barra superior */
+      --tpl-card:#fff;
+      --tpl-radius:14px;
+      --tpl-shadow:0 2px 12px rgba(0,0,0,.06);
+      --nav-offset:96px; /* despega el título de la barra superior */
     }
 
-    body{ background:#fff }
-    .wrap{ max-width:1200px; margin:auto; padding:28px }
-    .hero{ text-align:center; margin-top:var(--navbar-space); }
-    .hero h1{ margin:0 0 6px }
-    .sub{ color:var(--tpl-muted); margin-top:6px }
+    body{ background:#fff; }
+    .page{ max-width:1040px; margin:0 auto; padding:20px; }
 
-    .card{ border:1px solid var(--tpl-border); border-radius:14px; padding:22px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.04) }
-    .section-title{ font-weight:700; margin:14px 0 12px; font-size:1.05rem }
+    /* Cabecera */
+    .booking-header{
+      margin: calc(var(--nav-offset)) auto 18px;
+      text-align:center;
+    }
+    .booking-header h1{ margin:0 0 6px; }
+    .booking-sub{ color:var(--tpl-muted); margin:0; }
 
-    /* Grids compactas */
-    .grid-3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px }
-    .grid-2{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px }
-    .grid-dates,.grid-times{ display:grid; grid-template-columns:repeat(2,1fr); gap:16px }
+    /* Contenedor principal “tarjeta grande” */
+    .booking-shell{
+      background:var(--tpl-card);
+      border:1px solid var(--tpl-border);
+      border-radius: var(--tpl-radius);
+      box-shadow: var(--tpl-shadow);
+      overflow: hidden;
+    }
 
-    label{ font-size:14px; color:#374151; margin-bottom:8px; display:block }
-    input,select,textarea{ width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px; font-size:15px; line-height:1.35 }
+    /* Layout de 2 columnas (form izquierda, resumen derecha) en desktop */
+    .booking-grid{
+      display:grid;
+      grid-template-columns: 3fr 2fr;
+      gap:22px;
+      padding:22px;
+    }
+    @media (max-width: 980px){
+      .booking-grid{ grid-template-columns: 1fr; }
+    }
+
+    /* Tarjetas interiores */
+    .card{
+      border:1px solid var(--tpl-border);
+      border-radius: var(--tpl-radius);
+      background:#fff;
+      box-shadow: var(--tpl-shadow);
+      padding:18px;
+    }
+    .section-title{
+      font-weight:700; font-size:1.06rem; margin:0 0 12px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .section-title i{ color:var(--tpl-accent); }
+
+    /* Grids de campos */
+    .grid{ display:grid; gap:14px; }
+    .grid-2{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .grid-3{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+    @media (max-width: 860px){ .grid-2, .grid-3{ grid-template-columns:1fr; } }
+
+    .field{ display:flex; flex-direction:column; gap:6px; }
+    label{ font-size:.95rem; color:#374151; }
+    input,select,textarea{
+      width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;
+      font-size:15px; line-height:1.35; background:#fff;
+    }
     input::placeholder,textarea::placeholder{ color:#9ca3af }
 
-    /* Inputs de fecha/hora más cortos para no salirse */
-    .grid-dates input,.grid-times input{ max-width:220px }
-
-    /* Campos más estrechos para que “no se salgan” */
-    #phone,#email,#postalCode,#emergencyPhone{ max-width:320px }
-    #ownerFullName{ max-width:560px }
-    #address,#emergencyName{ max-width:360px }
-
-    /* Email un pelín a la derecha en desktop */
-    @media (min-width: 920px){
-      .field-email{ padding-left:8px }
+    /* Inputs fecha/hora compactos dentro de cajas */
+    .row-compact{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .row-compact input{ max-width: 220px; }
+    @media (max-width: 600px){
+      .row-compact{ grid-template-columns:1fr; }
+      .row-compact input{ max-width: 100%; }
     }
 
-    .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:600 }
-    .btn-primary{ background: var(--tpl-accent); color: var(--tpl-accent-on) }
-    .btn-primary:hover{ filter:brightness(1.05) }
+    /* Campos “estrechos” para no salirse visualmente */
+    #ownerFullName{ max-width:560px }
+    #email,#phone,#postalCode,#emergencyPhone{ max-width:320px }
+    #address,#emergencyName{ max-width:360px }
+    .field-email{ padding-left:8px } /* separa un pelín el email de nombre/teléfono en desktop */
+    @media (max-width: 920px){ .field-email{ padding-left:0 } }
+
+    /* Picker de mascotas (tarjetas) */
+    .pets-list{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+    .pet-item{
+      display:flex; gap:10px; align-items:center; padding:10px 12px;
+      border:1px solid #ececec; border-radius:12px; background:#fff;
+    }
+    .pet-thumb{ width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #ececec; }
+    .pet-icon{
+      width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      border:2px solid #ececec; color:#9aa0a6; font-size:20px;
+    }
+    .muted{ color:var(--tpl-muted); font-size:.9rem; }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
+
+    /* Resumen */
+    .summary-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .summary-lines .line{ display:flex; justify-content:space-between; margin:6px 0; }
+    .summary-total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px; }
+
+    /* CTA */
+    .actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
+    .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700 }
+    .btn-primary{ background:var(--tpl-accent); color:var(--tpl-accent-on) }
     .btn-ghost{ background:#fff; border:1px solid var(--tpl-border); color:#111827 }
 
-    .muted{ color:var(--tpl-muted); font-size:12px }
-    .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
-    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:12px; color:#374151 }
+    /* Auth wall */
+    .auth-wall{ padding:16px; border:1px dashed #bbb; border-radius:12px; text-align:center; background:#fafafa; margin:0 22px 16px; }
 
-    /* Resumen (mantenemos el tuyo) */
-    .summary{ background:var(--tpl-bg); margin-top:18px }
-    .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
-    .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
-
-    /* Muro de sesión + login inline */
-    .auth-wall{ padding:14px; border:1px dashed #bbb; border-radius:10px; text-align:center; background:#fafafa; margin-bottom:16px }
-    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+    /* Login inline */
+    .tpl-login-card{border:1px solid #eee;border-radius:12px;padding:16px;background:#fff;max-width:520px;margin:14px auto 0;box-shadow:var(--tpl-shadow)}
     .tpl-login-title{margin:0 0 8px;font-weight:700;font-size:1.05rem;text-align:center}
     .tpl-btn{background:var(--tpl-accent);color:#fff;border:none;border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
     .tpl-btn-outline{background:#fff;color:var(--tpl-accent);border:1px solid var(--tpl-accent);border-radius:999px;padding:10px 14px;cursor:pointer;font-weight:600}
 
-    /* Tarjetas de mascotas (como te gustaban) */
-    .tpl-pet-list { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
-    .tpl-pet-item { display:flex; gap:10px; align-items:center; padding:8px; border:1px solid #ececec; border-radius:12px; background:#fff; }
-    .tpl-pet-thumb { width:56px; height:56px; border-radius:50%; object-fit:cover; border:2px solid #ececec; }
-    .tpl-pet-icon { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #ececec; color:#9aa0a6; font-size:22px }
+    /* Estados */
+    .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
 
-    /* Evitar “todo rojo” al cargar */
-    input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db }
-    input:focus:invalid, select:focus:invalid, textarea:focus:invalid{ border-color:#ef4444 }
+    /* Mensajes de validación amigables */
+    input:invalid, select:invalid, textarea:invalid{ border-color:#d1d5db; }
+    input:focus:invalid, select:focus:invalid, textarea:focus:invalid{ border-color:#ef4444; }
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
+  <!-- Navbar inyectada -->
   <div id="tpl-navbar"></div>
 
-  <main class="wrap">
-    <div class="hero">
+  <div class="page">
+    <header class="booking-header">
       <h1>Reserva tu servicio</h1>
-      <p class="sub">Selecciona el servicio, fechas y mascotas. Tus datos se autocompletan desde el perfil.</p>
-    </div>
+      <p class="booking-sub">Selecciona el servicio, fechas y mascotas. Tus datos se autocompletan desde el perfil.</p>
+    </header>
 
-    <!-- Puerta de sesión (si usabas esta) -->
-    <div id="sessionGate" class="card" style="display:none">
-      <h3 style="margin:0 0 8px">Inicia sesión para reservar</h3>
-      <p class="muted" style="margin:0">Puedes usar el formulario de abajo sin salir de esta página.</p>
-    </div>
-
-    <!-- Login inline (solo se muestra si NO hay sesión) -->
+    <!-- Auth wall (solo si no hay sesión) -->
     <div id="authWall" class="auth-wall" style="display:none">
       <p><strong>Para reservar debes iniciar sesión.</strong></p>
       <div id="tpl-inline-login"></div>
     </div>
 
-    <!-- Formulario -->
-    <form id="reservaForm" class="card disabled" novalidate>
-      <!-- Datos del servicio -->
-      <div class="section-title">Datos del servicio</div>
+    <div class="booking-shell">
+      <div class="booking-grid">
+        <!-- Columna izquierda: formulario -->
+        <form id="reservaForm" class="grid disabled" novalidate>
+          <!-- BLOQUE 1 · Datos del servicio -->
+          <section class="card">
+            <div class="section-title"><i class="fa-solid fa-list-check"></i> Datos del servicio</div>
 
-      <div class="grid-3">
-        <div>
-          <label for="serviceType">Servicio</label>
-          <select id="serviceType" required>
-            <option value="">Selecciona…</option>
-            <option value="guarderia_dia">Guardería de día</option>
-            <option value="alojamiento_nocturno">Alojamiento nocturno</option>
-            <option value="paseo">Paseo (60’)</option>
-            <option value="visita_gato">Visita a domicilio (gato)</option>
-            <option value="exoticos_aves">Visita exóticos (aves)</option>
-            <option value="exoticos_reptiles">Visita exóticos (reptiles)</option>
-            <option value="exoticos_mamiferos">Visita exóticos (mamíferos pequeños)</option>
-            <option value="transporte">Transporte</option>
-          </select>
-        </div>
+            <div class="grid grid-3">
+              <div class="field">
+                <label for="serviceType">Servicio</label>
+                <select id="serviceType" required>
+                  <option value="">Selecciona…</option>
+                  <option value="guarderia_dia">Guardería de día</option>
+                  <option value="alojamiento_nocturno">Alojamiento nocturno</option>
+                  <option value="paseo">Paseo (60’)</option>
+                  <option value="visita_gato">Visita a domicilio (gato)</option>
+                  <option value="exoticos_aves">Visita exóticos (aves)</option>
+                  <option value="exoticos_reptiles">Visita exóticos (reptiles)</option>
+                  <option value="exoticos_mamiferos">Visita exóticos (mamíferos pequeños)</option>
+                  <option value="transporte">Transporte</option>
+                </select>
+              </div>
 
-        <div>
-          <label>Fecha inicio</label>
-          <div class="grid-dates">
-            <input id="startDate" type="date" required>
-            <input id="endDate" type="date" required>
+              <div class="field">
+                <label>Fecha</label>
+                <div class="row-compact">
+                  <input id="startDate" type="date" required>
+                  <input id="endDate" type="date" required>
+                </div>
+              </div>
+
+              <div class="field">
+                <label>Horario</label>
+                <div class="row-compact">
+                  <input id="startTime" type="time">
+                  <input id="endTime" type="time">
+                </div>
+              </div>
+            </div>
+
+            <!-- Controles específicos visita gato -->
+            <div id="visitCatControls" class="grid grid-2" style="margin-top:10px; display:none">
+              <div class="field">
+                <label for="visitDuration">Duración</label>
+                <select id="visitDuration">
+                  <option value="60">60 minutos</option>
+                  <option value="90">90 minutos</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="secondMedVisit">¿Añadir 2ª visita (medicación 15’)?</label>
+                <select id="secondMedVisit">
+                  <option value="no">No</option>
+                  <option value="si">Sí (12 € · desde día 11 → 10 €)</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- BLOQUE 2 · Mascotas -->
+          <section class="card">
+            <div class="section-title"><i class="fa-solid fa-paw"></i> Elige tus mascotas</div>
+            <div id="petsGrid" class="pets-list"></div>
+            <p class="muted" id="petsHint" style="margin-top:6px">
+              Marca una o varias de tus mascotas guardadas en el perfil.
+            </p>
+          </section>
+
+          <!-- BLOQUE 3 · Datos de la persona titular -->
+          <section class="card">
+            <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
+
+            <div class="grid grid-3">
+              <div class="field">
+                <label for="ownerFullName">Nombre y apellidos</label>
+                <input id="ownerFullName" autocomplete="name" required>
+              </div>
+
+              <div class="field field-email">
+                <label for="email">Email</label>
+                <input id="email" type="email" autocomplete="email" required>
+              </div>
+
+              <div class="field">
+                <label for="phone">Teléfono</label>
+                <input id="phone" autocomplete="tel" required>
+              </div>
+
+              <div class="field">
+                <label for="contactPref">Preferencia de contacto</label>
+                <select id="contactPref">
+                  <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="contactTime">Franja preferida</label>
+                <select id="contactTime">
+                  <option>Mañana</option><option>Tarde</option><option>Noche</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="region">Comunidad Autónoma</label>
+                <select id="region" required>
+                  <option value="">Selecciona…</option>
+                  <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
+                  <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
+                  <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
+                  <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="address">Dirección</label>
+                <input id="address" placeholder="Calle, nº, piso…">
+              </div>
+
+              <div class="field">
+                <label for="postalCode">Código Postal</label>
+                <input id="postalCode" placeholder="28001">
+              </div>
+
+              <div class="field">
+                <label for="travelNeeded">¿Necesitas desplazamiento?</label>
+                <select id="travelNeeded">
+                  <option value="no">No</option>
+                  <option value="si">Sí (se calculará al asignar cuidador)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="emergencyName">Contacto de emergencia</label>
+                <input id="emergencyName" placeholder="Nombre y parentesco">
+              </div>
+
+              <div class="field">
+                <label for="emergencyPhone">Teléfono de emergencia</label>
+                <input id="emergencyPhone" placeholder="600 000 000">
+              </div>
+
+              <div class="field" style="grid-column: 1/-1">
+                <label for="notes">Observaciones</label>
+                <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="btnReserve" type="button" class="btn btn-primary">
+                <i class="fa-solid fa-lock"></i> Reservar ahora
+              </button>
+            </div>
+          </section>
+        </form>
+
+        <!-- Columna derecha: resumen -->
+        <aside class="card">
+          <div class="section-title"><i class="fa-solid fa-receipt"></i> Resumen</div>
+          <div class="summary-head">
+            <span id="summaryContext" class="pill">—</span>
           </div>
-        </div>
-
-        <div>
-          <label>Hora</label>
-          <div class="grid-times">
-            <input id="startTime" type="time">
-            <input id="endTime" type="time">
-          </div>
-        </div>
+          <div id="summaryLines" class="summary-lines"></div>
+          <div class="summary-total line"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
+          <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
+          <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
+          <p class="muted" style="margin-top:8px">Solo abonarás una parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio.</p>
+        </aside>
       </div>
-
-      <!-- Controles específicos de visitas gato -->
-      <div id="visitCatControls" class="grid-3" style="margin-top:8px;display:none">
-        <div>
-          <label for="visitDuration">Duración</label>
-          <select id="visitDuration">
-            <option value="60">60 minutos</option>
-            <option value="90">90 minutos</option>
-          </select>
-        </div>
-        <div>
-          <label for="secondMedVisit">¿Añadir 2ª visita (medicación 15’)?</label>
-          <select id="secondMedVisit">
-            <option value="no">No</option>
-            <option value="si">Sí (12 € · desde día 11 → 10 €)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Mascotas -->
-      <div style="margin-top:14px" class="section-title">Mascotas (elige una o varias)</div>
-      <div id="petsGrid" class="tpl-pet-list"></div>
-      <p class="muted" id="petsHint" style="margin-top:8px">Selecciona tus mascotas guardadas en el perfil.</p>
-
-      <!-- Datos del titular -->
-      <div style="margin-top:14px" class="section-title">Datos del titular</div>
-
-      <div class="grid-3">
-        <div>
-          <label for="ownerFullName">Nombre y apellidos</label>
-          <input id="ownerFullName" autocomplete="name" required>
-        </div>
-
-        <div class="field-email">
-          <label for="email">Email</label>
-          <input id="email" type="email" autocomplete="email" required>
-        </div>
-
-        <div>
-          <label for="phone">Teléfono</label>
-          <input id="phone" autocomplete="tel" required>
-        </div>
-
-        <div>
-          <label for="contactPref">Preferencia de contacto</label>
-          <select id="contactPref">
-            <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="contactTime">Franja preferida</label>
-          <select id="contactTime">
-            <option>Mañana</option><option>Tarde</option><option>Noche</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="region">Comunidad Autónoma</label>
-          <select id="region" required>
-            <option value="">Selecciona…</option>
-            <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
-            <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
-            <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
-            <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="address">Dirección</label>
-          <input id="address" placeholder="Calle, nº, piso…">
-        </div>
-
-        <div>
-          <label for="postalCode">Código Postal</label>
-          <input id="postalCode" placeholder="28001">
-        </div>
-
-        <div>
-          <label for="travelNeeded">¿Necesitas desplazamiento?</label>
-          <select id="travelNeeded">
-            <option value="no">No</option>
-            <option value="si">Sí (se calculará al asignar cuidador)</option>
-          </select>
-        </div>
-
-        <div class="grid-2" style="grid-column:1/-1;gap:16px">
-          <div>
-            <label for="emergencyName">Contacto de emergencia</label>
-            <input id="emergencyName" placeholder="Nombre y parentesco">
-          </div>
-          <div>
-            <label for="emergencyPhone">Teléfono de emergencia</label>
-            <input id="emergencyPhone" placeholder="600 000 000">
-          </div>
-        </div>
-
-        <div class="grid-2" style="grid-column:1/-1;gap:16px">
-          <div>
-            <label for="notes">Observaciones</label>
-            <textarea id="notes" rows="2" placeholder="Cualquier detalle útil para el servicio"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Resumen -->
-      <div class="card summary">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div><strong>Resumen</strong></div>
-          <span id="summaryContext" class="pill">—</span>
-        </div>
-        <div id="summaryLines" style="margin-top:8px"></div>
-        <div class="line total"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
-        <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
-        <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
-        <p class="muted" style="margin-top:8px">Solo abonarás una pequeña parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio del servicio.</p>
-      </div>
-
-      <!-- CTA -->
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
-        <button id="btnReserve" type="button" class="btn btn-primary">
-          <i class="fa-solid fa-lock"></i> Reservar ahora
-        </button>
-      </div>
-    </form>
+    </div>
 
     <!-- Gracias -->
-    <div id="thanks" class="card" style="display:none">
+    <div id="thanks" class="card" style="display:none; margin-top:16px">
       <h3>¡Gracias! Tu solicitud está en revisión</h3>
       <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. El resto se paga 12 días antes del inicio.</p>
       <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
     </div>
-  </main>
+  </div>
 
-  <!-- Footer -->
+  <!-- Footer inyectado -->
   <div id="tpl-footer"></div>
 
-  <!-- Firebase compat -->
+  <!-- Firebase compat (no se toca config) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -300,25 +356,14 @@
     })();
   </script>
 
-  <!-- EmailJS (opcional; tu template actual) -->
+  <!-- EmailJS (solo librería; tu config ya la tienes en tus archivos) -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <script>
-    window.TPL_EMAILJS = {
-      enabled: true,                            // pon false si no quieres enviar ahora
-      serviceId: "service_odjqrfl",
-      publicKey:  "L2xAATfVuHJwj4EIV",
-      templateIdCliente: "template_rao5n0c",
-      templateIdGestion: "template_rao5n0c",
-      adminEmail: "gestion@thepetslovers.es"
-    };
-    try{ if(window.TPL_EMAILJS.enabled){ emailjs.init(window.TPL_EMAILJS.publicKey); } }catch(e){}
-  </script>
 
-  <!-- Tu navbar/footer -->
+  <!-- Navbar/Footer -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Lógica de la reserva (el JS que te pasé) -->
+  <!-- Lógica de reservas -->
   <script src="tpl-reservas.js" defer></script>
 </body>
 </html>
