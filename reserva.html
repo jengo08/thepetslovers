@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Reserva · The Pets Lovers</title>
 
-  <!-- Estilos globales de tu web -->
+  <!-- Estilos globales -->
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
@@ -40,27 +40,20 @@
     .pet-meta{font-size:12px;color:#4b5563}
     .badge{font-size:11px;border-radius:999px;padding:2px 6px;border:1px solid var(--tpl-border);background:#eef2ff;color:#3730a3}
     .danger{color:#b91c1c}
-
-    /* Más aire y compactación suave del form */
-    #reservaForm .grid-3 > div,
-    #reservaForm .grid-2 > div { margin-bottom: 10px; }
-    #reservaForm label { margin-bottom: 4px; }
-    #reservaForm input, #reservaForm select, #reservaForm textarea {
-      padding: 10px; line-height: 1.25;
-    }
-    #reservaForm .grid-3 { gap: 14px; }
-    #reservaForm .grid-2 { gap: 12px; }
-
+    /* Compactación suave + más aire */
+    #reservaForm .grid-3 > div, #reservaForm .grid-2 > div { margin-bottom:10px }
+    #reservaForm label { margin-bottom:4px }
+    #reservaForm input, #reservaForm select, #reservaForm textarea { padding:10px; line-height:1.25 }
+    #reservaForm .grid-3 { gap:14px } #reservaForm .grid-2 { gap:12px }
     /* Campos “estrechos” */
-    #postalCode, #phone, #emergencyPhone { max-width: 200px; }
-
+    #postalCode, #phone, #emergencyPhone { max-width: 220px }
     /* Subcontroles visita gato y subtipo exóticos */
-    .pet-subtype { margin-top: 4px; }
+    .pet-subtype { margin-top:4px }
   </style>
 </head>
 <body>
 
-  <!-- Nav (inyectado por tu tpl-navbar.js) -->
+  <!-- Navbar -->
   <div id="tpl-navbar"></div>
 
   <main class="wrap">
@@ -81,7 +74,7 @@
 
     <!-- Formulario -->
     <form id="reservaForm" class="card disabled" autocomplete="on">
-      <!-- Datos del servicio -->
+      <!-- Datos del servicio (SOLO estos campos) -->
       <div class="section-title">Datos del servicio</div>
       <div class="grid-3">
         <div>
@@ -114,31 +107,9 @@
           <label for="endTime">Hora fin</label>
           <input id="endTime" type="time">
         </div>
-        <div>
-          <label for="region">Comunidad Autónoma</label>
-          <select id="region" required>
-            <option value="">Selecciona…</option>
-            <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
-            <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
-            <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
-            <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
-          </select>
-        </div>
-        <div>
-          <label for="address">Dirección</label>
-          <input id="address" placeholder="Calle, nº, piso…">
-        </div>
-        <div>
-          <label for="postalCode">Código Postal</label>
-          <input id="postalCode" placeholder="28001">
-        </div>
-        <div>
-          <label for="notes">Observaciones</label>
-          <input id="notes" placeholder="Observaciones para el servicio">
-        </div>
       </div>
 
-      <!-- Controles específicos: Visitas a domicilio (gato) -->
+      <!-- Controles: Visitas a domicilio (gato) -->
       <div id="visitCatControls" class="card" style="display:none;margin-top:12px">
         <div class="section-title">Visitas a domicilio (gato)</div>
         <div class="grid-3">
@@ -162,67 +133,69 @@
         </p>
       </div>
 
-      <!-- Mascotas -->
+      <!-- Mascotas (sin filtro, todas las del perfil) -->
       <div style="margin-top:14px" class="section-title">Mascotas (elige una o varias)</div>
-      <div class="grid-3" style="align-items:end;margin-bottom:6px">
-        <div>
-          <label for="petsFilter">Filtrar por especie</label>
-          <select id="petsFilter">
-            <option value="">Todas</option>
-            <option value="perro">Perros</option>
-            <option value="gato">Gatos</option>
-            <option value="exotico">Exóticos</option>
-          </select>
-        </div>
-        <div>
-          <label for="petsCount">Máx. mascotas a seleccionar</label>
-          <select id="petsCount">
-            <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option>
-          </select>
-        </div>
-        <div style="text-align:right">
-          <span class="pill" id="petsSummaryPill">Selecciona tus mascotas</span>
-        </div>
-      </div>
       <div id="petsGrid" class="pets-grid"></div>
-      <p class="muted" id="petsHint" style="margin-top:6px">Selecciona 1..N mascotas para esta reserva.</p>
+      <p class="muted" id="petsHint" style="margin-top:6px">Selecciona tus mascotas del perfil.</p>
 
-      <!-- Datos del titular -->
+      <!-- Datos del titular (aquí van dirección/CP/CA/observaciones) -->
       <div style="margin-top:14px" class="section-title">Datos del titular</div>
       <div class="grid-3">
-        <div>
-          <label for="ownerFullName">Nombre y apellidos</label>
+        <div class="full">
+          <label for="ownerFullName">Nombre y apellido</label>
           <input id="ownerFullName" required autocomplete="name">
         </div>
-        <div>
-          <label for="email">Email</label>
-          <input id="email" type="email" required autocomplete="email">
-        </div>
-        <div>
+        <div class="full">
           <label for="phone">Teléfono</label>
           <input id="phone" required autocomplete="tel">
         </div>
-        <div>
+        <div class="full">
+          <label for="email">Email</label>
+          <input id="email" type="email" required autocomplete="email">
+        </div>
+        <div class="full">
+          <label for="region">Comunidad Autónoma</label>
+          <select id="region" required>
+            <option value="">Selecciona…</option>
+            <option>Andalucía</option><option>Aragón</option><option>Asturias</option><option>Baleares</option>
+            <option>Canarias</option><option>Cantabria</option><option>Castilla-La Mancha</option><option>Castilla y León</option>
+            <option>Cataluña</option><option>Comunidad Valenciana</option><option>Extremadura</option><option>Galicia</option>
+            <option>La Rioja</option><option>Madrid</option><option>Murcia</option><option>Navarra</option><option>País Vasco</option><option>Ceuta</option><option>Melilla</option>
+          </select>
+        </div>
+        <div class="full">
+          <label for="address">Dirección</label>
+          <input id="address" placeholder="Calle, nº, piso…">
+        </div>
+        <div class="full">
+          <label for="postalCode">Código Postal</label>
+          <input id="postalCode" placeholder="28001">
+        </div>
+        <div class="full">
+          <label for="notes">Observaciones</label>
+          <input id="notes" placeholder="Observaciones para el servicio">
+        </div>
+        <div class="full">
           <label for="contactPref">Preferencia de contacto</label>
           <select id="contactPref">
             <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
           </select>
         </div>
-        <div>
+        <div class="full">
           <label for="contactTime">Franja preferida</label>
           <select id="contactTime">
             <option>Mañana</option><option>Tarde</option><option>Noche</option>
           </select>
         </div>
-        <div>
+        <div class="full">
           <label for="emergencyName">Contacto de emergencia</label>
-          <input id="emergencyName" placeholder="Nombre y apellidos">
+          <input id="emergencyName" placeholder="Nombre y apellido">
         </div>
-        <div>
+        <div class="full">
           <label for="emergencyPhone">Teléfono de emergencia</label>
           <input id="emergencyPhone" placeholder="Ej.: 600123456">
         </div>
-        <div>
+        <div class="full">
           <label for="travelNeeded">¿Necesitas desplazamiento?</label>
           <select id="travelNeeded">
             <option value="no">No</option>
@@ -266,7 +239,7 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Firebase compat + init (usa tu config pública) -->
+  <!-- Firebase compat + init -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
@@ -289,13 +262,13 @@
     })();
   </script>
 
-  <!-- EmailJS (un único template para cliente y gestión) -->
+  <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
-  <!-- Bridge de login (con retorno a /reservas.html si no hay sesión) -->
+  <!-- Bridge de login (opcional si lo usas) -->
   <script src="tpl-auth-bridge.js" defer></script>
 
-  <!-- Lógica completa de reservas (autorrelleno, mascotas, precios, guardado y emails) -->
+  <!-- Lógica completa reservas -->
   <script src="tpl-reservas.js" defer></script>
 </body>
 </html>
