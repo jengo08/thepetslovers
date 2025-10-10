@@ -1,11 +1,20 @@
+/*!
+ * TPL · auth-bridge
+ * - Asegura login antes de interactuar con reservas
+ * - Recuerda parámetros para volver a /reservas.html tras login
+ * Requisitos: Firebase compat (app+auth) cargado previamente
+ */
+
 (function(){
-  // Puente mínimo: asegura login y recuerda parámetros para volver a /reservas.html
   const RETURN_KEY = "tpl.return.afterLogin";
   const STATE_KEY  = "tpl.port.state";
 
   function readPortParams(){
     const p = new URLSearchParams(location.search), o = {};
-    ["service","svc","date","start","end","startDate","endDate","pets","region","notes"].forEach(k=>{
+    [
+      "service","svc","date","start","end",
+      "startDate","endDate","pets","region","notes"
+    ].forEach(k=>{
       const v = p.get(k);
       if(v) o[k]=v;
     });
@@ -31,17 +40,18 @@
     }catch(_){ return null; }
   }
 
+  // Expuesto globalmente para que lo pueda invocar reservas u otras páginas
   window.__TPL_AUTH_BRIDGE__ = {
     ensureLogged: function(opts){
       opts = opts||{};
       const loginUrl = opts.loginUrl || "/login.html";
       try{
-        if(!window.firebase || !firebase.auth) return true;
+        if(!window.firebase || !firebase.auth) return true; // no podemos verificar, dejar pasar
         const u = firebase.auth().currentUser;
         if(u) return true;
         rememberReturn();
         const next = encodeURIComponent("/reservas.html");
-        location.href = loginUrl+"?next="+next;
+        location.href = loginUrl + "?next=" + next;
         return false;
       }catch(_){ return true; }
     },
