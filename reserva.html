@@ -94,6 +94,21 @@
     .muted{ color:var(--tpl-muted); font-size:.9rem; }
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
   </style>
+
+  <!-- OVERRIDE: tarjetas mascotas más pequeñas -->
+  <style>
+    #petsGrid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+    @media (max-width: 1100px){ #petsGrid{ grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 680px){  #petsGrid{ grid-template-columns: 1fr; } }
+
+    #petsGrid .tpl-pet-item{ padding:6px 8px; gap:8px; border-radius:10px; }
+    #petsGrid .tpl-pet-thumb{ width:34px; height:34px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
+    #petsGrid .tpl-pet-icon{  width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:15px; }
+    #petsGrid .tpl-pet-meta{ line-height:1.15; }
+    #petsGrid .tpl-pet-name{ font-size:.95rem; }
+    #petsGrid .tpl-pet-sub{ font-size:.84rem; }
+    #petsGrid .pet-check{ position:absolute; top:6px; left:6px; width:15px; height:15px; }
+  </style>
 </head>
 <body>
 
@@ -296,10 +311,10 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Lógica principal -->
+  <!-- Lógica principal (tu JS existente, sin tocar) -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- UI helpers: preselección servicio + visitas + cachorro (sin tocar cálculo) -->
+  <!-- UI helpers: preselección servicio + visitas + cachorro (sin tocar cálculo), y ENHANCER de tarjetas -->
   <script>
     function toggleVisitControls(){
       var v = document.getElementById('visitCatControls');
@@ -364,26 +379,83 @@
     }
     document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
 
-    // Si renderPets vuelve a pintar, añadimos data-* y resync
+    /* ===== ENHANCER: hace las tarjetas más informativas (Nombre ya existe; añadimos Raza · Edad · Sexo)
+       - No toca tpl-reservas.js: usa window.renderPets original y lo “posprocesa”.
+       - Mantiene data-birth/data-species para tu cálculo de cachorro. */
     (function enhancePets(){
-      const _orig = window.renderPets;
-      if(typeof _orig === 'function'){
-        window.renderPets = function(pets){
-          _orig(pets);
-          var grid = document.getElementById('petsGrid');
-          if(grid){
-            grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
-              var id = el.querySelector('.pet-check')?.getAttribute('data-id');
-              var p = (pets||[]).find(x=> String(x.id)===String(id));
-              if(p){
-                if(p.birth)   el.setAttribute('data-birth', String(p.birth));
-                if(p.species) el.setAttribute('data-species', String(p.species));
-              }
-            });
-          }
-          setTimeout(__updatePuppyDisplay, 0);
-        };
+      function __ageYears(dateStr){
+        if(!dateStr) return "";
+        var d = new Date(dateStr);
+        if(isNaN(d)) return "";
+        var now = new Date();
+        var years = (now - d) / (365.25 * 24 * 3600 * 1000);
+        if (years < 0) return "";
+        if (years < 2) return (Math.round(years * 10) / 10) + " años";
+        return Math.round(years) + " años";
       }
+      function __sexoText(v){
+        var s = String(v||"").toLowerCase().trim();
+        if (!s) return "";
+        if (/(hembra|female|f)$/.test(s)) return "Hembra";
+        if (/(macho|male|m)$/.test(s))   return "Macho";
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      var _orig = window.renderPets;
+      if(typeof _orig !== 'function') return;
+
+      window.renderPets = function(pets){
+        // Pintado original
+        _orig(pets);
+
+        var grid = document.getElementById('petsGrid');
+        if(!grid) return;
+
+        grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
+          var id  = el.querySelector('.pet-check')?.getAttribute('data-id');
+          var p   = (pets||[]).find(function(x){ return String(x.id)===String(id); }) || {};
+
+          // Campos habituales
+          var raza   = p.raza || p.breed || p.tipoExotico || "";
+          var birth  = p.nacimiento || p.birth || p.birthdate || p.fecha_nac || "";
+          var edad   = __ageYears(birth);
+          var sexo   = __sexoText(p.sexo || p.genero || p.gender || "");
+
+          var parts = [];
+          if (raza) parts.push(raza);
+          if (edad) parts.push(edad);
+          if (sexo) parts.push(sexo);
+          var subTxt = parts.join(" · ");
+
+          var meta = el.querySelector('.tpl-pet-meta');
+          if (meta){
+            // Asegura estructura
+            var nameNode = meta.querySelector('.tpl-pet-name');
+            var subNode  = meta.querySelector('.tpl-pet-sub');
+            if (!nameNode){
+              var n = document.createElement('strong');
+              n.className = 'tpl-pet-name';
+              n.textContent = (p.nombre || 'Mascota');
+              meta.prepend(n);
+            }
+            if (!subNode){
+              subNode = document.createElement('span');
+              subNode.className = 'tpl-pet-sub';
+              meta.appendChild(subNode);
+            }
+            subNode.textContent = subTxt;
+          }
+
+          // Para el display “cachorro”
+          if (birth)   el.setAttribute('data-birth', String(birth));
+          var specieVal = p.especie || p.species || p.tipo || "";
+          if (specieVal) el.setAttribute('data-species', String(specieVal).toLowerCase());
+        });
+
+        if (typeof window.__updatePuppyDisplay === 'function'){
+          setTimeout(window.__updatePuppyDisplay, 0);
+        }
+      };
     })();
   </script>
 </body>
