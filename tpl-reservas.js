@@ -1,6 +1,11 @@
 /****************************************************
- * TPL · RESERVAS (COMPLETO · para reservas.html remaquetado)
- * (Mantiene IDs y comportamiento del flujo actual)
+ * TPL · RESERVAS (COMPLETO · actualizado)
+ * - Mantiene IDs y flujo
+ * - Tarjetas de mascotas compactas (lista horizontal)
+ * - Preselección servicio (no si viene de perfil)
+ * - Cálculo público + auxiliar + desglose detallado
+ * - “A pagar ahora” = margen = Subtotal – Aux
+ * - EmailJS intacto (usa TPL_EMAILJS si está habilitado)
  ****************************************************/
 
 /************** Helpers **************/
@@ -21,9 +26,25 @@ function fmtMD(dateStr){
   const m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
   return `${m}-${dd}`;
 }
-const between11 = (n)=> n>=11;
+function clampInt(n, min=0){ n=Number(n||0); return isNaN(n)?min:Math.max(min,Math.floor(n)); }
+function cap(s){ s=String(s||''); return s? s[0].toUpperCase()+s.slice(1) : s; }
+function yearsFrom(birth){
+  if(!birth) return "";
+  const d=new Date(birth); if(isNaN(d)) return "";
+  const t=new Date();
+  let y=t.getFullYear()-d.getFullYear();
+  if(t.getMonth()<d.getMonth() || (t.getMonth()===d.getMonth()&&t.getDate()<d.getDate())) y--;
+  return y<0?"":String(y);
+}
+function isPuppy(p){
+  if((p.especie||"").toLowerCase()!=="perro") return false;
+  const d = p.nacimiento? new Date(p.nacimiento) : null;
+  if(!d || isNaN(d)) return false;
+  const months=(Date.now()-d.getTime())/2629800000;
+  return months<=6;
+}
 
-/************** Etiquetas **************/
+/************** Etiquetas y precios públicos **************/
 function labelService(s){
   return ({
     guarderia_dia:"Guardería de día",
@@ -37,56 +58,52 @@ function labelService(s){
   })[s]||s;
 }
 
-/************** Festivos señalados **************/
 const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
 
-/************** Tarifas CLIENTE **************/
+// PÚBLICO (cliente)
 const PUB = {
+  paseos: { base:12, extra:8 }, // por paseo
+  transporte: { base:20 },
   guarderia: {
-    dayAdult: 15, dayPuppy: 20,
-    packsAdult: {10:135, 20:250, 30:315},
-    packsPuppy: {10:185, 20:350, 30:465}
+    adult:  { day:15, pack10:135, pack20:250, pack30:315 },
+    puppy:  { day:20, pack10:185, pack20:350, pack30:465 }
   },
   alojamiento: {
-    std_1_10:30, std_11:28,
-    pup_1_10:35, pup_11:32,
-    second_1_10:25, second_11:22
+    std:   { d1_10:30, d11p:28 },
+    puppy: { d1_10:35, d11p:32 },
+    extra: { d1_10:25, d11p:22 }
   },
-  paseo: { base:12, extra:8 }, // por mascota adicional
-  visita: {
-    base60_1_10:22, base60_11:18,
-    base90_1_10:30, base90_11:27,
-    med15_1_10:12,  med15_11:10,
-    extraCats: {one:12, twoEach:8, threePlusEach:6}
+  visitaGato: {
+    base60: { d1_10:22, d11p:18 },
+    base90: { d1_10:30, d11p:27 },
+    med15:  { d1_10:12, d11p:10 },
+    extraCats: { one:12, twoEach:8, threePlusEach:6 }
   },
-  exoticos: { aves:20, reptiles:20, mamiferos:25 },
-  transporte: { base:20 },
-  suplementos: { festivo:10, senalado:30, urgencia:10 } // (urgencia íntegro a margen, festivo/normal no auto)
+  exoticos: { aves:20, reptiles:20, mamiferos:25 }
 };
 
-/************** Tarifas AUXILIAR (interno, no visible) **************/
+// AUXILIAR (coste interno)
 const AUX = {
+  paseos: { base:10, extra:5, packs: {10:8,15:7.5,20:7,25:6.5,30:6} },
   guarderia: {
-    dayAdult:12, dayPuppy:17,
-    // precio por DÍA cuando entra en bono:
-    perDayAdult: {10:11, 20:10, 30:9},
-    perDayPuppy: {10:16, 20:14, 30:12}
+    adultDay:12, puppyDay:17,
+    packAdultPerDay: {10:11,20:10,30:9},
+    packPuppyPerDay: {10:16,20:14,30:12}
   },
   alojamiento: {
-    std_1_10:25, std_11:22,
-    pup_1_10:30, pup_11:27,
-    second_1_10:20, second_11:17
+    std:   { d1_10:25, d11p:22 },
+    puppy: { d1_10:30, d11p:27 },
+    extra: { d1_10:20, d11p:17 }
   },
-  paseo: { base:10, extra:5 },
-  visita: {
-    base60_1_10:17, base60_11:12,
-    base90_1_10:25, base90_11:21,
-    med15_sameAsPublic:true,
-    extraCats: {one:10, twoEach:6, threePlusEach:4}
+  visitaGato: {
+    base60: { d1_10:17, d11p:12 },
+    base90: { d1_10:25, d11p:21 },
+    med15:  { d1_10:10, d11p:10 }, // margen 0 frente público
+    extraCats: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: { aves:15, reptiles:15, mamiferos:20 },
-  transporte: { base:15 },
-  suplementos: { festivo:8, senalado:15 } // urgencia NO suma al aux
+  transporte: 15,
+  festivo: { normal:8, señalados:15 }
 };
 
 /************** Preselección de servicio **************/
@@ -112,6 +129,7 @@ function inferServiceFromReferrer(){
     const r = document.referrer ? new URL(document.referrer) : null;
     if(!r) return "";
     const p = (r.pathname || "").toLowerCase();
+    if(p.includes("perfil")) return ""; // ← no preseleccionar si viene del perfil
     if(/paseo|paseos/.test(p)) return 'paseo';
     if(/guarderia/.test(p)) return 'guarderia_dia';
     if(/estancia|estancias|alojamiento|noche|nocturn/.test(p)) return 'alojamiento_nocturno';
@@ -143,12 +161,6 @@ function onAuth(cb){
 }
 
 /************** Firestore: owner + pets **************/
-function boolFrom(v){
-  const s = (v===true || v===false) ? v : String(v||"").toLowerCase().trim();
-  if(s===true || s==="true" || s==="si" || s==="sí" || s==="s" || s==="1") return true;
-  if(s===false || s==="false" || s==="no" || s==="0") return false;
-  return null;
-}
 async function readOwnerAndPets(uid){
   const db=firebase.firestore();
 
@@ -192,7 +204,7 @@ async function readOwnerAndPets(uid){
           nacimiento: x.birthdate || x.nacimiento || "",
           raza: x.raza || x.tipoExotico || "",
           sexo: x.sexo || x.genero || "",
-          esterilizado: (x.esterilizado ?? x.castrado ?? x.esterilizada ?? null),
+          castrado: (x.castrado ?? x.esterilizado ?? "").toString().toLowerCase(),
           foto: x.foto || x.img || ""
         };
       });
@@ -208,7 +220,7 @@ async function readOwnerAndPets(uid){
     nacimiento: p.nacimiento || p.birthdate || "",
     raza: p.raza || p.tipoExotico || "",
     sexo: p.sexo || p.genero || "",
-    esterilizado: (p.esterilizado ?? p.castrado ?? p.esterilizada ?? null),
+    castrado: (p.castrado ?? p.esterilizado ?? "").toString().toLowerCase(),
     foto: p.foto || p.img || ""
   }));
 
@@ -250,41 +262,59 @@ function renderPetsGrid(pets){
   grid.innerHTML="";
 
   (pets||[]).forEach(p=>{
-    const iconHtml = p.foto
-      ? `<img class="pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
-      : `<div class="pet-icon"><i class="fa-solid fa-paw"></i></div>`;
+    const avatar = p.foto
+      ? `<img class="tpl-pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
+      : `<div class="tpl-pet-thumb" style="display:flex;align-items:center;justify-content:center;border:2px solid #eee;background:#fafafa"><i class="fa-solid fa-paw" style="opacity:.5"></i></div>`;
 
     const el=document.createElement("label");
-    el.className="pet-item";
+    el.className="tpl-pet-item";
+    el.setAttribute("data-birth", p.nacimiento||"");
+    el.setAttribute("data-species", (p.especie||"").toLowerCase());
     el.innerHTML = `
-      <input type="checkbox" class="pet-check" data-id="${p.id}" style="margin-right:6px;width:18px;height:18px">
-      ${iconHtml}
-      <div style="display:flex;flex-direction:column;line-height:1.25">
-        <strong>${p.nombre||"Mascota"}</strong>
-        <span class="muted">${(p.especie||'').toLowerCase()}</span>
+      <input type="checkbox" class="pet-check" data-id="${p.id}">
+      ${avatar}
+      <div class="tpl-pet-meta">
+        <div class="tpl-pet-name">${p.nombre||"Mascota"}</div>
+        <div class="tpl-pet-sub"></div>
       </div>
     `;
+    // sub: especie · raza · edad · sexo · castrado(si)
+    const bits=[];
+    if(p.especie) bits.push(cap(p.especie));
+    if(p.raza)    bits.push(p.raza);
+    const ageY=yearsFrom(p.nacimiento); if(ageY!=="") bits.push("Edad: "+ageY);
+    if(p.sexo)    bits.push(p.sexo.trim().toLowerCase()==="hembra"?"♀ Hembra":"♂ Macho");
+    if(String(p.castrado)==="si"||String(p.castrado)==="sí") bits.push("Castrado: Sí");
+    el.querySelector(".tpl-pet-sub").textContent = bits.join(" · ");
+
     grid.appendChild(el);
   });
 
   if(!(pets||[]).length){
     grid.innerHTML = `
-      <div class="pet-item">
-        <div><strong style="color:#666">No hay mascotas en tu perfil</strong>
-        <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div>
+      <div class="tpl-pet-item">
+        <div class="tpl-pet-meta">
+          <div class="tpl-pet-name" style="color:#666">No hay mascotas en tu perfil</div>
+          <div class="tpl-pet-sub">Añádelas en tu perfil para seleccionarlas aquí.</div>
+        </div>
       </div>`;
   }
 
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
-    __updatePuppyDisplay?.();
+    try{ if(typeof __updatePuppyDisplay==='function') __updatePuppyDisplay(); }catch(_){}
     doRecalc();
   }, { once:true });
 }
 
 /************** Recogida de payload **************/
 function collectPayload(){
-  const pets = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
+  const petsSel = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
+  const selCount = petsSel.length;
+  const numSelectEl = $("#numPets");
+  const numOverride = numSelectEl ? clampInt(numSelectEl.value,1) : 0;
+  const nPetsForCalc = Math.max(selCount, numOverride||selCount||1);
+
   return {
     serviceType: $("#serviceType").value,
     startDate: $("#startDate").value,
@@ -297,200 +327,191 @@ function collectPayload(){
     travelNeeded: $("#travelNeeded")?.value || "no",
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
-    pets
+    walkCount: clampInt($("#walkCount")?.value || 0,0), // opcional: si no existe, se ignora
+    petsSelected: petsSel,
+    nPetsForCalc
   };
 }
 
-/************** Bonos guardería (cliente/aux) **************/
-function splitPacks(n){ // devuelve {p30,p20,p10,rest}
-  const p30=Math.floor(n/30); n%=30;
-  const p20=Math.floor(n/20); n%=20;
-  const p10=Math.floor(n/10); n%=10;
-  return {p30,p20,p10,rest:n};
-}
-function sumGuarderiaCliente(nDays, isPuppy){
-  const packs = splitPacks(nDays);
-  const cfg = isPuppy? PUB.guarderia.packsPuppy : PUB.guarderia.packsAdult;
-  const day = isPuppy? PUB.guarderia.dayPuppy : PUB.guarderia.dayAdult;
-  const lines=[];
-  if(packs.p30) lines.push({label:`Guardería · bono 30 × ${packs.p30}`, amount: cfg[30]*packs.p30});
-  if(packs.p20) lines.push({label:`Guardería · bono 20 × ${packs.p20}`, amount: cfg[20]*packs.p20});
-  if(packs.p10) lines.push({label:`Guardería · bono 10 × ${packs.p10}`, amount: cfg[10]*packs.p10});
-  if(packs.rest) lines.push({label:`Guardería · ${packs.rest} día(s) sueltos`, amount: day*packs.rest});
-  const total = lines.reduce((a,b)=>a+b.amount,0);
-  return {lines,total};
-}
-function sumGuarderiaAux(nDays, isPuppy){
-  const packs = splitPacks(nDays);
-  const perDay = isPuppy? AUX.guarderia.perDayPuppy : AUX.guarderia.perDayAdult;
-  const day = isPuppy? AUX.guarderia.dayPuppy : AUX.guarderia.dayAdult;
-  const lines=[];
-  if(packs.p30) lines.push({label:`Aux · guardería · bono 30 × ${packs.p30}`, amount: perDay[30]*30*packs.p30});
-  if(packs.p20) lines.push({label:`Aux · guardería · bono 20 × ${packs.p20}`, amount: perDay[20]*20*packs.p20});
-  if(packs.p10) lines.push({label:`Aux · guardería · bono 10 × ${packs.p10}`, amount: perDay[10]*10*packs.p10});
-  if(packs.rest) lines.push({label:`Aux · guardería · ${packs.rest} día(s)`, amount: day*packs.rest});
-  const total = lines.reduce((a,b)=>a+b.amount,0);
+/************** Cálculo + resumen **************/
+function splitTranches(days){ return { d1_10: Math.min(10, days), d11p: Math.max(0, days-10) }; }
+function greedyPacks(totalDays, packs){ // packs: {30:x,20:y,10:z,day:w}
+  let rem=totalDays, lines=[], total=0;
+  const use=(size, price)=>{ const n=Math.floor(rem/size); if(n>0){ lines.push([`${size}`, n, price]); total+=n*price; rem-=n*size; } };
+  use(30, packs.pack30);
+  use(20, packs.pack20);
+  use(10, packs.pack10);
+  if(rem>0){ lines.push(["sueltos", rem, packs.day]); total+=rem*packs.day; rem=0; }
   return {lines,total};
 }
 
-/************** Cálculo + resumen **************/
 function calc(payload){
   const s = payload.serviceType;
   const nDays = Math.max(1, daysInclusive(payload.startDate, payload.endDate));
-  const anyPuppy = payload.pets.some(p=>{
-    if(p.especie!=="perro" || !p.nacimiento) return false;
-    const d=new Date(p.nacimiento); if(isNaN(d)) return false;
-    const t=new Date();
-    const months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
-    return months<=6;
-  });
+  const bigStart = BIG_DAYS.includes(fmtMD(payload.startDate));
+  const bigEnd   = BIG_DAYS.includes(fmtMD(payload.endDate));
+  const bigDayFee = (bigStart||bigEnd)?30:0;
 
-  let lines=[], total=0;
-  let auxLines=[], auxTotal=0;
+  let linesPublic=[], totalPublic=0;
+  let linesAux=[], totalAux=0;
+
+  // helpers para añadir línea
+  function addPub(label, amount, note){ linesPublic.push({label, amount, note}); totalPublic+=amount||0; }
+  function addAux(label, amount){ linesAux.push({label, amount}); totalAux+=amount||0; }
+
+  // --- Conteos por especie/edad ---
+  const pets = payload.petsSelected;
+  const nSel = pets.length;
+  const nPets = Math.max(payload.nPetsForCalc, nSel||1);
+
+  const dogs = pets.filter(p=>(p.especie||"").toLowerCase()==="perro");
+  const cats = pets.filter(p=>(p.especie||"").toLowerCase()==="gato");
+  const nDogs = Math.max(dogs.length, (s==="paseo"||s==="guarderia_dia"||s==="alojamiento_nocturno")?nPets:dogs.length);
+  const nCats = Math.max(cats.length, s==="visita_gato"?nPets:cats.length);
+
+  const dogPuppies = dogs.filter(isPuppy).length;
+  // si hay menos seleccionadas que nPets, las extra se consideran adultas
+  const dogAdults  = Math.max(0, nDogs - dogPuppies);
+
+  // --- Cálculos por servicio ---
+  if(s==="paseo"){
+    // nº de paseos: si hay input #walkCount >0 usarlo, si no, uno por día del rango
+    const walks = payload.walkCount>0 ? payload.walkCount : nDays;
+    const extras = Math.max(0, nDogs-1);
+    const base = PUB.paseos.base * walks;
+    const add  = PUB.paseos.extra * extras * walks;
+
+    addPub(`Paseo (60’) × ${walks}`, base);
+    if(extras>0) addPub(`Mascotas adicionales × ${walks} ( ${extras} )`, add);
+
+    // AUX
+    addAux(`(aux) Paseo × ${walks}`, AUX.paseos.base*walks);
+    if(extras>0) addAux(`(aux) Extras × ${walks} (${extras})`, AUX.paseos.extra*extras*walks);
+  }
 
   if(s==="guarderia_dia"){
-    const pub = sumGuarderiaCliente(nDays, anyPuppy);
-    const aux = sumGuarderiaAux(nDays, anyPuppy);
-    lines.push(...pub.lines); total+=pub.total;
-    auxLines.push(...aux.lines); auxTotal+=aux.total;
+    // Adultos
+    if(dogAdults>0){
+      const packs = {day:PUB.guarderia.adult.day, pack10:PUB.guarderia.adult.pack10, pack20:PUB.guarderia.adult.pack20, pack30:PUB.guarderia.adult.pack30};
+      const result = greedyPacks(dogAdults*nDays, packs);
+      result.lines.forEach(([kind, qty, price])=>{
+        const label = kind==="sueltos" ? `Guardería · Adulto · ${qty} día(s)` : `Guardería · Adulto · Bono ${kind} × ${qty/kind}`;
+        addPub(label, qty*(kind==="sueltos"?packs.day:price));
+      });
+      // AUX: por día según pack por día
+      const perDay=AUX.guarderia.packAdultPerDay;
+      // reconstruimos coste aux equivalente
+      let remaining=dogAdults*nDays;
+      const apply=(sz,costPerDay)=>{ const n=Math.floor(remaining/sz); if(n>0){ addAux(`(aux) Guardería · Adulto · pack${sz} × ${n}`, costPerDay*sz*n); remaining-=n*sz; } };
+      apply(30,perDay[30]); apply(20,perDay[20]); apply(10,perDay[10]);
+      if(remaining>0){ addAux(`(aux) Guardería · Adulto · sueltos ${remaining}`, remaining*AUX.guarderia.adultDay); }
+    }
+    // Cachorros
+    if(dogPuppies>0){
+      const packs = {day:PUB.guarderia.puppy.day, pack10:PUB.guarderia.puppy.pack10, pack20:PUB.guarderia.puppy.pack20, pack30:PUB.guarderia.puppy.pack30};
+      const result = greedyPacks(dogPuppies*nDays, packs);
+      result.lines.forEach(([kind, qty, price])=>{
+        const label = kind==="sueltos" ? `Guardería · Cachorro · ${qty} día(s)` : `Guardería · Cachorro · Bono ${kind} × ${qty/kind}`;
+        addPub(label, qty*(kind==="sueltos"?packs.day:price));
+      });
+      // AUX
+      const perDay=AUX.guarderia.packPuppyPerDay;
+      let remaining=dogPuppies*nDays;
+      const apply=(sz,costPerDay)=>{ const n=Math.floor(remaining/sz); if(n>0){ addAux(`(aux) Guardería · Cachorro · pack${sz} × ${n}`, costPerDay*sz*n); remaining-=n*sz; } };
+      apply(30,perDay[30]); apply(20,perDay[20]); apply(10,perDay[10]);
+      if(remaining>0){ addAux(`(aux) Guardería · Cachorro · sueltos ${remaining}`, remaining*AUX.guarderia.puppyDay); }
+    }
   }
 
   if(s==="alojamiento_nocturno"){
-    // 1ª mascota
-    const first = payload.pets[0];
-    const firstPuppy = first && first.especie==="perro" && first.nacimiento &&
-      ((Date.now()-new Date(first.nacimiento).getTime())/2629800000 <= 6);
+    const {d1_10, d11p} = splitTranches(nDays);
 
-    const d1 = Math.min(nDays,10), d2 = Math.max(0,nDays-10);
-    const firstPub = (firstPuppy?PUB.alojamiento.pup_1_10:PUB.alojamiento.std_1_10)*d1
-                   + (firstPuppy?PUB.alojamiento.pup_11:PUB.alojamiento.std_11)*d2;
-    const firstAux = (firstPuppy?AUX.alojamiento.pup_1_10:AUX.alojamiento.std_1_10)*d1
-                   + (firstPuppy?AUX.alojamiento.pup_11:AUX.alojamiento.std_11)*d2;
-    lines.push({label:`Alojamiento · 1ª mascota · ${nDays} noche(s)`, amount:firstPub});
-    auxLines.push({label:`Aux · alojamiento · 1ª mascota`, amount:firstAux});
-    total+=firstPub; auxTotal+=firstAux;
+    // ¿1ª mascota cachorro?
+    const firstIsPuppy = dogs.some(isPuppy); // si hay alguno cachorro, consideramos la 1ª como cachorro
+    const price1 = firstIsPuppy ? PUB.alojamiento.puppy : PUB.alojamiento.std;
+    const aux1   = firstIsPuppy ? AUX.alojamiento.puppy : AUX.alojamiento.std;
 
-    // 2ª+ mascotas
-    const secondCount=Math.max(0,(payload.pets.length-1));
-    if(secondCount>0){
-      const addPub = PUB.alojamiento.second_1_10*d1 + PUB.alojamiento.second_11*d2;
-      const addAux = AUX.alojamiento.second_1_10*d1 + AUX.alojamiento.second_11*d2;
-      lines.push({label:`Alojamiento · ${secondCount} mascota(s) extra`, amount:addPub*secondCount});
-      auxLines.push({label:`Aux · alojamiento · ${secondCount} extra`, amount:addAux*secondCount});
-      total+=addPub*secondCount; auxTotal+=addAux*secondCount;
+    if(nDogs>=1){
+      if(d1_10>0) addPub(`Alojamiento · 1ª mascota · días 1–10 (${d1_10})`, price1.d1_10*d1_10);
+      if(d11p>0)  addPub(`Alojamiento · 1ª mascota · desde día 11 (${d11p})`, price1.d11p*d11p);
+
+      if(d1_10>0) addAux(`(aux) Alojamiento · 1ª · 1–10 (${d1_10})`, aux1.d1_10*d1_10);
+      if(d11p>0)  addAux(`(aux) Alojamiento · 1ª · 11+ (${d11p})`, aux1.d11p*d11p);
     }
-  }
 
-  if(s==="paseo"){
-    // (suelo interpretarlo como 1 paseo seleccionado; si incorporas "cantidad", multiplicas)
-    const base = PUB.paseo.base;
-    const extras = Math.max(0,(payload.pets.length||1)-1)*PUB.paseo.extra;
-    lines.push({label:`Paseo (60’) · base`, amount:base});
-    if(extras) lines.push({label:`Paseo · mascotas adicionales`, amount:extras});
-    total += base + extras;
+    const extras = Math.max(0, nDogs-1);
+    if(extras>0){
+      if(d1_10>0) addPub(`Alojamiento · ${extras} mascota(s) extra · 1–10 (${d1_10})`, PUB.alojamiento.extra.d1_10*extras*d1_10);
+      if(d11p>0)  addPub(`Alojamiento · ${extras} mascota(s) extra · 11+ (${d11p})`, PUB.alojamiento.extra.d11p*extras*d11p);
 
-    const auxBase = AUX.paseo.base;
-    const auxExtras = Math.max(0,(payload.pets.length||1)-1)*AUX.paseo.extra;
-    auxLines.push({label:`Aux · paseo base`, amount:auxBase});
-    if(auxExtras) auxLines.push({label:`Aux · paseo extras`, amount:auxExtras});
-    auxTotal += auxBase + auxExtras;
+      if(d1_10>0) addAux(`(aux) Extra · ${extras} · 1–10 (${d1_10})`, AUX.alojamiento.extra.d1_10*extras*d1_10);
+      if(d11p>0)  addAux(`(aux) Extra · ${extras} · 11+ (${d11p})`, AUX.alojamiento.extra.d11p*extras*d11p);
+    }
   }
 
   if(s==="visita_gato"){
+    const {d1_10, d11p} = splitTranches(nDays);
     const use90 = payload.visitDuration==="90";
-    const long = between11(nDays);
-    const basePub = (use90 ? (long?PUB.visita.base90_11:PUB.visita.base90_1_10)
-                           : (long?PUB.visita.base60_11:PUB.visita.base60_1_10)) * nDays;
-    lines.push({label:`Visita gato · ${use90?90:60}’ × ${nDays}`, amount:basePub});
-    total+=basePub;
+    const basePub = use90?PUB.visitaGato.base90:PUB.visitaGato.base60;
+    const baseAux = use90?AUX.visitaGato.base90:AUX.visitaGato.base60;
 
-    const baseAux = (use90 ? (long?AUX.visita.base90_11:AUX.visita.base90_1_10)
-                           : (long?AUX.visita.base60_11:AUX.visita.base60_1_10)) * nDays;
-    auxLines.push({label:`Aux · visita ${use90?90:60}’ × ${nDays}`, amount:baseAux});
-    auxTotal+=baseAux;
+    if(d1_10>0){ addPub(`Visita gato · ${use90?90:60}’ · 1–10 (${d1_10})`, basePub.d1_10*d1_10);
+                 addAux(`(aux) Visita · ${use90?90:60}’ · 1–10 (${d1_10})`, baseAux.d1_10*d1_10); }
+    if(d11p>0){  addPub(`Visita gato · ${use90?90:60}’ · 11+ (${d11p})`, basePub.d11p*d11p);
+                 addAux(`(aux) Visita · ${use90?90:60}’ · 11+ (${d11p})`, baseAux.d11p*d11p); }
 
     if(payload.secondMedVisit==="si"){
-      const medPub = (long?PUB.visita.med15_11:PUB.visita.med15_1_10) * nDays;
-      lines.push({label:`2ª visita medicación 15’ × ${nDays}`, amount:medPub});
-      total+=medPub;
-
-      const medAux = (AUX.visita.med15_sameAsPublic ? (long?PUB.visita.med15_11:PUB.visita.med15_1_10) : 0) * nDays;
-      auxLines.push({label:`Aux · 2ª medicación 15’ × ${nDays}`, amount:medAux});
-      auxTotal+=medAux;
+      if(d1_10>0){ addPub(`2ª visita medicación 15’ · 1–10 (${d1_10})`, PUB.visitaGato.med15.d1_10*d1_10);
+                   addAux(`(aux) Med 15’ · 1–10 (${d1_10})`, AUX.visitaGato.med15.d1_10*d1_10); }
+      if(d11p>0){  addPub(`2ª visita medicación 15’ · 11+ (${d11p})`, PUB.visitaGato.med15.d11p*d11p);
+                   addAux(`(aux) Med 15’ · 11+ (${d11p})`, AUX.visitaGato.med15.d11p*d11p); }
     }
 
-    // Gatos extra (por visita)
-    const cats = payload.pets.filter(p=>p.especie==="gato").length || payload.pets.length || 1;
-    const extraCats = Math.max(0, cats-1);
+    // Gatos extra por visita
+    const catsCount = Math.max(nCats, 1);
+    const extraCats = Math.max(0, catsCount-1);
     if(extraCats>0){
-      let addPub=0, addAux=0, label="";
-      if(extraCats===1){
-        addPub = PUB.visita.extraCats.one;
-        addAux = AUX.visita.extraCats.one;
-        label = "Gato extra (1)";
-      }else if(extraCats===2){
-        addPub = PUB.visita.extraCats.twoEach*extraCats;
-        addAux = AUX.visita.extraCats.twoEach*extraCats;
-        label = "Gatos extra (2)";
-      }else{
-        addPub = PUB.visita.extraCats.threePlusEach*extraCats;
-        addAux = AUX.visita.extraCats.threePlusEach*extraCats;
-        label = `Gatos extra (${extraCats})`;
-      }
-      lines.push({label:`${label} × ${nDays}`, amount:addPub*nDays});
-      auxLines.push({label:`Aux · ${label} × ${nDays}`, amount:addAux*nDays});
-      total+=addPub*nDays; auxTotal+=addAux*nDays;
+      let perPub=0, perAux=0, label="";
+      if(extraCats===1){ perPub=PUB.visitaGato.extraCats.one; perAux=AUX.visitaGato.extraCats.one; label="1 gato extra"; }
+      else if(extraCats===2){ perPub=PUB.visitaGato.extraCats.twoEach*2; perAux=AUX.visitaGato.extraCats.twoEach*2; label="2 gatos extra"; }
+      else { perPub=PUB.visitaGato.extraCats.threePlusEach*extraCats; perAux=AUX.visitaGato.extraCats.threePlusEach*extraCats; label=`${extraCats} gatos extra`; }
+      // Es por visita (día)
+      addPub(`Gatos extra (${label}) × ${nDays}`, perPub*nDays);
+      addAux(`(aux) Gatos extra (${label}) × ${nDays}`, perAux*nDays);
     }
   }
 
-  if(s==="exoticos_aves" || s==="exoticos_reptiles" || s==="exoticos_mamiferos"){
-    const key = s==="exoticos_aves" ? "aves" : (s==="exoticos_reptiles"?"reptiles":"mamiferos");
-    const pub = PUB.exoticos[key]*nDays;
-    const aux = AUX.exoticos[key]*nDays;
-    lines.push({label:`Exóticos · ${key} × ${nDays}`, amount:pub});
-    auxLines.push({label:`Aux · exóticos · ${key} × ${nDays}`, amount:aux});
-    total+=pub; auxTotal+=aux;
-  }
+  if(s==="exoticos_aves"){ addPub("Visita exóticos (aves)", PUB.exoticos.aves); addAux("(aux) Aves", AUX.exoticos.aves); }
+  if(s==="exoticos_reptiles"){ addPub("Visita exóticos (reptiles)", PUB.exoticos.reptiles); addAux("(aux) Reptiles", AUX.exoticos.reptiles); }
+  if(s==="exoticos_mamiferos"){ addPub("Visita exóticos (mamíferos)", PUB.exoticos.mamiferos); addAux("(aux) Mamíferos peq.", AUX.exoticos.mamiferos); }
+  if(s==="transporte"){ addPub("Transporte", PUB.transporte.base); addAux("(aux) Transporte", AUX.transporte); }
 
-  if(s==="transporte"){
-    lines.push({label:"Transporte", amount:PUB.transporte.base});
-    auxLines.push({label:"Aux · transporte", amount:AUX.transporte.base});
-    total+=PUB.transporte.base; auxTotal+=AUX.transporte.base;
-  }
+  // Días señalados
+  if(bigDayFee){ addPub("Día señalado", bigDayFee); addAux("(aux) Día señalado", AUX.festivo.señalados); }
 
-  // Días señalados (aplica si inicio o fin coincide)
-  const big = BIG_DAYS.includes(fmtMD(payload.startDate)) || BIG_DAYS.includes(fmtMD(payload.endDate));
-  if(big){
-    lines.push({label:"Día señalado", amount:PUB.suplementos.senalado});
-    auxLines.push({label:"Aux · día señalado", amount:AUX.suplementos.senalado});
-    total+=PUB.suplementos.senalado; auxTotal+=AUX.suplementos.senalado;
-  }
+  if(payload.travelNeeded==="si"){ addPub("Desplazamiento", 0, "pendiente"); }
 
-  // Desplazamiento: pendiente (no suma)
-  if(payload.travelNeeded==="si"){
-    lines.push({label:"Desplazamiento", note:"pendiente"});
-  }
+  const payNow   = Math.max(0, totalPublic - totalAux); // margen
+  const payLater = Math.max(0, totalPublic - payNow);
 
-  const payNow   = Math.max(0, total - auxTotal);   // margen real
-  const payLater = Math.max(0, total - payNow);
-  return { linesPublic:lines, totalPublic:total, payNow, payLater };
+  return { linesPublic, totalPublic, payNow, payLater };
 }
 
-function renderSummary(calc, payload){
+function renderSummary(calcRes, payload){
   $("#summaryContext").textContent =
-    `${labelService(payload.serviceType)} · ${payload.startDate||"—"}${payload.endDate?(" — "+payload.endDate):""}${payload.startTime?(" · "+payload.startTime):""}${payload.endTime?("–"+payload.endTime):""} · ${(payload.pets||[]).length||0} mascota(s)`;
+    `${labelService(payload.serviceType)} · ${payload.startDate||"—"}${payload.endDate?(" — "+payload.endDate):""}${payload.startTime?(" · "+payload.startTime):""}${payload.endTime?("–"+payload.endTime):""} · ${payload.nPetsForCalc||0} mascota(s)`;
 
   const box=$("#summaryLines"); box.innerHTML="";
-  calc.linesPublic.forEach(l=>{
+  calcRes.linesPublic.forEach(l=>{
     const row=document.createElement("div");
     row.className="line";
     row.innerHTML = `<span>${l.label}</span><span>${l.note?'<span class="muted">pendiente</span>':fmtMoney(l.amount)}</span>`;
     box.appendChild(row);
   });
 
-  $("#subtotalTxt").textContent = fmtMoney(calc.totalPublic);
-  $("#payNowTxt").textContent   = fmtMoney(calc.payNow);
-  $("#payLaterTxt").textContent = fmtMoney(calc.payLater);
+  $("#subtotalTxt").textContent = fmtMoney(calcRes.totalPublic);
+  $("#payNowTxt").textContent   = fmtMoney(calcRes.payNow);
+  $("#payLaterTxt").textContent = fmtMoney(calcRes.payLater);
 }
 
 function doRecalc(){
@@ -505,7 +526,7 @@ function doRecalc(){
   renderSummary(c, payload);
 }
 
-/************** EmailJS (opcional) **************/
+/************** EmailJS (opcional, respeta tu config) **************/
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
   const svc = labelService(reservation.service.type);
@@ -618,19 +639,8 @@ window.addEventListener("load", ()=>{
   // Preselección de servicio
   preselectService();
 
-  // Reubicar “Cachorro (≤6 m)” a Datos del servicio (solo lectura)
-  (function movePuppyDisplay(){
-    const puppy = $("#isPuppyDisplay");
-    if(!puppy) return;
-    const field = puppy.closest(".field") || puppy;
-    const after = $("#numPets")?.closest(".field");
-    if(after && field){
-      after.parentElement.insertBefore(field, after.nextSibling);
-    }
-  })();
-
   // Binds de recálculo
-  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit"]
+  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","numPets","walkCount"]
     .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
 
   // Auth gate
@@ -670,20 +680,11 @@ window.addEventListener("load", ()=>{
       const localPets = udbGet("pets", []) || udbGet("mascotas", []) || [];
       const merged = [
         ...(pets||[]),
-        ...localPets.map((p,i)=>({
-          id:p.id||`loc_${i}`,
-          nombre:p.nombre,
-          especie:(p.especie||p.tipo||"").toLowerCase(),
-          nacimiento:p.nacimiento||p.birthdate||"",
-          raza:p.raza||p.tipoExotico||"",
-          sexo:p.sexo||p.genero||"",
-          esterilizado:(p.esterilizado ?? p.castrado ?? p.esterilizada ?? null),
-          foto:p.foto||""
-        }))
+        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", raza:p.raza||p.tipoExotico||"", sexo:p.sexo||p.genero||"", castrado:(p.castrado??p.esterilizado??"").toString().toLowerCase(), foto:p.foto||"" }))
       ];
       const seen=new Set();
       STATE.pets = merged.filter(p=>{
-        const key = `${(p.nombre||"").toLowerCase()}|${p.especie||""}`;
+        const key = `${(p.nombre||"").toLowerCase()}|${p.especie||""}|${p.nacimiento||""}`;
         if(seen.has(key)) return false; seen.add(key); return true;
       });
 
@@ -704,7 +705,7 @@ window.addEventListener("load", ()=>{
       if(!payload.serviceType || !payload.startDate || !payload.endDate){
         alert("Selecciona servicio y fechas de inicio/fin."); return;
       }
-      if(!STATE.selectedPetIds.length){
+      if(!payload.nPetsForCalc){
         alert("Elige al menos una mascota."); return;
       }
 
@@ -730,7 +731,7 @@ window.addEventListener("load", ()=>{
           contactPref: $("#contactPref")?.value || "Cualquiera",
           contactTime: $("#contactTime")?.value || ""
         },
-        pets: payload.pets,
+        pets: payload.petsSelected,
         pricing: {
           breakdownPublic: c.linesPublic,
           totalClient: Number(c.totalPublic.toFixed(2)),
@@ -757,111 +758,3 @@ window.addEventListener("load", ()=>{
     });
   });
 });
-
-/* ============================================================
-   UI: tarjetas de mascotas compactas (lista vertical)
-   – Manteniendo tu estética, solo ampliamos el subtítulo
-   ============================================================ */
-(function(){
-  var _origRender = window.renderPetsGrid;
-
-  function cap(s){ s=String(s||''); return s? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-  function calcAge(birth){
-    if(!birth) return "";
-    var d=new Date(birth); if(isNaN(d)) return "";
-    var t=new Date();
-    var years = t.getFullYear()-d.getFullYear()
-               - ((t.getMonth()<d.getMonth()) || (t.getMonth()===d.getMonth() && t.getDate()<d.getDate()) ? 1 : 0);
-    return years>=0 ? String(years) : "";
-  }
-  function asSiNo(v){
-    const b = boolFrom(v);
-    return b===null ? "" : (b?"Sí":"No");
-  }
-
-  function normalizeCard(el){
-    el.classList.add('tpl-pet-item'); // para tus estilos compactos
-    var chk = el.querySelector('input[type="checkbox"]');
-    if(chk) chk.classList.add('pet-check');
-
-    var img = el.querySelector('img');
-    var ico = el.querySelector('.pet-icon');
-    if(img){ img.classList.add('tpl-pet-thumb'); }
-    else if(ico){ ico.classList.add('tpl-pet-thumb'); }
-
-    var meta = el.querySelector('.tpl-pet-meta');
-    if(!meta){
-      meta = document.createElement('div');
-      meta.className = 'tpl-pet-meta';
-      var anchor = el.querySelector('img, .tpl-pet-thumb, .pet-icon');
-      if(anchor && anchor.nextSibling) anchor.parentNode.insertBefore(meta, anchor.nextSibling);
-      else el.appendChild(meta);
-    }
-
-    var name = meta.querySelector('.tpl-pet-name') || el.querySelector('strong');
-    if(!name){
-      name = document.createElement('div');
-      name.className='tpl-pet-name';
-      meta.appendChild(name);
-    }else{
-      name.classList.add('tpl-pet-name');
-      if(name.parentElement!==meta) meta.prepend(name);
-    }
-
-    var sub = meta.querySelector('.tpl-pet-sub');
-    if(!sub){
-      sub = document.createElement('div');
-      sub.className='tpl-pet-sub';
-      meta.appendChild(sub);
-    }
-  }
-
-  function fillCard(el, pet){
-    var name = el.querySelector('.tpl-pet-name');
-    if(name) name.textContent = pet.nombre || "Mascota";
-
-    if(pet.nacimiento) el.setAttribute('data-birth', pet.nacimiento);
-    if(pet.especie)    el.setAttribute('data-species', String(pet.especie).toLowerCase());
-
-    var especie = (pet.especie||"").toString().trim();
-    var raza    = (pet.raza||"").toString().trim();
-    var edadY   = calcAge(pet.nacimiento||"");
-    var sexo    = (pet.sexo||"").toString().trim(); // macho/hembra
-    var castr   = asSiNo(pet.esterilizado);
-
-    var bits=[];
-    if(especie) bits.push(cap(especie));
-    if(raza)    bits.push(raza);
-    if(edadY)   bits.push("Edad: "+edadY);
-    if(sexo)    bits.push(cap(sexo));
-    if(castr)   bits.push("Castrado: "+castr);
-
-    var sub = el.querySelector('.tpl-pet-sub');
-    if(sub) sub.textContent = bits.join(" · ");
-  }
-
-  function enhance(pets){
-    var grid = document.getElementById('petsGrid'); if(!grid) return;
-    var cards = grid.querySelectorAll('label, .pet-item, .tpl-pet-item');
-
-    cards.forEach(function(card){
-      normalizeCard(card);
-      var id = card.querySelector('.pet-check')?.getAttribute('data-id');
-      var p = id ? (pets||[]).find(x => String(x.id)===String(id)) : null;
-      if(p) fillCard(card, p);
-    });
-
-    try{ if(typeof __updatePuppyDisplay==='function') __updatePuppyDisplay(); }catch(_){}
-  }
-
-  window.renderPetsGrid = function(pets){
-    if(typeof _origRender === 'function') _origRender(pets);
-    enhance(pets||STATE.pets||[]);
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    if($('#petsGrid')?.children?.length){
-      enhance(STATE?.pets||[]);
-    }
-  });
-})();
