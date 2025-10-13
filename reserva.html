@@ -59,42 +59,7 @@
 
     #reservaForm.compact.card{ padding:16px; }
 
-    /* ===== Mascotas: lista vertical compacta ===== */
-    /* 1 columna, unha tarxeta por fila */
-    #reservaForm.compact #petsGrid{
-      display:grid; grid-template-columns:1fr; gap:10px;
-    }
-    /* Tarxeta pequena, horizontal */
-    #reservaForm.compact .tpl-pet-item{
-      position:relative; display:flex; align-items:center; gap:10px;
-      border:1px solid #ece8f0; background:#fff; border-radius:10px; padding:10px 12px;
-      box-shadow:0 1px 6px rgba(0,0,0,.04);
-    }
-    #reservaForm.compact .tpl-pet-item.is-selected{ outline:2px solid var(--tpl-accent); outline-offset:0; }
-
-    /* Miniatura redonda e pequena */
-    #reservaForm.compact .tpl-pet-thumb,
-    #reservaForm.compact .tpl-pet-icon{
-      width:40px; height:40px; border-radius:50%; flex:0 0 40px; object-fit:cover;
-      border:2px solid #eee; display:flex; align-items:center; justify-content:center; color:#9aa0a6; font-size:16px;
-    }
-
-    #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; min-width:0; }
-    #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-    /* Checkbox discreto no canto superior esquerdo */
-    #reservaForm.compact .pet-check{
-      position:absolute; top:8px; left:8px; width:16px; height:16px;
-    }
-
-    /* Ligazón editar alineada á dereita */
-    #reservaForm.compact .tpl-pet-edit{
-      margin-left:auto; font-size:.88rem; color: var(--tpl-accent); text-decoration:none;
-    }
-    #reservaForm.compact .tpl-pet-edit:hover{ text-decoration:underline; }
-
-    /* ===== Resumen (sen cambios) ===== */
+    /* ===== Resumen (intacto) ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
     .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
@@ -109,10 +74,12 @@
     .muted{ color:var(--tpl-muted); font-size:.9rem; }
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
   </style>
+
+  <!-- CSS de tarjetas compactas (vertical) -->
+  <link rel="stylesheet" href="pets-cards.compact.css">
 </head>
 <body>
 
-  <!-- Navbar inyectada -->
   <div id="tpl-navbar"></div>
 
   <div class="page">
@@ -197,7 +164,7 @@
 
         <div class="divider"></div>
 
-        <!-- DATOS DEL TITULAR (3 columnas) -->
+        <!-- DATOS DEL TITULAR -->
         <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
 
         <div class="g-3 grid">
@@ -257,7 +224,7 @@
         </div>
       </form>
 
-      <!-- RESUMEN / DESGLOSE (intacto) -->
+      <!-- RESUMEN / DESGLOSE -->
       <section class="card summary">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div class="section-title" style="margin:0"><i class="fa-solid fa-receipt"></i> Resumen</div>
@@ -282,7 +249,6 @@
     </div>
   </div>
 
-  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -311,10 +277,10 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Lógica principal (sen tocar) -->
+  <!-- Tu lógica principal (no modificada) -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- UI helpers que xa usabas -->
+  <!-- Helper de UI que ya usabas (preselección servicio etc.) -->
   <script>
     function toggleVisitControls(){
       var v = document.getElementById('visitCatControls');
@@ -354,7 +320,33 @@
       toggleVisitControls();
     })();
 
-    /* Mantén o teu enhancer de "cachorro" se o tes no JS principal */
+    // Display de cachorro solo lectura en función de mascotas marcadas
+    function __updatePuppyDisplay(){
+      var disp = document.getElementById('isPuppyDisplay');
+      var grid = document.getElementById('petsGrid');
+      if(!disp || !grid){ return; }
+      var any = false;
+      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
+        var chk = card.querySelector('.pet-check');
+        if(chk && chk.checked){
+          var birth = (card.getAttribute('data-birth')||'').trim();
+          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
+          if(species==='perro' && birth){
+            var d = new Date(birth);
+            if(!isNaN(d)){
+              var t=new Date();
+              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
+              if(months<=6) any = true;
+            }
+          }
+        }
+      });
+      disp.value = any ? 'si' : 'no';
+    }
+    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
   </script>
+
+  <!-- Enhancer de tarjetas (compacta vertical + sublínea) -->
+  <script src="pets-cards.enhance.js" defer></script>
 </body>
 </html>
