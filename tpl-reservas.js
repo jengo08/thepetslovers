@@ -29,20 +29,6 @@ function fmtMD(dateStr){
   return `${m}-${dd}`;
 }
 
-/* Edad amable para tarjeta de mascota */
-function petAgeText(birthISO){
-  if(!birthISO) return "";
-  const d = parseDate(birthISO); if(!d) return "";
-  const now = new Date();
-  let months = (now.getFullYear()-d.getFullYear())*12 + (now.getMonth()-d.getMonth());
-  if(now.getDate() < d.getDate()) months--;
-  if(months < 0) return "";
-  if(months < 12) return `${months} ${months===1?'mes':'meses'}`;
-  const years = Math.floor(months/12), rem = months%12;
-  return rem ? `${years} ${years===1?'año':'años'} · ${rem} m` : `${years} ${years===1?'año':'años'}`;
-}
-function titleCase(s){ s=String(s||'').trim(); return s ? s[0].toUpperCase()+s.slice(1).toLowerCase() : ""; }
-
 /************** Etiquetas y precios públicos **************/
 function labelService(s){
   return ({
@@ -161,7 +147,8 @@ async function readOwnerAndPets(uid){
           nombre: x.nombre || x.name || "Mascota",
           especie: (x.especie || x.tipo || "").toLowerCase(),
           nacimiento: x.birthdate || x.nacimiento || "",
-          sexo: (x.sexo || x.sex || x.genero || "").toLowerCase(),
+          raza: x.raza || x.tipoExotico || "",
+          sexo: x.sexo || x.genero || "",
           foto: x.foto || x.img || ""
         };
       });
@@ -175,7 +162,8 @@ async function readOwnerAndPets(uid){
     nombre: p.nombre || p.name || "Mascota",
     especie: (p.especie || p.tipo || "").toLowerCase(),
     nacimiento: p.nacimiento || p.birthdate || "",
-    sexo: (p.sexo || p.sex || p.genero || "").toLowerCase(),
+    raza: p.raza || p.tipoExotico || "",
+    sexo: p.sexo || p.genero || "",
     foto: p.foto || p.img || ""
   }));
 
@@ -212,7 +200,6 @@ function fillOwner(owner){
 /************** Estado + render mascotas **************/
 const STATE = { owner:null, pets:[], selectedPetIds:[] };
 
-/* RENDER compacto: Nombre · Especie · Edad · Sexo (sin microchip) */
 function renderPetsGrid(pets){
   const grid=$("#petsGrid");
   grid.innerHTML="";
@@ -222,19 +209,14 @@ function renderPetsGrid(pets){
       ? `<img class="pet-thumb" src="${p.foto}" alt="${p.nombre||'Mascota'}">`
       : `<div class="pet-icon"><i class="fa-solid fa-paw"></i></div>`;
 
-    const especie  = titleCase(p.especie||"");
-    const edadTxt  = petAgeText(p.nacimiento);
-    const sexoTxt  = titleCase(p.sexo||"");
-    const subline  = [especie, edadTxt, sexoTxt].filter(Boolean).join(" · ");
-
     const el=document.createElement("label");
     el.className="pet-item";
     el.innerHTML = `
       <input type="checkbox" class="pet-check" data-id="${p.id}" style="margin-right:6px;width:18px;height:18px">
       ${iconHtml}
-      <div class="pet-meta">
-        <strong class="pet-name">${p.nombre||"Mascota"}</strong>
-        <span class="pet-sub muted">${subline || "&nbsp;"}</span>
+      <div style="display:flex;flex-direction:column;line-height:1.25">
+        <strong>${p.nombre||"Mascota"}</strong>
+        <span class="muted">${(p.especie||'').toLowerCase()}</span>
       </div>
     `;
     grid.appendChild(el);
@@ -243,21 +225,13 @@ function renderPetsGrid(pets){
   if(!(pets||[]).length){
     grid.innerHTML = `
       <div class="pet-item">
-        <div class="pet-meta">
-          <strong style="color:#666">No hay mascotas en tu perfil</strong>
-          <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div>
-        </div>
+        <div><strong style="color:#666">No hay mascotas en tu perfil</strong>
+        <div class="muted">Añádelas en tu perfil para seleccionarlas aquí.</div></div>
       </div>`;
   }
 
-  // Escucha única para toda la cuadrícula
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
-    // si usas <select id="numPets"> sincronizamos a número de checks
-    const numSel = $("#numPets");
-    if(numSel && STATE.selectedPetIds.length){
-      numSel.value = String(Math.min(5, STATE.selectedPetIds.length));
-    }
     doRecalc();
   }, { once:true });
 }
@@ -274,7 +248,7 @@ function collectPayload(){
     region: $("#region").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-    travelNeeded: $("#travelNeeded").value,
+    travelNeeded: $("#travelNeeded")?.value || "no",
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
     pets
@@ -390,7 +364,7 @@ function doRecalc(){
   renderSummary(c, payload);
 }
 
-/************** EmailJS (opcional, respeta tu config) **************/
+/************** EmailJS (opcional) **************/
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
   const svc = labelService(reservation.service.type);
@@ -500,7 +474,7 @@ window.addEventListener("load", ()=>{
     doRecalc();
   });
 
-  // Preselección de servicio antes de cualquier recálculo
+  // Preselección de servicio
   preselectService();
 
   // Binds de recálculo
@@ -544,7 +518,7 @@ window.addEventListener("load", ()=>{
       const localPets = udbGet("pets", []) || udbGet("mascotas", []) || [];
       const merged = [
         ...(pets||[]),
-        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", sexo:(p.sexo||p.sex||p.genero||"").toLowerCase(), foto:p.foto||"" }))
+        ...localPets.map((p,i)=>({ id:p.id||`loc_${i}`, nombre:p.nombre, especie:(p.especie||p.tipo||"").toLowerCase(), nacimiento:p.nacimiento||p.birthdate||"", raza:p.raza||p.tipoExotico||"", sexo:p.sexo||p.genero||"", foto:p.foto||"" }))
       ];
       const seen=new Set();
       STATE.pets = merged.filter(p=>{
@@ -557,7 +531,7 @@ window.addEventListener("load", ()=>{
       console.warn("[init] owner/pets", e);
     }
 
-    // Mostrar controles visita gato si aplica (por la preselección)
+    // Mostrar controles visita gato si aplica
     $("#visitCatControls").style.display =
       ($("#serviceType").value==="visita_gato") ? "" : "none";
 
@@ -613,7 +587,7 @@ window.addEventListener("load", ()=>{
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
 
-      // Envío emails (opcional, según tu config existente)
+      // Envío emails (opcional)
       try{ await sendEmails(reservation); }catch(_){}
 
       // UI gracias
@@ -622,3 +596,123 @@ window.addEventListener("load", ()=>{
     });
   });
 });
+
+/* ============================================================
+   UI: tarjetas de mascotas compactas (lista vertical, mini avatar)
+   - SIN ARCHIVOS NUEVOS
+   - No toca la lógica: solo maqueta las tarjetas ya renderizadas
+   ============================================================ */
+(function(){
+  var _origRender = window.renderPetsGrid;
+
+  // util: capitalizar primera letra
+  function cap(s){ s=String(s||''); return s? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+  // Años aproximados desde nacimiento
+  function calcAge(birth){
+    if(!birth) return "";
+    var d = new Date(birth); if(isNaN(d)) return "";
+    var t = new Date();
+    var years = t.getFullYear() - d.getFullYear()
+              - ((t.getMonth()<d.getMonth()) || (t.getMonth()===d.getMonth() && t.getDate()<d.getDate()) ? 1 : 0);
+    return years>=0 ? String(years) : "";
+  }
+
+  function normalizeCard(el){
+    // etiqueta base
+    el.classList.add('tpl-pet-item');
+
+    // checkbox
+    var chk = el.querySelector('input[type="checkbox"]');
+    if(chk) chk.classList.add('pet-check');
+
+    // foto/icono
+    var img = el.querySelector('img');
+    var ico = el.querySelector('.pet-icon');
+    if(img){ img.classList.add('tpl-pet-thumb'); }
+    else if(ico){ ico.classList.add('tpl-pet-thumb'); }
+
+    // contenedor meta
+    var meta = el.querySelector('.tpl-pet-meta');
+    if(!meta){
+      meta = document.createElement('div');
+      meta.className = 'tpl-pet-meta';
+      var anchor = el.querySelector('img, .tpl-pet-thumb, .pet-icon');
+      if(anchor && anchor.nextSibling) anchor.parentNode.insertBefore(meta, anchor.nextSibling);
+      else el.appendChild(meta);
+    }
+
+    // nombre
+    var name = meta.querySelector('.tpl-pet-name') || el.querySelector('strong');
+    if(!name){
+      name = document.createElement('div');
+      name.className='tpl-pet-name';
+      meta.appendChild(name);
+    }else{
+      name.classList.add('tpl-pet-name');
+      if(name.parentElement!==meta) meta.prepend(name);
+    }
+
+    // sublínea
+    var sub = meta.querySelector('.tpl-pet-sub');
+    if(!sub){
+      sub = document.createElement('div');
+      sub.className='tpl-pet-sub';
+      meta.appendChild(sub);
+    }
+  }
+
+  function fillCard(el, pet){
+    var name = el.querySelector('.tpl-pet-name');
+    if(name) name.textContent = pet.nombre || "Mascota";
+
+    // Para helper de "cachorro"
+    if(pet.nacimiento) el.setAttribute('data-birth', pet.nacimiento);
+    if(pet.especie)    el.setAttribute('data-species', String(pet.especie).toLowerCase());
+
+    var especie = (pet.especie||"").toString().trim();
+    var raza    = (pet.raza||"").toString().trim();
+    var edadY   = calcAge(pet.nacimiento||"");
+    var sexo    = (pet.sexo||"").toString().trim(); // macho/hembra
+
+    var bits=[];
+    if(especie) bits.push(cap(especie));
+    if(raza)    bits.push(raza);
+    if(edadY)   bits.push("Edad: "+edadY);
+    if(sexo)    bits.push(cap(sexo));
+
+    var sub = el.querySelector('.tpl-pet-sub');
+    if(sub) sub.textContent = bits.join(" · ");
+  }
+
+  function enhance(pets){
+    var grid = document.getElementById('petsGrid'); if(!grid) return;
+    var cards = grid.querySelectorAll('label, .pet-item, .tpl-pet-item');
+
+    cards.forEach(function(card){
+      normalizeCard(card);
+      // localizar pet por data-id del checkbox
+      var id = card.querySelector('.pet-check')?.getAttribute('data-id');
+      var p = id ? (pets||[]).find(x => String(x.id)===String(id)) : null;
+      if(p) fillCard(card, p);
+    });
+
+    // Recalcular display de cachorro si tu helper existe
+    try{ if(typeof __updatePuppyDisplay==='function') __updatePuppyDisplay(); }catch(_){}
+  }
+
+  // Hook al render original de tus tarjetas
+  window.renderPetsGrid = function(pets){
+    // llama a tu función original
+    if(typeof _origRender === 'function') _origRender(pets);
+    // y luego maqueta
+    enhance(pets||STATE.pets||[]);
+  };
+
+  // Si por cualquier motivo se pintó antes de hookear:
+  document.addEventListener('DOMContentLoaded', function(){
+    if($('#petsGrid')?.children?.length){
+      enhance(STATE?.pets||[]);
+    }
+  });
+})();
