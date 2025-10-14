@@ -59,29 +59,36 @@
 
     #reservaForm.compact.card{ padding:16px; }
 
-    /* ===== Mascotas compactas (lista vertical) ===== */
-    #reservaForm.compact #petsGrid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+    /* ===== Lista de mascotas (fila horizontal mini) ===== */
+    #reservaForm.compact #petsGrid{
+      display:grid; grid-template-columns: 1fr; gap:8px;
+    }
     #reservaForm.compact .tpl-pet-item{
       position:relative; display:flex; align-items:center; gap:10px;
-      border:1px solid #ece8f0; background:#fff; border-radius:10px; padding:8px 10px;
+      border:1px solid #ece8f0; background:#fff; border-radius:999px; padding:8px 12px;
       box-shadow:0 1px 6px rgba(0,0,0,.04);
     }
     #reservaForm.compact .tpl-pet-thumb{
-      width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #eee; flex:0 0 44px;
+      width:42px; height:42px; border-radius:50%; object-fit:cover; border:2px solid #eee;
+      flex: 0 0 42px;
     }
-    #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; min-width:0; }
+    #reservaForm.compact .tpl-pet-icon{
+      width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:18px;
+      flex: 0 0 42px;
+    }
+    #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.15; min-width:0; }
     #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
-
-    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
+    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:50%; left:10px; transform:translate(-6px,-50%); width:18px; height:18px; }
+    #reservaForm.compact .tpl-pet-item .pet-check{ left:auto; right:10px; transform:translate(6px,-50%); } /* a la derecha */
+    #reservaForm.compact .badge{ font-size:10px; padding:1px 6px; border-radius:999px; }
 
     /* ===== Resumen ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
-    .summary .line{ display:flex; justify-content:space-between; margin:6px 0; gap:10px; }
-    .summary .label{ color:#111827; }
-    .summary .note{ color:var(--tpl-muted); }
+    .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
+
     .actions-summary{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
     .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700 }
     .btn-primary{ background:var(--tpl-accent); color:var(--tpl-accent-on) }
@@ -94,6 +101,7 @@
 </head>
 <body>
 
+  <!-- Navbar inyectada -->
   <div id="tpl-navbar"></div>
 
   <div class="page">
@@ -122,9 +130,9 @@
               <option value="">Elige un servicio…</option>
               <option value="guarderia_dia">Guardería de día</option>
               <option value="alojamiento_nocturno">Alojamiento nocturno</option>
-              <option value="paseo">Paseos (60’)</option>
+              <option value="paseo">Paseo (60’)</option>
               <option value="visita_gato">Visita a domicilio (gato)</option>
-              <option value="exoticos">Servicio de Exóticos</option>
+              <option value="exoticos">Exóticos (visita)</option>
               <option value="transporte">Transporte</option>
             </select>
           </div>
@@ -138,7 +146,7 @@
           </div>
         </div>
 
-        <!-- Fila B: Horas + Nº mascotas -->
+        <!-- Fila B: Horas -->
         <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
@@ -149,38 +157,38 @@
             <input id="endTime" type="time">
           </div>
           <div class="field">
-            <label for="numPets">Nº de mascotas</label>
-            <select id="numPets">
-              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+            <label for="isPuppyDisplay">Cachorro detectado (≤ 6 m)</label>
+            <select id="isPuppyDisplay" disabled>
+              <option value="no">No</option><option value="si">Sí</option>
             </select>
           </div>
         </div>
 
-        <!-- Específicos visitas gato -->
+        <!-- Fila C: Controles específicos -->
         <div id="visitCatControls" class="row-2" style="display:none">
           <div class="field">
-            <label for="visitDuration">Duración</label>
+            <label for="visitDuration">Visita gato · Duración</label>
             <select id="visitDuration"><option value="60">60 minutos</option><option value="90">90 minutos</option></select>
           </div>
           <div class="field">
-            <label for="secondMedVisit">2ª visita (medicación 15’)</label>
+            <label for="secondMedVisit">2ª visita medicación 15’</label>
             <select id="secondMedVisit"><option value="no">No</option><option value="si">Sí</option></select>
           </div>
         </div>
 
-        <!-- Específicos EXÓTICOS -->
-        <div id="exoticosControls" class="row-2" style="display:none">
+        <!-- Exóticos -->
+        <div id="exoticControls" class="row-2" style="display:none">
           <div class="field">
-            <label for="exoticoType">Tipo de exótico</label>
-            <select id="exoticoType">
+            <label for="exoticType">Tipo de exótico</label>
+            <select id="exoticType">
               <option value="aves">Aves</option>
               <option value="reptiles">Reptiles</option>
               <option value="mamiferos">Pequeños mamíferos</option>
             </select>
           </div>
           <div class="field">
-            <label for="exoticoNum">Nº de mascotas (exóticos)</label>
-            <select id="exoticoNum">
+            <label for="exoticCount">Nº de mascotas (exóticos)</label>
+            <select id="exoticCount">
               <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
             </select>
           </div>
@@ -190,13 +198,12 @@
 
         <!-- ELIGE TUS MASCOTAS -->
         <div class="section-title"><i class="fa-solid fa-paw"></i> Elige tus mascotas</div>
-        <div id="petsGrid"></div>
+        <div id="petsGrid" class="pets-list"></div>
 
         <div class="divider"></div>
 
         <!-- DATOS DEL TITULAR -->
         <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
-
         <div class="g-3 grid">
           <div class="field">
             <label for="ownerFullName">Nombre y apellidos</label>
@@ -243,11 +250,6 @@
             </select>
           </div>
           <div class="field">
-            <label for="isPuppyDisplay">Cachorro (≤6 m)</label>
-            <select id="isPuppyDisplay" disabled><option value="no">No</option><option value="si">Sí</option></select>
-          </div>
-
-          <div class="field" style="grid-column:1/-1">
             <label for="notes">Observaciones</label>
             <textarea id="notes" rows="3" placeholder="Rutinas, medicación, instrucciones…"></textarea>
           </div>
@@ -267,7 +269,7 @@
         <div class="actions-summary">
           <button id="btnReserve" type="button" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
         </div>
-        <p class="muted" style="margin-top:6px">Solo abonarás una parte ahora (tu margen). El resto se paga <strong>12 días</strong> antes del inicio.</p>
+        <p class="muted" style="margin-top:6px">Solo abonarás una parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio.</p>
       </section>
     </div>
 
@@ -279,6 +281,7 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -313,13 +316,9 @@
   <!-- UI helpers mínimos -->
   <script>
     function toggleVisitControls(){
-      var v = document.getElementById('visitCatControls');
-      var s = document.getElementById('serviceType');
-      if(!v || !s) return;
-      v.style.display = (s.value === 'visita_gato') ? '' : 'none';
-
-      var ex = document.getElementById('exoticosControls');
-      if(ex) ex.style.display = (s.value === 'exoticos') ? '' : 'none';
+      var svc = document.getElementById('serviceType')?.value || '';
+      document.getElementById('visitCatControls').style.display = (svc==='visita_gato')?'':'none';
+      document.getElementById('exoticControls').style.display   = (svc==='exoticos')?'':'none';
     }
     document.addEventListener('change', (e)=>{ if(e.target.id==='serviceType') toggleVisitControls(); });
 
@@ -330,24 +329,52 @@
       var map = {
         'guarderia':'guarderia_dia','guarderia_dia':'guarderia_dia','guarderia-de-dia':'guarderia_dia',
         'alojamiento':'alojamiento_nocturno','alojamiento_nocturno':'alojamiento_nocturno','estancias':'alojamiento_nocturno','noche':'alojamiento_nocturno',
-        'paseo':'paseo','paseos':'paseo','paseos-60':'paseo',
+        'paseo':'paseo','paseos':'paseo',
         'visitas':'visita_gato','visita_gato':'visita_gato',
-        'exoticos':'exoticos'
+        'exoticos':'exoticos','exoticos_aves':'exoticos','exoticos_reptiles':'exoticos','exoticos_mamiferos':'exoticos'
       };
+      // NO usamos localStorage para no preseleccionar desde Perfil
       if(!raw && document.referrer){
         try{
           var u=new URL(document.referrer), p=(u.pathname||'').toLowerCase();
-          if(/guarderia/.test(p)) raw='guarderia_dia';
-          else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento_nocturno';
+          if(/guarderia/.test(p)) raw='guarderia';
+          else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento';
           else if(/paseo/.test(p)) raw='paseo';
           else if(/visita/.test(p)&&/gato/.test(p)) raw='visita_gato';
-          else if(/exotico/.test(p)) raw='exoticos';
+          else if(/exotico|exoticos/.test(p)) raw='exoticos';
+          // Si viene de perfil, no seteamos nada
+          if(/perfil/.test(p)) raw='';
         }catch(_){}
       }
       var canon = map[raw] || raw;
       if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
       toggleVisitControls();
     })();
+
+    // Actualiza indicador "Cachorro detectado"
+    function __updatePuppyDisplay(){
+      var disp = document.getElementById('isPuppyDisplay');
+      var grid = document.getElementById('petsGrid');
+      if(!disp || !grid){ return; }
+      var any = false;
+      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
+        var chk = card.querySelector('.pet-check');
+        if(chk && chk.checked){
+          var birth = (card.getAttribute('data-birth')||'').trim();
+          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
+          if(species==='perro' && birth){
+            var d = new Date(birth);
+            if(!isNaN(d)){
+              var t=new Date();
+              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
+              if(months<=6) any = true;
+            }
+          }
+        }
+      });
+      disp.value = any ? 'si' : 'no';
+    }
+    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
   </script>
 </body>
 </html>
