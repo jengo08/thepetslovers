@@ -59,7 +59,30 @@
 
     #reservaForm.compact.card{ padding:16px; }
 
-    /* ===== Resumen (intacto) ===== */
+    /* ===== Mascotas: lista vertical, avatar redondo pequeño ===== */
+    #reservaForm.compact #petsGrid{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    #reservaForm.compact .tpl-pet-item{
+      position:relative; display:flex; align-items:center; gap:10px;
+      border:1px solid #ece8f0; background:#fff; border-radius:10px; padding:8px 10px;
+      box-shadow:0 1px 6px rgba(0,0,0,.04);
+    }
+    #reservaForm.compact .tpl-pet-thumb{
+      width:40px; height:40px; border-radius:999px; object-fit:cover; border:2px solid #eee;
+      flex:0 0 40px;
+    }
+    #reservaForm.compact .tpl-pet-icon{
+      width:40px; height:40px; border-radius:999px; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:16px;
+      flex:0 0 40px;
+    }
+    #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.2; min-width:0; }
+    #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
+    #reservaForm.compact .badge{ font-size:10px; padding:1px 6px; border-radius:999px; }
+
+    /* ===== Resumen ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
     .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
@@ -73,59 +96,11 @@
     .auth-wall{ padding:16px; border:1px dashed #bbb; border-radius:12px; text-align:center; background:#fafafa; margin:0 0 16px; }
     .muted{ color:var(--tpl-muted); font-size:.9rem; }
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
-
-    /* === PET CARDS COMPACT (lista vertical, avatar redondo mini, sub-línea) === */
-    #petsGrid{
-      display: grid !important;
-      grid-template-columns: 1fr !important;
-      gap: 10px !important;
-    }
-    #petsGrid .tpl-pet-item{
-      position: relative !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 10px !important;
-      padding: 10px 12px !important;
-      border: 1px solid #ece8f0 !important;
-      border-radius: 12px !important;
-      background: #fff !important;
-      box-shadow: 0 1px 6px rgba(0,0,0,.04) !important;
-    }
-    #petsGrid .tpl-pet-item .pet-check{
-      position: absolute !important;
-      top: 8px !important;
-      left: 8px !important;
-      width: 16px !important;
-      height: 16px !important;
-    }
-    #petsGrid .tpl-pet-thumb,
-    #petsGrid .pet-thumb,
-    #petsGrid .tpl-pet-icon,
-    #petsGrid .pet-icon{
-      width: 40px !important;
-      height: 40px !important;
-      flex: 0 0 40px !important;
-      border-radius: 50% !important;
-      object-fit: cover !important;
-      border: 2px solid #eee !important;
-      display: inline-flex; align-items: center; justify-content: center;
-      overflow: hidden;
-      color: #9aa0a6;
-      font-size: 16px;
-    }
-    #petsGrid .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; min-width:0; }
-    #petsGrid .tpl-pet-name{
-      margin:0; font-weight:700; color:#453a49; font-size:15px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    #petsGrid .tpl-pet-sub{
-      color:#7b6f86; font-size:13px;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
   </style>
 </head>
 <body>
 
+  <!-- Navbar inyectada -->
   <div id="tpl-navbar"></div>
 
   <div class="page">
@@ -210,7 +185,7 @@
 
         <div class="divider"></div>
 
-        <!-- DATOS DEL TITULAR -->
+        <!-- DATOS DEL TITULAR (3 columnas) -->
         <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
 
         <div class="g-3 grid">
@@ -295,6 +270,7 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -323,10 +299,10 @@
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
 
-  <!-- Tu lógica principal -->
+  <!-- Lógica principal (archivo completo debajo) -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- Helpers UI que ya tenías -->
+  <!-- UI helpers mínimos (no tocan cálculo) -->
   <script>
     function toggleVisitControls(){
       var v = document.getElementById('visitCatControls');
@@ -352,44 +328,20 @@
       if(!raw && document.referrer){
         try{
           var u=new URL(document.referrer), p=(u.pathname||'').toLowerCase();
-        if(/guarderia/.test(p)) raw='guarderia_dia';
-        else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento_nocturno';
-        else if(/paseo/.test(p)) raw='paseo';
-        else if(/visita/.test(p)&&/gato/.test(p)) raw='visita_gato';
-        else if(/exotico|exoticos/.test(p)&&/ave|aves/.test(p)) raw='exoticos_aves';
-        else if(/exotico|exoticos/.test(p)&&/reptil|reptiles/.test(p)) raw='exoticos_reptiles';
-        else if(/exotico|exoticos/.test(p)&&/mamifer/.test(p)) raw='exoticos_mamiferos';
+          if(/guarderia/.test(p)) raw='guarderia_dia';
+          else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento_nocturno';
+          else if(/paseo/.test(p)) raw='paseo';
+          else if(/visita/.test(p)&&/gato/.test(p)) raw='visita_gato';
+          else if(/exotico|exoticos/.test(p)&&/ave|aves/.test(p)) raw='exoticos_aves';
+          else if(/exotico|exoticos/.test(p)&&/reptil|reptiles/.test(p)) raw='exoticos_reptiles';
+          else if(/exotico|exoticos/.test(p)&&/mamifer/.test(p)) raw='exoticos_mamiferos';
         }catch(_){}
       }
       var canon = map[raw] || raw;
+      // ⚠️ No usamos localStorage para no preseleccionar si vienes desde Perfil.
       if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
       toggleVisitControls();
     })();
-
-    // Display de cachorro (solo lectura) según mascotas marcadas (tu helper)
-    function __updatePuppyDisplay(){
-      var disp = document.getElementById('isPuppyDisplay');
-      var grid = document.getElementById('petsGrid');
-      if(!disp || !grid){ return; }
-      var any = false;
-      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
-        var chk = card.querySelector('.pet-check');
-        if(chk && chk.checked){
-          var birth = (card.getAttribute('data-birth')||'').trim();
-          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
-          if(species==='perro' && birth){
-            var d = new Date(birth);
-            if(!isNaN(d)){
-              var t=new Date();
-              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
-              if(months<=6) any = true;
-            }
-          }
-        }
-      });
-      disp.value = any ? 'si' : 'no';
-    }
-    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
   </script>
 </body>
 </html>
