@@ -59,22 +59,26 @@
 
     #reservaForm.compact.card{ padding:16px; }
 
-    /* Mascotas compactas (sin cambios visuales tuyos) */
+    /* ===== Mascotas (lista horizontal compacta) ===== */
     #reservaForm.compact #petsGrid{
-      display:grid; grid-template-columns: 1fr; gap:10px;
+      display:grid; grid-template-columns:1fr; gap:10px;
     }
     #reservaForm.compact .tpl-pet-item{
-      position:relative; display:flex; align-items:center; gap:10px;
-      border:1px solid #ece8f0; background:#fff; border-radius:999px; padding:8px 10px;
-      box-shadow:0 1px 6px rgba(0,0,0,.04);
+      display:flex; align-items:center; gap:10px;
+      border:1px solid #ece8f0; background:#fff; border-radius:10px; padding:8px 10px;
+      box-shadow:0 1px 6px rgba(0,0,0,.04); position:relative;
     }
-    #reservaForm.compact .tpl-pet-thumb{ width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid #eee; }
+    #reservaForm.compact .tpl-pet-thumb{
+      width:42px; height:42px; border-radius:50%;
+      object-fit:cover; border:2px solid #eee; flex:0 0 42px;
+    }
+    #reservaForm.compact .tpl-pet-icon{ width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #eee; color:#9aa0a6; font-size:16px; }
     #reservaForm.compact .tpl-pet-meta{ display:flex; flex-direction:column; line-height:1.25; min-width:0; }
     #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
 
-    /* Resumen (igual) */
+    /* ===== Resumen (intacto) ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
     .summary .line{ display:flex; justify-content:space-between; margin:6px 0 }
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
@@ -88,10 +92,15 @@
     .auth-wall{ padding:16px; border:1px dashed #bbb; border-radius:12px; text-align:center; background:#fafafa; margin:0 0 16px; }
     .muted{ color:var(--tpl-muted); font-size:.9rem; }
     .disabled{ opacity:.6; pointer-events:none; filter:grayscale(1) }
+
+    /* ===== Modal de confirmación ===== */
+    .tpl-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.35); z-index:9999; }
+    .tpl-modal .inner{ background:#fff; border-radius:14px; max-width:520px; width:90%; padding:20px; box-shadow: var(--tpl-shadow); text-align:center; }
   </style>
 </head>
 <body>
 
+  <!-- Navbar inyectada -->
   <div id="tpl-navbar"></div>
 
   <div class="page">
@@ -122,7 +131,7 @@
               <option value="alojamiento_nocturno">Alojamiento nocturno</option>
               <option value="paseo">Paseo (60’)</option>
               <option value="visita_gato">Visita a domicilio (gato)</option>
-              <option value="exoticos">Visita exóticos</option>
+              <option value="exoticos">Servicio de exóticos</option>
               <option value="transporte">Transporte</option>
             </select>
           </div>
@@ -136,26 +145,8 @@
           </div>
         </div>
 
-        <!-- Subtipo exóticos (solo si serviceType=exoticos) -->
-        <div id="exoticsRow" class="row-2" style="display:none">
-          <div class="field">
-            <label for="exoticsType">Tipo de exótico</label>
-            <select id="exoticsType">
-              <option value="aves">Aves</option>
-              <option value="reptiles">Reptiles</option>
-              <option value="mamiferos">Pequeños mamíferos</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="numPets">Nº de mascotas</label>
-            <select id="numPets">
-              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Fila B: Horas + Nº mascotas (visible para resto de servicios) -->
-        <div id="rowTimesAndPets" class="row-3">
+        <!-- Fila B: Horas + Nº mascotas -->
+        <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
             <input id="startTime" type="time">
@@ -165,8 +156,26 @@
             <input id="endTime" type="time">
           </div>
           <div class="field">
-            <label for="numPetsGeneral">Nº de mascotas</label>
-            <select id="numPetsGeneral">
+            <label for="numPets">Nº de mascotas</label>
+            <select id="numPets">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tipo exótico (solo si eliges exóticos) -->
+        <div id="exoticsRow" class="row-2" style="display:none">
+          <div class="field">
+            <label for="exoticType">Tipo de exótico</label>
+            <select id="exoticType">
+              <option value="aves">Aves</option>
+              <option value="reptiles">Reptiles</option>
+              <option value="mamiferos">Pequeños mamíferos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="exoticCount">Nº de mascotas exóticas</label>
+            <select id="exoticCount">
               <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
             </select>
           </div>
@@ -192,7 +201,7 @@
 
         <div class="divider"></div>
 
-        <!-- DATOS DEL TITULAR -->
+        <!-- DATOS DEL TITULAR (3 columnas) -->
         <div class="section-title"><i class="fa-solid fa-user"></i> Datos del titular</div>
 
         <div class="g-3 grid">
@@ -228,22 +237,9 @@
             <input id="postalCode" placeholder="28001">
           </div>
 
-          <div class="field">
-            <label for="contactPref">Preferencia de contacto</label>
-            <select id="contactPref">
-              <option>Teléfono</option><option>WhatsApp</option><option>Email</option><option>Cualquiera</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="contactTime">Franja preferida</label>
-            <select id="contactTime">
-              <option>Mañana</option><option>Tarde</option><option>Noche</option>
-            </select>
-          </div>
-
           <div class="field" style="grid-column:1/-1">
-            <label for="notes">Contacto de emergencia</label>
-            <textarea id="notes" rows="3" placeholder="Nombre, relación y teléfono de emergencia…"></textarea>
+            <label for="notes">Contacto de emergencia / observaciones</label>
+            <textarea id="notes" rows="3" placeholder="Nombre y teléfono de contacto de emergencia. Observaciones, medicación, rutinas…"></textarea>
           </div>
         </div>
       </form>
@@ -264,15 +260,18 @@
         <p class="muted" style="margin-top:6px">Solo abonarás una parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio.</p>
       </section>
     </div>
+  </div>
 
-    <!-- Gracias -->
-    <div id="thanks" class="card" style="display:none; margin-top:16px">
-      <h3>¡Gracias! Tu solicitud está en revisión</h3>
+  <!-- Modal confirmación -->
+  <div id="reserveModal" class="tpl-modal" role="dialog" aria-modal="true" aria-labelledby="reserveModalTitle">
+    <div class="inner">
+      <h3 id="reserveModalTitle">¡Gracias! Tu solicitud está en revisión</h3>
       <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. El resto se paga 12 días antes del inicio.</p>
-      <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
+      <a id="goProfile" class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
     </div>
   </div>
 
+  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -303,56 +302,5 @@
 
   <!-- Lógica principal -->
   <script src="tpl-reservas.js" defer></script>
-
-  <!-- UI helpers: preselección + controles dependientes -->
-  <script>
-    function toggleVisitControls(){
-      var v = document.getElementById('visitCatControls');
-      var s = document.getElementById('serviceType');
-      if(!v || !s) return;
-      v.style.display = (s.value === 'visita_gato') ? '' : 'none';
-    }
-    function toggleExoticsControls(){
-      var s = document.getElementById('serviceType');
-      var ex = document.getElementById('exoticsRow');
-      var rowGen = document.getElementById('rowTimesAndPets');
-      if(!s||!ex||!rowGen) return;
-      var isEx = (s.value==='exoticos');
-      ex.style.display = isEx ? '' : 'none';
-      rowGen.style.display = isEx ? 'none' : '';
-    }
-    document.addEventListener('change', (e)=>{
-      if(e.target.id==='serviceType'){ toggleVisitControls(); toggleExoticsControls(); }
-    });
-
-    (function presetService(){
-      var sel = document.getElementById('serviceType'); if(!sel) return;
-      var qs = new URLSearchParams(location.search);
-      var raw = (qs.get('service') || qs.get('svc') || '').toLowerCase();
-      var map = {
-        'guarderia':'guarderia_dia','guarderia_dia':'guarderia_dia','guarderia-de-dia':'guarderia_dia',
-        'alojamiento':'alojamiento_nocturno','alojamiento_nocturno':'alojamiento_nocturno','estancias':'alojamiento_nocturno','noche':'alojamiento_nocturno',
-        'paseo':'paseo','paseos':'paseo',
-        'visitas':'visita_gato','visita_gato':'visita_gato',
-        'exoticos':'exoticos','exoticos_aves':'exoticos','exoticos_reptiles':'exoticos','exoticos_mamiferos':'exoticos'
-      };
-      if(!raw && document.referrer){
-        try{
-          var u=new URL(document.referrer), p=(u.pathname||'').toLowerCase();
-          if(/guarderia/.test(p)) raw='guarderia_dia';
-          else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento_nocturno';
-          else if(/paseo/.test(p)) raw='paseo';
-          else if(/visita/.test(p)&&/gato/.test(p)) raw='visita_gato';
-          else if(/exotico|exoticos/.test(p)) raw='exoticos';
-        }catch(_){}
-      }
-      var canon = map[raw] || raw;
-      if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
-      toggleVisitControls(); toggleExoticsControls();
-    })();
-
-    // Mantén tu hook de cachorros si lo usas
-    function __updatePuppyDisplay(){ /* (sin cambios visuales; lo puedes dejar vacío si ya no lo usas) */ }
-  </script>
 </body>
 </html>
