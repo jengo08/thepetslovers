@@ -73,7 +73,6 @@
     #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
-    #reservaForm.compact .badge{ font-size:10px; padding:1px 6px; border-radius:999px; }
 
     /* ===== Resumen ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
@@ -191,7 +190,7 @@
               <option value="mamiferos">Pequeños mamíferos</option>
             </select>
           </div>
-          <!-- (Desplazamiento ya NO va aquí) -->
+          <!-- (ELIMINADO de aquí) Desplazamiento -->
         </div>
 
         <div class="divider"></div>
@@ -251,7 +250,7 @@
             </select>
           </div>
 
-          <!-- Desplazamiento en Datos del titular -->
+          <!-- TPL PATCH: Desplazamiento en Datos del titular -->
           <div class="field">
             <label for="travelNeeded">¿Quieres desplazamiento?</label>
             <select id="travelNeeded">
@@ -260,6 +259,7 @@
             </select>
             <small class="muted">* El importe del desplazamiento se calculará cuando asignemos al cuidador que mejor se adapte.</small>
           </div>
+          <!-- /TPL PATCH -->
 
           <div class="field" style="grid-column:1/-1">
             <label for="notes">Contacto de emergencia</label>
@@ -327,6 +327,20 @@
   <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
+  <!-- ⚠️ Config EmailJS (Sustituye estos 3 valores por los tuyos REALES) -->
+  <script>
+    window.TPL_EMAILJS = {
+      enabled: true,
+      publicKey: "TU_PUBLIC_KEY",      // <- pon tu Public Key
+      serviceId: "TU_SERVICE_ID",      // <- pon tu Service ID
+      templateId: "TU_TEMPLATE_ID",    // <- pon tu Template ID (el de la plantilla bonita)
+      adminEmail: "gestion@thepetslovers.es"
+    };
+    if (window.emailjs && TPL_EMAILJS.publicKey) {
+      try { emailjs.init(TPL_EMAILJS.publicKey); } catch(_) {}
+    }
+  </script>
+
   <!-- Navbar/Footer -->
   <script src="tpl-navbar.js" defer></script>
   <script src="tpl-footer.js" defer></script>
@@ -372,9 +386,8 @@
       toggleBlocks();
     })();
 
-    // Cachorro display (solo lectura) se mantiene para lógica interna si fuese necesaria
     function __updatePuppyDisplay(){
-      var disp = document.getElementById('isPuppyDisplay'); // ya no existe en el HTML, no pasa nada
+      var disp = document.getElementById('isPuppyDisplay');
       var grid = document.getElementById('petsGrid');
       if(!disp || !grid){ return; }
       var any = false;
@@ -396,7 +409,6 @@
     }
     document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
 
-    // Hook a render de mascotas para adjuntar data-* (cachorro auto)
     (function enhancePets(){
       const _orig = window.renderPetsGrid;
       if(typeof _orig === 'function'){
