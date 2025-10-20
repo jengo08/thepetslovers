@@ -281,7 +281,7 @@
       </section>
     </div>
 
-    <!-- Overlay -->
+    <!-- Overlay de confirmación -->
     <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
       <div class="modal">
         <h3 id="ovTitle">¡Gracias! Tu solicitud está en revisión</h3>
@@ -290,8 +290,15 @@
       </div>
     </div>
 
+    <!-- Gracias (oculto, compat) -->
+    <div id="thanks" class="card" style="display:none; margin-top:16px">
+      <h3>¡Gracias! Tu solicitud está en revisión</h3>
+      <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. El resto se paga 12 días antes del inicio.</p>
+      <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
+    </div>
   </div>
 
+  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -315,7 +322,7 @@
 
   <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <!-- Config + init -->
+  <!-- Config + init EmailJS -->
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
@@ -343,7 +350,7 @@
   <!-- Lógica principal -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- Helpers selectores -->
+  <!-- UI helpers: preselección servicio + controles -->
   <script>
     function toggleBlocks(){
       var s = document.getElementById('serviceType');
@@ -354,6 +361,7 @@
       if(vExo) vExo.style.display = (s.value === 'exoticos') ? '' : 'none';
     }
     document.addEventListener('change', (e)=>{ if(e.target.id==='serviceType') toggleBlocks(); });
+
     (function presetService(){
       var sel = document.getElementById('serviceType'); if(!sel) return;
       var qs = new URLSearchParams(location.search);
@@ -379,6 +387,8 @@
       if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
       toggleBlocks();
     })();
+
+    // (hook de mascotas y puppy-check igual que antes; lo mantengo intacto)
   </script>
 </body>
 </html>
