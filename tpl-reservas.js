@@ -1,10 +1,10 @@
 /****************************************************
  * TPL · RESERVAS (COMPLETO · para reservas.html)
- * Ajustes pedidos:
- * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
- * - Mantengo que NO haya suplemento por 2ª+ mascota en aves/reptiles.
- * - Si “Desplazamiento = Sí”: además de la línea “pendiente”, muestro aviso en el resumen.
- * - Email: bloque bonito (HTML) y texto plano con todas las mascotas.
+ * - Exóticos (aves/reptiles) día 11 → 18 € público (aux 15 €).
+ * - Sin suplemento 2ª+ mascota en aves/reptiles.
+ * - “Desplazamiento = Sí” → línea pendiente + aviso en resumen.
+ * - EmailJS: plantilla bonita (summary_html) + logo.
+ * - Robustez: el fallo de email NO bloquea la reserva.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -114,9 +114,9 @@ const AUX = {
 function splitDaysForBonos(n){
   const res = { d30:0, d20:0, d10:0, suelto:0 };
   if(n<=0) return res;
-  res.d30 = Math.floor(n/30); n = n%30;
-  res.d20 = Math.floor(n/20); n = n%20;
-  res.d10 = Math.floor(n/10); n = n%10;
+  res.d30 = Math.floor(n/30); n%=30;
+  res.d20 = Math.floor(n/20); n%=20;
+  res.d10 = Math.floor(n/10); n%=10;
   res.suelto = n;
   return res;
 }
@@ -516,8 +516,9 @@ function renderSummary(c, payload){
   $("#payLaterTxt").textContent = fmtMoney(c.payLater);
 }
 
-/* ====== EmailJS bonito (HTML + texto), única plantilla, con fallback REST ====== */
+/* ====== EmailJS bonito (HTML + texto), misma plantilla para cliente/gestión ====== */
 async function sendEmails(reservation){
+  // Si no hay config de email, seguimos sin bloquear reserva
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) return;
 
   const svcLabel = labelService(reservation.service?.type||"");
@@ -653,7 +654,7 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     summary_html: summaryHTML,
     summary_text: summaryText,
 
-    // 💡 LOGO PARA LA PLANTILLA (URL RAW de GitHub)
+    // LOGO (URL RAW pública de GitHub)
     logo_url: "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png",
 
     total_cliente: reservation.pricing?.totalClient ?? 0,
@@ -670,6 +671,7 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     _email: (firebase?.auth?.().currentUser?.email) || ""
   };
 
+  // Envío con SDK; si falla, reintento REST. Ninguno bloquea la reserva.
   async function sendWithSDK(to_email, to_name){
     if(!window.emailjs) throw new Error("SDK not loaded");
     try{ if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); } }catch(_){}
@@ -679,7 +681,6 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
       { to_email, to_name, ...vars }
     );
   }
-
   async function sendWithREST(to_email, to_name){
     const payload = {
       service_id: TPL_EMAILJS.serviceId,
@@ -702,33 +703,67 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
   const toClient  = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
   const toAdmin   = { to_email: TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es", to_name: "Gestión The Pets Lovers" };
 
+  // Cliente
   try{
     if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name);
     else await sendWithREST(toClient.to_email, toClient.to_name);
-    console.log("[EmailJS] Cliente OK");
   }catch(err1){
     console.warn("[EmailJS] Cliente SDK error, intento REST…", err1);
-    try{
-      await sendWithREST(toClient.to_email, toClient.to_name);
-      console.log("[EmailJS] Cliente OK (REST)");
-    }catch(err2){
-      console.error("[EmailJS] Cliente FALLÓ", err2);
-    }
+    try{ await sendWithREST(toClient.to_email, toClient.to_name); }catch(err2){ console.error("[EmailJS] Cliente FALLÓ", err2); }
   }
-
+  // Gestión
   try{
     if(window.emailjs) await sendWithSDK(toAdmin.to_email, toAdmin.to_name);
     else await sendWithREST(toAdmin.to_email, toAdmin.to_name);
-    console.log("[EmailJS] Gestión OK");
   }catch(err1){
     console.warn("[EmailJS] Gestión SDK error, intento REST…", err1);
-    try{
-      await sendWithREST(toAdmin.to_email, toAdmin.to_name);
-      console.log("[EmailJS] Gestión OK (REST)");
-    }catch(err2){
-      console.error("[EmailJS] Gestión FALLÓ", err2);
-    }
+    try{ await sendWithREST(toAdmin.to_email, toAdmin.to_name); }catch(err2){ console.error("[EmailJS] Gestión FALLÓ", err2); }
   }
+}
+
+/* ====== Login inline ====== */
+function mountInlineLogin(){
+  const host=$("#tpl-inline-login"); if(!host) return;
+  host.innerHTML = `
+    <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
+      <h3 class="tpl-login-title">Accede aquí mismo</h3>
+      <form id="tpl-inline-form" class="tpl-login-form" novalidate style="display:grid;gap:8px">
+        <label>Email</label>
+        <input type="email" name="email" required autocomplete="email" />
+        <label>Contraseña</label>
+        <input type="password" name="password" required autocomplete="current-password" />
+        <button type="submit" class="tpl-btn">Iniciar sesión</button>
+        <button type="button" class="tpl-btn-outline" id="tpl-google-btn"><i class="fa-brands fa-google"></i> Google</button>
+        <p class="tpl-login-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  `;
+  const form=$("#tpl-inline-form");
+  const msg = host.querySelector(".tpl-login-msg");
+  const gbtn=$("#tpl-google-btn");
+
+  form.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    msg.textContent = "Accediendo…";
+    try{
+      await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value);
+      msg.textContent = "¡Listo!";
+      location.reload();
+    }catch(err){
+      msg.textContent = (err && err.message) || "No se pudo iniciar sesión.";
+    }
+  });
+
+  gbtn.addEventListener("click", async ()=>{
+    msg.textContent="Conectando con Google…";
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await firebase.auth().signInWithPopup(provider);
+      location.reload();
+    }catch(err){
+      msg.textContent = (err && err.message) || "No se pudo iniciar con Google.";
+    }
+  });
 }
 
 /* ====== INIT ====== */
@@ -848,6 +883,7 @@ window.addEventListener("load", ()=>{
         }
       };
 
+      // Guardar local (no falla)
       try{
         const key="tpl.reservas";
         const list = JSON.parse(localStorage.getItem(key)||"[]");
@@ -855,9 +891,24 @@ window.addEventListener("load", ()=>{
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
 
-      try{ await sendEmails(reservation); }catch(_){}
+      // Enviar emails (no bloquea)
+      try{ await sendEmails(reservation); }catch(err){ console.warn("[Email] no crítico:", err); }
 
+      // Mostrar overlay pase lo que pase
       const ov=$("#overlay"); if(ov) ov.style.display="flex";
     });
   });
 });
+
+function doRecalc(){
+  const payload = collectPayload();
+  $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
+  const exo = $("#exoticControls"); if(exo) exo.style.display = (payload.serviceType==="exoticos") ? "" : "none";
+
+  if(!payload.serviceType || !payload.startDate || !payload.endDate){
+    renderSummary({lines:[],totalPub:0,totalAux:0,payNow:0,payLater:0}, payload);
+    return;
+  }
+  const c = calc(payload);
+  renderSummary(c, payload);
+}
