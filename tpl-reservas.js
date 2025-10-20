@@ -2,10 +2,10 @@
  * TPL · RESERVAS (COMPLETO)
  * - Exóticos (aves/reptiles) ≥ día 11 → 18 € público (aux 15 €).
  * - Sin suplemento 2ª+ mascota en aves/reptiles.
- * - Desplazamiento: leído de #travelNeededOwner (Datos del titular). Si no existe, usa #travelNeeded.
+ * - Desplazamiento: se lee de #travelNeeded (Datos del titular).
  * - Resumen: línea "Desplazamiento" pendiente + aviso.
  * - EmailJS: misma plantilla para cliente/gestión (summary_html + summary_text + logo).
- * - Fallo de email NO bloquea la reserva ni el overlay.
+ * - El fallo de email NO bloquea la reserva ni el overlay.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -339,9 +339,8 @@ function renderPetsGrid(pets){
 
 /* ====== Payload ====== */
 function getTravelNeeded(){
-  const ownerSel = $("#travelNeededOwner"); // NUEVO: selector en Datos del titular
-  const oldSel   = $("#travelNeeded");      // Antiguo (Exóticos)
-  const v = (ownerSel?.value || oldSel?.value || "no").toLowerCase();
+  const sel = $("#travelNeeded");
+  const v = (sel?.value || "no").toLowerCase();
   return (v==="si" || v==="sí") ? "si" : "no";
 }
 function collectPayload(){
@@ -355,7 +354,7 @@ function collectPayload(){
     region: $("#region").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-    travelNeeded: getTravelNeeded(),      // <— SIEMPRE desde datos del titular si existe
+    travelNeeded: getTravelNeeded(),
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
     exoticType: $("#exoticType")?.value || "aves",
@@ -567,6 +566,10 @@ async function sendEmails(reservation){
 
   const summaryHTML =
 `<div style="font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height:1.45; color:#222">
+  <div style="text-align:center;margin-bottom:12px;">
+    <img src="https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png" alt="The Pets Lovers" style="height:42px;">
+  </div>
+
   <h2 style="margin:0 0 6px; font-size:18px;">Resumen de la reserva</h2>
   <div style="font-size:14px; color:#555; margin-bottom:10px;">
     <strong>ID:</strong> ${reservation.id} · <strong>Estado:</strong> ${reservation.status||"paid_review"}
@@ -679,7 +682,9 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     observations: $("#notes")?.value || "",
 
     _uid:   (firebase?.auth?.().currentUser?.uid)   || "",
-    _email: (firebase?.auth?.().currentUser?.email) || ""
+    _email: (firebase?.auth?.().currentUser?.email) || "",
+
+    admin_email: (window.TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
   };
 
   async function sendWithSDK(to_email, to_name){
@@ -710,8 +715,8 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     return res.text();
   }
 
-  const toClient  = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
-  const toAdmin   = { to_email: TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es", to_name: "Gestión The Pets Lovers" };
+  const toClient = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
+  const toAdmin  = { to_email: vars.admin_email, to_name: "Gestión The Pets Lovers" };
 
   try{ if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name); else await sendWithREST(toClient.to_email, toClient.to_name); }
   catch(e1){ try{ await sendWithREST(toClient.to_email, toClient.to_name); }catch(e2){ console.error("[EmailJS] Cliente falló", e1, e2); } }
@@ -783,7 +788,7 @@ window.addEventListener("load", ()=>{
 
   preselectService();
 
-  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","travelNeededOwner","visitDuration","secondMedVisit","exoticType","numPets"]
+  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","exoticType","numPets"]
     .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
 
   onAuth(async (u)=>{
