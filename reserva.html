@@ -256,7 +256,6 @@
               <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
           </div>
-          <!-- Se elimina “Cachorro (≤6 m)” de aquí como acordamos -->
 
           <div class="field" style="grid-column:1/-1">
             <label for="notes">Contacto de emergencia</label>
@@ -282,7 +281,7 @@
       </section>
     </div>
 
-    <!-- Overlay de confirmación -->
+    <!-- Overlay -->
     <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
       <div class="modal">
         <h3 id="ovTitle">¡Gracias! Tu solicitud está en revisión</h3>
@@ -291,15 +290,8 @@
       </div>
     </div>
 
-    <!-- Gracias (oculto, compat) -->
-    <div id="thanks" class="card" style="display:none; margin-top:16px">
-      <h3>¡Gracias! Tu solicitud está en revisión</h3>
-      <p class="muted">Te llamaremos para confirmar los datos y asignarte el mejor cuidador. El resto se paga 12 días antes del inicio.</p>
-      <a class="btn btn-ghost" href="/perfil.html"><i class="fa-solid fa-user"></i> Ir a mi perfil</a>
-    </div>
   </div>
 
-  <!-- Footer -->
   <div id="tpl-footer"></div>
 
   <!-- Firebase compat -->
@@ -321,9 +313,9 @@
     })();
   </script>
 
-  <!-- EmailJS -->
+  <!-- EmailJS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <!-- Config + init EmailJS (NUEVO) -->
+  <!-- Config + init -->
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
@@ -336,8 +328,11 @@
       try{
         if (window.emailjs && TPL_EMAILJS?.publicKey) {
           emailjs.init(TPL_EMAILJS.publicKey);
+          console.log("[EmailJS] init OK");
+        } else {
+          console.warn("[EmailJS] SDK no disponible en carga");
         }
-      }catch(_){}
+      }catch(e){ console.warn("[EmailJS] init error", e); }
     })();
   </script>
 
@@ -348,7 +343,7 @@
   <!-- Lógica principal -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- UI helpers: preselección servicio + controles -->
+  <!-- Helpers selectores -->
   <script>
     function toggleBlocks(){
       var s = document.getElementById('serviceType');
@@ -359,7 +354,6 @@
       if(vExo) vExo.style.display = (s.value === 'exoticos') ? '' : 'none';
     }
     document.addEventListener('change', (e)=>{ if(e.target.id==='serviceType') toggleBlocks(); });
-
     (function presetService(){
       var sel = document.getElementById('serviceType'); if(!sel) return;
       var qs = new URLSearchParams(location.search);
@@ -384,52 +378,6 @@
       var canon = map[raw] || raw;
       if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
       toggleBlocks();
-    })();
-
-    // Cachorro display (solo lectura) se mantiene para lógica interna si fuese necesaria
-    function __updatePuppyDisplay(){
-      var disp = document.getElementById('isPuppyDisplay'); // ya no existe en el HTML, no pasa nada
-      var grid = document.getElementById('petsGrid');
-      if(!disp || !grid){ return; }
-      var any = false;
-      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
-        var chk = card.querySelector('.pet-check');
-        if(chk && chk.checked){
-          var birth = (card.getAttribute('data-birth')||'').trim();
-          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
-          if(species==='perro' && birth){
-            var d = new Date(birth);
-            if(!isNaN(d)){
-              var t=new Date();
-              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
-              if(months<=6) any = true;
-            }
-          }
-        }
-      });
-    }
-    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
-
-    // Hook a render de mascotas para adjuntar data-* (cachorro auto)
-    (function enhancePets(){
-      const _orig = window.renderPetsGrid;
-      if(typeof _orig === 'function'){
-        window.renderPetsGrid = function(pets){
-          _orig(pets);
-          var grid = document.getElementById('petsGrid');
-          if(grid){
-            grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
-              var id = el.querySelector('.pet-check')?.getAttribute('data-id');
-              var p = (pets||[]).find(x=> String(x.id)===String(id));
-              if(p){
-                if(p.nacimiento||p.birthdate)   el.setAttribute('data-birth', String(p.nacimiento||p.birthdate));
-                if(p.especie||p.tipo)           el.setAttribute('data-species', String((p.especie||p.tipo||'')).toLowerCase());
-              }
-            });
-          }
-          setTimeout(__updatePuppyDisplay, 0);
-        };
-      }
     })();
   </script>
 </body>
