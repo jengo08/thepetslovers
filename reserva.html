@@ -151,7 +151,7 @@
           </div>
         </div>
 
-        <!-- Fila B: Horas + Nº mascotas -->
+        <!-- Fila B: Horas + Nº mascotas + Desplazamiento -->
         <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
@@ -169,7 +169,7 @@
           </div>
         </div>
 
-        <!-- Controles específicos: visitas gato -->
+        <!-- Controles específicos: Visita gato -->
         <div id="visitCatControls" class="row-2" style="display:none">
           <div class="field">
             <label for="visitDuration">Duración</label>
@@ -181,7 +181,7 @@
           </div>
         </div>
 
-        <!-- Controles específicos: exóticos -->
+        <!-- Controles específicos: Exóticos -->
         <div id="exoticControls" class="row-2" style="display:none">
           <div class="field">
             <label for="exoticType">Tipo de exótico</label>
@@ -189,6 +189,13 @@
               <option value="aves">Aves</option>
               <option value="reptiles">Reptiles</option>
               <option value="mamiferos">Pequeños mamíferos</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="travelNeeded">Desplazamiento</label>
+            <select id="travelNeeded">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
             </select>
           </div>
         </div>
@@ -249,15 +256,7 @@
               <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
           </div>
-
-          <!-- Sustituimos “Cachorro” por “Desplazamiento” -->
-          <div class="field">
-            <label for="travelNeeded">Desplazamiento</label>
-            <select id="travelNeeded">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
+          <!-- Se elimina “Cachorro (≤6 m)” de aquí como acordamos -->
 
           <div class="field" style="grid-column:1/-1">
             <label for="notes">Contacto de emergencia</label>
@@ -332,34 +331,29 @@
   <!-- Lógica principal -->
   <script src="tpl-reservas.js" defer></script>
 
-  <!-- UI helpers: preselección servicio + controles condicionales (sin tocar cálculo) -->
+  <!-- UI helpers: preselección servicio + controles -->
   <script>
-    function toggleConditionalControls(){
+    function toggleBlocks(){
+      var s = document.getElementById('serviceType');
       var vCat = document.getElementById('visitCatControls');
       var vExo = document.getElementById('exoticControls');
-      var s = document.getElementById('serviceType');
       if(!s) return;
       if(vCat) vCat.style.display = (s.value === 'visita_gato') ? '' : 'none';
       if(vExo) vExo.style.display = (s.value === 'exoticos') ? '' : 'none';
     }
-    document.addEventListener('change', (e)=>{ if(e.target.id==='serviceType') toggleConditionalControls(); });
+    document.addEventListener('change', (e)=>{ if(e.target.id==='serviceType') toggleBlocks(); });
 
     (function presetService(){
       var sel = document.getElementById('serviceType'); if(!sel) return;
       var qs = new URLSearchParams(location.search);
       var raw = (qs.get('service') || qs.get('svc') || '').toLowerCase();
-
-      // normalización hacia la nueva opción única “exoticos”
       var map = {
         'guarderia':'guarderia_dia','guarderia_dia':'guarderia_dia','guarderia-de-dia':'guarderia_dia',
         'alojamiento':'alojamiento_nocturno','alojamiento_nocturno':'alojamiento_nocturno','estancias':'alojamiento_nocturno','noche':'alojamiento_nocturno',
         'paseo':'paseo','paseos':'paseo',
         'visitas':'visita_gato','visita_gato':'visita_gato',
-        'exoticos':'exoticos','exoticos_aves':'exoticos','aves':'exoticos',
-        'exoticos_reptiles':'exoticos','reptiles':'exoticos',
-        'exoticos_mamiferos':'exoticos','mamiferos':'exoticos'
+        'exoticos':'exoticos','exoticos_aves':'exoticos','exoticos_reptiles':'exoticos','exoticos_mamiferos':'exoticos'
       };
-
       if(!raw && document.referrer){
         try{
           var u=new URL(document.referrer), p=(u.pathname||'').toLowerCase();
@@ -370,14 +364,56 @@
           else if(/exotico|exoticos/.test(p)) raw='exoticos';
         }catch(_){}
       }
-
       var canon = map[raw] || raw;
       if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
-      toggleConditionalControls();
+      toggleBlocks();
     })();
 
-    /* Eliminamos la UI de “cachorro detectado”.
-       (El cálculo de cachorro sigue siendo automático en tpl-reservas.js) */
+    // Cachorro display (solo lectura) se mantiene para lógica interna si fuese necesaria
+    function __updatePuppyDisplay(){
+      var disp = document.getElementById('isPuppyDisplay'); // ya no existe en el HTML, no pasa nada
+      var grid = document.getElementById('petsGrid');
+      if(!disp || !grid){ return; }
+      var any = false;
+      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
+        var chk = card.querySelector('.pet-check');
+        if(chk && chk.checked){
+          var birth = (card.getAttribute('data-birth')||'').trim();
+          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
+          if(species==='perro' && birth){
+            var d = new Date(birth);
+            if(!isNaN(d)){
+              var t=new Date();
+              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
+              if(months<=6) any = true;
+            }
+          }
+        }
+      });
+    }
+    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
+
+    // Hook a render de mascotas para adjuntar data-* (cachorro auto)
+    (function enhancePets(){
+      const _orig = window.renderPetsGrid;
+      if(typeof _orig === 'function'){
+        window.renderPetsGrid = function(pets){
+          _orig(pets);
+          var grid = document.getElementById('petsGrid');
+          if(grid){
+            grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
+              var id = el.querySelector('.pet-check')?.getAttribute('data-id');
+              var p = (pets||[]).find(x=> String(x.id)===String(id));
+              if(p){
+                if(p.nacimiento||p.birthdate)   el.setAttribute('data-birth', String(p.nacimiento||p.birthdate));
+                if(p.especie||p.tipo)           el.setAttribute('data-species', String((p.especie||p.tipo||'')).toLowerCase());
+              }
+            });
+          }
+          setTimeout(__updatePuppyDisplay, 0);
+        };
+      }
+    })();
   </script>
 </body>
 </html>
