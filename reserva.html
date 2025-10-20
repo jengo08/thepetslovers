@@ -151,7 +151,7 @@
           </div>
         </div>
 
-        <!-- Fila B: Horas + Nº mascotas -->
+        <!-- Fila B: Horas + Nº mascotas + Desplazamiento -->
         <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
@@ -191,7 +191,13 @@
               <option value="mamiferos">Pequeños mamíferos</option>
             </select>
           </div>
-          <!-- (ELIMINADO de aquí) Desplazamiento -->
+          <div class="field">
+            <label for="travelNeeded">Desplazamiento</label>
+            <select id="travelNeeded">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
         </div>
 
         <div class="divider"></div>
@@ -250,18 +256,6 @@
               <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
           </div>
-
-          <!-- TPL PATCH: Desplazamiento en Datos del titular -->
-          <div class="field">
-            <label for="travelNeeded">¿Quieres desplazamiento?</label>
-            <select id="travelNeeded">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-            <small class="muted">* El importe del desplazamiento se calculará cuando asignemos al cuidador que mejor se adapte.</small>
-          </div>
-          <!-- /TPL PATCH -->
-
           <!-- Se elimina “Cachorro (≤6 m)” de aquí como acordamos -->
 
           <div class="field" style="grid-column:1/-1">
@@ -329,6 +323,23 @@
 
   <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <!-- Config + init EmailJS (NUEVO) -->
+  <script>
+    window.TPL_EMAILJS = {
+      enabled: true,
+      publicKey: "L2xAATfVuHJwj4EIV",
+      serviceId: "service_odjqrfl",
+      templateId: "template_rao5n0c",
+      adminEmail: "gestion@thepetslovers.es"
+    };
+    (function initEmailJS(){
+      try{
+        if (window.emailjs && TPL_EMAILJS?.publicKey) {
+          emailjs.init(TPL_EMAILJS.publicKey);
+        }
+      }catch(_){}
+    })();
+  </script>
 
   <!-- Navbar/Footer -->
   <script src="tpl-navbar.js" defer></script>
