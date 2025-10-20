@@ -1,11 +1,9 @@
 /****************************************************
  * TPL · RESERVAS (COMPLETO · actualizado)
- * Ajustes confirmados:
- * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
- * - Sin suplemento por 2ª+ mascota en aves/reptiles.
- * - “Desplazamiento”: selector en DATOS DEL TITULAR; si es “Sí”, línea “pendiente”
- *   + aviso en el resumen.
- * - Envío EmailJS doble (cliente + gestión) con HTML bonito y listado de mascotas.
+ * - Bonos y extras funcionando (recalcula siempre).
+ * - Exóticos aves/reptiles 20€/18€ (≥11), sin 2ª+ mascota, aux 15€.
+ * - Desplazamiento en Datos del titular → línea pendiente + aviso.
+ * - EmailJS: dos envíos (cliente y gestión) con HTML.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -62,10 +60,8 @@ const PUB = {
     base60: { d1_10:22, d11:18 },
     base90: { d1_10:30, d11:27 },
     med15:  { d1_10:12, d11:10 },
-    extrasPorGato: { one:12, twoEach:8, threePlusEach:6 }
   },
   exoticos: {
-    // CAMBIO: desde día 11 → 18 € (aves/reptiles)
     aves:      { base:{ d1_10:20, d11:18 } },
     reptiles:  { base:{ d1_10:20, d11:18 } },
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
@@ -94,10 +90,8 @@ const AUX = {
     base60: { d1_10:17, d11:12 },
     base90: { d1_10:25, d11:21 },
     med15:  { d1_10:12, d11:10 },
-    extrasPorGato: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: {
-    // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
     mamiferos: { first:{ d1_10:20, d11:18 }, extra:{ d1_10:14, d11:14 } }
@@ -328,10 +322,11 @@ function renderPetsGrid(pets){
       </div>`;
   }
 
+  // IMPORTANTE: recalcular SIEMPRE (sin { once:true })
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
     doRecalc();
-  }, { once:true });
+  });
 }
 
 /* ====== Payload ====== */
@@ -375,7 +370,7 @@ function calc(payload){
     totalPub += pub; totalAux += aux;
   }
 
-  // Días señalados fijos (navidad/año nuevo)
+  // Días señalados fijos
   const bigCount = (()=>{
     if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return 0;
     let c=0;
@@ -511,7 +506,6 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
-  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -634,18 +628,15 @@ async function sendEmails(reservation){
   const svc = labelService(reservation.service.type);
   const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
 
-  // Variables genéricas (funciona aunque la plantilla solo use {{message_html}})
+  // Variables para la plantilla (usa {{to_email}} y {{message_html}})
   const vars = {
-    // Campos típicos
     to_name: reservation.owner.fullName || "",
     to_email: reservation.owner.email || "",
-
-    // Texto/HTML
     message_html: html,
-    summary_html: html, // redundancia por si tu template usa otro nombre
+    summary_html: html,
     summary_text: `${svc} · ${reservation.dates.startDate} — ${reservation.dates.endDate||reservation.dates.startDate} · Mascotas: ${mascotas}`,
 
-    // Datos “legados” (por compatibilidad con tu template anterior)
+    // Compat con tu plantilla anterior
     reserva_id: reservation.id,
     service: svc,
     startDate: reservation.dates.startDate,
@@ -678,10 +669,10 @@ async function sendEmails(reservation){
   };
 
   try{
-    // 1) Email al cliente (usa el mismo template)
+    // 1) Email al cliente
     await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, vars);
 
-    // 2) Email a gestión (misma plantilla, cambiamos destinatario si tu template lo usa)
+    // 2) Email a gestión (misma plantilla, cambiando destinatario)
     const varsAdmin = { ...vars, to_email: TPL_EMAILJS.adminEmail, to_name: "Gestión The Pets Lovers" };
     await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
   }catch(e){ console.warn("[EmailJS] error", e); }
