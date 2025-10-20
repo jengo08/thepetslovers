@@ -4,7 +4,7 @@
  * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
  * - Mantengo que NO haya suplemento por 2ª+ mascota en aves/reptiles.
  * - Si “Desplazamiento = Sí”: además de la línea “pendiente”, muestro aviso en el resumen.
- * - Resto tal cual (bonos, desgloses, tarjetas, overlay, etc.).
+ * - Email: bloque bonito (HTML) y texto plano con todas las mascotas.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -260,7 +260,7 @@ function setSelectValue(selectId, value){
 }
 function fillOwner(owner){
   $("#ownerFullName").value = owner.fullName || "";
-  $("#email").value = owner.email || ""
+  $("#email").value = owner.email || "";
   $("#phone").value = owner.phone || "";
   setSelectValue("region", owner.region || "");
   $("#address").value = owner.address || "";
@@ -371,7 +371,6 @@ function calc(payload){
     totalPub += pub; totalAux += aux;
   }
 
-  // Días señalados fijos
   const bigCount = (()=>{
     if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return 0;
     let c=0;
@@ -463,7 +462,6 @@ function calc(payload){
     const d1 = Math.min(nDays,10), d2=Math.max(0,nDays-10);
 
     if(kind==="aves" || kind==="reptiles"){
-      // SIN suplemento 2ª+ mascota (precio por visita)
       const pr = PUB.exoticos[kind].base, ax=AUX.exoticos[kind].base;
       if(d1) pushLine(`Exóticos (${labelExotic(kind)}) · 1–10`, d1, pr.d1_10, ax.d1_10);
       if(d2) pushLine(`Exóticos (${labelExotic(kind)}) · ≥11`,  d2, pr.d11,   ax.d11);
@@ -482,7 +480,6 @@ function calc(payload){
     pushLine("Transporte", 1, PUB.transporte.base, AUX.transporte.base);
   }
 
-  // Desplazamiento “pendiente”
   if(payload.travelNeeded==="si"){
     lines.push({label:"Desplazamiento", qty:1, unitPub:0, unitAux:0, amountPub:0, amountAux:0, note:"pendiente"});
   }
@@ -507,7 +504,6 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
-  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -520,33 +516,126 @@ function renderSummary(c, payload){
   $("#payLaterTxt").textContent = fmtMoney(c.payLater);
 }
 
-function doRecalc(){
-  const payload = collectPayload();
-  $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
-  const exo = $("#exoticControls"); if(exo) exo.style.display = (payload.serviceType==="exoticos") ? "" : "none";
-
-  if(!payload.serviceType || !payload.startDate || !payload.endDate){
-    renderSummary({lines:[],totalPub:0,totalAux:0,payNow:0,payLater:0}, payload);
-    return;
-  }
-  const c = calc(payload);
-  renderSummary(c, payload);
-}
-
-/* ====== EmailJS (única plantilla; cliente + gestión) con fallback REST ====== */
+/* ====== EmailJS bonito (HTML + texto), única plantilla, con fallback REST ====== */
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) return;
 
+  // Datos base
+  const svcLabel = labelService(reservation.service?.type||"");
+  const exo = reservation.service?.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
+  const fechas = `${reservation.dates?.startDate||""} — ${reservation.dates?.endDate||reservation.dates?.startDate||""}`;
+  const horarios = (reservation.dates?.startTime||reservation.dates?.endTime)
+    ? `${reservation.dates?.startTime||""}${reservation.dates?.endTime?("–"+reservation.dates.endTime):""}`
+    : "—";
+
+  const petsArr = Array.isArray(reservation.pets) ? reservation.pets : [];
+  const petsCount = petsArr.length;
+  const petsNames = petsArr.map(p=>p?.nombre||"Mascota").filter(Boolean);
+  const petsListHTML = petsNames.length
+    ? `<ul style="margin:0;padding-left:18px">${petsNames.map(n=>`<li>${n}</li>`).join("")}</ul>`
+    : "—";
+  const petsListText = petsNames.length ? petsNames.join(", ") : "—";
+
+  const breakdown = reservation.pricing?.breakdownPublic || [];
+  const bdHTML = breakdown.length
+    ? `<ul style="margin:0;padding-left:18px">${breakdown.map(l=>{
+        const amt = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')} €` : "";
+        return `<li>${l.label}${amt?`: <strong>${amt}</strong>`:""}</li>`;
+      }).join("")}</ul>`
+    : "—";
+  const bdText = breakdown.length
+    ? breakdown.map(l=>{
+        const amt = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')} €` : "";
+        return `• ${l.label}${amt?`: ${amt}`:""}`;
+      }).join("\n")
+    : "—";
+
+  const totalTxt   = (reservation.pricing?.totalClient!=null ? reservation.pricing.totalClient.toFixed(2).replace('.',',')+' €' : '—');
+  const payNowTxt  = (reservation.pricing?.payNow!=null   ? reservation.pricing.payNow.toFixed(2).replace('.',',')+' €'   : '—');
+  const laterTxt   = (reservation.pricing?.payLater!=null ? reservation.pricing.payLater.toFixed(2).replace('.',',')+' €' : '—');
+
+  // Bloque HTML bonito (se usa en summaryField)
+  const summaryHTML =
+`<div style="font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height:1.45; color:#222">
+  <h2 style="margin:0 0 6px; font-size:18px;">Resumen de la reserva</h2>
+  <div style="font-size:14px; color:#555; margin-bottom:10px;">
+    <strong>ID:</strong> ${reservation.id} · <strong>Estado:</strong> ${reservation.status||"paid_review"}
+  </div>
+
+  <h3 style="margin:12px 0 6px; font-size:16px;">Servicio</h3>
+  <div style="font-size:14px">
+    <div><strong>Tipo:</strong> ${svcLabel}${exo}</div>
+    <div><strong>Fechas:</strong> ${fechas}</div>
+    <div><strong>Horarios:</strong> ${horarios}</div>
+  </div>
+
+  <h3 style="margin:12px 0 6px; font-size:16px;">Titular</h3>
+  <div style="font-size:14px">
+    <div><strong>Nombre:</strong> ${reservation.owner?.fullName||""}</div>
+    <div><strong>Teléfono:</strong> ${reservation.owner?.phone||""}</div>
+    <div><strong>Email:</strong> ${reservation.owner?.email||""}</div>
+    <div><strong>Zona (CCAA):</strong> ${reservation.region||$("#region")?.value||""}</div>
+    <div><strong>Dirección:</strong> ${reservation.owner?.address||""} ${reservation.owner?.postalCode?`(${reservation.owner.postalCode})`:""}</div>
+  </div>
+
+  <h3 style="margin:12px 0 6px; font-size:16px;">Mascotas (${petsCount})</h3>
+  <div style="font-size:14px">${petsListHTML}</div>
+
+  <h3 style="margin:12px 0 6px; font-size:16px;">Desglose</h3>
+  <div style="font-size:14px">${bdHTML}</div>
+
+  <h3 style="margin:12px 0 6px; font-size:16px;">Importe</h3>
+  <div style="font-size:14px">
+    <div><strong>Total:</strong> ${totalTxt}</div>
+    <div><strong>A pagar ahora:</strong> ${payNowTxt}</div>
+    <div><strong>Pendiente (12 días antes):</strong> ${laterTxt}</div>
+  </div>
+
+  ${($("#notes")?.value||"").trim() ? `
+  <h3 style="margin:12px 0 6px; font-size:16px;">Observaciones</h3>
+  <div style="font-size:14px; white-space:pre-wrap">${($("#notes")?.value||"").trim()}</div>` : ""}
+
+  <div style="margin-top:14px; padding:10px; background:#f6fbfb; border:1px solid #e5f0f0; border-radius:10px; font-size:14px;">
+    <strong>Nos pondremos en contacto lo antes posible</strong> para confirmar los datos y asignarte el/la cuidador/a que mejor se adapta. El desplazamiento (si procede) se calcula al asignar cuidador.
+  </div>
+</div>`.trim();
+
+  // Texto plano (por si tu plantilla no permite HTML)
+  const summaryText =
+`Resumen de la reserva
+ID: ${reservation.id} · Estado: ${reservation.status||"paid_review"}
+
+Servicio
+Tipo: ${svcLabel}${exo}
+Fechas: ${fechas}
+Horarios: ${horarios}
+
+Titular
+Nombre: ${reservation.owner?.fullName||""}
+Teléfono: ${reservation.owner?.phone||""}
+Email: ${reservation.owner?.email||""}
+Zona (CCAA): ${reservation.region||$("#region")?.value||""}
+Dirección: ${reservation.owner?.address||""} ${reservation.owner?.postalCode?`(${reservation.owner.postalCode})`:""}
+
+Mascotas (${petsCount})
+${petsListText}
+
+Desglose
+${bdText}
+
+Importe
+Total: ${totalTxt}
+A pagar ahora: ${payNowTxt}
+Pendiente (12 días antes): ${laterTxt}
+
+${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").trim()}\n\n` : ""}Nos pondremos en contacto lo antes posible para confirmar los datos y asignarte el cuidador que mejor se adapta.`.trim();
+
+  // Variables que enviamos a la plantilla (reutiliza tus placeholders existentes)
   const vars = {
     reserva_id: reservation.id,
     _estado: reservation.status || "paid_review",
 
-    service: (()=>{
-      const svc = reservation.service?.type || "";
-      const exo = reservation.service?.exoticType ? (" · " + reservation.service.exoticType) : "";
-      return (svc + exo) || "—";
-    })(),
-
+    service: `${svcLabel}${exo}` || "—",
     startDate: reservation.dates?.startDate || "",
     endDate: reservation.dates?.endDate || reservation.dates?.startDate || "",
     Hora_inicio: reservation.dates?.startTime || "",
@@ -559,15 +648,16 @@ async function sendEmails(reservation){
     address: reservation.owner?.address || "",
     postalCode: reservation.owner?.postalCode || "",
 
-    species: (reservation.pets||[]).map(p=>p.nombre||"Mascota").join(", ") || "—",
+    species: petsNames.join(", ") || "—",     // por compatibilidad con tu placeholder antiguo
+    num_pets: petsCount,                      // NUEVO: por si lo quieres usar en la plantilla
+    pets_list_text: petsListText,             // NUEVO
+    pets_list_html: petsListHTML,             // NUEVO
 
-    summaryField: JSON.stringify(
-      (reservation.pricing?.breakdownPublic||[]).map(l=>{
-        const amount = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')}€` : "";
-        return amount ? `${l.label}: ${amount}` : l.label;
-      }),
-      null, 2
-    ),
+    // Sustituimos el JSON por el bloque formateado (HTML). Si tu plantilla muestra literal,
+    // cambia a summary_text en el HTML del template. Si acepta HTML, usa {{summaryField}}.
+    summaryField: summaryHTML,
+    summary_html: summaryHTML,                // NUEVO
+    summary_text: summaryText,                // NUEVO
 
     total_cliente: reservation.pricing?.totalClient ?? 0,
     pagar_ahora:   reservation.pricing?.payNow ?? 0,
@@ -583,6 +673,7 @@ async function sendEmails(reservation){
     _email: (firebase?.auth?.().currentUser?.email) || ""
   };
 
+  // Helpers envío
   async function sendWithSDK(to_email, to_name){
     if(!window.emailjs) throw new Error("SDK not loaded");
     try{ if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); } }catch(_){}
