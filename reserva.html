@@ -73,6 +73,7 @@
     #reservaForm.compact .tpl-pet-name{ font-weight:700; color:#453a49; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #reservaForm.compact .tpl-pet-sub{ color:#7b6f86; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     #reservaForm.compact .tpl-pet-item .pet-check{ position:absolute; top:8px; left:8px; width:18px; height:18px; transform:translate(-2px,-2px); }
+    #reservaForm.compact .badge{ font-size:10px; padding:1px 6px; border-radius:999px; }
 
     /* ===== Resumen ===== */
     .summary{ background:var(--tpl-bg); margin-top:14px; padding:18px; }
@@ -326,18 +327,19 @@
 
   <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
-  <!-- ⚙️ Config EmailJS (usa tus valores reales) -->
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
-      publicKey: "public_TU_PUBLIC_KEY_AQUI",   // 👈 tu Public Key (empieza por "public_")
-      serviceId: "service_odjqrfl",             // ✅ tu Service ID (SMTP server)
-      templateId: "template_rao5n0c",           // ✅ tu Template ID (Reservas)
+      publicKey: "L2xAATfVuHJwj4EIV",
+      serviceId: "service_odjqrfl",
+      templateId: "template_rao5n0c",
       adminEmail: "gestion@thepetslovers.es"
     };
     if (window.emailjs && TPL_EMAILJS.publicKey) {
-      try { emailjs.init(TPL_EMAILJS.publicKey); } catch(_) {}
+      emailjs.init(TPL_EMAILJS.publicKey);
+      console.debug("[EmailJS] init OK con publicKey:", TPL_EMAILJS.publicKey);
+    } else {
+      console.warn("[EmailJS] init FALLÓ (falta emailjs o publicKey)");
     }
   </script>
 
@@ -387,30 +389,10 @@
     })();
 
     // Cachorro display (solo lectura)
-    function __updatePuppyDisplay(){
-      var disp = document.getElementById('isPuppyDisplay');
-      var grid = document.getElementById('petsGrid');
-      if(!disp || !grid){ return; }
-      var any = false;
-      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
-        var chk = card.querySelector('.pet-check');
-        if(chk && chk.checked){
-          var birth = (card.getAttribute('data-birth')||'').trim();
-          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
-          if(species==='perro' && birth){
-            var d = new Date(birth);
-            if(!isNaN(d)){
-              var t=new Date();
-              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
-              if(months<=6) any = true;
-            }
-          }
-        }
-      });
-    }
+    function __updatePuppyDisplay(){ /* mantenido para compatibilidad, sin UI */ }
     document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
 
-    // Hook a render de mascotas para adjuntar data-* (cachorro auto)
+    // Hook a render de mascotas para adjuntar data-*
     (function enhancePets(){
       const _orig = window.renderPetsGrid;
       if(typeof _orig === 'function'){
