@@ -3,10 +3,8 @@
  * Ajustes pedidos:
  * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
  * - Mantengo que NO haya suplemento por 2ª+ mascota en aves/reptiles.
- * - “Desplazamiento”: línea “pendiente” y aviso en el resumen.
- * - Festivos nacionales + CCAA (2025, ejemplo) — se suman como “Día señalado” o “Festivo CCAA (X)”.
- * - Guarda en localStorage y, si hay sesión, también en Firestore reservas/{uid}/items/{reservaId}.
- * - EmailJS: envío “bonito” con variables texto/HTML.
+ * - Si “Desplazamiento = Sí”: además de la línea “pendiente”, muestro aviso en el resumen.
+ * - Resto tal cual (bonos, desgloses, tarjetas, overlay, etc.).
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -26,17 +24,8 @@ function fmtMD(dateStr){
   const m=String(d.getMonth()+1).padStart(2,"0"), dd=String(d.getDate()).padStart(2,"0");
   return `${m}-${dd}`;
 }
-
-/* ====== Festivos ======
-   BIG_DAYS (señalados) + festivos de CCAA (ejemplo 2025). Amplía según necesites. */
 const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
-const FESTIVOS_CCAA_2025 = {
-  "Madrid": ["01-06","03-19","03-20","03-21","05-02","07-25","08-15","10-12","11-01","12-06","12-08"],
-  "Andalucía": ["02-28","03-20","03-21","05-01","08-15","10-12","11-01","12-06","12-08"],
-  // ... añade el resto de CCAA si quieres precisión total
-};
 
-/* ====== Etiquetas ====== */
 function labelService(s){
   return ({
     guarderia_dia:"Guardería de día",
@@ -93,6 +82,7 @@ const AUX = {
       adult:{ d10:11, d20:10, d30:9 },
       puppy:{ d10:16, d20:14, d30:12 }
     },
+    // según me diste: 2ª=10 (margen 2), 3ª+=6 (margen 2)
     extra: { second:10, thirdPlus:6 }
   },
   alojamiento: {
@@ -384,7 +374,7 @@ function calc(payload){
     totalPub += pub; totalAux += aux;
   }
 
-  // Festivos señalados globales
+  // Días señalados fijos
   const bigCount = (()=>{
     if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return 0;
     let c=0;
@@ -396,18 +386,6 @@ function calc(payload){
   })();
   if(bigCount>0){
     pushLine("Día señalado", bigCount, AUX.suplementos.senalado.pub, AUX.suplementos.senalado.aux);
-  }
-
-  // Festivos CCAA
-  const ccaa = (payload.region||"").trim();
-  const festivos = FESTIVOS_CCAA_2025[ccaa] || [];
-  if(festivos.length){
-    let c=0;
-    for(let i=0;i<nDays;i++){
-      const d=new Date(parseDate(payload.startDate)); d.setDate(d.getDate()+i);
-      if(festivos.includes(fmtMD(d.toISOString()))) c++;
-    }
-    if(c>0) pushLine(`Festivo CCAA (${ccaa})`, c, AUX.suplementos.festivo.pub, AUX.suplementos.festivo.aux);
   }
 
   if(s==="paseo"){
@@ -558,125 +536,84 @@ function doRecalc(){
   renderSummary(c, payload);
 }
 
-/* ============ EmailJS (mejorado y robusto) ============ */
+/* ====== EmailJS (única plantilla; cliente + gestión) ====== */
 async function sendEmails(reservation){
+  // Si EmailJS no está habilitado, salimos sin romper nada
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
 
-  // init opcional con Public Key si la tienes
+  // Intento de init por si cambia el orden de los scripts
   try{
-    if (TPL_EMAILJS.publicKey && !emailjs.__tpl_inited) {
-      emailjs.init(TPL_EMAILJS.publicKey);
-      emailjs.__tpl_inited = true;
-    }
+    if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); }
   }catch(_){}
-
-  const safe = s => (s||"").toString();
-  const fmt = n => (typeof n==="number" && !isNaN(n)) ? n.toFixed(2).replace(".",",")+" €" : "—";
-  const svcLabel = s => ({
-    guarderia_dia:"Guardería de día",
-    alojamiento_nocturno:"Alojamiento nocturno",
-    paseo:"Paseo (60’)",
-    visita_gato:"Visita a domicilio (gato)",
-    exoticos:"Servicio exóticos",
-    transporte:"Transporte"
-  }[s] || s || "—");
-  const exoticLabel = t => ({ aves:"Aves", reptiles:"Reptiles", mamiferos:"Pequeños mamíferos" }[t] || "");
-
-  // Días totales
-  const start = safe(reservation.dates.startDate);
-  const end   = safe(reservation.dates.endDate || reservation.dates.startDate);
-  const sd = new Date(start), ed = new Date(end);
-  const nDays = (!isNaN(sd) && !isNaN(ed)) ? (Math.round((ed - sd)/86400000)+1) : 1;
-
-  // Mascotas
-  const pets = Array.isArray(reservation.pets) ? reservation.pets : [];
-  const petsText = pets.length
-    ? pets.map((p,i)=>`${i+1}. ${p.nombre||"Mascota"} — ${p.especie||""}${p.raza?(" · "+p.raza):""}${p.sexo?(" · "+p.sexo):""}`).join("\n")
-    : "—";
-  const petsHTML = pets.length
-    ? `<ul style="margin:0;padding-left:18px">${pets.map(p=>(
-        `<li><strong>${safe(p.nombre)||"Mascota"}</strong>`+
-        `${p.especie?` — ${safe(p.especie)}`:""}`+
-        `${p.raza?` · ${safe(p.raza)}`:""}`+
-        `${p.sexo?` · ${safe(p.sexo)}`:""}`+
-        `</li>`
-      )).join("")}</ul>`
-    : "<em>—</em>";
-
-  // Desglose
-  const breakdown = Array.isArray(reservation.pricing?.breakdownPublic) ? reservation.pricing.breakdownPublic : [];
-  const breakdownText = breakdown.length
-    ? breakdown.map(l=>`• ${l.label}${l.qty?` (${l.qty}×${fmt(l.unit)})`:""}: ${fmt(l.amount)}`).join("\n")
-    : "—";
-  const breakdownHTML = breakdown.length
-    ? `<table border="0" cellpadding="6" cellspacing="0" style="border-collapse:collapse;background:#fafafa;width:100%">
-        <thead><tr>
-          <th align="left">Concepto</th>
-          <th align="right">Importe</th>
-        </tr></thead>
-        <tbody>
-          ${breakdown.map(l=>`
-            <tr>
-              <td>${safe(l.label)} ${l.qty?`<span style="color:#6b7280">(${l.qty} × ${fmt(l.unit)})</span>`:""}</td>
-              <td align="right">${fmt(l.amount)}</td>
-            </tr>`).join("")}
-          <tr>
-            <td style="border-top:1px solid #e5e7eb"><strong>Total</strong></td>
-            <td align="right" style="border-top:1px solid #e5e7eb"><strong>${fmt(reservation.pricing?.totalClient)}</strong></td>
-          </tr>
-          <tr>
-            <td>Pagado ahora</td><td align="right">${fmt(reservation.pricing?.payNow)}</td>
-          </tr>
-          <tr>
-            <td>Pendiente</td><td align="right">${fmt(reservation.pricing?.payLater)}</td>
-          </tr>
-        </tbody>
-      </table>`
-    : "<em>—</em>";
-
-  const serviceTxt = `${svcLabel(reservation.service?.type)}${reservation.service?.exoticType?(" · "+exoticLabel(reservation.service.exoticType)):""}`;
-  const timeTxt = [reservation.dates?.startTime, reservation.dates?.endTime].filter(Boolean).join("–");
-  const travelNote = (reservation.pricing?.breakdownPublic||[]).some(l=>String(l.label).toLowerCase().includes("desplazamiento"))
-                     ? "Sí (importe pendiente según cuidador)"
-                     : "No";
 
   const vars = {
     reserva_id: reservation.id,
-    estado: reservation.status || "paid_review",
-    creado_en: reservation.createdAt || new Date().toISOString(),
+    _estado: reservation.status || "paid_review",
 
-    servicio: serviceTxt,
-    fecha_inicio: start,
-    fecha_fin: end,
-    num_dias: String(nDays),
-    hora: timeTxt || "—",
-    desplazamiento: travelNote,
+    service: (()=>{
+      const svc = reservation.service?.type || "";
+      const exo = reservation.service?.exoticType ? (" · " + reservation.service.exoticType) : "";
+      return (svc + exo) || "—";
+    })(),
 
-    titular_nombre: safe(reservation.owner?.fullName),
-    titular_email:  safe(reservation.owner?.email),
-    titular_telefono: safe(reservation.owner?.phone),
-    titular_region: safe(reservation.region || reservation.owner?.region || ""),
-    titular_direccion: safe(reservation.owner?.address),
-    titular_cp: safe(reservation.owner?.postalCode),
+    startDate: reservation.dates?.startDate || "",
+    endDate: reservation.dates?.endDate || reservation.dates?.startDate || "",
+    Hora_inicio: reservation.dates?.startTime || "",
+    Hora_fin: reservation.dates?.endTime || "",
 
-    mascotas_text: petsText,
-    mascotas_html: petsHTML,
+    firstName: reservation.owner?.fullName || "",
+    email: reservation.owner?.email || "",
+    phone: reservation.owner?.phone || "",
+    region: reservation.region || $("#region")?.value || "",
+    address: reservation.owner?.address || "",
+    postalCode: reservation.owner?.postalCode || "",
 
-    desglose_text: breakdownText,
-    desglose_html: breakdownHTML,
-    total_txt: fmt(reservation.pricing?.totalClient),
-    pagado_txt: fmt(reservation.pricing?.payNow),
-    pendiente_txt: fmt(reservation.pricing?.payLater),
+    species: (reservation.pets||[]).map(p=>p.nombre||"Mascota").join(", ") || "—",
 
-    json_reserva: JSON.stringify(reservation, null, 2),
+    summaryField: JSON.stringify(
+      (reservation.pricing?.breakdownPublic||[]).map(l=>{
+        const amount = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')}€` : "";
+        return amount ? `${l.label}: ${amount}` : l.label;
+      }),
+      null, 2
+    ),
 
-    // opcional: email interno de gestión
-    admin_email: (window.TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
+    total_cliente: reservation.pricing?.totalClient ?? 0,
+    pagar_ahora:   reservation.pricing?.payNow ?? 0,
+    pendiente:     reservation.pricing?.payLater ?? 0,
+
+    total_txt:     (reservation.pricing?.totalClient!=null ? reservation.pricing.totalClient.toFixed(2).replace('.',',')+' €' : '—'),
+    pay_now_txt:   (reservation.pricing?.payNow!=null   ? reservation.pricing.payNow.toFixed(2).replace('.',',')+' €'   : '—'),
+    pay_later_txt: (reservation.pricing?.payLater!=null ? reservation.pricing.payLater.toFixed(2).replace('.',',')+' €' : '—'),
+
+    observations: $("#notes")?.value || "",
+
+    _uid:   (firebase?.auth?.().currentUser?.uid)   || "",
+    _email: (firebase?.auth?.().currentUser?.email) || ""
   };
 
   try{
-    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdCliente, vars);
-    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdGestion, vars);
+    // Envío 1: Cliente (misma plantilla)
+    await emailjs.send(
+      TPL_EMAILJS.serviceId,
+      TPL_EMAILJS.templateId,
+      {
+        to_email: vars.email,
+        to_name:  vars.firstName || "Cliente",
+        ...vars
+      }
+    );
+
+    // Envío 2: Gestión (misma plantilla)
+    await emailjs.send(
+      TPL_EMAILJS.serviceId,
+      TPL_EMAILJS.templateId,
+      {
+        to_email: TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es",
+        to_name:  "Gestión The Pets Lovers",
+        ...vars
+      }
+    );
   }catch(e){
     console.warn("[EmailJS] error", e);
   }
@@ -710,7 +647,7 @@ window.addEventListener("load", ()=>{
     if(!u){
       wall.style.display="block";
       form.classList.add("disabled");
-      // si tienes login inline, lo puedes montar aquí
+      mountInlineLogin();
       return;
     }
 
@@ -799,31 +736,12 @@ window.addEventListener("load", ()=>{
         }
       };
 
-      // Guarda local
       try{
         const key="tpl.reservas";
         const list = JSON.parse(localStorage.getItem(key)||"[]");
         list.unshift(reservation);
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
-
-      // Guarda Firestore: reservas/{uid}/items/{reservaId}
-      try{
-        if (firebase?.auth && firebase?.firestore) {
-          const u = firebase.auth().currentUser;
-          if (u) {
-            const db = firebase.firestore();
-            await db
-              .collection("reservas")
-              .doc(u.uid)
-              .collection("items")
-              .doc(reservation.id)
-              .set(reservation, { merge: true });
-          }
-        }
-      }catch(e){
-        console.warn("[reservas] Firestore no disponible o sin sesión, usando solo localStorage", e);
-      }
 
       try{ await sendEmails(reservation); }catch(_){}
 
