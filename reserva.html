@@ -151,7 +151,7 @@
           </div>
         </div>
 
-        <!-- Fila B: Horas + Nº mascotas + Desplazamiento -->
+        <!-- Fila B: Horas + Nº mascotas -->
         <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
@@ -191,13 +191,7 @@
               <option value="mamiferos">Pequeños mamíferos</option>
             </select>
           </div>
-          <div class="field">
-            <label for="travelNeeded">Desplazamiento</label>
-            <select id="travelNeeded">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
+          <!-- (Desplazamiento ya NO va aquí) -->
         </div>
 
         <div class="divider"></div>
@@ -255,6 +249,16 @@
             <select id="contactTime">
               <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
+          </div>
+
+          <!-- Desplazamiento en Datos del titular -->
+          <div class="field">
+            <label for="travelNeeded">¿Quieres desplazamiento?</label>
+            <select id="travelNeeded">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+            <small class="muted">* El importe del desplazamiento se calculará cuando asignemos al cuidador que mejor se adapte.</small>
           </div>
 
           <div class="field" style="grid-column:1/-1">
@@ -320,28 +324,8 @@
     })();
   </script>
 
-  <!-- EmailJS SDK -->
+  <!-- EmailJS -->
   <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-  <!-- Config + init EmailJS -->
-  <script>
-    window.TPL_EMAILJS = {
-      enabled: true,
-      publicKey: "L2xAATfVuHJwj4EIV",
-      serviceId: "service_odjqrfl",
-      templateId: "template_rao5n0c",
-      adminEmail: "gestion@thepetslovers.es"
-    };
-    (function initEmailJS(){
-      try{
-        if (window.emailjs && TPL_EMAILJS?.publicKey) {
-          emailjs.init(TPL_EMAILJS.publicKey);
-          console.log("[EmailJS] init OK");
-        } else {
-          console.warn("[EmailJS] SDK no disponible en carga");
-        }
-      }catch(e){ console.warn("[EmailJS] init error", e); }
-    })();
-  </script>
 
   <!-- Navbar/Footer -->
   <script src="tpl-navbar.js" defer></script>
@@ -388,7 +372,51 @@
       toggleBlocks();
     })();
 
-    // (hook de mascotas y puppy-check igual que antes; lo mantengo intacto)
+    // Cachorro display (solo lectura) se mantiene para lógica interna si fuese necesaria
+    function __updatePuppyDisplay(){
+      var disp = document.getElementById('isPuppyDisplay'); // ya no existe en el HTML, no pasa nada
+      var grid = document.getElementById('petsGrid');
+      if(!disp || !grid){ return; }
+      var any = false;
+      grid.querySelectorAll('.tpl-pet-item').forEach(function(card){
+        var chk = card.querySelector('.pet-check');
+        if(chk && chk.checked){
+          var birth = (card.getAttribute('data-birth')||'').trim();
+          var species = (card.getAttribute('data-species')||'').trim().toLowerCase();
+          if(species==='perro' && birth){
+            var d = new Date(birth);
+            if(!isNaN(d)){
+              var t=new Date();
+              var months=(t.getFullYear()-d.getFullYear())*12+(t.getMonth()-d.getMonth())-(t.getDate()<d.getDate()?1:0);
+              if(months<=6) any = true;
+            }
+          }
+        }
+      });
+    }
+    document.addEventListener('change', (e)=>{ if(e.target.classList?.contains('pet-check')) __updatePuppyDisplay(); });
+
+    // Hook a render de mascotas para adjuntar data-* (cachorro auto)
+    (function enhancePets(){
+      const _orig = window.renderPetsGrid;
+      if(typeof _orig === 'function'){
+        window.renderPetsGrid = function(pets){
+          _orig(pets);
+          var grid = document.getElementById('petsGrid');
+          if(grid){
+            grid.querySelectorAll('.tpl-pet-item').forEach(function(el){
+              var id = el.querySelector('.pet-check')?.getAttribute('data-id');
+              var p = (pets||[]).find(x=> String(x.id)===String(id));
+              if(p){
+                if(p.nacimiento||p.birthdate)   el.setAttribute('data-birth', String(p.nacimiento||p.birthdate));
+                if(p.especie||p.tipo)           el.setAttribute('data-species', String((p.especie||p.tipo||'')).toLowerCase());
+              }
+            });
+          }
+          setTimeout(__updatePuppyDisplay, 0);
+        };
+      }
+    })();
   </script>
 </body>
 </html>
