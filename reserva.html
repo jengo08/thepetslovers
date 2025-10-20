@@ -151,7 +151,7 @@
           </div>
         </div>
 
-        <!-- Fila B: Horas + Nº mascotas + Desplazamiento -->
+        <!-- Fila B: Horas + Nº mascotas -->
         <div class="row-3">
           <div class="field">
             <label for="startTime">Hora inicio</label>
@@ -191,13 +191,7 @@
               <option value="mamiferos">Pequeños mamíferos</option>
             </select>
           </div>
-          <div class="field">
-            <label for="travelNeeded">Desplazamiento</label>
-            <select id="travelNeeded">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
+          <!-- (ELIMINADO de aquí) Desplazamiento -->
         </div>
 
         <div class="divider"></div>
@@ -256,6 +250,18 @@
               <option>Mañana</option><option>Tarde</option><option>Noche</option>
             </select>
           </div>
+
+          <!-- TPL PATCH: Desplazamiento en Datos del titular -->
+          <div class="field">
+            <label for="travelNeeded">¿Quieres desplazamiento?</label>
+            <select id="travelNeeded">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+            <small class="muted">* El importe del desplazamiento se calculará cuando asignemos al cuidador que mejor se adapte.</small>
+          </div>
+          <!-- /TPL PATCH -->
+
           <!-- Se elimina “Cachorro (≤6 m)” de aquí como acordamos -->
 
           <div class="field" style="grid-column:1/-1">
