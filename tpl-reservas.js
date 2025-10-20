@@ -1,11 +1,11 @@
 /****************************************************
- * TPL · RESERVAS (COMPLETO)
- * - Exóticos (aves/reptiles) ≥ día 11 → 18 € público (aux 15 €).
- * - Sin suplemento 2ª+ mascota en aves/reptiles.
- * - Desplazamiento: se lee de #travelNeeded (Datos del titular).
- * - Resumen: línea "Desplazamiento" pendiente + aviso.
- * - EmailJS: misma plantilla para cliente/gestión (summary_html + summary_text + logo).
- * - El fallo de email NO bloquea la reserva ni el overlay.
+ * TPL · RESERVAS (COMPLETO · actualizado)
+ * Ajustes confirmados:
+ * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
+ * - Sin suplemento por 2ª+ mascota en aves/reptiles.
+ * - “Desplazamiento”: selector en DATOS DEL TITULAR; si es “Sí”, línea “pendiente”
+ *   + aviso en el resumen.
+ * - Envío EmailJS doble (cliente + gestión) con HTML bonito y listado de mascotas.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -65,7 +65,7 @@ const PUB = {
     extrasPorGato: { one:12, twoEach:8, threePlusEach:6 }
   },
   exoticos: {
-    // CAMBIO: desde día 11 → 18 €
+    // CAMBIO: desde día 11 → 18 € (aves/reptiles)
     aves:      { base:{ d1_10:20, d11:18 } },
     reptiles:  { base:{ d1_10:20, d11:18 } },
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
@@ -100,10 +100,7 @@ const AUX = {
     // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
-    mamiferos: {
-      first:{ d1_10:20, d11:18 },
-      extra:{ d1_10:14, d11:14 }
-    }
+    mamiferos: { first:{ d1_10:20, d11:18 }, extra:{ d1_10:14, d11:14 } }
   },
   suplementos: {
     urgencia:{ pub:10, aux:0 },
@@ -117,9 +114,9 @@ const AUX = {
 function splitDaysForBonos(n){
   const res = { d30:0, d20:0, d10:0, suelto:0 };
   if(n<=0) return res;
-  res.d30 = Math.floor(n/30); n%=30;
-  res.d20 = Math.floor(n/20); n%=20;
-  res.d10 = Math.floor(n/10); n%=10;
+  res.d30 = Math.floor(n/30); n = n%30;
+  res.d20 = Math.floor(n/20); n = n%20;
+  res.d10 = Math.floor(n/10); n = n%10;
   res.suelto = n;
   return res;
 }
@@ -338,11 +335,6 @@ function renderPetsGrid(pets){
 }
 
 /* ====== Payload ====== */
-function getTravelNeeded(){
-  const sel = $("#travelNeeded");
-  const v = (sel?.value || "no").toLowerCase();
-  return (v==="si" || v==="sí") ? "si" : "no";
-}
 function collectPayload(){
   const pets = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
   return {
@@ -354,9 +346,13 @@ function collectPayload(){
     region: $("#region").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-    travelNeeded: getTravelNeeded(),
+
+    // Desplazamiento en DATOS DEL TITULAR
+    travelNeeded: $("#travelNeeded")?.value || "no",
+
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
+
     exoticType: $("#exoticType")?.value || "aves",
     numPetsSelect: parseInt($("#numPets")?.value||"1",10),
     pets
@@ -379,6 +375,7 @@ function calc(payload){
     totalPub += pub; totalAux += aux;
   }
 
+  // Días señalados fijos (navidad/año nuevo)
   const bigCount = (()=>{
     if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return 0;
     let c=0;
@@ -470,7 +467,7 @@ function calc(payload){
     const d1 = Math.min(nDays,10), d2=Math.max(0,nDays-10);
 
     if(kind==="aves" || kind==="reptiles"){
-      // SIN suplemento 2ª+ mascota
+      // SIN suplemento 2ª+ mascota (precio por visita)
       const pr = PUB.exoticos[kind].base, ax=AUX.exoticos[kind].base;
       if(d1) pushLine(`Exóticos (${labelExotic(kind)}) · 1–10`, d1, pr.d1_10, ax.d1_10);
       if(d2) pushLine(`Exóticos (${labelExotic(kind)}) · ≥11`,  d2, pr.d11,   ax.d11);
@@ -527,202 +524,167 @@ function renderSummary(c, payload){
   $("#payLaterTxt").textContent = fmtMoney(c.payLater);
 }
 
-/* ====== EmailJS (misma plantilla cliente/gestión) ====== */
+function doRecalc(){
+  const payload = collectPayload();
+  $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
+  const exo = $("#exoticControls"); if(exo) exo.style.display = (payload.serviceType==="exoticos") ? "" : "none";
+
+  if(!payload.serviceType || !payload.startDate || !payload.endDate){
+    renderSummary({lines:[],totalPub:0,totalAux:0,payNow:0,payLater:0}, payload);
+    return;
+  }
+  const c = calc(payload);
+  renderSummary(c, payload);
+}
+
+/* ====== EmailJS (cliente + gestión) ====== */
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function makeBreakdownHtml(lines){
+  if(!Array.isArray(lines)||!lines.length) return '<p><em>—</em></p>';
+  const rows = lines.map(l=>{
+    const unit = l.note?'Pendiente':fmtMoney(l.unit);
+    const amount = l.note?'Pendiente':fmtMoney(l.amount);
+    const qty = l.qty || 1;
+    return `<tr>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee">${escapeHtml(l.label)}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${unit}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600">${amount}</td>
+    </tr>`;
+  }).join("");
+  return `<table style="width:100%;border-collapse:collapse;margin:6px 0 0">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Concepto</th>
+        <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #ddd">Cant.</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #ddd">Unit.</th>
+        <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #ddd">Importe</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+function buildEmailHtml(reservation){
+  const logo = "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png";
+  const svc  = labelService(reservation.service.type);
+  const exo  = reservation.service.type==="exoticos" && reservation.service.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
+  const dates = `${reservation.dates.startDate} — ${reservation.dates.endDate || reservation.dates.startDate}`;
+  const time  = reservation.dates.startTime || reservation.dates.endTime ? `${reservation.dates.startTime||""}${reservation.dates.endTime?("–"+reservation.dates.endTime):""}` : "—";
+  const petNames = (reservation.pets||[]).map(p=>p.nombre).join(", ") || "—";
+  const breakdownHtml = makeBreakdownHtml((reservation.pricing.breakdownPublic||[]).map(l=>({
+    label:l.label, qty:l.qty, unit:l.unit, amount:l.amount, note:l.note
+  })));
+
+  return `
+  <div style="font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:#222">
+    <div style="text-align:center;margin:8px 0 16px">
+      <img src="${logo}" alt="The Pets Lovers" style="height:48px;vertical-align:middle"/>
+    </div>
+
+    <h2 style="margin:10px 0 6px">¡Hemos recibido tu solicitud! 🎉</h2>
+    <p style="margin:0 0 12px;color:#555">Te llamaremos en breve para confirmar los detalles y asignarte el cuidador ideal.</p>
+
+    <div style="border:1px solid #eee;border-radius:12px;padding:12px">
+      <p style="margin:0 0 6px"><strong>Resumen de la reserva</strong></p>
+      <p style="margin:0;color:#666">ID: <strong>${reservation.id}</strong> · Estado: <strong>${reservation.status}</strong></p>
+
+      <hr style="border:none;border-top:1px dashed #e5e7eb;margin:12px 0"/>
+
+      <p style="margin:0 0 6px"><strong>Servicio</strong></p>
+      <p style="margin:0;color:#444">${svc}${exo}</p>
+      <p style="margin:0;color:#666">Fechas: <strong>${dates}</strong></p>
+      <p style="margin:0 0 12px;color:#666">Horarios: <strong>${time}</strong></p>
+
+      <p style="margin:0 0 6px"><strong>Titular</strong></p>
+      <p style="margin:0;color:#444">${escapeHtml(reservation.owner.fullName)} · ${escapeHtml(reservation.owner.phone)}</p>
+      <p style="margin:0 0 12px;color:#666">${escapeHtml(reservation.owner.email)} · ${escapeHtml(reservation.region||"")} ${reservation.owner.postalCode?("("+escapeHtml(reservation.owner.postalCode)+")"):""}</p>
+
+      <p style="margin:0 0 6px"><strong>Mascotas</strong></p>
+      <p style="margin:0 0 12px;color:#444">${escapeHtml(petNames)}</p>
+
+      <p style="margin:0 0 6px"><strong>Desglose</strong></p>
+      ${breakdownHtml}
+
+      <div style="background:#f9fafb;border:1px solid #eee;border-radius:10px;padding:10px;margin-top:10px">
+        <p style="margin:0"><strong>Total:</strong> ${fmtMoney(reservation.pricing.totalClient)}</p>
+        <p style="margin:0"><strong>A pagar ahora:</strong> ${fmtMoney(reservation.pricing.payNow)}</p>
+        <p style="margin:0 0 6px"><strong>Pendiente (12 días antes):</strong> ${fmtMoney(reservation.pricing.payLater)}</p>
+        <p style="margin:0;color:#6b7280">* El desplazamiento se calculará cuando asignemos el cuidador que mejor se adapte.</p>
+      </div>
+
+      ${reservation.owner?.address ? `<p style="margin:10px 0 0;color:#666"><strong>Dirección:</strong> ${escapeHtml(reservation.owner.address)}</p>` : ""}
+
+      <hr style="border:none;border-top:1px dashed #e5e7eb;margin:12px 0"/>
+
+      <p style="margin:0;color:#444"><strong>Observaciones</strong></p>
+      <p style="margin:6px 0 0;color:#666">${escapeHtml($("#notes")?.value||"—")}</p>
+    </div>
+
+    <p style="margin:14px 0 0;color:#444">Nos pondremos en contacto contigo lo antes posible. ¡Gracias por confiar en <strong>The Pets Lovers</strong>! 🐾</p>
+  </div>
+  `;
+}
+
 async function sendEmails(reservation){
-  if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) return;
+  if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
 
-  const svcLabel = labelService(reservation.service?.type||"");
-  const exo = reservation.service?.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
-  const fechas = `${reservation.dates?.startDate||""} — ${reservation.dates?.endDate||reservation.dates?.startDate||""}`;
-  const horarios = (reservation.dates?.startTime||reservation.dates?.endTime)
-    ? `${reservation.dates?.startTime||""}${reservation.dates?.endTime?("–"+reservation.dates.endTime):""}`
-    : "—";
+  const html = buildEmailHtml(reservation);
+  const svc = labelService(reservation.service.type);
+  const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
 
-  const petsArr = Array.isArray(reservation.pets) ? reservation.pets : [];
-  const petsCount = petsArr.length;
-  const petsNames = petsArr.map(p=>p?.nombre||"Mascota").filter(Boolean);
-  const petsListHTML = petsNames.length
-    ? `<ul style="margin:0;padding-left:18px">${petsNames.map(n=>`<li>${n}</li>`).join("")}</ul>`
-    : "—";
-  const petsListText = petsNames.length ? petsNames.join(", ") : "—";
-
-  const breakdown = reservation.pricing?.breakdownPublic || [];
-  const bdHTML = breakdown.length
-    ? `<ul style="margin:0;padding-left:18px">${breakdown.map(l=>{
-        const amt = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')} €` : "";
-        return `<li>${l.label}${amt?`: <strong>${amt}</strong>`:""}</li>`;
-      }).join("")}</ul>`
-    : "—";
-  const bdText = breakdown.length
-    ? breakdown.map(l=>{
-        const amt = (l.amount!=null) ? `${Number(l.amount).toFixed(2).replace('.',',')} €` : "";
-        return `• ${l.label}${amt?`: ${amt}`:""}`;
-      }).join("\n")
-    : "—";
-
-  const totalTxt   = (reservation.pricing?.totalClient!=null ? reservation.pricing.totalClient.toFixed(2).replace('.',',')+' €' : '—');
-  const payNowTxt  = (reservation.pricing?.payNow!=null   ? reservation.pricing.payNow.toFixed(2).replace('.',',')+' €'   : '—');
-  const laterTxt   = (reservation.pricing?.payLater!=null ? reservation.pricing.payLater.toFixed(2).replace('.',',')+' €' : '—');
-
-  const summaryHTML =
-`<div style="font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height:1.45; color:#222">
-  <div style="text-align:center;margin-bottom:12px;">
-    <img src="https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png" alt="The Pets Lovers" style="height:42px;">
-  </div>
-
-  <h2 style="margin:0 0 6px; font-size:18px;">Resumen de la reserva</h2>
-  <div style="font-size:14px; color:#555; margin-bottom:10px;">
-    <strong>ID:</strong> ${reservation.id} · <strong>Estado:</strong> ${reservation.status||"paid_review"}
-  </div>
-
-  <h3 style="margin:12px 0 6px; font-size:16px;">Servicio</h3>
-  <div style="font-size:14px">
-    <div><strong>Tipo:</strong> ${svcLabel}${exo}</div>
-    <div><strong>Fechas:</strong> ${fechas}</div>
-    <div><strong>Horarios:</strong> ${horarios}</div>
-  </div>
-
-  <h3 style="margin:12px 0 6px; font-size:16px;">Titular</h3>
-  <div style="font-size:14px">
-    <div><strong>Nombre:</strong> ${reservation.owner?.fullName||""}</div>
-    <div><strong>Teléfono:</strong> ${reservation.owner?.phone||""}</div>
-    <div><strong>Email:</strong> ${reservation.owner?.email||""}</div>
-    <div><strong>Zona (CCAA):</strong> ${reservation.region||$("#region")?.value||""}</div>
-    <div><strong>Dirección:</strong> ${reservation.owner?.address||""} ${reservation.owner?.postalCode?`(${reservation.owner.postalCode})`:""}</div>
-  </div>
-
-  <h3 style="margin:12px 0 6px; font-size:16px;">Mascotas (${petsCount})</h3>
-  <div style="font-size:14px">${petsListHTML}</div>
-
-  <h3 style="margin:12px 0 6px; font-size:16px;">Desglose</h3>
-  <div style="font-size:14px">${bdHTML}</div>
-
-  <h3 style="margin:12px 0 6px; font-size:16px;">Importe</h3>
-  <div style="font-size:14px">
-    <div><strong>Total:</strong> ${totalTxt}</div>
-    <div><strong>A pagar ahora:</strong> ${payNowTxt}</div>
-    <div><strong>Pendiente (12 días antes):</strong> ${laterTxt}</div>
-  </div>
-
-  ${($("#notes")?.value||"").trim() ? `
-  <h3 style="margin:12px 0 6px; font-size:16px;">Observaciones</h3>
-  <div style="font-size:14px; white-space:pre-wrap">${($("#notes")?.value||"").trim()}</div>` : ""}
-
-  <div style="margin-top:14px; padding:10px; background:#f6fbfb; border:1px solid #e5f0f0; border-radius:10px; font-size:14px;">
-    <strong>Nos pondremos en contacto lo antes posible</strong> para confirmar los datos y asignarte el/la cuidador/a que mejor se adapta. El desplazamiento (si procede) se calcula al asignar cuidador.
-  </div>
-</div>`.trim();
-
-  const summaryText =
-`Resumen de la reserva
-ID: ${reservation.id} · Estado: ${reservation.status||"paid_review"}
-
-Servicio
-Tipo: ${svcLabel}${exo}
-Fechas: ${fechas}
-Horarios: ${horarios}
-
-Titular
-Nombre: ${reservation.owner?.fullName||""}
-Teléfono: ${reservation.owner?.phone||""}
-Email: ${reservation.owner?.email||""}
-Zona (CCAA): ${reservation.region||$("#region")?.value||""}
-Dirección: ${reservation.owner?.address||""} ${reservation.owner?.postalCode?`(${reservation.owner.postalCode})`:""}
-
-Mascotas (${petsCount})
-${petsListText}
-
-Desglose
-${bdText}
-
-Importe
-Total: ${totalTxt}
-A pagar ahora: ${payNowTxt}
-Pendiente (12 días antes): ${laterTxt}
-
-${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").trim()}\n\n` : ""}Nos pondremos en contacto lo antes posible para confirmar los datos y asignarte el cuidador que mejor se adapta.`.trim();
-
+  // Variables genéricas (funciona aunque la plantilla solo use {{message_html}})
   const vars = {
+    // Campos típicos
+    to_name: reservation.owner.fullName || "",
+    to_email: reservation.owner.email || "",
+
+    // Texto/HTML
+    message_html: html,
+    summary_html: html, // redundancia por si tu template usa otro nombre
+    summary_text: `${svc} · ${reservation.dates.startDate} — ${reservation.dates.endDate||reservation.dates.startDate} · Mascotas: ${mascotas}`,
+
+    // Datos “legados” (por compatibilidad con tu template anterior)
     reserva_id: reservation.id,
-    _estado: reservation.status || "paid_review",
+    service: svc,
+    startDate: reservation.dates.startDate,
+    endDate: reservation.dates.endDate || reservation.dates.startDate,
+    Hora_inicio: reservation.dates.startTime || "",
+    Hora_fin: reservation.dates.endTime || "",
+    species: mascotas,
 
-    service: `${svcLabel}${exo}` || "—",
-    startDate: reservation.dates?.startDate || "",
-    endDate: reservation.dates?.endDate || reservation.dates?.startDate || "",
-    Hora_inicio: reservation.dates?.startTime || "",
-    Hora_fin: reservation.dates?.endTime || "",
+    total_cliente: reservation.pricing.totalClient,
+    pagar_ahora: reservation.pricing.payNow,
+    pendiente: reservation.pricing.payLater,
 
-    firstName: reservation.owner?.fullName || "",
-    email: reservation.owner?.email || "",
-    phone: reservation.owner?.phone || "",
-    region: reservation.region || $("#region")?.value || "",
-    address: reservation.owner?.address || "",
-    postalCode: reservation.owner?.postalCode || "",
+    total_txt: fmtMoney(reservation.pricing.totalClient).replace(" €","€"),
+    pay_now_txt: fmtMoney(reservation.pricing.payNow).replace(" €","€"),
+    pay_later_txt: fmtMoney(reservation.pricing.payLater).replace(" €","€"),
 
-    species: petsNames.join(", ") || "—",
-    num_pets: petsCount,
-    pets_list_text: petsListText,
-    pets_list_html: petsListHTML,
-
-    summaryField: summaryHTML,
-    summary_html: summaryHTML,
-    summary_text: summaryText,
-
-    // LOGO RAW GitHub
-    logo_url: "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png",
-
-    total_cliente: reservation.pricing?.totalClient ?? 0,
-    pagar_ahora:   reservation.pricing?.payNow ?? 0,
-    pendiente:     reservation.pricing?.payLater ?? 0,
-
-    total_txt:     (reservation.pricing?.totalClient!=null ? reservation.pricing.totalClient.toFixed(2).replace('.',',')+' €' : '—'),
-    pay_now_txt:   (reservation.pricing?.payNow!=null   ? reservation.pricing.payNow.toFixed(2).replace('.',',')+' €'   : '—'),
-    pay_later_txt: (reservation.pricing?.payLater!=null ? reservation.pricing.payLater.toFixed(2).replace('.',',')+' €' : '—'),
-
+    firstName: reservation.owner.fullName,
+    email: reservation.owner.email,
+    phone: reservation.owner.phone,
+    region: reservation.region || $("#region").value || "",
+    address: reservation.owner.address,
+    postalCode: reservation.owner.postalCode,
     observations: $("#notes")?.value || "",
 
-    _uid:   (firebase?.auth?.().currentUser?.uid)   || "",
-    _email: (firebase?.auth?.().currentUser?.email) || "",
+    _estado: reservation.status || "paid_review",
+    _uid: firebase.auth().currentUser?.uid || "",
+    _email: firebase.auth().currentUser?.email || "",
 
-    admin_email: (window.TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
+    admin_email: (TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
   };
 
-  async function sendWithSDK(to_email, to_name){
-    if(!window.emailjs) throw new Error("SDK not loaded");
-    try{ if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); } }catch(_){}
-    return emailjs.send(
-      TPL_EMAILJS.serviceId,
-      TPL_EMAILJS.templateId,
-      { to_email, to_name, ...vars }
-    );
-  }
-  async function sendWithREST(to_email, to_name){
-    const payload = {
-      service_id: TPL_EMAILJS.serviceId,
-      template_id: TPL_EMAILJS.templateId,
-      user_id: TPL_EMAILJS.publicKey,
-      template_params: { to_email, to_name, ...vars }
-    };
-    const res = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if(!res.ok){
-      const txt = await res.text().catch(()=>res.statusText);
-      throw new Error("REST send failed: "+txt);
-    }
-    return res.text();
-  }
+  try{
+    // 1) Email al cliente (usa el mismo template)
+    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, vars);
 
-  const toClient = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
-  const toAdmin  = { to_email: vars.admin_email, to_name: "Gestión The Pets Lovers" };
-
-  try{ if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name); else await sendWithREST(toClient.to_email, toClient.to_name); }
-  catch(e1){ try{ await sendWithREST(toClient.to_email, toClient.to_name); }catch(e2){ console.error("[EmailJS] Cliente falló", e1, e2); } }
-
-  try{ if(window.emailjs) await sendWithSDK(toAdmin.to_email, toAdmin.to_name); else await sendWithREST(toAdmin.to_email, toAdmin.to_name); }
-  catch(e1){ try{ await sendWithREST(toAdmin.to_email, toAdmin.to_name); }catch(e2){ console.error("[EmailJS] Gestión falló", e1, e2); } }
+    // 2) Email a gestión (misma plantilla, cambiamos destinatario si tu template lo usa)
+    const varsAdmin = { ...vars, to_email: TPL_EMAILJS.adminEmail, to_name: "Gestión The Pets Lovers" };
+    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
+  }catch(e){ console.warn("[EmailJS] error", e); }
 }
 
 /* ====== Login inline ====== */
@@ -879,7 +841,7 @@ window.addEventListener("load", ()=>{
         },
         pets: payload.pets,
         pricing: {
-          breakdownPublic: c.lines.map(l=>({label:l.label, qty:l.qty, unit:l.unitPub, amount:l.amountPub})),
+          breakdownPublic: c.lines.map(l=>({label:l.label, qty:l.qty, unit:l.unitPub, amount:l.amountPub, note:l.note||null})),
           totalClient: Number(c.totalPub.toFixed(2)),
           payNow: Number(c.payNow.toFixed(2)),
           payLater: Number(c.payLater.toFixed(2)),
@@ -887,7 +849,6 @@ window.addEventListener("load", ()=>{
         }
       };
 
-      // Guardar local
       try{
         const key="tpl.reservas";
         const list = JSON.parse(localStorage.getItem(key)||"[]");
@@ -895,24 +856,9 @@ window.addEventListener("load", ()=>{
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
 
-      // Enviar emails (no bloquea)
-      try{ await sendEmails(reservation); }catch(err){ console.warn("[Email] no crítico:", err); }
+      try{ await sendEmails(reservation); }catch(_){}
 
-      // Mostrar overlay
       const ov=$("#overlay"); if(ov) ov.style.display="flex";
     });
   });
 });
-
-function doRecalc(){
-  const payload = collectPayload();
-  $("#visitCatControls").style.display = (payload.serviceType==="visita_gato") ? "" : "none";
-  const exo = $("#exoticControls"); if(exo) exo.style.display = (payload.serviceType==="exoticos") ? "" : "none";
-
-  if(!payload.serviceType || !payload.startDate || !payload.endDate){
-    renderSummary({lines:[],totalPub:0,totalAux:0,payNow:0,payLater:0}, payload);
-    return;
-  }
-  const c = calc(payload);
-  renderSummary(c, payload);
-}
