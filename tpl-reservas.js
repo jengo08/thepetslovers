@@ -626,6 +626,37 @@ function mountInlineLogin(){
   });
 }
 
+/* ====== TPL PATCH · Desplazamiento SOLO en datos del cliente ====== */
+// Detección (opcional) de cuidador seleccionado: ajusta selectores a tu UI real.
+function getSelectedCaregiver(){
+  const el = document.querySelector('[name="cuidadorId"]:checked')
+            || $("#cuidadorSeleccionado")
+            || document.querySelector('[data-cuidador-seleccionado]');
+  return (el && ('value' in el) ? el.value : el?.getAttribute?.('data-cuidador-seleccionado')) || null;
+}
+
+// Crea un overlay ligero si no existe en el HTML:
+function ensureTravelOverlay(){
+  if($("#overlay-travel")) return $("#overlay-travel");
+  const div = document.createElement("div");
+  div.id = "overlay-travel";
+  div.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9999;";
+  div.innerHTML = `
+    <div style="background:#fff;max-width:560px;width:92%;padding:20px 18px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.2);">
+      <h3 style="margin:0 0 8px;">Importe de desplazamiento</h3>
+      <p style="margin:0 0 12px;line-height:1.45">
+        Hasta elegir al cuidador que mejor se adapte a tus necesidades,
+        <strong>no se puede calcular el importe del desplazamiento</strong>.
+      </p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" id="overlay-travel-close" class="tpl-btn">Entendido</button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  $("#overlay-travel-close").addEventListener("click", ()=>{ div.style.display="none"; });
+  return div;
+}
+
 /* ====== INIT ====== */
 window.addEventListener("load", ()=>{
   $("#startDate").addEventListener("change", ()=>{
@@ -646,6 +677,18 @@ window.addEventListener("load", ()=>{
 
   ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","exoticType","numPets"]
     .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
+
+  // TPL PATCH: overlay/aviso cuando el usuario marca desplazamiento = "si" sin cuidador
+  const travelSelect = $("#travelNeeded");
+  if(travelSelect){
+    const overlay = ensureTravelOverlay();
+    travelSelect.addEventListener("change", ()=>{
+      if(travelSelect.value==="si" && !getSelectedCaregiver()){
+        overlay.style.display="flex";
+      }
+      doRecalc();
+    });
+  }
 
   onAuth(async (u)=>{
     const wall=$("#authWall");
