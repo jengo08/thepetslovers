@@ -1,10 +1,11 @@
 /****************************************************
- * TPL · RESERVAS (COMPLETO · para reservas.html)
- * - Exóticos (aves/reptiles) día 11 → 18 € público (aux 15 €).
+ * TPL · RESERVAS (COMPLETO)
+ * - Exóticos (aves/reptiles) ≥ día 11 → 18 € público (aux 15 €).
  * - Sin suplemento 2ª+ mascota en aves/reptiles.
- * - “Desplazamiento = Sí” → línea pendiente + aviso en resumen.
- * - EmailJS: plantilla bonita (summary_html) + logo.
- * - Robustez: el fallo de email NO bloquea la reserva.
+ * - Desplazamiento: leído de #travelNeededOwner (Datos del titular). Si no existe, usa #travelNeeded.
+ * - Resumen: línea "Desplazamiento" pendiente + aviso.
+ * - EmailJS: misma plantilla para cliente/gestión (summary_html + summary_text + logo).
+ * - Fallo de email NO bloquea la reserva ni el overlay.
  ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
@@ -64,6 +65,7 @@ const PUB = {
     extrasPorGato: { one:12, twoEach:8, threePlusEach:6 }
   },
   exoticos: {
+    // CAMBIO: desde día 11 → 18 €
     aves:      { base:{ d1_10:20, d11:18 } },
     reptiles:  { base:{ d1_10:20, d11:18 } },
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
@@ -95,6 +97,7 @@ const AUX = {
     extrasPorGato: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: {
+    // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
     mamiferos: {
@@ -335,6 +338,12 @@ function renderPetsGrid(pets){
 }
 
 /* ====== Payload ====== */
+function getTravelNeeded(){
+  const ownerSel = $("#travelNeededOwner"); // NUEVO: selector en Datos del titular
+  const oldSel   = $("#travelNeeded");      // Antiguo (Exóticos)
+  const v = (ownerSel?.value || oldSel?.value || "no").toLowerCase();
+  return (v==="si" || v==="sí") ? "si" : "no";
+}
 function collectPayload(){
   const pets = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
   return {
@@ -346,7 +355,7 @@ function collectPayload(){
     region: $("#region").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-    travelNeeded: $("#travelNeeded")?.value || "no",
+    travelNeeded: getTravelNeeded(),      // <— SIEMPRE desde datos del titular si existe
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
     exoticType: $("#exoticType")?.value || "aves",
@@ -462,6 +471,7 @@ function calc(payload){
     const d1 = Math.min(nDays,10), d2=Math.max(0,nDays-10);
 
     if(kind==="aves" || kind==="reptiles"){
+      // SIN suplemento 2ª+ mascota
       const pr = PUB.exoticos[kind].base, ax=AUX.exoticos[kind].base;
       if(d1) pushLine(`Exóticos (${labelExotic(kind)}) · 1–10`, d1, pr.d1_10, ax.d1_10);
       if(d2) pushLine(`Exóticos (${labelExotic(kind)}) · ≥11`,  d2, pr.d11,   ax.d11);
@@ -480,6 +490,7 @@ function calc(payload){
     pushLine("Transporte", 1, PUB.transporte.base, AUX.transporte.base);
   }
 
+  // Desplazamiento “pendiente”
   if(payload.travelNeeded==="si"){
     lines.push({label:"Desplazamiento", qty:1, unitPub:0, unitAux:0, amountPub:0, amountAux:0, note:"pendiente"});
   }
@@ -504,6 +515,7 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
+  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -516,9 +528,8 @@ function renderSummary(c, payload){
   $("#payLaterTxt").textContent = fmtMoney(c.payLater);
 }
 
-/* ====== EmailJS bonito (HTML + texto), misma plantilla para cliente/gestión ====== */
+/* ====== EmailJS (misma plantilla cliente/gestión) ====== */
 async function sendEmails(reservation){
-  // Si no hay config de email, seguimos sin bloquear reserva
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) return;
 
   const svcLabel = labelService(reservation.service?.type||"");
@@ -654,7 +665,7 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     summary_html: summaryHTML,
     summary_text: summaryText,
 
-    // LOGO (URL RAW pública de GitHub)
+    // LOGO RAW GitHub
     logo_url: "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png",
 
     total_cliente: reservation.pricing?.totalClient ?? 0,
@@ -671,7 +682,6 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     _email: (firebase?.auth?.().currentUser?.email) || ""
   };
 
-  // Envío con SDK; si falla, reintento REST. Ninguno bloquea la reserva.
   async function sendWithSDK(to_email, to_name){
     if(!window.emailjs) throw new Error("SDK not loaded");
     try{ if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); } }catch(_){}
@@ -703,22 +713,11 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
   const toClient  = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
   const toAdmin   = { to_email: TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es", to_name: "Gestión The Pets Lovers" };
 
-  // Cliente
-  try{
-    if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name);
-    else await sendWithREST(toClient.to_email, toClient.to_name);
-  }catch(err1){
-    console.warn("[EmailJS] Cliente SDK error, intento REST…", err1);
-    try{ await sendWithREST(toClient.to_email, toClient.to_name); }catch(err2){ console.error("[EmailJS] Cliente FALLÓ", err2); }
-  }
-  // Gestión
-  try{
-    if(window.emailjs) await sendWithSDK(toAdmin.to_email, toAdmin.to_name);
-    else await sendWithREST(toAdmin.to_email, toAdmin.to_name);
-  }catch(err1){
-    console.warn("[EmailJS] Gestión SDK error, intento REST…", err1);
-    try{ await sendWithREST(toAdmin.to_email, toAdmin.to_name); }catch(err2){ console.error("[EmailJS] Gestión FALLÓ", err2); }
-  }
+  try{ if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name); else await sendWithREST(toClient.to_email, toClient.to_name); }
+  catch(e1){ try{ await sendWithREST(toClient.to_email, toClient.to_name); }catch(e2){ console.error("[EmailJS] Cliente falló", e1, e2); } }
+
+  try{ if(window.emailjs) await sendWithSDK(toAdmin.to_email, toAdmin.to_name); else await sendWithREST(toAdmin.to_email, toAdmin.to_name); }
+  catch(e1){ try{ await sendWithREST(toAdmin.to_email, toAdmin.to_name); }catch(e2){ console.error("[EmailJS] Gestión falló", e1, e2); } }
 }
 
 /* ====== Login inline ====== */
@@ -784,7 +783,7 @@ window.addEventListener("load", ()=>{
 
   preselectService();
 
-  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","exoticType","numPets"]
+  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","travelNeededOwner","visitDuration","secondMedVisit","exoticType","numPets"]
     .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
 
   onAuth(async (u)=>{
@@ -883,7 +882,7 @@ window.addEventListener("load", ()=>{
         }
       };
 
-      // Guardar local (no falla)
+      // Guardar local
       try{
         const key="tpl.reservas";
         const list = JSON.parse(localStorage.getItem(key)||"[]");
@@ -894,7 +893,7 @@ window.addEventListener("load", ()=>{
       // Enviar emails (no bloquea)
       try{ await sendEmails(reservation); }catch(err){ console.warn("[Email] no crítico:", err); }
 
-      // Mostrar overlay pase lo que pase
+      // Mostrar overlay
       const ov=$("#overlay"); if(ov) ov.style.display="flex";
     });
   });
