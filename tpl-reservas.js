@@ -520,7 +520,6 @@ function renderSummary(c, payload){
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled) return;
 
-  // Datos base
   const svcLabel = labelService(reservation.service?.type||"");
   const exo = reservation.service?.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
   const fechas = `${reservation.dates?.startDate||""} — ${reservation.dates?.endDate||reservation.dates?.startDate||""}`;
@@ -554,7 +553,6 @@ async function sendEmails(reservation){
   const payNowTxt  = (reservation.pricing?.payNow!=null   ? reservation.pricing.payNow.toFixed(2).replace('.',',')+' €'   : '—');
   const laterTxt   = (reservation.pricing?.payLater!=null ? reservation.pricing.payLater.toFixed(2).replace('.',',')+' €' : '—');
 
-  // Bloque HTML bonito (se usa en summaryField)
   const summaryHTML =
 `<div style="font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height:1.45; color:#222">
   <h2 style="margin:0 0 6px; font-size:18px;">Resumen de la reserva</h2>
@@ -600,7 +598,6 @@ async function sendEmails(reservation){
   </div>
 </div>`.trim();
 
-  // Texto plano (por si tu plantilla no permite HTML)
   const summaryText =
 `Resumen de la reserva
 ID: ${reservation.id} · Estado: ${reservation.status||"paid_review"}
@@ -630,7 +627,6 @@ Pendiente (12 días antes): ${laterTxt}
 
 ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").trim()}\n\n` : ""}Nos pondremos en contacto lo antes posible para confirmar los datos y asignarte el cuidador que mejor se adapta.`.trim();
 
-  // Variables que enviamos a la plantilla (reutiliza tus placeholders existentes)
   const vars = {
     reserva_id: reservation.id,
     _estado: reservation.status || "paid_review",
@@ -648,16 +644,17 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     address: reservation.owner?.address || "",
     postalCode: reservation.owner?.postalCode || "",
 
-    species: petsNames.join(", ") || "—",     // por compatibilidad con tu placeholder antiguo
-    num_pets: petsCount,                      // NUEVO: por si lo quieres usar en la plantilla
-    pets_list_text: petsListText,             // NUEVO
-    pets_list_html: petsListHTML,             // NUEVO
+    species: petsNames.join(", ") || "—",
+    num_pets: petsCount,
+    pets_list_text: petsListText,
+    pets_list_html: petsListHTML,
 
-    // Sustituimos el JSON por el bloque formateado (HTML). Si tu plantilla muestra literal,
-    // cambia a summary_text en el HTML del template. Si acepta HTML, usa {{summaryField}}.
     summaryField: summaryHTML,
-    summary_html: summaryHTML,                // NUEVO
-    summary_text: summaryText,                // NUEVO
+    summary_html: summaryHTML,
+    summary_text: summaryText,
+
+    // 💡 LOGO PARA LA PLANTILLA (URL RAW de GitHub)
+    logo_url: "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png",
 
     total_cliente: reservation.pricing?.totalClient ?? 0,
     pagar_ahora:   reservation.pricing?.payNow ?? 0,
@@ -673,7 +670,6 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     _email: (firebase?.auth?.().currentUser?.email) || ""
   };
 
-  // Helpers envío
   async function sendWithSDK(to_email, to_name){
     if(!window.emailjs) throw new Error("SDK not loaded");
     try{ if(TPL_EMAILJS.publicKey){ emailjs.init(TPL_EMAILJS.publicKey); } }catch(_){}
@@ -706,7 +702,6 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
   const toClient  = { to_email: vars.email, to_name: vars.firstName || "Cliente" };
   const toAdmin   = { to_email: TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es", to_name: "Gestión The Pets Lovers" };
 
-  // Cliente
   try{
     if(window.emailjs) await sendWithSDK(toClient.to_email, toClient.to_name);
     else await sendWithREST(toClient.to_email, toClient.to_name);
@@ -721,7 +716,6 @@ ${($("#notes")?.value||"").trim() ? `Observaciones\n${($("#notes")?.value||"").t
     }
   }
 
-  // Gestión
   try{
     if(window.emailjs) await sendWithSDK(toAdmin.to_email, toAdmin.to_name);
     else await sendWithREST(toAdmin.to_email, toAdmin.to_name);
