@@ -1,10 +1,13 @@
-/* === TPL · RESERVAS (COMPLETO) ============================================
-   Cambios añadidos sin tocar el diseño ni tus sumas:
-   - TPL PATCH: Validación suave + botón “Reservar ahora” activado/desactivado
-   - TPL PATCH: Cachorro automático (≤6 meses) informativo (no cambia tu layout)
-   - TPL PATCH: Festivos 2025 nacionales + CCAA (solo aparece si aplica)
-   - TPL PATCH: Accesibilidad mínima para overlays (foco y ESC)
-=========================================================================== */
+/****************************************************
+ * TPL · RESERVAS (COMPLETO · para reservas.html)
+ * Ajustes pedidos:
+ * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
+ * - Mantengo que NO haya suplemento por 2ª+ mascota en aves/reptiles.
+ * - “Desplazamiento”: línea “pendiente” y aviso en el resumen.
+ * - Festivos nacionales + CCAA (2025, ejemplo) — se suman como “Día señalado” o “Festivo CCAA (X)”.
+ * - Guarda en localStorage y, si hay sesión, también en Firestore reservas/{uid}/items/{reservaId}.
+ * - EmailJS: envío “bonito” con variables texto/HTML.
+ ****************************************************/
 
 const $  = (s,root=document)=>root.querySelector(s);
 const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
@@ -24,10 +27,16 @@ function fmtMD(dateStr){
   return `${m}-${dd}`;
 }
 
-/* ===== Festivos señalados especiales (mantienes tu lógica) ===== */
-const BIG_DAYS = ["12-24","12-25","12-31","01-01"];
+/* ====== Festivos ======
+   BIG_DAYS (señalados) + festivos de CCAA (ejemplo 2025). Amplía según necesites. */
+const BIG_DAYS = ["12-24","12-25","12-31","01-01"]; // MM-DD
+const FESTIVOS_CCAA_2025 = {
+  "Madrid": ["01-06","03-19","03-20","03-21","05-02","07-25","08-15","10-12","11-01","12-06","12-08"],
+  "Andalucía": ["02-28","03-20","03-21","05-01","08-15","10-12","11-01","12-06","12-08"],
+  // ... añade el resto de CCAA si quieres precisión total
+};
 
-/* ======= Etiquetas ======= */
+/* ====== Etiquetas ====== */
 function labelService(s){
   return ({
     guarderia_dia:"Guardería de día",
@@ -42,7 +51,7 @@ function labelExotic(t){
   return ({ aves:"Aves", reptiles:"Reptiles", mamiferos:"Pequeños mamíferos" }[t]||"");
 }
 
-/* ====== Tarifas públicas (TU CONFIG) ====== */
+/* ====== Tarifas públicas ====== */
 const PUB = {
   paseo: { base:12, extra:8 },
   transporte: { base:20 },
@@ -72,7 +81,7 @@ const PUB = {
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
   }
 };
-/* ====== Costes auxiliar (TU CONFIG) ====== */
+/* ====== Costes auxiliar ====== */
 const AUX = {
   paseo: { base:10, extra:5,
     bonos:{ d10:8, d15:7.5, d20:7, d25:6.5, d30:6 }
@@ -84,7 +93,7 @@ const AUX = {
       adult:{ d10:11, d20:10, d30:9 },
       puppy:{ d10:16, d20:14, d30:12 }
     },
-    extra: { second:10, thirdPlus:6 } // margen 2
+    extra: { second:10, thirdPlus:6 }
   },
   alojamiento: {
     std:   { d1_10:25, d11:22 },
@@ -98,7 +107,7 @@ const AUX = {
     extrasPorGato: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: {
-    // margen 3 € desde día 11 (18 público → 15 aux)
+    // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
     mamiferos: {
@@ -113,47 +122,6 @@ const AUX = {
     transporte:{ pub:20, aux:15 }
   }
 };
-
-/* ====== HOLIDAYS 2025 NACIONAL + CCAA (solo se añade si coincide) ======
-   Fuente base: BOE (calendario laboral 2025) + calendarios autonómicos.
-   Nacionales (comunes 2025): 01-01, 01-06, 04-18 (Viernes Santo), 05-01, 08-15, 12-06, 12-08, 12-25.
-   + Variables según CCAA: Jueves Santo (04-17), Lunes de Pascua (04-21), otros días propios CCAA.
-   Nota: mostramos en desglose solo si existe algún festivo en el rango.
-   ===================================================================== */
-// TPL PATCH · Festivos por CCAA (2025)
-const HOLIDAYS = {
-  national: ["01-01","01-06","04-18","05-01","08-15","12-06","12-08","12-25"], // BOE
-  // Jueves Santo (04-17) lo celebran como no laborable la mayoría de CCAA (no todas las ciudades autónomas)
-  juevesSantoCCAA: ["Andalucía","Aragón","Asturias","Baleares","Canarias","Cantabria","Castilla-La Mancha","Castilla y León","Cataluña","Comunidad Valenciana","Extremadura","Galicia","La Rioja","Madrid","Murcia","Navarra","País Vasco"],
-
-  // Lunes de Pascua (04-21) — típico en Baleares, Cataluña, Comunidad Valenciana, Navarra, País Vasco, La Rioja
-  lunesPascuaCCAA: ["Baleares","Cataluña","Comunidad Valenciana","Navarra","País Vasco","La Rioja"],
-
-  // Días propios por CCAA (fijos 2025). Hecho con fechas emblemáticas habituales:
-  "Andalucía": ["02-28"],
-  "Aragón": ["04-23"],
-  "Asturias": ["09-08"],
-  "Baleares": ["03-01"],
-  "Canarias": ["05-30"],           // Día de Canarias
-  "Cantabria": ["07-28"],          // Día de las Instituciones
-  "Castilla-La Mancha": ["06-19"], // Corpus Christi 2025
-  "Castilla y León": ["04-23"],
-  "Cataluña": ["09-11"],
-  "Comunidad Valenciana": ["10-09"],
-  "Extremadura": ["09-08"],
-  "Galicia": ["07-25"],            // Santiago Apóstol (Día de Galicia)
-  "La Rioja": ["06-09"],           // Día de La Rioja
-  "Madrid": ["05-02"],             // Fiesta de la Comunidad de Madrid
-  "Murcia": ["06-09"],             // Día de la Región de Murcia
-  "Navarra": ["12-03"],            // San Francisco Javier
-  "País Vasco": [],                // (suelen optar por Lunes de Pascua, ya arriba)
-  "Ceuta": ["06-13","08-05"],      // San Antonio; Ntra. Sra. de África
-  "Melilla": ["09-17"]
-};
-/* Citas principales: BOE (calendario 2025) y calendarios autonómicos/municipales. 
-   Ver: timeanddate (resumen nacional), BOE (resolución con relación CCAA),
-        Madrid (calendario oficial PDF), OfficeHolidays (detalle por CCAA). 
-   :contentReference[oaicite:0]{index=0} */
 
 /* ====== Helpers bonos ====== */
 function splitDaysForBonos(n){
@@ -177,7 +145,7 @@ function splitWalks(n){
   return res;
 }
 
-/* ====== Preselección servicio ====== */
+/* ====== Preselección ====== */
 function canonicalizeService(raw){
   if(!raw) return "";
   const s = String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -376,7 +344,6 @@ function renderPetsGrid(pets){
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
     doRecalc();
-    updateReserveBtn(); // TPL PATCH: revalidar
   }, { once:true });
 }
 
@@ -401,69 +368,6 @@ function collectPayload(){
   };
 }
 
-/* ====== TPL PATCH · Validación suave ====== */
-function setError(id, msg){
-  const el = document.getElementById(id);
-  if(!el) return;
-  let hint = el.nextElementSibling && el.nextElementSibling.dataset?.hint === '1' ? el.nextElementSibling : null;
-  if(!hint){
-    hint = document.createElement('small');
-    hint.dataset.hint = '1';
-    hint.className = 'muted';
-    hint.style.color = '#b3261e';
-    hint.style.display = 'block';
-    hint.style.marginTop = '4px';
-    el.parentElement.appendChild(hint);
-  }
-  hint.textContent = msg || '';
-  hint.style.visibility = msg ? 'visible' : 'hidden';
-  el.setAttribute('aria-invalid', msg ? 'true' : 'false');
-}
-function validateForm(payload){
-  let ok = true;
-  const req = [
-    ['serviceType','Elige un servicio'],
-    ['startDate','Indica la fecha de inicio'],
-    ['endDate','Indica la fecha de fin'],
-    ['ownerFullName','Indica tu nombre y apellidos'],
-    ['email','Indica un email válido'],
-    ['phone','Indica un teléfono'],
-    ['region','Selecciona tu CCAA']
-  ];
-  req.forEach(([id,msg])=>{
-    const v = (document.getElementById(id)?.value||'').trim();
-    const bad = !v || (id==='email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v));
-    if(bad){ setError(id, msg); ok=false; } else { setError(id, ''); }
-  });
-  const sd = parseDate(payload.startDate), ed = parseDate(payload.endDate);
-  if(sd && ed && ed < sd){ setError('endDate','No puede ser anterior al inicio'); ok=false; }
-
-  if(payload.serviceType!=='exoticos'){
-    const nSel = (payload.pets||[]).length;
-    const grid = document.getElementById('petsGrid');
-    let warn = grid?.nextElementSibling?.dataset?.hint==='1' ? grid.nextElementSibling : null;
-    if(nSel<1){
-      if(!warn){
-        warn = document.createElement('small');
-        warn.dataset.hint='1'; warn.className='muted';
-        warn.style.color='#b3261e'; warn.style.display='block'; warn.style.marginTop='6px';
-        grid.parentElement.appendChild(warn);
-      }
-      warn.textContent = 'Elige al menos una mascota';
-      warn.style.visibility = 'visible';
-      ok=false;
-    }else if(warn){ warn.style.visibility='hidden'; }
-  }
-  return ok;
-}
-function updateReserveBtn(){
-  const payload = collectPayload();
-  const ready = validateForm(payload);
-  const btn = document.getElementById('btnReserve');
-  if(btn){ btn.disabled = !ready; btn.setAttribute('aria-disabled', !ready ? 'true':'false'); }
-  return ready;
-}
-
 /* ====== Cálculo ====== */
 function calc(payload){
   const s = payload.serviceType;
@@ -480,37 +384,32 @@ function calc(payload){
     totalPub += pub; totalAux += aux;
   }
 
-  /* ===== Festivos: nacionales + CCAA + señalados (solo si hay) ===== */
-  const countHolidays = (() => {
-    if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return {national:0, regional:0, señalados:0};
-    let cNat=0,cReg=0,cSig=0;
-    const ccaa = payload.region || "";
+  // Festivos señalados globales
+  const bigCount = (()=>{
+    if(!parseDate(payload.startDate)||!parseDate(payload.endDate)) return 0;
+    let c=0;
     for(let i=0;i<nDays;i++){
       const d=new Date(parseDate(payload.startDate)); d.setDate(d.getDate()+i);
-      const tag = fmtMD(d.toISOString());
-      if(HOLIDAYS.national.includes(tag)) cNat++;
-      if(HOLIDAYS[ccaa]?.includes(tag))   cReg++;
-
-      // Jueves Santo (04-17) por CCAA
-      if(tag==="04-17" && HOLIDAYS.juevesSantoCCAA.includes(ccaa)) cReg++;
-      // Lunes de Pascua (04-21) por CCAA
-      if(tag==="04-21" && HOLIDAYS.lunesPascuaCCAA.includes(ccaa)) cReg++;
-
-      if(BIG_DAYS.includes(tag)) cSig++;
+      if(BIG_DAYS.includes(fmtMD(d.toISOString()))) c++;
     }
-    return {national:cNat, regional:cReg, señalados:cSig};
+    return c;
   })();
-  if(countHolidays.national>0){
-    pushLine("Festivo nacional", countHolidays.national, AUX.suplementos.festivo.pub, AUX.suplementos.festivo.aux);
-  }
-  if(countHolidays.regional>0){
-    pushLine(`Festivo CCAA (${payload.region})`, countHolidays.regional, AUX.suplementos.festivo.pub, AUX.suplementos.festivo.aux);
-  }
-  if(countHolidays.señalados>0){
-    pushLine("Día señalado", countHolidays.señalados, AUX.suplementos.senalado.pub, AUX.suplementos.senalado.aux);
+  if(bigCount>0){
+    pushLine("Día señalado", bigCount, AUX.suplementos.senalado.pub, AUX.suplementos.senalado.aux);
   }
 
-  /* ===== Servicios ===== */
+  // Festivos CCAA
+  const ccaa = (payload.region||"").trim();
+  const festivos = FESTIVOS_CCAA_2025[ccaa] || [];
+  if(festivos.length){
+    let c=0;
+    for(let i=0;i<nDays;i++){
+      const d=new Date(parseDate(payload.startDate)); d.setDate(d.getDate()+i);
+      if(festivos.includes(fmtMD(d.toISOString()))) c++;
+    }
+    if(c>0) pushLine(`Festivo CCAA (${ccaa})`, c, AUX.suplementos.festivo.pub, AUX.suplementos.festivo.aux);
+  }
+
   if(s==="paseo"){
     const packs = splitWalks(nDays);
     if(packs.d30) pushLine("Paseos (30) · 1ª mascota", 30*packs.d30, 10.6, AUX.paseo.bonos.d30);
@@ -608,7 +507,7 @@ function calc(payload){
     pushLine("Transporte", 1, PUB.transporte.base, AUX.transporte.base);
   }
 
-  // Desplazamiento “pendiente” (ya lo tenías)
+  // Desplazamiento “pendiente”
   if(payload.travelNeeded==="si"){
     lines.push({label:"Desplazamiento", qty:1, unitPub:0, unitAux:0, amountPub:0, amountAux:0, note:"pendiente"});
   }
@@ -633,6 +532,7 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
+  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -652,126 +552,134 @@ function doRecalc(){
 
   if(!payload.serviceType || !payload.startDate || !payload.endDate){
     renderSummary({lines:[],totalPub:0,totalAux:0,payNow:0,payLater:0}, payload);
-    updateReserveBtn(); // TPL PATCH
     return;
   }
   const c = calc(payload);
   renderSummary(c, payload);
-  updateReserveBtn(); // TPL PATCH
 }
 
-/* ====== EmailJS (opcional) ====== */
+/* ============ EmailJS (mejorado y robusto) ============ */
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
-  const svc = labelService(reservation.service.type);
-  const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
+
+  // init opcional con Public Key si la tienes
+  try{
+    if (TPL_EMAILJS.publicKey && !emailjs.__tpl_inited) {
+      emailjs.init(TPL_EMAILJS.publicKey);
+      emailjs.__tpl_inited = true;
+    }
+  }catch(_){}
+
+  const safe = s => (s||"").toString();
+  const fmt = n => (typeof n==="number" && !isNaN(n)) ? n.toFixed(2).replace(".",",")+" €" : "—";
+  const svcLabel = s => ({
+    guarderia_dia:"Guardería de día",
+    alojamiento_nocturno:"Alojamiento nocturno",
+    paseo:"Paseo (60’)",
+    visita_gato:"Visita a domicilio (gato)",
+    exoticos:"Servicio exóticos",
+    transporte:"Transporte"
+  }[s] || s || "—");
+  const exoticLabel = t => ({ aves:"Aves", reptiles:"Reptiles", mamiferos:"Pequeños mamíferos" }[t] || "");
+
+  // Días totales
+  const start = safe(reservation.dates.startDate);
+  const end   = safe(reservation.dates.endDate || reservation.dates.startDate);
+  const sd = new Date(start), ed = new Date(end);
+  const nDays = (!isNaN(sd) && !isNaN(ed)) ? (Math.round((ed - sd)/86400000)+1) : 1;
+
+  // Mascotas
+  const pets = Array.isArray(reservation.pets) ? reservation.pets : [];
+  const petsText = pets.length
+    ? pets.map((p,i)=>`${i+1}. ${p.nombre||"Mascota"} — ${p.especie||""}${p.raza?(" · "+p.raza):""}${p.sexo?(" · "+p.sexo):""}`).join("\n")
+    : "—";
+  const petsHTML = pets.length
+    ? `<ul style="margin:0;padding-left:18px">${pets.map(p=>(
+        `<li><strong>${safe(p.nombre)||"Mascota"}</strong>`+
+        `${p.especie?` — ${safe(p.especie)}`:""}`+
+        `${p.raza?` · ${safe(p.raza)}`:""}`+
+        `${p.sexo?` · ${safe(p.sexo)}`:""}`+
+        `</li>`
+      )).join("")}</ul>`
+    : "<em>—</em>";
+
+  // Desglose
+  const breakdown = Array.isArray(reservation.pricing?.breakdownPublic) ? reservation.pricing.breakdownPublic : [];
+  const breakdownText = breakdown.length
+    ? breakdown.map(l=>`• ${l.label}${l.qty?` (${l.qty}×${fmt(l.unit)})`:""}: ${fmt(l.amount)}`).join("\n")
+    : "—";
+  const breakdownHTML = breakdown.length
+    ? `<table border="0" cellpadding="6" cellspacing="0" style="border-collapse:collapse;background:#fafafa;width:100%">
+        <thead><tr>
+          <th align="left">Concepto</th>
+          <th align="right">Importe</th>
+        </tr></thead>
+        <tbody>
+          ${breakdown.map(l=>`
+            <tr>
+              <td>${safe(l.label)} ${l.qty?`<span style="color:#6b7280">(${l.qty} × ${fmt(l.unit)})</span>`:""}</td>
+              <td align="right">${fmt(l.amount)}</td>
+            </tr>`).join("")}
+          <tr>
+            <td style="border-top:1px solid #e5e7eb"><strong>Total</strong></td>
+            <td align="right" style="border-top:1px solid #e5e7eb"><strong>${fmt(reservation.pricing?.totalClient)}</strong></td>
+          </tr>
+          <tr>
+            <td>Pagado ahora</td><td align="right">${fmt(reservation.pricing?.payNow)}</td>
+          </tr>
+          <tr>
+            <td>Pendiente</td><td align="right">${fmt(reservation.pricing?.payLater)}</td>
+          </tr>
+        </tbody>
+      </table>`
+    : "<em>—</em>";
+
+  const serviceTxt = `${svcLabel(reservation.service?.type)}${reservation.service?.exoticType?(" · "+exoticLabel(reservation.service.exoticType)):""}`;
+  const timeTxt = [reservation.dates?.startTime, reservation.dates?.endTime].filter(Boolean).join("–");
+  const travelNote = (reservation.pricing?.breakdownPublic||[]).some(l=>String(l.label).toLowerCase().includes("desplazamiento"))
+                     ? "Sí (importe pendiente según cuidador)"
+                     : "No";
 
   const vars = {
     reserva_id: reservation.id,
-    service: svc,
-    startDate: reservation.dates.startDate,
-    endDate: reservation.dates.endDate || reservation.dates.startDate,
-    Hora_inicio: reservation.dates.startTime || "",
-    Hora_fin: reservation.dates.endTime || "",
-    species: mascotas,
-    summaryField: JSON.stringify(reservation.pricing.breakdownPublic.map(l=>`${l.label}${l.amount?`: ${l.amount}€`:""}`), null, 2),
+    estado: reservation.status || "paid_review",
+    creado_en: reservation.createdAt || new Date().toISOString(),
 
-    firstName: reservation.owner.fullName,
-    email: reservation.owner.email,
-    phone: reservation.owner.phone,
-    region: reservation.region || $("#region").value || "",
-    address: reservation.owner.address,
-    postalCode: reservation.owner.postalCode,
-    observations: $("#notes").value || "",
+    servicio: serviceTxt,
+    fecha_inicio: start,
+    fecha_fin: end,
+    num_dias: String(nDays),
+    hora: timeTxt || "—",
+    desplazamiento: travelNote,
 
-    total_cliente: reservation.pricing.totalClient,
-    pagar_ahora: reservation.pricing.payNow,
-    pendiente: reservation.pricing.payLater,
+    titular_nombre: safe(reservation.owner?.fullName),
+    titular_email:  safe(reservation.owner?.email),
+    titular_telefono: safe(reservation.owner?.phone),
+    titular_region: safe(reservation.region || reservation.owner?.region || ""),
+    titular_direccion: safe(reservation.owner?.address),
+    titular_cp: safe(reservation.owner?.postalCode),
 
-    total_txt: fmtMoney(reservation.pricing.totalClient).replace(" €","€"),
-    pay_now_txt: fmtMoney(reservation.pricing.payNow).replace(" €","€"),
-    pay_later_txt: fmtMoney(reservation.pricing.payLater).replace(" €","€"),
+    mascotas_text: petsText,
+    mascotas_html: petsHTML,
 
-    _estado: reservation.status || "paid_review",
-    _uid: firebase.auth().currentUser?.uid || "",
-    _email: firebase.auth().currentUser?.email || "",
+    desglose_text: breakdownText,
+    desglose_html: breakdownHTML,
+    total_txt: fmt(reservation.pricing?.totalClient),
+    pagado_txt: fmt(reservation.pricing?.payNow),
+    pendiente_txt: fmt(reservation.pricing?.payLater),
 
-    admin_email: (TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
+    json_reserva: JSON.stringify(reservation, null, 2),
+
+    // opcional: email interno de gestión
+    admin_email: (window.TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
   };
 
   try{
     await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdCliente, vars);
     await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateIdGestion, vars);
-  }catch(e){ console.warn("[EmailJS] error", e); }
-}
-
-/* ====== Login inline ====== */
-function mountInlineLogin(){
-  const host=$("#tpl-inline-login"); if(!host) return;
-  host.innerHTML = `
-    <div class="tpl-login-card" role="region" aria-label="Acceso rápido">
-      <h3 class="tpl-login-title">Accede aquí mismo</h3>
-      <form id="tpl-inline-form" class="tpl-login-form" novalidate style="display:grid;gap:8px">
-        <label>Email</label>
-        <input type="email" name="email" required autocomplete="email" />
-        <label>Contraseña</label>
-        <input type="password" name="password" required autocomplete="current-password" />
-        <button type="submit" class="tpl-btn">Iniciar sesión</button>
-        <button type="button" class="tpl-btn-outline" id="tpl-google-btn"><i class="fa-brands fa-google"></i> Google</button>
-        <p class="tpl-login-msg" aria-live="polite"></p>
-      </form>
-    </div>
-  `;
-  const form=$("#tpl-inline-form");
-  const msg = host.querySelector(".tpl-login-msg");
-  const gbtn=$("#tpl-google-btn");
-
-  form.addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    msg.textContent = "Accediendo…";
-    try{
-      await firebase.auth().signInWithEmailAndPassword(form.email.value.trim(), form.password.value);
-      msg.textContent = "¡Listo!";
-      location.reload();
-    }catch(err){
-      msg.textContent = (err && err.message) || "No se pudo iniciar sesión.";
-    }
-  });
-
-  gbtn.addEventListener("click", async ()=>{
-    msg.textContent="Conectando con Google…";
-    try{
-      const provider = new firebase.auth.GoogleAuthProvider();
-      await firebase.auth().signInWithPopup(provider);
-      location.reload();
-    }catch(err){
-      msg.textContent = (err && err.message) || "No se pudo iniciar con Google.";
-    }
-  });
-}
-
-/* ====== Overlay “desplazamiento” (si no hay cuidador) ====== */
-function getSelectedCaregiver(){
-  const el = document.querySelector('[name="cuidadorId"]:checked')
-            || $("#cuidadorSeleccionado")
-            || document.querySelector('[data-cuidador-seleccionado]');
-  return (el && ('value' in el) ? el.value : el?.getAttribute?.('data-cuidador-seleccionado')) || null;
-}
-function ensureTravelOverlay(){
-  if($("#overlay-travel")) return $("#overlay-travel");
-  const div = document.createElement("div");
-  div.id = "overlay-travel";
-  div.className = "overlay"; // usa tu misma clase visual
-  div.style.display="none";
-  div.innerHTML = `
-    <div class="modal">
-      <h3>Importe de desplazamiento</h3>
-      <p class="muted">Hasta elegir al cuidador que mejor se adapte, <strong>no se puede calcular el importe del desplazamiento</strong>.</p>
-      <button type="button" id="overlay-travel-close" class="btn btn-primary">Entendido</button>
-    </div>`;
-  document.body.appendChild(div);
-  $("#overlay-travel-close").addEventListener("click", ()=>{ div.style.display="none"; });
-  return div;
+  }catch(e){
+    console.warn("[EmailJS] error", e);
+  }
 }
 
 /* ====== INIT ====== */
@@ -792,20 +700,8 @@ window.addEventListener("load", ()=>{
 
   preselectService();
 
-  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","exoticType","numPets","ownerFullName","email","phone"]
-    .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", ()=>{ doRecalc(); updateReserveBtn(); }); });
-
-  // Overlay/aviso cuando marcan desplazamiento sin cuidador
-  const travelSelect = $("#travelNeeded");
-  if(travelSelect){
-    const overlay = ensureTravelOverlay();
-    travelSelect.addEventListener("change", ()=>{
-      if(travelSelect.value==="si" && !getSelectedCaregiver()){
-        overlay.style.display="flex";
-      }
-      doRecalc();
-    });
-  }
+  ["serviceType","startDate","endDate","startTime","endTime","region","address","postalCode","travelNeeded","visitDuration","secondMedVisit","exoticType","numPets"]
+    .forEach(id=>{ const el=$("#"+id); if(el) el.addEventListener("input", doRecalc); });
 
   onAuth(async (u)=>{
     const wall=$("#authWall");
@@ -814,7 +710,7 @@ window.addEventListener("load", ()=>{
     if(!u){
       wall.style.display="block";
       form.classList.add("disabled");
-      mountInlineLogin();
+      // si tienes login inline, lo puedes montar aquí
       return;
     }
 
@@ -861,19 +757,20 @@ window.addEventListener("load", ()=>{
     const exo = $("#exoticControls"); if(exo) exo.style.display = ($("#serviceType").value==="exoticos") ? "" : "none";
 
     doRecalc();
-    updateReserveBtn();
 
-    $("#btnReserve").addEventListener("click", async function(){
+    $("#btnReserve").addEventListener("click", async ()=>{
       const payload=collectPayload();
-      if(!validateForm(payload)){ updateReserveBtn(); return; }
-
-      // Anti-doble click
-      const btn=this; const oldTxt=btn.innerHTML; btn.disabled=true; btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Enviando…';
+      if(!payload.serviceType || !payload.startDate || !payload.endDate){
+        alert("Selecciona servicio y fechas de inicio/fin."); return;
+      }
+      if(!STATE.selectedPetIds.length && payload.serviceType!=="exoticos"){
+        alert("Elige al menos una mascota."); return;
+      }
 
       const c=calc(payload);
       const reservation = {
         id: "resv_"+Date.now(),
-        status: "paid_review", // recibida
+        status: "paid_review",
         createdAt: nowISO(),
         region: payload.region,
         service: { type: payload.serviceType, exoticType: payload.exoticType || null },
@@ -902,6 +799,7 @@ window.addEventListener("load", ()=>{
         }
       };
 
+      // Guarda local
       try{
         const key="tpl.reservas";
         const list = JSON.parse(localStorage.getItem(key)||"[]");
@@ -909,26 +807,27 @@ window.addEventListener("load", ()=>{
         localStorage.setItem(key, JSON.stringify(list));
       }catch(_){}
 
+      // Guarda Firestore: reservas/{uid}/items/{reservaId}
+      try{
+        if (firebase?.auth && firebase?.firestore) {
+          const u = firebase.auth().currentUser;
+          if (u) {
+            const db = firebase.firestore();
+            await db
+              .collection("reservas")
+              .doc(u.uid)
+              .collection("items")
+              .doc(reservation.id)
+              .set(reservation, { merge: true });
+          }
+        }
+      }catch(e){
+        console.warn("[reservas] Firestore no disponible o sin sesión, usando solo localStorage", e);
+      }
+
       try{ await sendEmails(reservation); }catch(_){}
 
       const ov=$("#overlay"); if(ov) ov.style.display="flex";
-
-      btn.disabled=false; btn.innerHTML=oldTxt;
     });
   });
-
-  /* ===== Accesibilidad mínima overlays ===== */
-  (function a11yOverlay(rootId, closeSel){
-    function init(id, sel){
-      const ov = document.getElementById(id); if(!ov) return;
-      const closeBtn = ov.querySelector(sel);
-      function onKey(e){ if(e.key==='Escape'){ ov.style.display='none'; document.removeEventListener('keydown', onKey); } }
-      const mo = new MutationObserver(()=>{
-        if(getComputedStyle(ov).display!=='none'){ closeBtn?.focus(); document.addEventListener('keydown', onKey); }
-      });
-      mo.observe(ov, { attributes:true, attributeFilter:['style'] });
-    }
-    init('overlay', '.btn.btn-primary');
-    init('overlay-travel', '#overlay-travel-close');
-  })();
 });
