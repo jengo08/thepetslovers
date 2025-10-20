@@ -1,11 +1,12 @@
 /****************************************************
- * TPL · RESERVAS (COMPLETO · actualizado)
- * - Bonos y extras funcionando (recalcula siempre).
- * - Exóticos aves/reptiles 20€/18€ (≥11), sin 2ª+ mascota, aux 15€.
- * - Desplazamiento en Datos del titular → línea pendiente + aviso.
- * - EmailJS: dos envíos (cliente y gestión) con HTML.
+ * TPL · RESERVAS (COMPLETO para reservas.html)
+ * - EXÓTICOS (aves/reptiles): desde día 11 → 18 € público y margen 3 € (aux 15 €).
+ * - SIN suplemento por 2ª+ mascota en aves/reptiles.
+ * - “Desplazamiento” se selecciona en Datos del titular. En el desglose aparece “pendiente” y aviso.
+ * - EmailJS: HTML bonito con logo arriba-izquierda y anti-doble envío.
  ****************************************************/
 
+// =================== Utils básicos ===================
 const $  = (s,root=document)=>root.querySelector(s);
 const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
 const fmtMoney = n => (typeof n!=="number"||isNaN(n))?"—":n.toFixed(2).replace(".",",")+" €";
@@ -39,7 +40,7 @@ function labelExotic(t){
   return ({ aves:"Aves", reptiles:"Reptiles", mamiferos:"Pequeños mamíferos" }[t]||"");
 }
 
-/* ====== Tarifas públicas ====== */
+// =================== Tarifas públicas ===================
 const PUB = {
   paseo: { base:12, extra:8 },
   transporte: { base:20 },
@@ -60,14 +61,16 @@ const PUB = {
     base60: { d1_10:22, d11:18 },
     base90: { d1_10:30, d11:27 },
     med15:  { d1_10:12, d11:10 },
+    extrasPorGato: { one:12, twoEach:8, threePlusEach:6 }
   },
   exoticos: {
+    // CAMBIO: desde día 11 → 18 €
     aves:      { base:{ d1_10:20, d11:18 } },
     reptiles:  { base:{ d1_10:20, d11:18 } },
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
   }
 };
-/* ====== Costes auxiliar ====== */
+// =================== Costes auxiliar ===================
 const AUX = {
   paseo: { base:10, extra:5,
     bonos:{ d10:8, d15:7.5, d20:7, d25:6.5, d30:6 }
@@ -90,11 +93,16 @@ const AUX = {
     base60: { d1_10:17, d11:12 },
     base90: { d1_10:25, d11:21 },
     med15:  { d1_10:12, d11:10 },
+    extrasPorGato: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: {
+    // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
-    mamiferos: { first:{ d1_10:20, d11:18 }, extra:{ d1_10:14, d11:14 } }
+    mamiferos: {
+      first:{ d1_10:20, d11:18 },
+      extra:{ d1_10:14, d11:14 }
+    }
   },
   suplementos: {
     urgencia:{ pub:10, aux:0 },
@@ -104,7 +112,7 @@ const AUX = {
   }
 };
 
-/* ====== Helpers bonos ====== */
+// =================== Helpers bonos ===================
 function splitDaysForBonos(n){
   const res = { d30:0, d20:0, d10:0, suelto:0 };
   if(n<=0) return res;
@@ -126,7 +134,7 @@ function splitWalks(n){
   return res;
 }
 
-/* ====== Preselección ====== */
+// =================== Preselección ===================
 function canonicalizeService(raw){
   if(!raw) return "";
   const s = String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -167,13 +175,13 @@ function preselectService(){
   if(canon){ el.value = canon; }
 }
 
-/* ====== Auth ====== */
+// =================== Auth ===================
 function onAuth(cb){
   try{ return firebase.auth().onAuthStateChanged(cb); }
   catch(_){ cb(null); return ()=>{}; }
 }
 
-/* ====== Firestore owner + pets ====== */
+// =================== Firestore owner + pets ===================
 async function readOwnerAndPets(uid){
   const db=firebase.firestore();
   async function readDoc(coll){
@@ -234,7 +242,7 @@ async function readOwnerAndPets(uid){
   return { owner:{ fullName, email, phone, region, address, postalCode:postal }, pets };
 }
 
-/* ====== LocalStorage helpers ====== */
+// =================== LocalStorage helpers ===================
 function getUID(){
   try{ return firebase.auth().currentUser?.uid || localStorage.getItem('tpl_auth_uid') || 'default'; }
   catch(_){ return 'default'; }
@@ -242,7 +250,7 @@ function getUID(){
 function udbKey(k){ return `tpl.udb.${getUID()}.${k}`; }
 function udbGet(k,fb){ try{ const v=localStorage.getItem(udbKey(k)); return v?JSON.parse(v):fb; }catch(_){ return fb; } }
 
-/* ====== Owner UI ====== */
+// =================== Owner UI ===================
 function setSelectValue(selectId, value){
   const el = document.getElementById(selectId);
   if(!el || !value) return;
@@ -261,7 +269,7 @@ function fillOwner(owner){
   $("#postalCode").value = owner.postalCode || "";
 }
 
-/* ====== Estado + tarjetas mascotas ====== */
+// =================== Estado + tarjetas mascotas ===================
 const STATE = { owner:null, pets:[], selectedPetIds:[] };
 
 function calcYears(birth){
@@ -322,14 +330,13 @@ function renderPetsGrid(pets){
       </div>`;
   }
 
-  // IMPORTANTE: recalcular SIEMPRE (sin { once:true })
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
     doRecalc();
-  });
+  }, { once:true });
 }
 
-/* ====== Payload ====== */
+// =================== Payload ===================
 function collectPayload(){
   const pets = STATE.pets.filter(p=>STATE.selectedPetIds.includes(p.id));
   return {
@@ -341,20 +348,16 @@ function collectPayload(){
     region: $("#region").value,
     address: $("#address").value,
     postalCode: $("#postalCode").value,
-
-    // Desplazamiento en DATOS DEL TITULAR
-    travelNeeded: $("#travelNeeded")?.value || "no",
-
+    travelNeeded: $("#travelNeeded")?.value || "no", // << selector en Datos del titular
     visitDuration: $("#visitDuration")?.value || "60",
     secondMedVisit: $("#secondMedVisit")?.value || "no",
-
     exoticType: $("#exoticType")?.value || "aves",
     numPetsSelect: parseInt($("#numPets")?.value||"1",10),
     pets
   };
 }
 
-/* ====== Cálculo ====== */
+// =================== Cálculo ===================
 function calc(payload){
   const s = payload.serviceType;
   const nDays = Math.max(1, daysInclusive(payload.startDate, payload.endDate));
@@ -481,7 +484,7 @@ function calc(payload){
     pushLine("Transporte", 1, PUB.transporte.base, AUX.transporte.base);
   }
 
-  // Desplazamiento “pendiente”
+  // Desplazamiento “pendiente” (selector en Datos del titular)
   if(payload.travelNeeded==="si"){
     lines.push({label:"Desplazamiento", qty:1, unitPub:0, unitAux:0, amountPub:0, amountAux:0, note:"pendiente"});
   }
@@ -506,6 +509,7 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
+  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -531,35 +535,49 @@ function doRecalc(){
   renderSummary(c, payload);
 }
 
-/* ====== EmailJS (cliente + gestión) ====== */
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// =================== EmailJS ===================
+const TPL_EMAILJS = {
+  enabled: true,
+  publicKey: "L2xAATfVuHJwj4EIV",
+  serviceId: "service_odjqrfl",
+  templateId: "template_rao5n0c",
+  adminEmail: "gestion@thepetslovers.es"
+};
+
+function emailjsInitIfNeeded(){
+  try{
+    if(window.emailjs && TPL_EMAILJS?.publicKey){
+      // init idempotente
+      if(!emailjs.__tpl_inited){
+        emailjs.init({ publicKey: TPL_EMAILJS.publicKey });
+        emailjs.__tpl_inited = true;
+      }
+    }
+  }catch(e){ console.warn("[EmailJS] init", e); }
 }
+
+// Escapar HTML para el correo
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+}
+
+// Tabla bonita del desglose para el correo
 function makeBreakdownHtml(lines){
-  if(!Array.isArray(lines)||!lines.length) return '<p><em>—</em></p>';
+  if(!Array.isArray(lines)||!lines.length) return `<p style="margin:0;color:#666">—</p>`;
   const rows = lines.map(l=>{
-    const unit = l.note?'Pendiente':fmtMoney(l.unit);
-    const amount = l.note?'Pendiente':fmtMoney(l.amount);
-    const qty = l.qty || 1;
+    const note = l.note ? `<span style="color:#6b7280">pendiente</span>`
+                        : `${fmtMoney(l.amount)} <span style="color:#6b7280;font-size:12px">(${l.qty} × ${fmtMoney(l.unit)})</span>`;
     return `<tr>
       <td style="padding:6px 8px;border-bottom:1px solid #eee">${escapeHtml(l.label)}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:center">${qty}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${unit}</td>
-      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:600">${amount}</td>
+      <td style="padding:6px 8px;border-bottom:1px solid #eee;text-align:right">${note}</td>
     </tr>`;
   }).join("");
-  return `<table style="width:100%;border-collapse:collapse;margin:6px 0 0">
-    <thead>
-      <tr>
-        <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #ddd">Concepto</th>
-        <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #ddd">Cant.</th>
-        <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #ddd">Unit.</th>
-        <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #ddd">Importe</th>
-      </tr>
-    </thead>
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;border-radius:10px;border-collapse:separate">
     <tbody>${rows}</tbody>
   </table>`;
 }
+
+// --- EMAIL: HTML con logo arriba a la izquierda ---
 function buildEmailHtml(reservation){
   const logo = "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png";
   const svc  = labelService(reservation.service.type);
@@ -573,9 +591,15 @@ function buildEmailHtml(reservation){
 
   return `
   <div style="font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:#222">
-    <div style="text-align:center;margin:8px 0 16px">
-      <img src="${logo}" alt="The Pets Lovers" style="height:48px;vertical-align:middle"/>
-    </div>
+    <!-- LOGO ARRIBA IZQUIERDA -->
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 12px 0;">
+      <tr>
+        <td align="left" style="padding:0">
+          <img src="${logo}" alt="The Pets Lovers"
+               style="height:44px;max-width:240px;display:block;border:0;outline:none;text-decoration:none;">
+        </td>
+      </tr>
+    </table>
 
     <h2 style="margin:10px 0 6px">¡Hemos recibido tu solicitud! 🎉</h2>
     <p style="margin:0 0 12px;color:#555">Te llamaremos en breve para confirmar los detalles y asignarte el cuidador ideal.</p>
@@ -592,7 +616,7 @@ function buildEmailHtml(reservation){
       <p style="margin:0 0 12px;color:#666">Horarios: <strong>${time}</strong></p>
 
       <p style="margin:0 0 6px"><strong>Titular</strong></p>
-      <p style="margin:0;color:#444">${escapeHtml(reservation.owner.fullName)} · ${escapeHtml(reservation.owner.phone)}</p>
+      <p style="margin:0;color:#444">${escapeHtml(reservation.owner.fullName)} · ${escapeHtml(reservation.owner.phone||"")}</p>
       <p style="margin:0 0 12px;color:#666">${escapeHtml(reservation.owner.email)} · ${escapeHtml(reservation.region||"")} ${reservation.owner.postalCode?("("+escapeHtml(reservation.owner.postalCode)+")"):""}</p>
 
       <p style="margin:0 0 6px"><strong>Mascotas</strong></p>
@@ -621,22 +645,29 @@ function buildEmailHtml(reservation){
   `;
 }
 
+// Anti-doble envío global
+let __TPL_SENDING_EMAIL__ = false;
+
 async function sendEmails(reservation){
   if(!window.TPL_EMAILJS || !TPL_EMAILJS.enabled || !window.emailjs) return;
+
+  if (__TPL_SENDING_EMAIL__) {
+    console.debug("[EmailJS] envío ignorado (ya en curso)");
+    return;
+  }
+  __TPL_SENDING_EMAIL__ = true;
 
   const html = buildEmailHtml(reservation);
   const svc = labelService(reservation.service.type);
   const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
 
-  // Variables para la plantilla (usa {{to_email}} y {{message_html}})
-  const vars = {
+  const varsBase = {
     to_name: reservation.owner.fullName || "",
     to_email: reservation.owner.email || "",
     message_html: html,
     summary_html: html,
     summary_text: `${svc} · ${reservation.dates.startDate} — ${reservation.dates.endDate||reservation.dates.startDate} · Mascotas: ${mascotas}`,
 
-    // Compat con tu plantilla anterior
     reserva_id: reservation.id,
     service: svc,
     startDate: reservation.dates.startDate,
@@ -663,22 +694,27 @@ async function sendEmails(reservation){
 
     _estado: reservation.status || "paid_review",
     _uid: firebase.auth().currentUser?.uid || "",
-    _email: firebase.auth().currentUser?.email || "",
-
-    admin_email: (TPL_EMAILJS && TPL_EMAILJS.adminEmail) ? TPL_EMAILJS.adminEmail : "gestion@thepetslovers.es"
+    _email: firebase.auth().currentUser?.email || ""
   };
 
   try{
-    // 1) Email al cliente
-    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, vars);
+    emailjsInitIfNeeded();
 
-    // 2) Email a gestión (misma plantilla, cambiando destinatario)
-    const varsAdmin = { ...vars, to_email: TPL_EMAILJS.adminEmail, to_name: "Gestión The Pets Lovers" };
+    // Cliente (1 correo)
+    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
+
+    // Gestión (1 correo)
+    const varsAdmin = { ...varsBase, to_email: (TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es"), to_name: "Gestión The Pets Lovers" };
     await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
-  }catch(e){ console.warn("[EmailJS] error", e); }
+
+  }catch(e){
+    console.warn("[EmailJS] error", e);
+  }finally{
+    __TPL_SENDING_EMAIL__ = false;
+  }
 }
 
-/* ====== Login inline ====== */
+// =================== Login inline ===================
 function mountInlineLogin(){
   const host=$("#tpl-inline-login"); if(!host) return;
   host.innerHTML = `
@@ -723,7 +759,7 @@ function mountInlineLogin(){
   });
 }
 
-/* ====== INIT ====== */
+// =================== INIT ===================
 window.addEventListener("load", ()=>{
   $("#startDate").addEventListener("change", ()=>{
     if(!$("#endDate").value) $("#endDate").value = $("#startDate").value;
@@ -799,13 +835,23 @@ window.addEventListener("load", ()=>{
 
     doRecalc();
 
-    $("#btnReserve").addEventListener("click", async ()=>{
+    $("#btnReserve").addEventListener("click", async (ev)=>{
+      const btn = ev.currentTarget;
+      if (btn.disabled) return;         // anti-doble click
+      btn.disabled = true;
+      const prev = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
+
       const payload=collectPayload();
       if(!payload.serviceType || !payload.startDate || !payload.endDate){
-        alert("Selecciona servicio y fechas de inicio/fin."); return;
+        alert("Selecciona servicio y fechas de inicio/fin."); 
+        btn.disabled = false; btn.innerHTML = prev; 
+        return;
       }
       if(!STATE.selectedPetIds.length && payload.serviceType!=="exoticos"){
-        alert("Elige al menos una mascota."); return;
+        alert("Elige al menos una mascota."); 
+        btn.disabled = false; btn.innerHTML = prev; 
+        return;
       }
 
       const c=calc(payload);
@@ -850,6 +896,10 @@ window.addEventListener("load", ()=>{
       try{ await sendEmails(reservation); }catch(_){}
 
       const ov=$("#overlay"); if(ov) ov.style.display="flex";
+      btn.disabled = false; btn.innerHTML = prev;
     });
   });
+
+  // init EmailJS una vez cargado
+  emailjsInitIfNeeded();
 });
