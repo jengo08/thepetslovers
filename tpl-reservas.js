@@ -392,6 +392,7 @@ function calc(payload){
   }
 
   if(s==="paseo"){
+    // nDays = nº de paseos; extras = por paseo y por mascota extra
     const packs = splitWalks(nDays);
     if(packs.d30) pushLine("Paseos (30) · 1ª mascota", 30*packs.d30, 10.6, AUX.paseo.bonos.d30);
     if(packs.d25) pushLine("Paseos (25) · 1ª mascota", 25*packs.d25, 10.8, AUX.paseo.bonos.d25);
@@ -404,6 +405,7 @@ function calc(payload){
   }
 
   if(s==="guarderia_dia"){
+    // 1ª mascota: aplica bonos; extras: por día (independiente de bonos)
     const anyPuppy = (payload.pets||[]).some(p=>{
       if(p.especie!=="perro" || !p.nacimiento) return false;
       const months = (Date.now()-new Date(p.nacimiento).getTime())/2629800000;
@@ -469,10 +471,12 @@ function calc(payload){
     const d1 = Math.min(nDays,10), d2=Math.max(0,nDays-10);
 
     if(kind==="aves" || kind==="reptiles"){
+      // sin suplemento por 2ª+ mascota
       const pr = PUB.exoticos[kind].base, ax=AUX.exoticos[kind].base;
       if(d1) pushLine(`Exóticos (${labelExotic(kind)}) · 1–10`, d1, pr.d1_10, ax.d1_10);
       if(d2) pushLine(`Exóticos (${labelExotic(kind)}) · ≥11`,  d2, pr.d11,   ax.d11);
     }else{
+      // pequeños mamíferos: 1ª + extras
       if(d1) pushLine(`Exóticos (Pequeños mamíferos) · 1ª mascota · 1–10`, d1, PUB.exoticos.mamiferos.first.d1_10, AUX.exoticos.mamiferos.first.d1_10);
       if(d2) pushLine(`Exóticos (Pequeños mamíferos) · 1ª mascota · ≥11`,  d2, PUB.exoticos.mamiferos.first.d11,   AUX.exoticos.mamiferos.first.d11);
       const extras = Math.max(0, nPets-1);
@@ -543,9 +547,9 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "ARsCMGwHFtJ0mND61",   // <-- NUEVA Public Key (fallback)
-      serviceId: "service_fu9tbwq",     // <-- NUEVO Service ID SMTP (fallback)
-      templateId: "template_rao5n0c",
+      publicKey: "ARsCMGwHFtJ0mND61",   // fallback nueva key
+      serviceId: "service_fu9tbwq",     // fallback nuevo servicio SMTP
+      templateId: "template_ulk5owf",   // <-- NUEVO templateId
       adminEmail: "gestion@thepetslovers.es"
     };
 
@@ -556,7 +560,6 @@ function emailjsInitIfNeeded(){
   try{
     if(window.emailjs && TPL_EMAILJS?.publicKey){
       if(!emailjs.__tpl_inited){
-        // soporta init(str) e init({ publicKey })
         try{ emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); }
         catch(_){ emailjs.init(TPL_EMAILJS.publicKey); }
         emailjs.__tpl_inited = true;
@@ -752,7 +755,6 @@ async function sendEmails(reservation){
     postalCode: reservation.owner.postalCode,
 
     _estado: reservation.status || "paid_review",
-    // Reply-To al cliente (tu plantilla usa {{reply_to}})
     reply_to: reservation.owner.email,
 
     _uid: firebase.auth().currentUser?.uid || "",
@@ -760,7 +762,6 @@ async function sendEmails(reservation){
   };
 
   try{
-    // asegurar init por si el SDK cargó después
     emailjsInitIfNeeded();
 
     const r1 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
@@ -772,10 +773,8 @@ async function sendEmails(reservation){
 
   }catch(e){
     console.warn("[EmailJS] error", e);
-
-    // alerta clara si es la clave pública inválida o no casa con el service/template
     if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
-      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_rao5n0c\nestán en la MISMA cuenta.");
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
     }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
