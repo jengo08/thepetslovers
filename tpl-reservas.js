@@ -64,7 +64,6 @@ const PUB = {
     extrasPorGato: { one:12, twoEach:8, threePlusEach:6 }
   },
   exoticos: {
-    // CAMBIO: desde día 11 → 18 €
     aves:      { base:{ d1_10:20, d11:18 } },
     reptiles:  { base:{ d1_10:20, d11:18 } },
     mamiferos: { first:{ d1_10:25, d11:22 }, extra:{ d1_10:20, d11:18 } }
@@ -96,7 +95,6 @@ const AUX = {
     extrasPorGato: { one:10, twoEach:6, threePlusEach:4 }
   },
   exoticos: {
-    // CAMBIO: margen 3 € desde día 11 (18 público → 15 aux)
     aves: { base:{ d1_10:15, d11:15 } },
     reptiles: { base:{ d1_10:15, d11:15 } },
     mamiferos: {
@@ -263,7 +261,7 @@ function setSelectValue(selectId, value){
 function fillOwner(owner){
   $("#ownerFullName").value = owner.fullName || "";
   $("#email").value = owner.email || "";
-  $("#phone").value = owner.phone || "";
+  $("#phone").value = owner.phone || ""
   setSelectValue("region", owner.region || "");
   $("#address").value = owner.address || "";
   $("#postalCode").value = owner.postalCode || "";
@@ -330,10 +328,16 @@ function renderPetsGrid(pets){
       </div>`;
   }
 
+  // TPL FIX: quitar { once:true } y sincronizar #numPets con la selección
   grid.addEventListener("change", ()=>{
     STATE.selectedPetIds = $$(".pet-check:checked").map(x=>x.dataset.id);
+    const selCount = STATE.selectedPetIds.length;
+    const numPetsSel = $("#numPets");
+    if (numPetsSel && selCount>0) {
+      numPetsSel.value = String(Math.min(Math.max(selCount,1), 5));
+    }
     doRecalc();
-  }, { once:true });
+  });
 }
 
 // =================== Payload ===================
@@ -465,7 +469,6 @@ function calc(payload){
     const d1 = Math.min(nDays,10), d2=Math.max(0,nDays-10);
 
     if(kind==="aves" || kind==="reptiles"){
-      // SIN suplemento 2ª+ mascota (precio por visita)
       const pr = PUB.exoticos[kind].base, ax=AUX.exoticos[kind].base;
       if(d1) pushLine(`Exóticos (${labelExotic(kind)}) · 1–10`, d1, pr.d1_10, ax.d1_10);
       if(d2) pushLine(`Exóticos (${labelExotic(kind)}) · ≥11`,  d2, pr.d11,   ax.d11);
@@ -509,7 +512,6 @@ function renderSummary(c, payload){
     box.appendChild(row);
   });
 
-  // Aviso extra si hay desplazamiento
   if(payload.travelNeeded==="si"){
     const info=document.createElement("div");
     info.className="line";
@@ -536,13 +538,16 @@ function doRecalc(){
 }
 
 // =================== EmailJS ===================
-const TPL_EMAILJS = {
-  enabled: true,
-  publicKey: "L2xAATfVuHJwj4EIV",
-  serviceId: "service_odjqrfl",
-  templateId: "template_rao5n0c",
-  adminEmail: "gestion@thepetslovers.es"
-};
+// TPL FIX: usa la config global si existe (evita divergencias)
+const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
+  ? window.TPL_EMAILJS
+  : {
+      enabled: true,
+      publicKey: "L2xAATfVuHJwj4EIV",
+      serviceId: "service_odjqrfl",
+      templateId: "template_rao5n0c",
+      adminEmail: "gestion@thepetslovers.es"
+    };
 
 // URL del logo para el email (se usa en {{logo_url}} de tu plantilla)
 const EMAIL_LOGO_URL = "https://thepetslovers.es/assets/logo-email.png";
@@ -550,21 +555,19 @@ const EMAIL_LOGO_URL = "https://thepetslovers.es/assets/logo-email.png";
 function emailjsInitIfNeeded(){
   try{
     if(window.emailjs && TPL_EMAILJS?.publicKey){
-      // init idempotente
       if(!emailjs.__tpl_inited){
-        emailjs.init({ publicKey: TPL_EMAILJS.publicKey });
+        // soporta init(str) e init({ publicKey })
+        try{ emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); }
+        catch(_){ emailjs.init(TPL_EMAILJS.publicKey); }
         emailjs.__tpl_inited = true;
       }
     }
   }catch(e){ console.warn("[EmailJS] init", e); }
 }
 
-// Escapar HTML para el correo
 function escapeHtml(s){
   return String(s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
 }
-
-// Tabla bonita del desglose para el correo
 function makeBreakdownHtml(lines){
   if(!Array.isArray(lines)||!lines.length) return `<p style="margin:0;color:#666">—</p>`;
   const rows = lines.map(l=>{
@@ -579,8 +582,6 @@ function makeBreakdownHtml(lines){
     <tbody>${rows}</tbody>
   </table>`;
 }
-
-// === RESUMEN PARA LA PLANTILLA DE EMAILJS (solo el bloque de resumen) ===
 function buildSummaryForEmailTemplate(reservation){
   const breakdownHtml = makeBreakdownHtml((reservation.pricing.breakdownPublic||[]).map(l=>({
     label: l.label,
@@ -635,8 +636,6 @@ function buildSummaryForEmailTemplate(reservation){
     </div>
   `;
 }
-
-// --- EMAIL: HTML con logo arriba a la izquierda ---
 function buildEmailHtml(reservation){
   const logo = "https://raw.githubusercontent.com/jengo08/thepetslovers/main/images/logo.png.png";
   const svc  = labelService(reservation.service.type);
@@ -650,7 +649,6 @@ function buildEmailHtml(reservation){
 
   return `
   <div style="font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:#222">
-    <!-- LOGO ARRIBA IZQUIERDA -->
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 12px 0;">
       <tr>
         <td align="left" style="padding:0">
@@ -717,7 +715,7 @@ async function sendEmails(reservation){
   __TPL_SENDING_EMAIL__ = true;
 
   const html = buildEmailHtml(reservation);
-  const summaryHtml = buildSummaryForEmailTemplate(reservation); // <- para {{{summary_html}}} de tu plantilla
+  const summaryHtml = buildSummaryForEmailTemplate(reservation);
   const svc = labelService(reservation.service.type);
   const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
   const firstNameOnly = (reservation.owner.fullName || "").split(" ")[0] || (reservation.owner.fullName || "cliente");
@@ -726,7 +724,7 @@ async function sendEmails(reservation){
     to_name: reservation.owner.fullName || "",
     to_email: reservation.owner.email || "",
     message_html: html,
-    summary_html: summaryHtml, // <<< tu plantilla usa este bloque
+    summary_html: summaryHtml,
     summary_text: `${svc} · ${reservation.dates.startDate} — ${reservation.dates.endDate||reservation.dates.startDate} · Mascotas: ${mascotas}`,
 
     reserva_id: reservation.id,
@@ -745,16 +743,17 @@ async function sendEmails(reservation){
     pay_now_txt: fmtMoney(reservation.pricing.payNow).replace(" €","€"),
     pay_later_txt: fmtMoney(reservation.pricing.payLater).replace(" €","€"),
 
-    // === CAMPOS QUE TU PLANTILLA DICE ===
-    logo_url: EMAIL_LOGO_URL,                  // {{logo_url}}
-    firstName: firstNameOnly,                  // {{firstName}} (solo nombre)
+    logo_url: EMAIL_LOGO_URL,
+    firstName: firstNameOnly,
     email: reservation.owner.email,
     phone: reservation.owner.phone,
     region: reservation.region || $("#region").value || "",
     address: reservation.owner.address,
     postalCode: reservation.owner.postalCode,
+
     _estado: reservation.status || "paid_review",
-    reply_to: (TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es"),
+    // TPL FIX: Reply-To al cliente para poder responderle
+    reply_to: reservation.owner.email,
 
     _uid: firebase.auth().currentUser?.uid || "",
     _email: firebase.auth().currentUser?.email || ""
@@ -763,12 +762,12 @@ async function sendEmails(reservation){
   try{
     emailjsInitIfNeeded();
 
-    // Cliente (1 correo)
-    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
+    const r1 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
+    console.debug("[EmailJS] cliente OK:", r1);
 
-    // Gestión (1 correo)
     const varsAdmin = { ...varsBase, to_email: (TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es"), to_name: "Gestión The Pets Lovers" };
-    await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
+    const r2 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
+    console.debug("[EmailJS] gestión OK:", r2);
 
   }catch(e){
     console.warn("[EmailJS] error", e);
@@ -900,20 +899,20 @@ window.addEventListener("load", ()=>{
 
     $("#btnReserve").addEventListener("click", async (ev)=>{
       const btn = ev.currentTarget;
-      if (btn.disabled) return;         // anti-doble click
+      if (btn.disabled) return;
       btn.disabled = true;
       const prev = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
 
       const payload=collectPayload();
       if(!payload.serviceType || !payload.startDate || !payload.endDate){
-        alert("Selecciona servicio y fechas de inicio/fin."); 
-        btn.disabled = false; btn.innerHTML = prev; 
+        alert("Selecciona servicio y fechas de inicio/fin.");
+        btn.disabled = false; btn.innerHTML = prev;
         return;
       }
       if(!STATE.selectedPetIds.length && payload.serviceType!=="exoticos"){
-        alert("Elige al menos una mascota."); 
-        btn.disabled = false; btn.innerHTML = prev; 
+        alert("Elige al menos una mascota.");
+        btn.disabled = false; btn.innerHTML = prev;
         return;
       }
 
