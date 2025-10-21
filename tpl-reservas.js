@@ -543,7 +543,7 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "L2xAATfVuHJwj4EIV",
+      publicKey: "wMD6TZzuVJKQsNY3l",   // <-- misma publicKey nueva como fallback
       serviceId: "service_odjqrfl",
       templateId: "template_rao5n0c",
       adminEmail: "gestion@thepetslovers.es"
@@ -752,7 +752,7 @@ async function sendEmails(reservation){
     postalCode: reservation.owner.postalCode,
 
     _estado: reservation.status || "paid_review",
-    // Reply-To: dejamos el del cliente (tu plantilla lo usa como {{reply_to}})
+    // Reply-To al cliente (tu plantilla usa {{reply_to}})
     reply_to: reservation.owner.email,
 
     _uid: firebase.auth().currentUser?.uid || "",
