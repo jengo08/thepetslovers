@@ -544,6 +544,9 @@ const TPL_EMAILJS = {
   adminEmail: "gestion@thepetslovers.es"
 };
 
+// URL del logo para el email (se usa en {{logo_url}} de tu plantilla)
+const EMAIL_LOGO_URL = "https://thepetslovers.es/assets/logo-email.png";
+
 function emailjsInitIfNeeded(){
   try{
     if(window.emailjs && TPL_EMAILJS?.publicKey){
@@ -575,6 +578,62 @@ function makeBreakdownHtml(lines){
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;border-radius:10px;border-collapse:separate">
     <tbody>${rows}</tbody>
   </table>`;
+}
+
+// === RESUMEN PARA LA PLANTILLA DE EMAILJS (solo el bloque de resumen) ===
+function buildSummaryForEmailTemplate(reservation){
+  const breakdownHtml = makeBreakdownHtml((reservation.pricing.breakdownPublic||[]).map(l=>({
+    label: l.label,
+    qty:   l.qty,
+    unit:  l.unitPub,
+    amount:l.amountPub,
+    note:  l.note
+  })));
+
+  const svc   = labelService(reservation.service.type);
+  const exo   = reservation.service.type==="exoticos" && reservation.service.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
+  const dates = `${reservation.dates.startDate} — ${reservation.dates.endDate || reservation.dates.startDate}`;
+  const time  = reservation.dates.startTime || reservation.dates.endTime ? `${reservation.dates.startTime||""}${reservation.dates.endTime?("–"+reservation.dates.endTime):""}` : "—";
+  const pets  = (reservation.pets||[]).map(p=>p.nombre).join(", ") || "—";
+  const addr  = reservation.owner?.address ? `<p style="margin:10px 0 0;color:#666"><strong>Dirección:</strong> ${escapeHtml(reservation.owner.address)}</p>` : "";
+
+  return `
+    <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#223">
+      <p style="margin:0 0 6px"><strong>Resumen de la reserva</strong></p>
+      <p style="margin:0;color:#666">ID: <strong>${reservation.id}</strong> · Estado: <strong>${reservation.status}</strong></p>
+
+      <hr style="border:none;border-top:1px dashed #e5e7eb;margin:12px 0"/>
+
+      <p style="margin:0 0 6px"><strong>Servicio</strong></p>
+      <p style="margin:0;color:#444">${svc}${exo}</p>
+      <p style="margin:0;color:#666">Fechas: <strong>${dates}</strong></p>
+      <p style="margin:0 0 12px;color:#666">Horarios: <strong>${time}</strong></p>
+
+      <p style="margin:0 0 6px"><strong>Titular</strong></p>
+      <p style="margin:0;color:#444">${escapeHtml(reservation.owner.fullName)} · ${escapeHtml(reservation.owner.phone||"")}</p>
+      <p style="margin:0 0 12px;color:#666">${escapeHtml(reservation.owner.email)} · ${escapeHtml(reservation.region||"")} ${reservation.owner.postalCode?("("+escapeHtml(reservation.owner.postalCode)+")"):""}</p>
+
+      <p style="margin:0 0 6px"><strong>Mascotas</strong></p>
+      <p style="margin:0 0 12px;color:#444">${escapeHtml(pets)}</p>
+
+      <p style="margin:0 0 6px"><strong>Desglose</strong></p>
+      ${breakdownHtml}
+
+      <div style="background:#f9fafb;border:1px solid #eee;border-radius:10px;padding:10px;margin-top:10px">
+        <p style="margin:0"><strong>Total:</strong> ${fmtMoney(reservation.pricing.totalClient)}</p>
+        <p style="margin:0"><strong>A pagar ahora:</strong> ${fmtMoney(reservation.pricing.payNow)}</p>
+        <p style="margin:0 0 6px"><strong>Pendiente (12 días antes):</strong> ${fmtMoney(reservation.pricing.payLater)}</p>
+        <p style="margin:0;color:#6b7280">* El desplazamiento se calculará cuando asignemos el cuidador que mejor se adapte.</p>
+      </div>
+
+      ${addr}
+
+      <hr style="border:none;border-top:1px dashed #e5e7eb;margin:12px 0"/>
+
+      <p style="margin:0;color:#444"><strong>Observaciones</strong></p>
+      <p style="margin:6px 0 0;color:#666">${escapeHtml($("#notes")?.value||"—")}</p>
+    </div>
+  `;
 }
 
 // --- EMAIL: HTML con logo arriba a la izquierda ---
@@ -658,14 +717,16 @@ async function sendEmails(reservation){
   __TPL_SENDING_EMAIL__ = true;
 
   const html = buildEmailHtml(reservation);
+  const summaryHtml = buildSummaryForEmailTemplate(reservation); // <- para {{{summary_html}}} de tu plantilla
   const svc = labelService(reservation.service.type);
   const mascotas = (reservation.pets||[]).map(p=>p.nombre).join(", ")||"—";
+  const firstNameOnly = (reservation.owner.fullName || "").split(" ")[0] || (reservation.owner.fullName || "cliente");
 
   const varsBase = {
     to_name: reservation.owner.fullName || "",
     to_email: reservation.owner.email || "",
     message_html: html,
-    summary_html: html,
+    summary_html: summaryHtml, // <<< tu plantilla usa este bloque
     summary_text: `${svc} · ${reservation.dates.startDate} — ${reservation.dates.endDate||reservation.dates.startDate} · Mascotas: ${mascotas}`,
 
     reserva_id: reservation.id,
@@ -684,15 +745,17 @@ async function sendEmails(reservation){
     pay_now_txt: fmtMoney(reservation.pricing.payNow).replace(" €","€"),
     pay_later_txt: fmtMoney(reservation.pricing.payLater).replace(" €","€"),
 
-    firstName: reservation.owner.fullName,
+    // === CAMPOS QUE TU PLANTILLA DICE ===
+    logo_url: EMAIL_LOGO_URL,                  // {{logo_url}}
+    firstName: firstNameOnly,                  // {{firstName}} (solo nombre)
     email: reservation.owner.email,
     phone: reservation.owner.phone,
     region: reservation.region || $("#region").value || "",
     address: reservation.owner.address,
     postalCode: reservation.owner.postalCode,
-    observations: $("#notes")?.value || "",
-
     _estado: reservation.status || "paid_review",
+    reply_to: (TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es"),
+
     _uid: firebase.auth().currentUser?.uid || "",
     _email: firebase.auth().currentUser?.email || ""
   };
