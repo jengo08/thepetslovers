@@ -760,6 +760,7 @@ async function sendEmails(reservation){
   };
 
   try{
+    // TPL ADD: asegurar init justo antes de enviar (por si la página cargó antes del SDK)
     emailjsInitIfNeeded();
 
     const r1 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
@@ -771,6 +772,11 @@ async function sendEmails(reservation){
 
   }catch(e){
     console.warn("[EmailJS] error", e);
+
+    // TPL ADD: alerta clara si es la clave pública inválida o de otra cuenta
+    if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = wMD6TZzuVJKQsNY3l\n2) Service ID = service_odjqrfl\n3) Template ID = template_rao5n0c\nestán en la MISMA cuenta.");
+    }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
   }
@@ -903,6 +909,14 @@ window.addEventListener("load", ()=>{
       btn.disabled = true;
       const prev = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
+
+      // TPL ADD: Términos y condiciones obligatorios (si existe #termsCheck)
+      const termsEl = $("#termsCheck");
+      if (termsEl && !termsEl.checked) {
+        alert("Debes aceptar los Términos y Condiciones.");
+        btn.disabled = false; btn.innerHTML = prev;
+        return;
+      }
 
       const payload=collectPayload();
       if(!payload.serviceType || !payload.startDate || !payload.endDate){
