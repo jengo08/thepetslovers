@@ -82,7 +82,7 @@
     .summary .total{ font-weight:700; border-top:1px dashed var(--tpl-border); padding-top:8px; margin-top:6px }
     .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--tpl-bg); border:1px solid var(--tpl-border); font-size:.8rem; color:#374151 }
 
-    .actions-summary{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; flex-wrap:wrap; align-items:center; }
+    .actions-summary{ display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }
     .btn{ display:inline-flex; align-items:center; gap:8px; padding:12px 16px; border-radius:12px; border:0; cursor:pointer; font-weight:700 }
     .btn-primary{ background:var(--tpl-accent); color:var(--tpl-accent-on) }
     .btn-ghost{ background:#fff; border:1px solid var(--tpl-border); color:#111827 }
@@ -279,22 +279,9 @@
         <div class="line total"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
         <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
         <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
-
         <div class="actions-summary">
-          <label style="display:flex;align-items:flex-start;gap:8px;font-weight:normal">
-            <input id="acceptTerms" type="checkbox" style="margin-top:3px">
-            <span class="muted">
-              He leído y acepto los
-              <a href="/terminos.html" target="_blank" rel="noopener">Términos y Condiciones</a>
-              y la <a href="/privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.
-            </span>
-          </label>
-
-          <button id="btnReserve" type="button" class="btn btn-primary" disabled>
-            <i class="fa-solid fa-lock"></i> Reservar ahora
-          </button>
+          <button id="btnReserve" type="button" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
         </div>
-
         <p class="muted" style="margin-top:6px">Solo abonarás una parte ahora. El resto se pagará <strong>12 días</strong> antes del inicio.</p>
       </section>
     </div>
@@ -343,13 +330,14 @@
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
-      publicKey: "wMD6TZzuVJKQsNY3l",  // << NUEVA PUBLIC KEY
+      publicKey: "wMD6TZzuVJKQsNY3l",   // <-- CLAVE NUEVA
       serviceId: "service_odjqrfl",
       templateId: "template_rao5n0c",
       adminEmail: "gestion@thepetslovers.es"
     };
     if (window.emailjs && TPL_EMAILJS.publicKey) {
-      emailjs.init(TPL_EMAILJS.publicKey);
+      try { emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); }
+      catch(_) { emailjs.init(TPL_EMAILJS.publicKey); }
       console.debug("[EmailJS] init OK con publicKey:", TPL_EMAILJS.publicKey);
     } else {
       console.warn("[EmailJS] init FALLÓ (falta emailjs o publicKey)");
@@ -426,19 +414,6 @@
         };
       }
     })();
-  </script>
-
-  <!-- Habilitar botón según aceptación de términos -->
-  <script>
-    document.addEventListener("DOMContentLoaded", function(){
-      const cb = document.getElementById('acceptTerms');
-      const btn = document.getElementById('btnReserve');
-      if (cb && btn) {
-        const sync = ()=> { btn.disabled = !cb.checked; };
-        cb.addEventListener('change', sync);
-        sync();
-      }
-    });
   </script>
 </body>
 </html>
