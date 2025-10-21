@@ -543,8 +543,8 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "wMD6TZzuVJKQsNY3l",   // <-- misma publicKey nueva como fallback
-      serviceId: "service_odjqrfl",
+      publicKey: "ARsCMGwHFtJ0mND61",   // <-- NUEVA Public Key (fallback)
+      serviceId: "service_fu9tbwq",     // <-- NUEVO Service ID SMTP (fallback)
       templateId: "template_rao5n0c",
       adminEmail: "gestion@thepetslovers.es"
     };
@@ -760,7 +760,7 @@ async function sendEmails(reservation){
   };
 
   try{
-    // TPL ADD: asegurar init justo antes de enviar (por si la página cargó antes del SDK)
+    // asegurar init por si el SDK cargó después
     emailjsInitIfNeeded();
 
     const r1 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
@@ -773,9 +773,9 @@ async function sendEmails(reservation){
   }catch(e){
     console.warn("[EmailJS] error", e);
 
-    // TPL ADD: alerta clara si es la clave pública inválida o de otra cuenta
+    // alerta clara si es la clave pública inválida o no casa con el service/template
     if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
-      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = wMD6TZzuVJKQsNY3l\n2) Service ID = service_odjqrfl\n3) Template ID = template_rao5n0c\nestán en la MISMA cuenta.");
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_rao5n0c\nestán en la MISMA cuenta.");
     }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
