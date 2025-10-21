@@ -279,6 +279,15 @@
         <div class="line total"><span>Subtotal</span><span id="subtotalTxt">—</span></div>
         <div class="line"><span>A pagar ahora</span><span id="payNowTxt">—</span></div>
         <div class="line"><span>Pendiente (12 días antes)</span><span id="payLaterTxt">—</span></div>
+
+        <!-- ===== NUEVO: Términos y Condiciones (no toca nada más) ===== -->
+        <label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin-top:8px;">
+          <input type="checkbox" id="terms" style="margin-top:3px;">
+          <span>Acepto los <a href="/legal/terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="/legal/privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+        </label>
+        <div id="termsError" class="muted" style="color:#b91c1c;display:none;margin-top:4px;">Debes aceptar los Términos y Condiciones.</div>
+        <!-- ===== /NUEVO ===== -->
+
         <div class="actions-summary">
           <button id="btnReserve" type="button" class="btn btn-primary"><i class="fa-solid fa-lock"></i> Reservar ahora</button>
         </div>
