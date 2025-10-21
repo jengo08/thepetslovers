@@ -261,7 +261,7 @@ function setSelectValue(selectId, value){
 function fillOwner(owner){
   $("#ownerFullName").value = owner.fullName || "";
   $("#email").value = owner.email || "";
-  $("#phone").value = owner.phone || "";
+  $("#phone").value = owner.phone || ""
   setSelectValue("region", owner.region || "");
   $("#address").value = owner.address || "";
   $("#postalCode").value = owner.postalCode || "";
@@ -556,6 +556,7 @@ function emailjsInitIfNeeded(){
   try{
     if(window.emailjs && TPL_EMAILJS?.publicKey){
       if(!emailjs.__tpl_inited){
+        // soporta init(str) e init({ publicKey })
         try{ emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); }
         catch(_){ emailjs.init(TPL_EMAILJS.publicKey); }
         emailjs.__tpl_inited = true;
@@ -591,7 +592,7 @@ function buildSummaryForEmailTemplate(reservation){
   })));
 
   const svc   = labelService(reservation.service.type);
-  the_exo   = reservation.service.type==="exoticos" && reservation.service.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
+  const exo   = reservation.service.type==="exoticos" && reservation.service.exoticType ? ` · ${labelExotic(reservation.service.exoticType)}` : "";
   const dates = `${reservation.dates.startDate} — ${reservation.dates.endDate || reservation.dates.startDate}`;
   const time  = reservation.dates.startTime || reservation.dates.endTime ? `${reservation.dates.startTime||""}${reservation.dates.endTime?("–"+reservation.dates.endTime):""}` : "—";
   const pets  = (reservation.pets||[]).map(p=>p.nombre).join(", ") || "—";
@@ -605,7 +606,7 @@ function buildSummaryForEmailTemplate(reservation){
       <hr style="border:none;border-top:1px dashed #e5e7eb;margin:12px 0"/>
 
       <p style="margin:0 0 6px"><strong>Servicio</strong></p>
-      <p style="margin:0;color:#444">${svc}${the_exo}</p>
+      <p style="margin:0;color:#444">${svc}${exo}</p>
       <p style="margin:0;color:#666">Fechas: <strong>${dates}</strong></p>
       <p style="margin:0 0 12px;color:#666">Horarios: <strong>${time}</strong></p>
 
@@ -751,7 +752,7 @@ async function sendEmails(reservation){
     postalCode: reservation.owner.postalCode,
 
     _estado: reservation.status || "paid_review",
-    // Reply-To al cliente (coincide con tu plantilla {{reply_to}})
+    // Reply-To: dejamos el del cliente (tu plantilla lo usa como {{reply_to}})
     reply_to: reservation.owner.email,
 
     _uid: firebase.auth().currentUser?.uid || "",
@@ -902,18 +903,6 @@ window.addEventListener("load", ()=>{
       btn.disabled = true;
       const prev = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
-
-      // ==== Validación: Términos y Condiciones ====
-      const terms = $("#terms");
-      const termsErr = $("#termsError");
-      if (terms && !terms.checked) {
-        if (termsErr) termsErr.style.display = "block";
-        terms?.focus();
-        btn.disabled = false; btn.innerHTML = prev;
-        return;
-      }
-      if (termsErr) termsErr.style.display = "none";
-      // ============================================
 
       const payload=collectPayload();
       if(!payload.serviceType || !payload.startDate || !payload.endDate){
