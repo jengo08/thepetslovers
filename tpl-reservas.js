@@ -449,8 +449,8 @@ function calc(payload){
     if(d1) pushLine(`Visita gato ${use90?90:60}’ · 1–10`, d1, basePub.d1_10, baseAux.d1_10);
     if(d2) pushLine(`Visita gato ${use90?90:60}’ · ≥11`,  d2, basePub.d11,   baseAux.d11);
 
-    // *** ÚNICO CAMBIO: contar mascotas seleccionadas (o # del selector) sin depender de especie==="gato"
-    const cats = (payload.pets && payload.pets.length) ? payload.pets.length : nPets;
+    // *** ÚNICO CAMBIO: contar mascotas seleccionadas (o nº del selector), sin filtrar por especie
+    const cats = (payload.pets && payload.pets.length) ? payload.pets.length : (payload.numPetsSelect || 1);
 
     const extraCats = Math.max(0, cats-1);
     if(extraCats>0){
@@ -540,9 +540,9 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "ARsCMGwHFtJ0mND61",   // <-- misma Public Key nueva como fallback
-      serviceId: "service_fu9tbwq",      // <-- mismo Service ID nuevo
-      templateId: "template_ulk5owf",    // <-- mismo Template ID nuevo
+      publicKey: "ARsCMGwHFtJ0mND61",   // fallback, NO se usa si ya inyectas window.TPL_EMAILJS
+      serviceId: "service_fu9tbwq",
+      templateId: "template_ulk5owf",
       adminEmail: "gestion@thepetslovers.es"
     };
 
@@ -553,9 +553,8 @@ function emailjsInitIfNeeded(){
   try{
     if(window.emailjs && TPL_EMAILJS?.publicKey){
       if(!emailjs.__tpl_inited){
-        // soporta init(str) e init({ publicKey })
-        try{ emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); }
-        catch(_){ emailjs.init(TPL_EMAILJS.publicKey); }
+        try{ emailjs.init({ publicKey: TPL_EMAILJS.publicKey }); } // v4
+        catch(_){ emailjs.init(TPL_EMAILJS.publicKey); }           // compat
         emailjs.__tpl_inited = true;
       }
     }
@@ -671,7 +670,7 @@ function buildEmailHtml(reservation){
 
       <p style="margin:0 0 6px"><strong>Titular</strong></p>
       <p style="margin:0;color:#444">${escapeHtml(reservation.owner.fullName)} · ${escapeHtml(reservation.owner.phone||"")}</p>
-      <p style="margin:0 0 12px;color:#666">${escapeHtml(reservation.owner.email)} · ${escapeHtml(reservation.region||"")} ${reservation.owner.postalCode?("("+escapeHtml(reservation.owner.postalCode)+")"):""}</p>
+      <p style="margin:0 0 12px;color:#666">${escapeHtml(reservation.owner.email)} · ${escapeHtml(reservation.region||"")} ${escapeHtml(reservation.owner.postalCode||"")}</p>
 
       <p style="margin:0 0 6px"><strong>Mascotas</strong></p>
       <p style="margin:0 0 12px;color:#444">${escapeHtml(petNames)}</p>
@@ -749,7 +748,6 @@ async function sendEmails(reservation){
     postalCode: reservation.owner.postalCode,
 
     _estado: reservation.status || "paid_review",
-    // Reply-To al cliente (tu plantilla usa {{reply_to}})
     reply_to: reservation.owner.email,
 
     _uid: firebase.auth().currentUser?.uid || "",
@@ -757,22 +755,16 @@ async function sendEmails(reservation){
   };
 
   try{
-    // asegurar init justo antes de enviar
     emailjsInitIfNeeded();
-
     const r1 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsBase);
     console.debug("[EmailJS] cliente OK:", r1);
-
     const varsAdmin = { ...varsBase, to_email: (TPL_EMAILJS.adminEmail || "gestion@thepetslovers.es"), to_name: "Gestión The Pets Lovers" };
     const r2 = await emailjs.send(TPL_EMAILJS.serviceId, TPL_EMAILJS.templateId, varsAdmin);
     console.debug("[EmailJS] gestión OK:", r2);
-
   }catch(e){
     console.warn("[EmailJS] error", e);
-
-    // alerta clara si la public key no corresponde con Service/Template
     if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
-      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = "+(TPL_EMAILJS.publicKey||"")+"\n2) Service ID = "+TPL_EMAILJS.serviceId+"\n3) Template ID = "+TPL_EMAILJS.templateId+"\nEstán en la MISMA cuenta.");
     }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
@@ -907,7 +899,7 @@ window.addEventListener("load", ()=>{
       const prev = btn.innerHTML;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando…';
 
-      // TPL ADD: Términos y condiciones obligatorios (si existe #termsCheck)
+      // Términos y condiciones obligatorios (si existe #termsCheck)
       const termsEl = $("#termsCheck");
       if (termsEl && !termsEl.checked) {
         alert("Debes aceptar los Términos y Condiciones.");
