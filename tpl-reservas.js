@@ -449,12 +449,9 @@ function calc(payload){
     if(d1) pushLine(`Visita gato ${use90?90:60}’ · 1–10`, d1, basePub.d1_10, baseAux.d1_10);
     if(d2) pushLine(`Visita gato ${use90?90:60}’ · ≥11`,  d2, basePub.d11,   baseAux.d11);
 
-    if($("#secondMedVisit")?.value==="si"){
-      if(d1) pushLine(`2ª visita medicación 15’ · 1–10`, d1, PUB.visitaGato.med15.d1_10, AUX.visitaGato.med15.d1_10);
-      if(d2) pushLine(`2ª visita medicación 15’ · ≥11`,  d2, PUB.visitaGato.med15.d11,   AUX.visitaGato.med15.d11);
-    }
+    // >>> ÚNICO CAMBIO: contar mascotas seleccionadas (o # del selector) sin depender de especie==="gato"
+    const cats = (payload.pets && payload.pets.length) ? payload.pets.length : nPets;
 
-    const cats = (payload.pets||[]).filter(p=>p.especie==="gato").length || nPets;
     const extraCats = Math.max(0, cats-1);
     if(extraCats>0){
       const per = extraCats===1 ? {pub:12, aux:10}
@@ -543,7 +540,7 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "DJY5pmUTEL5ji3AV3",   // <-- fallback actualizado
+      publicKey: "ARsCMGwHFtJ0mND61",   // <-- misma Public Key nueva como fallback
       serviceId: "service_fu9tbwq",      // <-- mismo Service ID nuevo
       templateId: "template_ulk5owf",    // <-- mismo Template ID nuevo
       adminEmail: "gestion@thepetslovers.es"
@@ -721,7 +718,7 @@ async function sendEmails(reservation){
   const firstNameOnly = (reservation.owner.fullName || "").split(" ")[0] || (reservation.owner.fullName || "cliente");
 
   const varsBase = {
-    to_name: reservation.owner.fullName || "",
+    to_name: reservation.owner.fullName || ",
     to_email: reservation.owner.email || "",
     message_html: html,
     summary_html: summaryHtml,
@@ -775,7 +772,7 @@ async function sendEmails(reservation){
 
     // alerta clara si la public key no corresponde con Service/Template
     if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
-      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = DJY5pmUTEL5ji3AV3\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
     }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
