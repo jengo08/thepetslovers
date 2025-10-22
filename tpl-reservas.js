@@ -449,7 +449,7 @@ function calc(payload){
     if(d1) pushLine(`Visita gato ${use90?90:60}’ · 1–10`, d1, basePub.d1_10, baseAux.d1_10);
     if(d2) pushLine(`Visita gato ${use90?90:60}’ · ≥11`,  d2, basePub.d11,   baseAux.d11);
 
-    // >>> ÚNICO CAMBIO: contar mascotas seleccionadas (o # del selector) sin depender de especie==="gato"
+    // *** ÚNICO CAMBIO: contar mascotas seleccionadas (o # del selector) sin depender de especie==="gato"
     const cats = (payload.pets && payload.pets.length) ? payload.pets.length : nPets;
 
     const extraCats = Math.max(0, cats-1);
@@ -718,7 +718,7 @@ async function sendEmails(reservation){
   const firstNameOnly = (reservation.owner.fullName || "").split(" ")[0] || (reservation.owner.fullName || "cliente");
 
   const varsBase = {
-    to_name: reservation.owner.fullName || ",
+    to_name: reservation.owner.fullName || "",
     to_email: reservation.owner.email || "",
     message_html: html,
     summary_html: summaryHtml,
