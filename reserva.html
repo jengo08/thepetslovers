@@ -336,14 +336,14 @@
     })();
   </script>
 
-  <!-- EmailJS (v4 browser) -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- EmailJS -->
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
-      publicKey: "DJY5pmUTEL5ji3AV3",   // Public Key corregida
-      serviceId: "service_fu9tbwq",
-      templateId: "template_ulk5owf",
+      publicKey: "ARsCMGwHFtJ0mND61",   // <-- CLAVE NUEVA
+      serviceId: "service_fu9tbwq",      // <-- SERVICE SMTP NUEVO
+      templateId: "template_ulk5owf",    // <-- TEMPLATE NUEVO
       adminEmail: "gestion@thepetslovers.es"
     };
     if (window.emailjs && TPL_EMAILJS.publicKey) {
