@@ -336,14 +336,14 @@
     })();
   </script>
 
-  <!-- EmailJS -->
-  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <!-- EmailJS (v4 browser) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <script>
     window.TPL_EMAILJS = {
       enabled: true,
-      publicKey: "ARsCMGwHFtJ0mND61",   // <-- CLAVE NUEVA
-      serviceId: "service_fu9tbwq",      // <-- SERVICE SMTP NUEVO
-      templateId: "template_ulk5owf",    // <-- TEMPLATE NUEVO
+      publicKey: "DJY5pmUTEL5ji3AV3",   // Public Key
+      serviceId: "service_fu9tbwq",
+      templateId: "template_ulk5owf",
       adminEmail: "gestion@thepetslovers.es"
     };
     if (window.emailjs && TPL_EMAILJS.publicKey) {
@@ -376,28 +376,58 @@
 
     (function presetService(){
       var sel = document.getElementById('serviceType'); if(!sel) return;
-      var qs = new URLSearchParams(location.search);
-      var raw = (qs.get('service') || qs.get('svc') || '').toLowerCase();
-      var map = {
-        'guarderia':'guarderia_dia','guarderia_dia':'guarderia_dia','guarderia-de-dia':'guarderia_dia',
-        'alojamiento':'alojamiento_nocturno','alojamiento_nocturno':'alojamiento_nocturno','estancias':'alojamiento_nocturno','noche':'alojamiento_nocturno',
-        'paseo':'paseo','paseos':'paseo',
-        'visitas':'visita_gato','visita_gato':'visita_gato',
-        'exoticos':'exoticos','exoticos_aves':'exoticos','exoticos_reptiles':'exoticos','exoticos_mamiferos':'exoticos'
-      };
-      if(!raw && document.referrer){
+
+      // 1) querystring
+      var qs   = new URLSearchParams(location.search);
+      var rawQ = (qs.get('service') || qs.get('svc') || qs.get('s') || '').toLowerCase();
+
+      // 2) referrer
+      var rawR = '';
+      if(!rawQ && document.referrer){
         try{
           var u=new URL(document.referrer), p=(u.pathname||'').toLowerCase();
-          if(/guarderia/.test(p)) raw='guarderia_dia';
-          else if(/alojamiento|estancias|noche/.test(p)) raw='alojamiento_nocturno';
-          else if(/paseo/.test(p)) raw='paseo';
-          else if(/visita/.test(p)&&/gato/.test(p)) raw='visita_gato';
-          else if(/exotico|exoticos/.test(p)) raw='exoticos';
+          // Alojamiento (noches)
+          if(/alojamiento|estancias|noche|nocturn/.test(p)) rawR='alojamiento_nocturno';
+          // Guardería día
+          else if(/guarderia|guardería|daycare/.test(p)) rawR='guarderia_dia';
+          // Paseos
+          else if(/paseo|paseos|walk/.test(p)) rawR='paseo';
+          // Visitas a domicilio (gato)
+          else if(/visita|visitas|a-domicilio/.test(p) && /gato|gatos|cat/.test(p)) rawR='visita_gato';
+          else if(/visitas-a-domicilio-gato|visita-gato|gato-domicilio/.test(p)) rawR='visita_gato';
+          // Exóticos
+          else if(/exotico|exóticos|exoticos|aves|reptiles|mamiferos|mamíferos/.test(p)) rawR='exoticos';
+          // Transporte
+          else if(/transporte|transport/.test(p)) rawR='transporte';
         }catch(_){}
       }
+
+      var raw = (rawQ || rawR || '').trim();
+
+      // normalización extra
+      var map = {
+        // guardería
+        'guarderia':'guarderia_dia','guardería':'guarderia_dia','guarderia_dia':'guarderia_dia','guarderia-de-dia':'guarderia_dia','guarderia-dia':'guarderia_dia',
+        // alojamiento
+        'alojamiento':'alojamiento_nocturno','alojamiento_nocturno':'alojamiento_nocturno','estancias':'alojamiento_nocturno','noches':'alojamiento_nocturno','noche':'alojamiento_nocturno',
+        // paseo
+        'paseo':'paseo','paseos':'paseo',
+        // visita gato
+        'visita_gato':'visita_gato','visita-gato':'visita_gato','visitas-gato':'visita_gato','visitas-a-domicilio-gato':'visita_gato','visita-a-domicilio-gato':'visita_gato',
+        'visitas':'visita_gato', // fallback común en tu web
+        // exóticos
+        'exoticos':'exoticos','exóticos':'exoticos','exoticos_aves':'exoticos','exoticos_reptiles':'exoticos','exoticos_mamiferos':'exoticos'
+      };
+
       var canon = map[raw] || raw;
-      if(canon && [...sel.options].some(o=>o.value===canon)){ sel.value = canon; }
-      toggleBlocks();
+      if(canon && [...sel.options].some(o=>o.value===canon)){
+        sel.value = canon;
+        toggleBlocks();
+        // dispara un change para que el JS principal recalcule y sincronice la UI
+        sel.dispatchEvent(new Event('change', { bubbles:true }));
+      } else {
+        toggleBlocks();
+      }
     })();
 
     // Cachorro display (solo lectura)
