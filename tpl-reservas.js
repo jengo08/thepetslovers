@@ -543,7 +543,7 @@ const TPL_EMAILJS = (window.TPL_EMAILJS && typeof window.TPL_EMAILJS==='object')
   ? window.TPL_EMAILJS
   : {
       enabled: true,
-      publicKey: "ARsCMGwHFtJ0mND61",   // <-- misma Public Key nueva como fallback
+      publicKey: "DJY5pmUTEL5ji3AV3",   // <-- fallback actualizado
       serviceId: "service_fu9tbwq",      // <-- mismo Service ID nuevo
       templateId: "template_ulk5owf",    // <-- mismo Template ID nuevo
       adminEmail: "gestion@thepetslovers.es"
@@ -775,7 +775,7 @@ async function sendEmails(reservation){
 
     // alerta clara si la public key no corresponde con Service/Template
     if (e && e.status===400 && typeof e.text==="string" && /public key/i.test(e.text)) {
-      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = ARsCMGwHFtJ0mND61\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
+      alert("EmailJS: La Public Key es inválida o no corresponde con el Service/Template.\n\nRevisa en EmailJS Dashboard que:\n1) Public Key = DJY5pmUTEL5ji3AV3\n2) Service ID = service_fu9tbwq\n3) Template ID = template_ulk5owf\nestán en la MISMA cuenta.");
     }
   }finally{
     __TPL_SENDING_EMAIL__ = false;
