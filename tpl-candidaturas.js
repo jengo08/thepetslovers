@@ -1,13 +1,18 @@
-/* TPL: INICIO BLOQUE NUEVO [EmailJS + Overlay — Candidaturas (y Reservas) con adjuntos, con fallback Cloudinary unsigned + Firestore; SIN Firebase Storage] */
+<!-- TPL: INICIO BLOQUE NUEVO [EmailJS + Overlay — Candidaturas (y Reservas) con adjuntos, Cloudinary unsigned + Firestore; doble envío] -->
+<script>
 (function () {
   'use strict';
 
   // ========= 🔑 EmailJS (tus claves) =========
-  const EMAILJS_PUBLIC_KEY = 'L2xAATfVuHJwj4EIV';
-  const EMAILJS_SERVICE_ID = 'service_odjqrfl';
-  const TEMPLATE_CANDIDATURAS = 'template_32z2wj4';
-  const TEMPLATE_RESERVAS     = 'template_rao5n0c';
+  const EMAILJS_PUBLIC_KEY = 'DJY5pmUTEL5ji3AV3';
+  const EMAILJS_SERVICE_ID = 'service_fu9tbwq';
+  const TEMPLATE_CANDIDATURAS = 'template_q3q0smr';
+  const TEMPLATE_RESERVAS     = 'template_ulk5owf';
   const EMAILJS_URL = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
+
+  // ========= Config de correo =========
+  const ADMIN_EMAIL = 'gestion@thepetslovers.es';
+  const ADMIN_NAME  = 'Gestión The Pets Lovers';
 
   // ========= Helpers UI / DOM =========
   function q(id){ return document.getElementById(id); }
@@ -87,7 +92,6 @@
     return t.includes('mi perfil') || t.includes('mi panel');
   }
 
-  /* Respaldo de sesión en localStorage */
   function getStoredEmail(){ try{ return localStorage.getItem('tpl_auth_email') || ''; }catch(_){ return ''; } }
   function looksLoggedFromStorage(){ return !!getStoredEmail(); }
   function syncStorageFromUser(user){
@@ -113,7 +117,7 @@
   function getProfileUrl(){
     const a = document.getElementById('tpl-login-link');
     const href = a ? (a.getAttribute('href')||'') : '';
-    if (/tpl-candidaturas-admin\.html/i.test(href)) return href; // admin → panel
+    if (/tpl-candidaturas-admin\.html/i.test(href)) return href;
     if (/perfil/i.test(href)) return href;
     return 'perfil.html';
   }
@@ -182,7 +186,6 @@
   function detectType(form){
     if (form && form.id === 'tpl-form-auxiliares') return 'cuestionario';
     if (form && form.id === 'tpl-form-reservas')    return 'reserva';
-    // heurística adicional (por si el form de reservas no tiene id)
     const txt = (form.textContent||'').toLowerCase();
     if (txt.includes('reserva') || txt.includes('reservar')) return 'reserva';
     return (form && (form.dataset.type||'generico')).toLowerCase();
@@ -203,18 +206,16 @@
   }
 
   /* =========================
-     NUEVO: Subida a Cloudinary (unsigned, GRATIS)
+     Subida a Cloudinary (unsigned, opcional)
      ========================= */
   async function uploadFilesToCloudinary(form, type, onProgress){
     const ds = form.dataset || {};
     const cloudName = ds.cloudinaryName;
     const preset    = ds.cloudinaryPreset;
     if (!cloudName || !preset){
-      // Si no hay Cloudinary configurado, retornamos null (seguirá con EmailJS adjuntos)
       return null;
     }
 
-    // Intentamos obtener uid para folder, si hay sesión
     let uid = null;
     try{
       await ensureFirebaseAuth();
@@ -233,7 +234,6 @@
     const total = files.reduce((a,it)=> a + (it.file?.size||0), 0);
     let transferred = 0;
 
-    // Límites front (iguales a los que ya usas)
     const MAX_FILE = 10*1024*1024, MAX_TOTAL = 20*1024*1024;
     if (files.some(f=>f.file.size > MAX_FILE) || total > MAX_TOTAL){
       throw new Error('Cada archivo ≤ 10MB y el total ≤ 20MB.');
@@ -279,7 +279,6 @@
       });
     }
 
-    // Guardado en Firestore para tu panel
     try{
       await ensureFirestore();
       const db = firebase.firestore();
@@ -292,7 +291,7 @@
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         estado: 'pendiente'
       });
-    }catch(_){ /* opcional */ }
+    }catch(_){}
 
     return { urls, id: batchId, uid };
   }
@@ -314,7 +313,7 @@
     form.querySelectorAll('input[type="file"]').forEach(inp=>{
       if (flag){
         inp.dataset._tplPrevDisabled = inp.disabled ? '1' : '';
-        inp.disabled = true; // al estar disabled, EmailJS no adjunta
+        inp.disabled = true;
       } else {
         if (inp.dataset._tplPrevDisabled === '') inp.disabled = false;
       }
@@ -325,7 +324,6 @@
      PATCH VALIDACIONES (CP + TEL) — global (candidaturas)
      ========================= */
   (function patchValidationHintsGlobal(){
-    // Candidaturas
     const cp = q('tpl-cp');
     if (cp){
       cp.setAttribute('pattern', '^[0-9]{5}$');
@@ -346,9 +344,128 @@
     }
   })();
 
-  /* TPL: INICIO BLOQUE NUEVO [CP universal — saneo y validación] */
-  function digits5(s){ return String(s||'').replace(/\D/g,'').slice(0,5); }
+  /* ==============
+     Helpers EmailJS: inyectar vars temporales para doble envío
+     ============== */
+  function injectVars(form, vars){
+    const created = [];
+    Object.entries(vars||{}).forEach(([name, value])=>{
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = name;
+      input.value = value == null ? '' : String(value);
+      form.appendChild(input);
+      created.push(input);
+    });
+    return ()=> created.forEach(el=> el.remove());
+  }
 
+  /* ========= Lógica genérica para formularios EmailJS (DOBLE ENVÍO) ========= */
+  async function handleEmailSend(form, templateId, sendingLabel, successLabel){
+    const submitBtn = form.querySelector('button[type="submit"], .cta-button');
+
+    // --- Validación básica (incluye CP saneado) ---
+    const cpCtx = sanitizeCpInputsBeforeValidation(form);
+    if (typeof form.reportValidity === 'function' && !form.reportValidity()){
+      cpCtx.restoreAll(); setStatus('Revisa los campos obligatorios.', false); return;
+    }
+    if (cpCtx.hasError){
+      cpCtx.restoreAll(); const first = cpCtx.inputs[0]; if (first){ try{ first.reportValidity(); first.focus(); }catch(_){ } } return;
+    }
+    cpCtx.restoreAll();
+
+    // Requiere sesión
+    const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
+    if (!logged){
+      showOverlay('Inicia sesión para continuar. Te llevamos y volverás aquí automáticamente.', true);
+      wireAcceptRedirect(resolveLoginUrl(), 'Iniciar sesión');
+      return;
+    }
+
+    // Límite de adjuntos
+    const max = 10 * 1024 * 1024;
+    const files = getFiles(form);
+    for (const f of files){
+      if (f.file && f.file.size > max){
+        setStatus('El archivo "'+(f.file.name||'adjunto')+'" supera 10MB.', false);
+        return;
+      }
+    }
+
+    if (submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
+    setStatus('Preparando envío…', false);
+    showOverlay(sendingLabel, false);
+
+    // Subir a Cloudinary (si está configurado) → enviamos enlaces en vez de adjuntos
+    let uploaded = null;
+    try{
+      if (files.length){
+        uploaded = await uploadFilesToCloudinary(form, detectType(form), null);
+        if (uploaded && uploaded.urls){
+          populateHiddenUrls(form, uploaded.urls);
+          disableFileInputs(form, true);
+        }
+      }
+    }catch(errUp){
+      console.warn('Cloudinary falló, sigo con EmailJS adjuntos:', errUp);
+    }
+
+    try{
+      const emailjs = await ensureEmailJS();
+      try{ emailjs.init(EMAILJS_PUBLIC_KEY); }catch(_){}
+
+      // Datos base
+      const formDataObj = formToObject(form);
+      const candidateEmail = formDataObj.email || getStoredEmail() || '';
+      const candidateName  = formDataObj.name  || formDataObj.nombre || formDataObj.candidate_name || 'Candidata';
+
+      // 1) ENVÍO A LA CANDIDATA
+      const removeCandidateVars = injectVars(form, {
+        to_email: candidateEmail,
+        to_name: candidateName,
+        reply_to: ADMIN_EMAIL,
+        is_admin: '' // para plantilla: bloque público
+      });
+      await withTimeout(emailjs.sendForm(EMAILJS_SERVICE_ID, templateId, form), 30000, 'EmailJS candidata');
+      removeCandidateVars();
+
+      // 2) ENVÍO A GESTIÓN
+      const removeAdminVars = injectVars(form, {
+        to_email: ADMIN_EMAIL,
+        to_name: ADMIN_NAME,
+        reply_to: candidateEmail, // responder a la candidata desde gestión
+        is_admin: '1' // para plantilla: bloque privado
+      });
+      await withTimeout(emailjs.sendForm(EMAILJS_SERVICE_ID, templateId, form), 30000, 'EmailJS gestión');
+      removeAdminVars();
+
+      const okMsg = successLabel || (form.dataset.success || '¡Envío realizado con éxito! 🐾');
+      const extra = uploaded?.urls ? ' (archivos subidos y enlaces enviados).' : '';
+      setStatus(okMsg + extra, true);
+
+      // Mensaje especial si era candidatura
+      showOverlay(
+        okMsg + (detectType(form)==='cuestionario'
+          ? ' Tu candidatura está confirmada. En breve revisaremos tus datos y, si todo está correcto, te abriremos tu perfil de auxiliar.'
+          : ''),
+        true
+      );
+      wireAcceptRedirect(getProfileUrl(), 'Ir a mi perfil');
+
+      try{ form.reset(); }catch(_){}
+
+    }catch(err){
+      console.error('EmailJS error:', err);
+      setStatus('No se pudo enviar. ' + (err && err.message ? err.message : ''), false);
+      hideOverlay();
+    }finally{
+      disableFileInputs(form, false);
+      if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
+    }
+  }
+
+  /* ========= CP universal — saneo/validación ========= */
+  function digits5(s){ return String(s||'').replace(/\D/g,'').slice(0,5); }
   function findCpCandidates(form){
     if (!form) return [];
     const els = Array.from(form.querySelectorAll('input'));
@@ -370,15 +487,10 @@
       return hayCp || hayPostal;
     });
   }
-
-  // Neutraliza attrs que provocan "pattern mismatch" y valida manualmente
   function sanitizeCpInputsBeforeValidation(form){
     const cands = findCpCandidates(form);
     if (!cands.length) return { restoreAll: ()=>{}, hasError:false, inputs:[] };
-
-    const toRestore = [];
-    let hasError = false;
-
+    const toRestore = []; let hasError = false;
     cands.forEach(cp=>{
       const prev = {
         type: cp.getAttribute('type'),
@@ -387,27 +499,17 @@
         min: cp.getAttribute('min'),
         max: cp.getAttribute('max')
       };
-      // normaliza valor
       cp.value = digits5(cp.value);
       cp.setAttribute('maxlength','5');
       cp.setAttribute('inputmode','numeric');
-
-      // neutraliza
       cp.setAttribute('type','text');
       if (prev.pattern!=null) cp.removeAttribute('pattern');
       if (prev.step) cp.removeAttribute('step');
       if (prev.min) cp.removeAttribute('min');
       if (prev.max) cp.removeAttribute('max');
-
-      // valida manual: si es required o si el usuario escribió algo
       const must = cp.hasAttribute('required') || cp.value.length>0;
-      if (must && cp.value.length !== 5){
-        hasError = true;
-        cp.setCustomValidity('Introduce 5 dígitos (España)');
-      } else {
-        cp.setCustomValidity('');
-      }
-
+      if (must && cp.value.length !== 5){ hasError = true; cp.setCustomValidity('Introduce 5 dígitos (España)'); }
+      else { cp.setCustomValidity(''); }
       toRestore.push(()=> {
         if (prev.type) cp.setAttribute('type', prev.type); else cp.removeAttribute('type');
         if (prev.pattern!=null) cp.setAttribute('pattern', prev.pattern); else cp.removeAttribute('pattern');
@@ -416,105 +518,7 @@
         if (prev.max) cp.setAttribute('max', prev.max); else cp.removeAttribute('max');
       });
     });
-
-    return {
-      hasError,
-      inputs: cands,
-      restoreAll: ()=>{ toRestore.forEach(fn=>{ try{ fn(); }catch(_){}}); }
-    };
-  }
-  /* TPL: FIN BLOQUE NUEVO */
-
-  // ========= Lógica genérica para formularios EmailJS =========
-  async function handleEmailSend(form, templateId, sendingLabel, successLabel){
-    const submitBtn = form.querySelector('button[type="submit"], .cta-button');
-
-    /* 🔧 FIX CP universal: sanea y neutraliza antes de validar */
-    const cpCtx = sanitizeCpInputsBeforeValidation(form);
-
-    // Validación nativa (ya no falla por pattern/number/min/max)
-    if (typeof form.reportValidity === 'function' && !form.reportValidity()){
-      cpCtx.restoreAll();
-      setStatus('Revisa los campos obligatorios.', false);
-      return;
-    }
-    // Y, si nuestra verificación manual de CP falla, mostramos el aviso
-    if (cpCtx.hasError){
-      cpCtx.restoreAll();
-      const first = cpCtx.inputs[0]; if (first){ try{ first.reportValidity(); first.focus(); }catch(_){ } }
-      return;
-    }
-    // Restaurar attrs originales antes de continuar
-    cpCtx.restoreAll();
-
-    // Requiere sesión (robusta)
-    const logged = await waitUntilLogged({ maxMs: 12000, stepMs: 150 });
-    if (!logged){
-      showOverlay('Inicia sesión para continuar. Te llevamos y volverás aquí automáticamente.', true);
-      wireAcceptRedirect(resolveLoginUrl(), 'Iniciar sesión');
-      return;
-    }
-
-    // Límite por archivo (10 MB)
-    const max = 10 * 1024 * 1024;
-    const files = getFiles(form);
-    for (const f of files){
-      if (f.file && f.file.size > max){
-        setStatus('El archivo "'+(f.file.name||'adjunto')+'" supera 10MB.', false);
-        return;
-      }
-    }
-
-    if (submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
-    setStatus('Preparando envío…', false);
-    showOverlay(sendingLabel, false);
-
-    // ====== Cloudinary (si está configurado) → EmailJS sin adjuntos ======
-    let uploaded = null;
-    try{
-      if (files.length){
-        uploaded = await uploadFilesToCloudinary(form, detectType(form), (p)=>{/* opcional progreso */});
-        if (uploaded && uploaded.urls){
-          populateHiddenUrls(form, uploaded.urls);
-          disableFileInputs(form, true);
-        }
-      }
-    }catch(errUp){
-      console.warn('Cloudinary falló, sigo con EmailJS adjuntos:', errUp);
-      // Si falla Cloudinary, seguimos con EmailJS con adjuntos
-    }
-
-    try{
-      const emailjs = await ensureEmailJS();
-      try{ emailjs.init(EMAILJS_PUBLIC_KEY); }catch(_){}
-
-      await withTimeout(
-        emailjs.sendForm(EMAILJS_SERVICE_ID, templateId, form),
-        30000,
-        'EmailJS'
-      );
-
-      const okMsg = successLabel || (form.dataset.success || '¡Envío realizado con éxito! 🐾');
-      const extra = uploaded?.urls ? ' (archivos subidos y enlaces enviados).' : '';
-      setStatus(okMsg + extra, true);
-      showOverlay(
-        okMsg + (detectType(form)==='cuestionario'
-          ? ' En cuanto esté aceptada podrás generar tu perfil; te llegará un correo para crear tu acceso.'
-          : ''),
-        true
-      );
-      wireAcceptRedirect(getProfileUrl(), 'Ir a mi perfil');
-
-      try{ form.reset(); }catch(_){}
-
-    }catch(err){
-      console.error('EmailJS error:', err);
-      setStatus('No se pudo enviar. ' + (err && err.message ? err.message : ''), false);
-      hideOverlay();
-    }finally{
-      disableFileInputs(form, false);
-      if (submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar'; }
-    }
+    return { hasError, inputs: cands, restoreAll: ()=>{ toRestore.forEach(fn=>{ try{ fn(); }catch(_){}}); } };
   }
 
   // ========= Inicialización por página =========
@@ -529,12 +533,12 @@
           formC,
           TEMPLATE_CANDIDATURAS,
           'Subiendo archivos y enviando tu candidatura…',
-          'Tu candidatura está subida.'
+          '¡Tu candidatura ha sido enviada! 🎉'
         );
       });
     }
 
-    // --- RESERVAS (o cualquier form de reservas aunque no se llame así) ---
+    // --- RESERVAS ---
     const formR = q('tpl-form-reservas') || Array.from(document.forms).find(f => {
       const t=(f.textContent||'').toLowerCase(); return t.includes('reserva')||t.includes('reservar');
     });
@@ -551,4 +555,5 @@
     }
   });
 })();
-/* TPL: FIN BLOQUE NUEVO */
+</script>
+<!-- TPL: FIN BLOQUE NUEVO -->
